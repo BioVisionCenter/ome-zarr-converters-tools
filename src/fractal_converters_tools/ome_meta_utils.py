@@ -14,7 +14,8 @@ from fractal_tasks_core.ngff.specs import (
     WellInPlate,
 )
 from fractal_tasks_core.ngff.specs import ImageInWell as ImageInWellMeta
-from image import ImageInWell
+
+from fractal_converters_tools.image import ImageInWell
 
 alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 

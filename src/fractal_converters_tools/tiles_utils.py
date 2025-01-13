@@ -4,8 +4,9 @@ import copy
 from typing import Literal
 
 import numpy as np
-from grid_utils import GridSetup, check_if_regular_grid
-from tiles import Point, Tile, Vector
+
+from fractal_converters_tools.grid_utils import GridSetup, check_if_regular_grid
+from fractal_converters_tools.tiles import Point, Tile, Vector
 
 
 def check_tiles_coplanar(tiles: list[Tile]) -> bool:

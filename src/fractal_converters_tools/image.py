@@ -1,6 +1,6 @@
 """A module to represent an acquisition."""
 
-from tiles import Tile
+from fractal_converters_tools.tiles import Tile
 
 
 class ImageInWell:
@@ -16,7 +16,7 @@ class ImageInWell:
         channel_names: list[str] | None = None,
         num_levels: int = 5,
     ):
-        """Initialize the acquisition"""
+        """Initialize the acquisition."""
         self._name = name
         self._row = row
         self._column = column

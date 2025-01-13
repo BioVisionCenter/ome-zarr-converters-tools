@@ -306,7 +306,7 @@ class Tile:
         )
 
     def derive_from_diag(self, top_l: Point, diag: Vector) -> "Tile":
-        """Create a new tile keeping the origin"""
+        """Create a new tile keeping the origin."""
         return Tile(
             top_l,
             diag,
