@@ -1,0 +1,17 @@
+# Do not edit - changes here will be overwritten by Copier
+_commit: v1
+_src_path: gh:pydev-guide/pyrepo-copier
+author_email: lorenzo.cerrone@uzh.ch
+author_name: Lorenzo Cerrone
+git_versioning: true
+github_username: fractal-analytics-platform
+mode: customize
+module_name: fractal_converters_tools
+project_license: BSD-3-Clause
+project_name: fractal-converters-tools
+project_short_description: Tooling to build ome-zarr HCS plate converters
+test_pre_release: false
+use_mypy: true
+use_pre_commit: true
+use_ruff: true
+
