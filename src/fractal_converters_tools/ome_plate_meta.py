@@ -15,12 +15,12 @@ from fractal_tasks_core.ngff.specs import (
 )
 from fractal_tasks_core.ngff.specs import ImageInWell as ImageInWellMeta
 
-from fractal_converters_tools.image import ImageInWell
+from fractal_converters_tools.tiled_image import TiledImage
 
 alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 
-def build_plate_meta(acquisitions: list[ImageInWell], plate_name) -> NgffPlateMeta:
+def build_plate_meta(acquisitions: list[TiledImage], plate_name) -> NgffPlateMeta:
     """Build a plate metadata object from a list of acquisitions."""
     if len(acquisitions) == 0:
         raise ValueError("Empty list of acquisitions")
@@ -73,7 +73,7 @@ def build_plate_meta(acquisitions: list[ImageInWell], plate_name) -> NgffPlateMe
     return NgffPlateMeta(plate=plate)
 
 
-def build_well_meta(acquisitions: list[ImageInWell]) -> dict[str, NgffWellMeta]:
+def build_well_meta(acquisitions: list[TiledImage]) -> dict[str, NgffWellMeta]:
     """Build a well metadata object from a list of acquisitions."""
     well_meta = {}
 
@@ -98,7 +98,7 @@ def build_well_meta(acquisitions: list[ImageInWell]) -> dict[str, NgffWellMeta]:
 def initiate_ome_zarr_plate(
     store: str | Path,
     plate_name: str,
-    acquisitions: list[ImageInWell],
+    acquisitions: list[TiledImage],
     overwrite: bool = False,
 ) -> None:
     """Create an OME-Zarr plate from a list of acquisitions."""

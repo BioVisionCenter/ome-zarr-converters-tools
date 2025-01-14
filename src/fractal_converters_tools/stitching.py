@@ -6,7 +6,7 @@ from typing import Literal
 import numpy as np
 
 from fractal_converters_tools.grid_utils import GridSetup, check_if_regular_grid
-from fractal_converters_tools.tiles import Point, Tile, Vector
+from fractal_converters_tools.tile import Point, Tile, Vector
 
 
 def check_tiles_coplanar(tiles: list[Tile]) -> bool:
@@ -211,3 +211,26 @@ def resolve_tiles_overlap(
             return _resolve_free_mode(tiles)
         case "none":
             return tiles
+
+def standard_stitching_pipe(tiles: list[Tile], 
+                            mode: Literal["auto", "grid", "free", "none"] = "auto",
+                            swap_xy: bool = False,
+                            invert_x: bool = False,
+                            invert_y: bool = False) -> list[Tile]:
+    """Standard stitching pipe for a list of tiles."""
+    tiles = copy.deepcopy(tiles)
+    if swap_xy:
+        tiles = swap_xy_tiles(tiles)
+    if invert_x:
+        tiles = invert_x_tiles(tiles)
+    if invert_y:
+        tiles = invert_y_tiles(tiles)
+    
+    if any([swap_xy, invert_x, invert_y]):
+        tiles = remove_tiles_offset(tiles)
+    
+    tiles = sort_tiles_by_distance(tiles)
+    tiles = remove_tiles_offset(tiles)
+    tiles = resolve_tiles_overlap(tiles, mode=mode)
+    tiles = tiles_to_pixel_space(tiles)
+    return tiles

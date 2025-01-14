@@ -1,9 +1,9 @@
 """A module to represent an acquisition."""
 
-from fractal_converters_tools.tiles import Tile
+from fractal_converters_tools.tile import Tile
 
 
-class ImageInWell:
+class TiledImage:
     """A class to represent an acquisition."""
 
     def __init__(

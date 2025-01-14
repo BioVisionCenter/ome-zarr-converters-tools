@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from fractal_converters_tools.tiles import Tile
+from fractal_converters_tools.tile import Tile
 
 
 def _first_if_allclose(values: list[float]) -> tuple[bool, float]:
