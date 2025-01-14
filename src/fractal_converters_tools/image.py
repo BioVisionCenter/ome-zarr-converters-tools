@@ -62,7 +62,7 @@ class ImageInWell:
             tile_channel_names = self.tiles[0].channel_names
             if tile_channel_names is None:
                 raise ValueError(
-                    "Channel names not found. " "Please provide channel names manually."
+                    "Channel names not found. Please provide channel names manually."
                 )
             self._channel_names = tile_channel_names
         return self._channel_names

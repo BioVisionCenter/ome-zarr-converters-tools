@@ -46,9 +46,7 @@ def tiles_to_pixel_space(tiles: list[Tile]) -> list[Tile]:
     return [tile.to_pixel_space() for tile in tiles]
 
 
-def tiles_to_real_space(
-    tiles: list[Tile], xy_scale: float, z_scale: float
-) -> list[Tile]:
+def tiles_to_real_space(tiles: list[Tile]) -> list[Tile]:
     """Convert a list of tiles from pixel space to real space."""
     return [tile.to_real_space() for tile in tiles]
 
@@ -175,28 +173,41 @@ def resolve_grid_tiles_overlap(
     return output_tiles
 
 
-def resolve_tiles_overlap(
-    tiles: list[Tile],
-    sort_list: bool = True,
-    eps: float = 1e-6,
-    mode: Literal["auto", "grid", "free"] = "auto",
-) -> list[Tile]:
-    """Remove the overlap from any list of tiles."""
-    if mode not in ["auto", "grid", "free"]:
-        raise ValueError("Mode must be 'auto', 'grid', or 'free'")
-
-    if mode == "free":
-        return resolve_random_tiles_overlap(tiles, sort_list=sort_list, eps=eps)
-
+def _resolve_auto_mode(tiles: list[Tile]) -> list[Tile]:
+    """Resolve the overlap of a list of tiles."""
     error_message_or_none, grid_setup = check_if_regular_grid(tiles)
-    if mode == "auto":
-        if error_message_or_none is None:
-            return resolve_grid_tiles_overlap(tiles, grid_setup, eps=eps)
-        return resolve_random_tiles_overlap(tiles, sort_list=sort_list, eps=eps)
+    if error_message_or_none is None:
+        return resolve_grid_tiles_overlap(tiles, grid_setup)
+    return resolve_random_tiles_overlap(tiles)
 
+def _resolve_grid_mode(tiles: list[Tile]) -> list[Tile]:
+    """Resolve the overlap of a list of tiles."""
+    error_message_or_none, grid_setup = check_if_regular_grid(tiles)
     if error_message_or_none is not None:
         raise ValueError(
             "The input tiles are not on a regular grid "
             f"because: {error_message_or_none}. Please set 'mode=free'."
         )
-    return resolve_grid_tiles_overlap(tiles, grid_setup, eps=eps)
+    return resolve_grid_tiles_overlap(tiles, grid_setup)
+
+def _resolve_free_mode(tiles: list[Tile]) -> list[Tile]:
+    """Resolve the overlap of a list of tiles."""
+    return resolve_random_tiles_overlap(tiles)
+
+def resolve_tiles_overlap(
+    tiles: list[Tile],
+    mode: Literal["auto", "grid", "free", "none"] = "auto",
+) -> list[Tile]:
+    """Remove the overlap from any list of tiles."""
+    if mode not in ["auto", "grid", "free", "none"]:
+        raise ValueError("Mode must be 'auto', 'grid', 'free', or 'none'")
+
+    match mode:
+        case "auto":
+            return _resolve_auto_mode(tiles)
+        case "grid":
+            return _resolve_grid_mode(tiles)
+        case "free":
+            return _resolve_free_mode(tiles)
+        case "none":
+            return tiles
