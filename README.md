@@ -6,4 +6,5 @@
 [![CI](https://github.com/fractal-analytics-platform/fractal-converters-tools/actions/workflows/ci.yml/badge.svg)](https://github.com/fractal-analytics-platform/fractal-converters-tools/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/fractal-analytics-platform/fractal-converters-tools/branch/main/graph/badge.svg)](https://codecov.io/gh/fractal-analytics-platform/fractal-converters-tools)
 
+
 Tooling to build ome-zarr HCS plate converters
