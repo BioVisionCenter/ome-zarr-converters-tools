@@ -49,6 +49,12 @@ class GridSetup:
 
 def check_if_regular_grid(tiles: list[Tile]) -> tuple[str | None, GridSetup]:
     """Find the grid size of a list of tiles."""
+    if len(tiles) == 0:
+        return "Empty list of tiles", GridSetup()
+
+    if len(tiles) == 1:
+        return "Only one tile", GridSetup()
+
     # ------------------------------------------
     # Test 1: Check if all lengths are the same
     # ------------------------------------------
