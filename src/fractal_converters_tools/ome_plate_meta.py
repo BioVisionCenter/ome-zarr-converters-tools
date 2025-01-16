@@ -107,7 +107,7 @@ def initiate_ome_zarr_plate(
 
     store = Path(store)
     if store.exists() and not overwrite:
-        raise ValueError(
+        raise FileExistsError(
             f"Zarr file already exists at {store}. Set overwrite=True to overwrite."
         )
 
