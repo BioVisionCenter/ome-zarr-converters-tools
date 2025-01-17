@@ -15,17 +15,32 @@ from fractal_tasks_core.ngff.specs import (
 )
 from fractal_tasks_core.ngff.specs import ImageInWell as ImageInWellMeta
 
-from fractal_converters_tools.tiled_image import TiledImage
+from fractal_converters_tools.tiled_image import PathBuilderPlate, TiledImage
 
 alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 
-def build_plate_meta(acquisitions: list[TiledImage], plate_name) -> NgffPlateMeta:
+def validate_tiled_images(tiled_images: list[TiledImage]) -> None:
+    """Validate if the tiled images.
+
+    Check if all the required attributes are present, like:
+    - path_builder == PlatePathBuilder
+    """
+    for img in tiled_images:
+        if not isinstance(img.path_builder, PathBuilderPlate):
+            raise ValueError(
+                "Something went wrong with the parsing. "
+                "Some of the metadata is missing or not correctly "
+                "formatted."
+            )
+
+
+def build_plate_meta(tiled_images: list[TiledImage], plate_name) -> NgffPlateMeta:
     """Build a plate metadata object from a list of acquisitions."""
-    if len(acquisitions) == 0:
+    if len(tiled_images) == 0:
         raise ValueError("Empty list of acquisitions")
 
-    _acquisition_ids = list({acq.acquisition_id for acq in acquisitions})
+    _acquisition_ids = list({img.path_builder.acquisition_id for img in tiled_images})
     acquisition_ids = []
     for acquisition_id in _acquisition_ids:
         acq_model = AcquisitionInPlate(
@@ -37,13 +52,13 @@ def build_plate_meta(acquisitions: list[TiledImage], plate_name) -> NgffPlateMet
         acquisition_ids.append(acq_model)
 
     rows = []
-    existing_rows = {acq.row for acq in acquisitions}
+    existing_rows = {img.path_builder.row for img in tiled_images}
     for row_name in alphabet:
         if row_name in existing_rows:
             rows.append(RowInPlate(name=row_name))
 
     columns = []
-    existing_columns = {acq.column for acq in acquisitions}
+    existing_columns = {img.path_builder.column for img in tiled_images}
     for column_name in range(1, 100):
         if column_name in existing_columns:
             columns.append(ColumnInPlate(name=str(column_name)))
@@ -53,8 +68,9 @@ def build_plate_meta(acquisitions: list[TiledImage], plate_name) -> NgffPlateMet
         for column_id, column in enumerate(columns):
             path = f"{row.name}/{column.name}"
 
-            for acq in acquisitions:
-                if acq.well_path == path and path not in wells:
+            for img in tiled_images:
+                well_path = img.path_builder.well_path
+                if well_path == path and path not in wells:
                     wells[path] = WellInPlate(
                         path=path,
                         rowIndex=row_id,
@@ -73,15 +89,15 @@ def build_plate_meta(acquisitions: list[TiledImage], plate_name) -> NgffPlateMet
     return NgffPlateMeta(plate=plate)
 
 
-def build_well_meta(acquisitions: list[TiledImage]) -> dict[str, NgffWellMeta]:
+def build_well_meta(tiled_images: list[TiledImage]) -> dict[str, NgffWellMeta]:
     """Build a well metadata object from a list of acquisitions."""
     well_meta = {}
 
-    for acq in acquisitions:
-        if acq.well_path not in well_meta:
-            well_meta[acq.well_path] = set()
+    for img in tiled_images:
+        if img.path_builder.well_path not in well_meta:
+            well_meta[img.path_builder.well_path] = set()
 
-        well_meta[acq.well_path].add(acq.acquisition_id)
+        well_meta[img.path_builder.well_path].add(img.acquisition_id)
 
     _well_meta = {}
     for path, wells in well_meta.items():
@@ -98,12 +114,13 @@ def build_well_meta(acquisitions: list[TiledImage]) -> dict[str, NgffWellMeta]:
 def initiate_ome_zarr_plate(
     store: str | Path,
     plate_name: str,
-    acquisitions: list[TiledImage],
+    tiled_images: list[TiledImage],
     overwrite: bool = False,
 ) -> None:
     """Create an OME-Zarr plate from a list of acquisitions."""
-    plate_meta = build_plate_meta(acquisitions, plate_name)
-    plate_wells_meta = build_well_meta(acquisitions)
+    validate_tiled_images(tiled_images)
+    plate_meta = build_plate_meta(tiled_images, plate_name)
+    plate_wells_meta = build_well_meta(tiled_images)
 
     store = Path(store)
     if store.exists() and not overwrite:
@@ -117,3 +134,12 @@ def initiate_ome_zarr_plate(
     for well_path, well_meta in plate_wells_meta.items():
         well_group = plate_group.create_group(well_path)
         well_group.attrs.update(well_meta.model_dump(exclude_none=True))
+
+
+def update_ome_zarr_plate(
+    store: str | Path,
+    plate_name: str,
+    tiledimages: list[TiledImage],
+):
+    """Update an Existing OME-Zarr plate with new TiledImages."""
+    raise NotImplementedError("Not implemented yet.")

@@ -8,6 +8,7 @@ from typing import Protocol
 
 import numpy as np
 from dask.array.core import Array
+from ngio.ngff_meta.fractal_image_meta import PixelSize
 
 
 def _find_prec(a: float | int) -> int:
@@ -89,19 +90,21 @@ class Vector:
         """Compute the length of the vector."""
         return (self.x**2 + self.y**2 + self.z**2 + self.c**2 + self.t**2) ** 0.5
 
-    def to_pixel_space(self, xy_scale: float = 1.0, z_scale: float = 1.0) -> "Vector":
+    def to_pixel_space(self, pixel_size: PixelSize) -> "Vector":
         """Convert the vector to pixel space."""
-        x = int(self.x * xy_scale)
-        y = int(self.y * xy_scale)
-        z = int(self.z * z_scale)
-        return Vector(x, y, z=z, c=self.c, t=self.t)
+        x = int(self.x / pixel_size.x)
+        y = int(self.y / pixel_size.y)
+        z = int(self.z / pixel_size.z)
+        t = self.t  # Scaling in time is not supported yet
+        return Vector(x, y, z=z, c=self.c, t=t)
 
-    def to_real_space(self, xy_scale: float = 1.0, z_scale: float = 1.0) -> "Vector":
+    def to_real_space(self, pixel_size) -> "Vector":
         """Convert the vector to real space."""
-        x = self.x / xy_scale
-        y = self.y / xy_scale
-        z = self.z / z_scale
-        return Vector(x, y, z=z, c=self.c, t=self.t)
+        x = self.x * pixel_size.x
+        y = self.y * pixel_size.y
+        z = self.z * pixel_size.z
+        t = self.t  # Scaling in time is not supported yet
+        return Vector(x, y, z=z, c=self.c, t=t)
 
 
 @dataclass
@@ -134,28 +137,34 @@ class Point:
             self.t - other.t,
         )
 
-    def to_pixel_space(self, xy_scale: float = 1.0, z_scale: float = 1.0) -> "Point":
+    def to_pixel_space(self, pixel_size: PixelSize) -> "Point":
         """Convert the point to pixel space."""
-        x = int(self.x * xy_scale)
-        y = int(self.y * xy_scale)
-        z = int(self.z * z_scale)
-        return Point(x, y, z=z, c=self.c, t=self.t)
+        x = int(self.x / pixel_size.x)
+        y = int(self.y / pixel_size.y)
+        z = int(self.z / pixel_size.z)
+        t = self.t  # Scaling in time is not supported yet
+        return Point(x, y, z=z, c=self.c, t=t)
 
-    def to_real_space(self, xy_scale: float = 1.0, z_scale: float = 1.0) -> "Point":
+    def to_real_space(self, pixel_size: PixelSize) -> "Point":
         """Convert the point to real space."""
-        x = self.x / xy_scale
-        y = self.y / xy_scale
-        z = self.z / z_scale
-        return Point(x, y, z=z, c=self.c, t=self.t)
+        x = self.x * pixel_size.x
+        y = self.y * pixel_size.y
+        z = self.z * pixel_size.z
+        t = self.t  # Scaling in time is not supported yet
+        return Point(x, y, z=z, c=self.c, t=t)
 
 
 class TileLoader(Protocol):
     """Tile loader interface."""
 
-    def __call__(self) -> np.ndarray | Array:
-        """Load the tile data into a numpy array."""
+    def load(self) -> np.ndarray | Array:
+        """Load the tile data into a numpy array in the format (t, c, z, y, x)."""
         ...
 
+    @property
+    def dtype(self) -> str:
+        """Return the dtype of the tile."""
+        ...
 
 class TileSpace(Enum):
     """Tile space enumeration."""
@@ -189,12 +198,12 @@ class Tile:
         self,
         top_l: Point,
         diag: Vector,
+        pixel_size: PixelSize,
         origin: OriginDict | None = None,
         space: TileSpace = TileSpace.REAL,
         data_loader: TileLoader | None = None,
         channel_names: list[str] | None = None,
-        xy_scale: float = 1.0,
-        z_scale: float = 1.0,
+        wavelength_ids: list[int] | None = None,
     ):
         """Initialize the tile with the top-left corner and the diagonal vector."""
         self._top_l = top_l
@@ -210,8 +219,8 @@ class Tile:
         self._data_loader = data_loader
         self._space = space
         self._channel_names = channel_names
-        self._xy_scale = xy_scale
-        self._z_scale = z_scale
+        self._wavelength_ids = wavelength_ids
+        self._pixel_size = pixel_size
 
     def __repr__(self) -> str:
         """String representation of the tile."""
@@ -271,38 +280,38 @@ class Tile:
         return self._channel_names
 
     @property
-    def xy_scale(self) -> float:
-        """Return the XY scale of the tile."""
-        return self._xy_scale
+    def wavelength_ids(self) -> list[int] | None:
+        """Return the wavelength ids of the tile."""
+        return self._wavelength_ids
 
     @property
-    def z_scale(self) -> float:
-        """Return the Z scale of the tile."""
-        return self._z_scale
+    def pixel_size(self) -> PixelSize:
+        """Return the pixel size of the tile."""
+        return self._pixel_size
 
     @classmethod
     def from_points(
         cls,
         top_l: Point,
         bot_r: Point,
+        pixel_size: PixelSize,
         origin: OriginDict | None = None,
         space: TileSpace = TileSpace.REAL,
         data_loader: TileLoader | None = None,
         channel_names: list[str] | None = None,
-        xy_scale: float = 1.0,
-        z_scale: float = 1.0,
+        wavelength_ids: list[int] | None = None,
     ):
         """Create a tile from two points (top-left and bottom-right corners)."""
         diag = bot_r - top_l
         return cls(
             top_l=top_l,
             diag=diag,
+            pixel_size=pixel_size,
             origin=origin,
             space=space,
             data_loader=data_loader,
             channel_names=channel_names,
-            xy_scale=xy_scale,
-            z_scale=z_scale,
+            wavelength_ids=wavelength_ids,
         )
 
     def derive_from_diag(self, top_l: Point, diag: Vector) -> "Tile":
@@ -310,12 +319,12 @@ class Tile:
         return Tile(
             top_l,
             diag,
+            pixel_size=self._pixel_size,
             origin=self._origin,
             data_loader=self._data_loader,
             space=self._space,
             channel_names=self._channel_names,
-            xy_scale=self._xy_scale,
-            z_scale=self._z_scale,
+            wavelength_ids=self._wavelength_ids,
         )
 
     def derive_from_points(self, top_l: Point, bot_r: Point) -> "Tile":
@@ -324,12 +333,12 @@ class Tile:
         return Tile(
             top_l,
             diag,
+            pixel_size=self._pixel_size,
             origin=self._origin,
             data_loader=self._data_loader,
             space=self._space,
             channel_names=self._channel_names,
-            xy_scale=self._xy_scale,
-            z_scale=self._z_scale,
+            wavelength_ids=self._wavelength_ids,
         )
 
     def move_by(self, vec: Vector) -> "Tile":
@@ -346,56 +355,48 @@ class Tile:
             x_micrometer_original=self.top_l.x, y_micrometer_original=self.top_l.y
         )
         return Tile(
-            self.top_l,
-            self.diag,
+            top_l=self.top_l,
+            diag=self.diag,
+            pixel_size=self._pixel_size,
             origin=new_origin,
             data_loader=self._data_loader,
             space=self._space,
             channel_names=self._channel_names,
-            xy_scale=self._xy_scale,
-            z_scale=self._z_scale,
+            wavelength_ids=self._wavelength_ids,
         )
 
     def to_pixel_space(self) -> "Tile":
         """Convert the tile to pixel space."""
         if self.space == TileSpace.PIXEL:
             raise ValueError("Tile is already in pixel space")
-        top_l = self.top_l.to_pixel_space(
-            xy_scale=1 / self.xy_scale, z_scale=1 / self.z_scale
-        )
-        diag = self.diag.to_pixel_space(
-            xy_scale=1 / self.xy_scale, z_scale=1 / self.z_scale
-        )
+        top_l = self.top_l.to_pixel_space(pixel_size=self.pixel_size)
+        diag = self.diag.to_pixel_space(pixel_size=self.pixel_size)
         return Tile(
-            top_l,
-            diag,
+            top_l=top_l,
+            diag=diag,
+            pixel_size=self._pixel_size,
             origin=self._origin,
             data_loader=self._data_loader,
             space=TileSpace.PIXEL,
             channel_names=self._channel_names,
-            xy_scale=self._xy_scale,
-            z_scale=self._z_scale,
+            wavelength_ids=self._wavelength_ids,
         )
 
     def to_real_space(self) -> "Tile":
         """Convert the tile to real space."""
         if self.space == TileSpace.REAL:
             raise ValueError("Tile is already in real space")
-        top_l = self.top_l.to_real_space(
-            xy_scale=1 / self.xy_scale, z_scale=1 / self.z_scale
-        )
-        diag = self.diag.to_real_space(
-            xy_scale=1 / self.xy_scale, z_scale=1 / self.z_scale
-        )
+        top_l = self.top_l.to_real_space(pixel_size=self.pixel_size)
+        diag = self.diag.to_real_space(pixel_size=self.pixel_size)
         return Tile(
-            top_l,
-            diag,
+            top_l=top_l,
+            diag=diag,
+            pixel_size=self._pixel_size,
             origin=self._origin,
             data_loader=self._data_loader,
             space=TileSpace.REAL,
             channel_names=self._channel_names,
-            xy_scale=self._xy_scale,
-            z_scale=self._z_scale,
+            wavelength_ids=self._wavelength_ids,
         )
 
     def is_coplanar(self, bbox: "Tile", z_tol: float = 1e-6) -> bool:
@@ -478,30 +479,18 @@ class Tile:
         """Load the tile data."""
         if self._data_loader is None:
             raise ValueError("No data loader provided.")
-        return self._data_loader()
 
-    def shape(self) -> dict[str, int]:
+        data = self._data_loader()
+        if self.shape != data.shape:
+            raise ValueError("Data shape does not match tile shape.")
+        return self._data_loader.load()
+
+    def dtype(self) -> str:
+        """Return the dtype of the tile."""
+        return self._data_loader.dtype
+
+    @property
+    def shape(self) -> tuple[int, int, int, int, int]:
         """Return the shape of the tile."""
-        if self.space == TileSpace.REAL:
-            raise ValueError("Tile is in real space, cannot return shape")
-
-        return {
-            "t": int(self.diag.t),
-            "c": int(self.diag.c),
-            "z": int(self.diag.z),
-            "y": int(self.diag.y),
-            "x": int(self.diag.x),
-        }
-
-    def slices(self) -> dict[str, slice]:
-        """Return the slices of the tile."""
-        if self.space == TileSpace.REAL:
-            raise ValueError("Tile is in real space, cannot return slices")
-
-        return {
-            "t": slice(self.top_l.t, self.bot_r.t),
-            "c": slice(self.top_l.c, self.bot_r.c),
-            "z": slice(self.top_l.z, self.bot_r.z),
-            "y": slice(self.top_l.y, self.bot_r.y),
-            "x": slice(self.top_l.x, self.bot_r.x),
-        }
+        _shape = (self.diag.t, self.diag.c, self.diag.z, self.diag.y, self.diag.x)
+        return tuple(int(s) for s in _shape)

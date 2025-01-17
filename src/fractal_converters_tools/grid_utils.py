@@ -26,6 +26,7 @@ def _find_grid_size(tiles: list[Tile], offset_x, offset_y) -> tuple[int, int]:
     num_y = int(max(y) // offset_y) + 1
     return num_x, num_y
 
+
 @dataclass
 class GridSetup:
     """Grid setup for a list of tiles.
@@ -46,6 +47,7 @@ class GridSetup:
     offset_y: float = 0.0
     num_x: int = 0
     num_y: int = 0
+
 
 def check_if_regular_grid(tiles: list[Tile]) -> tuple[str | None, GridSetup]:
     """Find the grid size of a list of tiles."""

@@ -180,6 +180,7 @@ def _resolve_auto_mode(tiles: list[Tile]) -> list[Tile]:
         return resolve_grid_tiles_overlap(tiles, grid_setup)
     return resolve_random_tiles_overlap(tiles)
 
+
 def _resolve_grid_mode(tiles: list[Tile]) -> list[Tile]:
     """Resolve the overlap of a list of tiles."""
     error_message_or_none, grid_setup = check_if_regular_grid(tiles)
@@ -190,9 +191,11 @@ def _resolve_grid_mode(tiles: list[Tile]) -> list[Tile]:
         )
     return resolve_grid_tiles_overlap(tiles, grid_setup)
 
+
 def _resolve_free_mode(tiles: list[Tile]) -> list[Tile]:
     """Resolve the overlap of a list of tiles."""
     return resolve_random_tiles_overlap(tiles)
+
 
 def resolve_tiles_overlap(
     tiles: list[Tile],
@@ -212,11 +215,14 @@ def resolve_tiles_overlap(
         case "none":
             return tiles
 
-def standard_stitching_pipe(tiles: list[Tile], 
-                            mode: Literal["auto", "grid", "free", "none"] = "auto",
-                            swap_xy: bool = False,
-                            invert_x: bool = False,
-                            invert_y: bool = False) -> list[Tile]:
+
+def standard_stitching_pipe(
+    tiles: list[Tile],
+    mode: Literal["auto", "grid", "free", "none"] = "auto",
+    swap_xy: bool = False,
+    invert_x: bool = False,
+    invert_y: bool = False,
+) -> list[Tile]:
     """Standard stitching pipe for a list of tiles."""
     tiles = copy.deepcopy(tiles)
     if swap_xy:
@@ -225,10 +231,10 @@ def standard_stitching_pipe(tiles: list[Tile],
         tiles = invert_x_tiles(tiles)
     if invert_y:
         tiles = invert_y_tiles(tiles)
-    
+
     if any([swap_xy, invert_x, invert_y]):
         tiles = remove_tiles_offset(tiles)
-    
+
     tiles = sort_tiles_by_distance(tiles)
     tiles = remove_tiles_offset(tiles)
     tiles = resolve_tiles_overlap(tiles, mode=mode)
