@@ -166,6 +166,7 @@ class TileLoader(Protocol):
         """Return the dtype of the tile."""
         ...
 
+
 class TileSpace(Enum):
     """Tile space enumeration."""
 
