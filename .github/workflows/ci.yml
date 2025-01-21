@@ -55,7 +55,7 @@ jobs:
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: /home/runner/work/fractal_converters_tools/fractal_converters_tools/coverage.xml
+          files: /home/runner/work/fractal-converters-tools/fractal-converters-tools/coverage.xml
 
   deploy:
     name: Deploy
