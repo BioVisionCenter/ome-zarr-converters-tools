@@ -127,6 +127,13 @@ pretty = true
 minversion = "7.0"
 testpaths = ["tests"]
 filterwarnings = ["error"]
+addopts = [
+    "-vv",
+    "--color=yes",
+    "--cov",
+    "--cov-report=term-missing",
+    "--cov-report=xml",
+]
 
 # https://coverage.readthedocs.io/
 [tool.coverage.report]
