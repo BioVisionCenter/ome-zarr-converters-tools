@@ -1,6 +1,8 @@
+import json
+
 import pytest
 from utils import generate_tiled_images
-import json
+
 from fractal_converters_tools.omezarr_plate_writers import initiate_ome_zarr_plates
 
 

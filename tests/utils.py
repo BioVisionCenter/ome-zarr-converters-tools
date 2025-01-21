@@ -2,7 +2,7 @@ import numpy as np
 from ngio.ngff_meta.fractal_image_meta import PixelSize
 
 from fractal_converters_tools.tile import Point, Tile, Vector
-from fractal_converters_tools.tiled_image import TiledImage, PlatePathBuilder
+from fractal_converters_tools.tiled_image import PlatePathBuilder, TiledImage
 
 
 def generate_grid_tiles(
