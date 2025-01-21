@@ -246,6 +246,25 @@ class Tile:
             f"space={self.space})"
         )
 
+    def __eq__(self, value: "Tile") -> bool:
+        """Check if two tiles are equal."""
+        if not isinstance(value, Tile):
+            return False
+
+        if value.space != self.space:
+            if self.space == TileSpace.REAL:
+                value = value.to_real_space()
+            else:
+                value = value.to_pixel_space()
+
+        if (self.top_l - value.top_l).length() > 1e-9:
+            return False
+
+        if (self.diag - value.diag).length() > 1e-9:
+            return False
+
+        return True
+
     @property
     def top_l(self) -> Point:
         """Return the top-left corner of the tile."""
@@ -453,9 +472,16 @@ class Tile:
         if self._data_loader is None:
             raise ValueError("No data loader provided.")
 
+        if self.space == TileSpace.REAL:
+            expected_shape = self.to_pixel_space().shape
+        else:
+            expected_shape = self.shape
+
         data = self._data_loader.load()
-        if self.shape != data.shape:
-            raise ValueError("Data shape does not match tile shape.")
+        if expected_shape != data.shape:
+            raise ValueError(
+                f"Data shape {data.shape} does not match tile shape {self.shape}."
+            )
         return data
 
     def dtype(self) -> str:
