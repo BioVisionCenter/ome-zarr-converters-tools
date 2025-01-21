@@ -36,20 +36,20 @@ class SimplePathBuilder:
         return _zarrify_path(self._path)
 
 
-class PathBuilderPlate:
+class PlatePathBuilder:
     """A class to build paths for a standard plate."""
 
-    def __init__(self, plate: str, row: str, column: int, acquisition_id: int):
+    def __init__(self, plate_name: str, row: str, column: int, acquisition_id: int):
         """Initialize the path builder."""
-        self._plate = plate
+        self._plate_name = plate_name
         self._row = row
         self._column = column
         self._acquisition_id = acquisition_id
 
     @property
-    def plate(self) -> str:
-        """Return the plate."""
-        return self._plate
+    def plate_name(self) -> str:
+        """Return the plate name."""
+        return self._plate_name
 
     @property
     def row(self) -> str:
@@ -62,23 +62,28 @@ class PathBuilderPlate:
         return self._column
 
     @property
+    def well_id(self) -> str:
+        """Return the well ID {row}/{column}."""
+        return f"{self.row}/{self.column}"
+
+    @property
     def acquisition_id(self) -> int:
         """Return the acquisition ID."""
         return self._acquisition_id
 
     @property
     def plate_path(self) -> str:
-        """Return the plate path."""
-        return _zarrify_path(self.plate)
+        """Return the relative plate path."""
+        return _zarrify_path(self.plate_name)
 
     @property
     def well_path(self) -> str:
-        """Return the well path."""
-        return f"{self.plate_path}/{self.row}/{self.column}"
+        """Return the relative well path."""
+        return f"{self.plate_path}/{self.well_id}"
 
     @property
     def path(self) -> str:
-        """Return the zarr relative path."""
+        """Return the image relative path."""
         return f"{self.well_path}/{self.acquisition_id}"
 
 
@@ -89,14 +94,18 @@ class TiledImage:
         self,
         name: str,
         path_builder: PathBuilder,
+        channel_names: list[str] | None = None,
+        wavelength_ids: list[int] | None = None,
         num_levels: int = 5,
     ):
         """Initialize the acquisition."""
         self._name = name
         self._path_builder = path_builder
-        self.tiles = []
-        # User input will override the values from the tiles
-        self.num_levels = num_levels
+        self._tiles = []
+
+        self._channel_names = channel_names
+        self._wavelength_ids = wavelength_ids
+        self._num_levels = num_levels
 
     @property
     def tiles(self) -> list[Tile]:
@@ -120,16 +129,12 @@ class TiledImage:
     @property
     def channel_names(self) -> list[str] | None:
         """Return the channel names."""
-        if len(self.tiles) == 0:
-            return None
-        return self.tiles[0].channel_names
+        return self._channel_names
 
     @property
     def wavelength_ids(self) -> list[int] | None:
         """Return the wavelength ids."""
-        if len(self.tiles) == 0:
-            return None
-        return self.tiles[0].wavelength_ids
+        return self._wavelength_ids
 
     @property
     def pixel_size(self) -> PixelSize | None:
@@ -137,3 +142,8 @@ class TiledImage:
         if len(self.tiles) == 0:
             return None
         return self.tiles[0].pixel_size
+
+    @property
+    def num_levels(self) -> int:
+        """Return the number of levels."""
+        return self._num_levels

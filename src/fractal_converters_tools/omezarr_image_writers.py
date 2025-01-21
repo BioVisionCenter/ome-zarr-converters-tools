@@ -17,7 +17,7 @@ def _find_shape(tiles: list[Tile]) -> tuple[int, int, int, int, int]:
     """Find the shape of the image."""
     shape_x = max(int(tile.bot_r.x) for tile in tiles)
     shape_y = max(int(tile.bot_r.y) for tile in tiles)
-    shape_t, shape_c, shape_z, *_ = tiles[0].shape()
+    shape_t, shape_c, shape_z, *_ = tiles[0].shape
     return shape_t, shape_c, shape_z, shape_y, shape_x
 
 
@@ -28,7 +28,7 @@ def _find_chunk_shape(
     c_chunk: int = 1,
     t_chunk: int = 1,
 ) -> tuple[int, int, int, int, int]:
-    shape_t, shape_c, shape_z, shape_y, shape_x = tiles[0].shape()
+    shape_t, shape_c, shape_z, shape_y, shape_x = tiles[0].shape
     chunk_y = min(shape_y, max_xy_chunk)
     chunk_x = min(shape_x, max_xy_chunk)
     chunk_z = min(shape_z, z_chunk)
@@ -167,7 +167,7 @@ def write_tiled_image(
     tiled_image: TiledImage,
     stiching_pipe: Callable[[list[Tile]], list[Tile]],
     overwrite: bool = False,
-) -> tuple[str, bool, str]:
+) -> tuple[str, bool, bool]:
     """Build a tiled ome-zarr image from a TiledImage object."""
     tiles = apply_stitching_pipe(tiled_image, stiching_pipe)
     new_zarr_url = init_empty_ome_zarr_image(

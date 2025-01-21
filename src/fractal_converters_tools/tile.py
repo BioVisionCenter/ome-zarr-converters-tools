@@ -203,8 +203,6 @@ class Tile:
         origin: OriginDict | None = None,
         space: TileSpace = TileSpace.REAL,
         data_loader: TileLoader | None = None,
-        channel_names: list[str] | None = None,
-        wavelength_ids: list[int] | None = None,
     ):
         """Initialize the tile with the top-left corner and the diagonal vector."""
         self._top_l = top_l
@@ -219,8 +217,6 @@ class Tile:
 
         self._data_loader = data_loader
         self._space = space
-        self._channel_names = channel_names
-        self._wavelength_ids = wavelength_ids
         self._pixel_size = pixel_size
 
     def __repr__(self) -> str:
@@ -276,16 +272,6 @@ class Tile:
         return self._space
 
     @property
-    def channel_names(self) -> list[str] | None:
-        """Return the channel names of the tile."""
-        return self._channel_names
-
-    @property
-    def wavelength_ids(self) -> list[int] | None:
-        """Return the wavelength ids of the tile."""
-        return self._wavelength_ids
-
-    @property
     def pixel_size(self) -> PixelSize:
         """Return the pixel size of the tile."""
         return self._pixel_size
@@ -299,8 +285,6 @@ class Tile:
         origin: OriginDict | None = None,
         space: TileSpace = TileSpace.REAL,
         data_loader: TileLoader | None = None,
-        channel_names: list[str] | None = None,
-        wavelength_ids: list[int] | None = None,
     ):
         """Create a tile from two points (top-left and bottom-right corners)."""
         diag = bot_r - top_l
@@ -311,8 +295,6 @@ class Tile:
             origin=origin,
             space=space,
             data_loader=data_loader,
-            channel_names=channel_names,
-            wavelength_ids=wavelength_ids,
         )
 
     def derive_from_diag(self, top_l: Point, diag: Vector) -> "Tile":
@@ -324,8 +306,6 @@ class Tile:
             origin=self._origin,
             data_loader=self._data_loader,
             space=self._space,
-            channel_names=self._channel_names,
-            wavelength_ids=self._wavelength_ids,
         )
 
     def derive_from_points(self, top_l: Point, bot_r: Point) -> "Tile":
@@ -338,8 +318,6 @@ class Tile:
             origin=self._origin,
             data_loader=self._data_loader,
             space=self._space,
-            channel_names=self._channel_names,
-            wavelength_ids=self._wavelength_ids,
         )
 
     def move_by(self, vec: Vector) -> "Tile":
@@ -362,8 +340,6 @@ class Tile:
             origin=new_origin,
             data_loader=self._data_loader,
             space=self._space,
-            channel_names=self._channel_names,
-            wavelength_ids=self._wavelength_ids,
         )
 
     def to_pixel_space(self) -> "Tile":
@@ -379,8 +355,6 @@ class Tile:
             origin=self._origin,
             data_loader=self._data_loader,
             space=TileSpace.PIXEL,
-            channel_names=self._channel_names,
-            wavelength_ids=self._wavelength_ids,
         )
 
     def to_real_space(self) -> "Tile":
@@ -396,8 +370,6 @@ class Tile:
             origin=self._origin,
             data_loader=self._data_loader,
             space=TileSpace.REAL,
-            channel_names=self._channel_names,
-            wavelength_ids=self._wavelength_ids,
         )
 
     def is_coplanar(self, bbox: "Tile", z_tol: float = 1e-6) -> bool:
@@ -481,10 +453,10 @@ class Tile:
         if self._data_loader is None:
             raise ValueError("No data loader provided.")
 
-        data = self._data_loader()
+        data = self._data_loader.load()
         if self.shape != data.shape:
             raise ValueError("Data shape does not match tile shape.")
-        return self._data_loader.load()
+        return data
 
     def dtype(self) -> str:
         """Return the dtype of the tile."""

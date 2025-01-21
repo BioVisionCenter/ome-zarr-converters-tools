@@ -34,8 +34,8 @@ classifiers = [
 ]
 # add your package dependencies here
 dependencies = [
-    "fractal-tasks-core == 1.4.0",
-    "ngio==0.1.4",
+    "fractal-tasks-core>=1.4.2,<1.5.0",
+    "ngio>=0.1.5,<0.2",
     "tqdm",
     "numpy",
     "zarr",
