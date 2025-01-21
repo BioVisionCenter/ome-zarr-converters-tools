@@ -52,6 +52,7 @@ jobs:
         run: pytest
 
       - name: Coverage
+        if: matrix.python-version == '3.10' && matrix.platform == 'ubuntu-latest'
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
