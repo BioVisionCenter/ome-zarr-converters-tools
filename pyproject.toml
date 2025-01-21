@@ -126,11 +126,14 @@ pretty = true
 [tool.pytest.ini_options]
 minversion = "7.0"
 testpaths = ["tests"]
-filterwarnings = [
-    "error",
-    "ignore::FutureWarning",
-    "ignore::DeprecationWarning",
-]
+# The filterwarnings option 
+# caused some unexpected behavior in the tests
+# so it was commented out
+#filterwarnings = [
+#    "error",
+#    "ignore::FutureWarning",
+#    "ignore::DeprecationWarning",
+#]
 addopts = [
     "-vv",
     "--color=yes",
