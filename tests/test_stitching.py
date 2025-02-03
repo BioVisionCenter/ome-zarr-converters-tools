@@ -28,7 +28,7 @@ def test_standard_grid_stitching(overalap):
         assert tile.origin in origins
         
         
-def test_grid_stitching_with_missing_origin():
+def test_grid_stitching_with_missing_top_left():
     tiles = generate_grid_tiles(overlap=0.1, tile_shape=(1, 1, 1, 11, 10))
     tiles = tiles[1:] # remove the first tile
     origins = [copy.deepcopy(tile.origin) for tile in tiles]
