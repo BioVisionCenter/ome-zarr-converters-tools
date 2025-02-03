@@ -16,11 +16,13 @@ def check_tiles_coplanar(tiles: list[Tile]) -> bool:
 
     return all(tiles[0].is_coplanar(tile) for tile in tiles)
 
+
 def _min_point(tiles: list[Tile]) -> Point:
     """Find the minimum point of a list of tiles."""
     min_x = min([tile.top_l.x for tile in tiles])
     min_y = min([tile.top_l.y for tile in tiles])
     return Point(min_x, min_y, z=0, c=0, t=0)
+
 
 def sort_tiles_by_distance(
     tiles: list[Tile], check_coplanar: bool = False
@@ -140,9 +142,7 @@ def resolve_random_tiles_overlap(
     return tiles
 
 
-def resolve_grid_tiles_overlap(
-    tiles: list[Tile], grid_setup: GridSetup
-) -> list[Tile]:
+def resolve_grid_tiles_overlap(tiles: list[Tile], grid_setup: GridSetup) -> list[Tile]:
     """Remove overlap from a list of tiles that follow a regular grid."""
     tiles = sort_tiles_by_distance(tiles)
 
@@ -172,7 +172,7 @@ def resolve_grid_tiles_overlap(
                 top_l = Point(x_out, y_out, z=z, c=c, t=t)
                 new_tile = closest_bbox.derive_from_diag(top_l, diag=closest_bbox.diag)
                 output_tiles.append(new_tile)
-    
+
     if len(output_tiles) != len(tiles):
         raise ValueError("Something went wrong with the grid tiling resolution.")
     return output_tiles

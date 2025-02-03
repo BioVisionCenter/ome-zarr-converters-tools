@@ -26,14 +26,14 @@ def test_standard_grid_stitching(overalap):
     for tile in tiles_free:
         assert tile in tiles_no_overlap
         assert tile.origin in origins
-        
-        
+
+
 def test_grid_stitching_with_missing_top_left():
     tiles = generate_grid_tiles(overlap=0.1, tile_shape=(1, 1, 1, 11, 10))
-    tiles = tiles[1:] # remove the first tile
+    tiles = tiles[1:]  # remove the first tile
     origins = [copy.deepcopy(tile.origin) for tile in tiles]
     tiles_no_overlap = generate_grid_tiles(overlap=1, tile_shape=(1, 1, 1, 11, 10))
-    tiles_no_overlap = tiles_no_overlap[1:] # remove the first tile
+    tiles_no_overlap = tiles_no_overlap[1:]  # remove the first tile
 
     tiles_grid = standard_stitching_pipe(tiles, mode="grid")
     for tile in tiles_grid:
