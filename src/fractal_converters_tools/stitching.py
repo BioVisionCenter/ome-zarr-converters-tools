@@ -5,8 +5,12 @@ from typing import Literal
 
 import numpy as np
 
-from fractal_converters_tools.grid_utils import GridSetup, check_if_regular_grid
-from fractal_converters_tools.tile import Point, Tile, Vector
+from fractal_converters_tools.grid_utils import (
+    GridSetup,
+    _find_grid_size,
+    check_if_regular_grid,
+)
+from fractal_converters_tools.tile import Point, Tile, TileSpace, Vector
 
 
 def check_tiles_coplanar(tiles: list[Tile]) -> bool:
@@ -149,8 +153,8 @@ def resolve_grid_tiles_overlap(tiles: list[Tile], grid_setup: GridSetup) -> list
     z, c, t = tiles[0].top_l.z, tiles[0].top_l.c, tiles[0].top_l.t
 
     output_tiles = []
-    # The grid tolerance is set to 10% of the grid length
-    grid_tollerance = min(grid_setup.length_x, grid_setup.length_y) / 10
+    # The grid tolerance is set to 1% of the grid length
+    grid_tollerance = min(grid_setup.length_x, grid_setup.length_y) / 100
     for i in range(grid_setup.num_x):
         for j in range(grid_setup.num_y):
             # X-Y position in the input grid
@@ -182,8 +186,8 @@ def _resolve_auto_mode(tiles: list[Tile]) -> list[Tile]:
     """Resolve the overlap of a list of tiles."""
     error_message_or_none, grid_setup = check_if_regular_grid(tiles)
     if error_message_or_none is None:
-        return resolve_grid_tiles_overlap(tiles, grid_setup)
-    return resolve_random_tiles_overlap(tiles)
+        return resolve_grid_tiles_overlap(tiles, grid_setup), "grid"
+    return resolve_random_tiles_overlap(tiles), "free"
 
 
 def _resolve_grid_mode(tiles: list[Tile]) -> list[Tile]:
@@ -205,7 +209,7 @@ def _resolve_free_mode(tiles: list[Tile]) -> list[Tile]:
 def resolve_tiles_overlap(
     tiles: list[Tile],
     mode: Literal["auto", "grid", "free", "none"] = "auto",
-) -> list[Tile]:
+) -> tuple[list[Tile], str]:
     """Remove the overlap from any list of tiles."""
     if mode not in ["auto", "grid", "free", "none"]:
         raise ValueError("Mode must be 'auto', 'grid', 'free', or 'none'")
@@ -214,11 +218,44 @@ def resolve_tiles_overlap(
         case "auto":
             return _resolve_auto_mode(tiles)
         case "grid":
-            return _resolve_grid_mode(tiles)
+            return _resolve_grid_mode(tiles), "grid"
         case "free":
-            return _resolve_free_mode(tiles)
+            return _resolve_free_mode(tiles), "free"
         case "none":
-            return tiles
+            return tiles, "none"
+
+
+def remove_pixel_gaps(tiles: list[Tile], max_gap: int = 1) -> list[Tile]:
+    """Remove evenutal pixel gaps from a grid of tiles."""
+    assert len(tiles) > 0, "The input list of tiles is empty"
+    assert tiles[0].space == TileSpace.PIXEL, "Tiles must be in pixel space"
+
+    offset_x = tiles[0].diag.x
+    offset_y = tiles[0].diag.y
+    num_x, num_y = _find_grid_size(tiles, offset_x, offset_y)
+
+    z, c, t = tiles[0].top_l.z, tiles[0].top_l.c, tiles[0].top_l.t
+    # The max_gap is set to the diagonal of the tiles
+    # So if there is a gap of 1 pixel on the x and y axis
+    # the max_gap will be sqrt(2) ~= 1.41 + eps
+    max_gap = np.sqrt(max_gap**2 + max_gap**2) + 1e-6
+
+    out_tiles = []
+    for i in range(num_x):
+        for j in range(num_y):
+            x_in = i * offset_x
+            y_in = j * offset_y
+
+            point = Point(x_in, y_in, z=z, c=c, t=t)
+            distances = [(point - bbox.top_l).length() for bbox in tiles]
+            min_dist = np.min(distances)
+            closest_bbox = tiles[np.argmin(distances)]
+
+            if min_dist <= max_gap:
+                top_l = Point(x_in, y_in, z=z, c=c, t=t)
+                new_tile = closest_bbox.derive_from_diag(top_l, diag=closest_bbox.diag)
+                out_tiles.append(new_tile)
+    return out_tiles
 
 
 def standard_stitching_pipe(
@@ -242,6 +279,8 @@ def standard_stitching_pipe(
 
     tiles = sort_tiles_by_distance(tiles)
     tiles = remove_tiles_offset(tiles)
-    tiles = resolve_tiles_overlap(tiles, mode=mode)
+    tiles, mode = resolve_tiles_overlap(tiles, mode=mode)
     tiles = tiles_to_pixel_space(tiles)
+    if mode == "grid":
+        tiles = remove_pixel_gaps(tiles)
     return tiles

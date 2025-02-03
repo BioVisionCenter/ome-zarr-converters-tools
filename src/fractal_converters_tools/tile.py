@@ -15,7 +15,11 @@ def _find_prec(a: float | int) -> int:
     """Find the precision of a float."""
     if isinstance(a, int):
         return 0
-    return len(str(a).split(".")[1])
+
+    split_a = str(a).split(".")
+    if len(split_a) == 1:
+        return 0
+    return len(split_a[1])
 
 
 def _round_ops(a: float | int, b: float | int, op: Callable) -> float | int:
