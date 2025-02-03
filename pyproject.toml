@@ -45,11 +45,10 @@ dependencies = [
 # "extras" (e.g. for `pip install .[test]`)
 [project.optional-dependencies]
 # add dependencies used for testing here
-test = ["pytest", "pytest-cov"]
+test = ["pytest", "pytest-cov", "devtools"]
 # add anything else you like to have in your dev environment here
 dev = [
     "notebook",
-    "devtools",
     "matplotlib",
     "ipython",
     "mypy",
@@ -173,7 +172,10 @@ fractal-converters-tools = { path = ".", editable = true }
 
 [tool.pixi.environments]
 default = { solve-group = "default" }
-dev = { features = ["dev"], solve-group = "default" }
+dev = { features = ["dev", "test"], solve-group = "default" }
 test = { features = ["test"], solve-group = "default" }
 
 [tool.pixi.tasks]
+
+[tool.pixi.dependencies]
+pytest = ">=8.3.4,<9"
