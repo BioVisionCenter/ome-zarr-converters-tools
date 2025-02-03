@@ -141,7 +141,7 @@ def resolve_random_tiles_overlap(
 
 
 def resolve_grid_tiles_overlap(
-    tiles: list[Tile], grid_setup: GridSetup, eps: float = 1e-6
+    tiles: list[Tile], grid_setup: GridSetup
 ) -> list[Tile]:
     """Remove overlap from a list of tiles that follow a regular grid."""
     tiles = sort_tiles_by_distance(tiles)
@@ -149,6 +149,8 @@ def resolve_grid_tiles_overlap(
     z, c, t = tiles[0].top_l.z, tiles[0].top_l.c, tiles[0].top_l.t
 
     output_tiles = []
+    # The grid tolerance is set to 10% of the grid length
+    grid_tollerance = min(grid_setup.length_x, grid_setup.length_y) / 10
     for i in range(grid_setup.num_x):
         for j in range(grid_setup.num_y):
             # X-Y position in the input grid
@@ -165,11 +167,14 @@ def resolve_grid_tiles_overlap(
             min_dist = np.min(distances)
             closest_bbox = tiles[np.argmin(distances)]
 
-            if min_dist < eps:
+            if min_dist < grid_tollerance:
                 # Move the bounding box to the (x_out, y_out) position
                 top_l = Point(x_out, y_out, z=z, c=c, t=t)
                 new_tile = closest_bbox.derive_from_diag(top_l, diag=closest_bbox.diag)
                 output_tiles.append(new_tile)
+    
+    if len(output_tiles) != len(tiles):
+        raise ValueError("Something went wrong with the grid tiling resolution.")
     return output_tiles
 
 
@@ -233,7 +238,7 @@ def standard_stitching_pipe(
         tiles = invert_y_tiles(tiles)
 
     if any([swap_xy, invert_x, invert_y]):
-        tiles = remove_tiles_offset(tiles)
+        tiles = reset_tiles_origin(tiles)
 
     tiles = sort_tiles_by_distance(tiles)
     tiles = remove_tiles_offset(tiles)
