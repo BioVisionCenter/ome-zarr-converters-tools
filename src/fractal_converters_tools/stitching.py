@@ -16,6 +16,11 @@ def check_tiles_coplanar(tiles: list[Tile]) -> bool:
 
     return all(tiles[0].is_coplanar(tile) for tile in tiles)
 
+def _min_point(tiles: list[Tile]) -> Point:
+    """Find the minimum point of a list of tiles."""
+    min_x = min([tile.top_l.x for tile in tiles])
+    min_y = min([tile.top_l.y for tile in tiles])
+    return Point(min_x, min_y, z=0, c=0, t=0)
 
 def sort_tiles_by_distance(
     tiles: list[Tile], check_coplanar: bool = False
@@ -25,20 +30,15 @@ def sort_tiles_by_distance(
     if check_coplanar and not check_tiles_coplanar(tiles):
         raise ValueError("Tiles are not coplanar")
 
-    min_x = min([tile.top_l.x for tile in tiles])
-    min_y = min([tile.top_l.y for tile in tiles])
-    min_point = Point(
-        min_x, min_y, tiles[0].top_l.z, tiles[0].top_l.c, tiles[0].top_l.t
-    )
+    min_point = _min_point(tiles)
     return sorted(tiles, key=lambda x: (x.top_l - min_point).length())
 
 
 def remove_tiles_offset(tiles: list[Tile]) -> list[Tile]:
     """Remove the offset from a list of tiles."""
-    sorted_tiles = sort_tiles_by_distance(tiles)
-    origin = tiles[0].top_l
-    offset_vector = Vector(-origin.x, -origin.y, z=-origin.z, c=-origin.c, t=-origin.t)
-    return [tile.move_by(vec=offset_vector) for tile in sorted_tiles]
+    min_point = _min_point(tiles)
+    offset_vector = Vector(-min_point.x, -min_point.y, z=0, c=0, t=0)
+    return [tile.move_by(vec=offset_vector) for tile in tiles]
 
 
 def tiles_to_pixel_space(tiles: list[Tile]) -> list[Tile]:
