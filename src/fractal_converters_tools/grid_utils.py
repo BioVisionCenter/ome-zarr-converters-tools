@@ -21,9 +21,9 @@ def _find_grid_size(tiles: list[Tile], offset_x, offset_y) -> tuple[int, int]:
     """Find the grid size of a list of tiles."""
     x = [tile.top_l.x for tile in tiles]
     y = [tile.top_l.y for tile in tiles]
-
-    num_x = int(max(x) // offset_x) + 1
-    num_y = int(max(y) // offset_y) + 1
+    
+    num_x = int(np.round(max(x) / offset_x)) + 1
+    num_y = int(np.round(max(y) / offset_y)) + 1
     return num_x, num_y
 
 
