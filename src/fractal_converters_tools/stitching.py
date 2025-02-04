@@ -99,7 +99,10 @@ def reset_tiles_origin(tiles: list[Tile]) -> list[Tile]:
 
 
 def _remove_tile_XY_overalap(
-    ref_tile: Tile, query_tile: Tile, speed=1.0, eps: float = 1e-6
+    ref_tile: Tile,
+    query_tile: Tile,
+    eps: float = 1e-6,
+    speed: float = 0.1,
 ) -> Tile:
     """Move the query_tile to remove the overlap with the ref_tile."""
     if speed <= 0 or speed > 1:
@@ -116,23 +119,19 @@ def _remove_tile_XY_overalap(
             vectors.append(vec)
 
     min_idx = np.argmin(lenghts)
-    best_vector = vectors[min_idx]
+    best_vector: Vector = vectors[min_idx]
     best_vector = best_vector * speed
+
     best_moved_bbox = query_tile.move_by(best_vector)
     return best_moved_bbox
 
 
-def resolve_random_tiles_overlap(
-    tiles: list[Tile], sort_list: bool = True, eps: float = 1e-6
-) -> list[Tile]:
+def resolve_random_tiles_overlap(tiles: list[Tile], eps: float = 1e-6) -> list[Tile]:
     """Remove the overlap from any list of tiles."""
     tiles = copy.deepcopy(tiles)
-
-    if sort_list:
-        tiles = sort_tiles_by_distance(tiles)
-
     n_overlap = np.inf
     while n_overlap > 0:
+        tiles = sort_tiles_by_distance(tiles)
         n_overlap = 0
         for i in range(len(tiles)):
             tile = tiles[i]
