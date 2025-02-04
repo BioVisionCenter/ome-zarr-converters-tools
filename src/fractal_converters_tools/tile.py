@@ -411,9 +411,9 @@ class Tile:
     def cornersXY(self) -> list[Point]:
         """Return the 4 corners of the tiles box in the top-XY plane."""
         corners = [
-            # (self.top_l.x, self.top_l.y),
+            (self.top_l.x, self.top_l.y),
             (self.top_l.x, self.bot_r.y),
-            # (self.bot_r.x, self.bot_r.y),
+            (self.bot_r.x, self.bot_r.y),
             (self.bot_r.x, self.top_l.y),
         ]
 
