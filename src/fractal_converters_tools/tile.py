@@ -1,4 +1,4 @@
-"""This module contains the classes to handle an abstact 5D (t, c, z, y, x) tile."""
+"""This module contains the classes to handle an abstract 5D (t, c, z, y, x) tile."""
 
 from collections import namedtuple
 from collections.abc import Callable

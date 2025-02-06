@@ -114,7 +114,7 @@ def build_well_meta(tiled_images: list[TiledImage]) -> dict[str, NgffWellMeta]:
 
 
 def _initiate_ome_zarr_plate(
-    store: Path,
+    zarr_dir: Path,
     tiled_images: list[TiledImage],
     overwrite: bool = False,
 ) -> None:
@@ -122,11 +122,11 @@ def _initiate_ome_zarr_plate(
     plate_meta = build_plate_meta(tiled_images)
     plate_wells_meta = build_well_meta(tiled_images)
 
-    plate_store = store / tiled_images[0].path_builder.plate_path
+    plate_store = zarr_dir / tiled_images[0].path_builder.plate_path
 
     if plate_store.exists() and not overwrite:
         raise FileExistsError(
-            f"Zarr file already exists at {store}. Set overwrite=True to overwrite."
+            f"Zarr file already exists at {zarr_dir}. Set overwrite=True to overwrite."
         )
 
     plate_group = zarr.open_group(plate_store, mode="w")
@@ -138,12 +138,12 @@ def _initiate_ome_zarr_plate(
 
 
 def initiate_ome_zarr_plates(
-    store: str | Path,
+    zarr_dir: str | Path,
     tiled_images: list[TiledImage],
     overwrite: bool = False,
 ) -> None:
     """Create an OME-Zarr plate from a list of acquisitions."""
-    store = Path(store)
+    zarr_dir = Path(zarr_dir)
 
     validate_tiled_images(tiled_images)
     plates = {}
@@ -153,7 +153,9 @@ def initiate_ome_zarr_plates(
         plates[img.path_builder.plate_name].append(img)
 
     for images in plates.values():
-        _initiate_ome_zarr_plate(store=store, tiled_images=images, overwrite=overwrite)
+        _initiate_ome_zarr_plate(
+            zarr_dir=zarr_dir, tiled_images=images, overwrite=overwrite
+        )
 
 
 def update_ome_zarr_plate(
