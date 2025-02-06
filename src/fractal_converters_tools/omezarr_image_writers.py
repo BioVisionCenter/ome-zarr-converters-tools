@@ -66,12 +66,28 @@ def init_empty_ome_zarr_image(
     pixel_size: PixelSize,
     channel_names: list[str],
     wavelength_ids: list[int],
+    num_levels: int = 5,
+    max_xy_chunk: int = 4096,
+    z_chunk: int = 10,
+    c_chunk: int = 1,
+    t_chunk: int = 1,
     overwrite: bool = False,
 ):
     """Initialize an empty OME-Zarr image."""
     on_disk_axis = ("t", "c", "z", "y", "x")
     on_disk_shape = _find_shape(tiles)
-    chunk_shape = _find_chunk_shape(tiles)
+    chunk_shape = _find_chunk_shape(
+        tiles,
+        max_xy_chunk=max_xy_chunk,
+        z_chunk=z_chunk,
+        c_chunk=c_chunk,
+        t_chunk=t_chunk,
+    )
+
+    # Chunk shape should be smaller or equal to the on disk shape
+    chunk_shape = tuple(
+        min(c, s) for c, s in zip(chunk_shape, on_disk_shape, strict=True)
+    )
 
     squeeze_t = False if on_disk_shape[0] > 1 else True
     if squeeze_t:
@@ -98,6 +114,7 @@ def init_empty_ome_zarr_image(
         channel_labels=channel_names,
         channel_wavelengths=wavelength_ids,
         overwrite=overwrite,
+        levels=num_levels,
     )
     return new_zarr_url
 
@@ -166,6 +183,11 @@ def write_tiled_image(
     zarr_dir: Path | str,
     tiled_image: TiledImage,
     stiching_pipe: Callable[[list[Tile]], list[Tile]],
+    num_levels: int = 5,
+    max_xy_chunk: int = 4096,
+    z_chunk: int = 10,
+    c_chunk: int = 1,
+    t_chunk: int = 1,
     overwrite: bool = False,
 ) -> tuple[str, bool, bool]:
     """Build a tiled ome-zarr image from a TiledImage object."""
@@ -177,6 +199,11 @@ def write_tiled_image(
         pixel_size=tiled_image.pixel_size,
         channel_names=tiled_image.channel_names,
         wavelength_ids=tiled_image.wavelength_ids,
+        num_levels=num_levels,
+        max_xy_chunk=max_xy_chunk,
+        z_chunk=z_chunk,
+        c_chunk=c_chunk,
+        t_chunk=t_chunk,
         overwrite=overwrite,
     )
     ngff_image = NgffImage(store=new_zarr_url)
