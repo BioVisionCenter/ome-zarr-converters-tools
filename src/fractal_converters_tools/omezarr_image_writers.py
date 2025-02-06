@@ -1,8 +1,8 @@
 """OME-Zarr Image Writers."""
 
 import copy
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable
 
 from ngio import NgffImage
 from ngio.core.roi import RasterCooROI, WorldCooROI

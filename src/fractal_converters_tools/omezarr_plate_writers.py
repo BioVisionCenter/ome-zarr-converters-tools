@@ -153,7 +153,9 @@ def initiate_ome_zarr_plates(
         plates[img.path_builder.plate_name].append(img)
 
     for images in plates.values():
-        _initiate_ome_zarr_plate(zarr_dir=zarr_dir, tiled_images=images, overwrite=overwrite)
+        _initiate_ome_zarr_plate(
+            zarr_dir=zarr_dir, tiled_images=images, overwrite=overwrite
+        )
 
 
 def update_ome_zarr_plate(

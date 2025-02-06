@@ -74,7 +74,7 @@ repository = "https://github.com/fractal-analytics-platform/fractal-converters-t
 # https://docs.astral.sh/ruff
 [tool.ruff]
 line-length = 88
-target-version = "py39"
+target-version = "py310"
 src = ["src"]
 
 # https://docs.astral.sh/ruff/rules
@@ -175,7 +175,8 @@ default = { solve-group = "default" }
 dev = { features = ["dev", "test"], solve-group = "default" }
 test = { features = ["test"], solve-group = "default" }
 
-[tool.pixi.tasks]
-
-[tool.pixi.dependencies]
-pytest = ">=8.3.4,<9"
+[tool.pixi.feature.dev.tasks]
+ruff-fix-imports = { cmd = "ruff check --select I --fix" }
+ruff = { cmd = "ruff format", depends-on = ["ruff-fix-imports"] }
+test = { cmd = "pytest", depends-on = ["ruff"] }
+chores = { cmd = "pre-commit run --all-files", depends-on = ["test"] }

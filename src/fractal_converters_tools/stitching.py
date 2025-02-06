@@ -108,17 +108,17 @@ def _remove_tile_XY_overalap(
     if speed <= 0 or speed > 1:
         raise ValueError("Speed must be in the range (0, 1]")
 
-    lenghts = []
+    lengths = []
     vectors = []
     for corner in ref_tile.cornersXY():
         vec = corner - query_tile.top_l
         moved_bbox = query_tile.move_by(vec)
         iou = moved_bbox.iouXY(ref_tile)
         if iou < eps:
-            lenghts.append(vec.length())
+            lengths.append(vec.length())
             vectors.append(vec)
 
-    min_idx = np.argmin(lenghts)
+    min_idx = np.argmin(lengths)
     best_vector: Vector = vectors[min_idx]
     best_vector = best_vector * speed
 
@@ -153,7 +153,7 @@ def resolve_grid_tiles_overlap(tiles: list[Tile], grid_setup: GridSetup) -> list
 
     output_tiles = []
     # The grid tolerance is set to 1% of the grid length
-    grid_tollerance = min(grid_setup.length_x, grid_setup.length_y) / 100
+    grid_tolerance = min(grid_setup.length_x, grid_setup.length_y) / 100
     for i in range(grid_setup.num_x):
         for j in range(grid_setup.num_y):
             # X-Y position in the input grid
@@ -170,7 +170,7 @@ def resolve_grid_tiles_overlap(tiles: list[Tile], grid_setup: GridSetup) -> list
             min_dist = np.min(distances)
             closest_bbox = tiles[np.argmin(distances)]
 
-            if min_dist < grid_tollerance:
+            if min_dist < grid_tolerance:
                 # Move the bounding box to the (x_out, y_out) position
                 top_l = Point(x_out, y_out, z=z, c=c, t=t)
                 new_tile = closest_bbox.derive_from_diag(top_l, diag=closest_bbox.diag)
