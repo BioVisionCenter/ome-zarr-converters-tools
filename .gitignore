@@ -114,4 +114,6 @@ ENV/
 .pixi
 pixi.lock
 *.egg-info
+*ipynb_checkpoints
+*.ipynb
 
