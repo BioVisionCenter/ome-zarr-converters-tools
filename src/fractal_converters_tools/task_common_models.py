@@ -44,4 +44,5 @@ class ConvertParallelInitArgs(BaseModel):
     """Arguments for the compute task."""
 
     tiled_image_pickled_path: str
+    overwrite: bool
     advanced_compute_options: AdvancedComputeOptions

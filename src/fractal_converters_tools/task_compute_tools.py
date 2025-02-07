@@ -51,12 +51,7 @@ def generic_compute_task(
             z_chunk=init_args.advanced_compute_options.z_chunk,
             c_chunk=init_args.advanced_compute_options.c_chunk,
             t_chunk=init_args.advanced_compute_options.t_chunk,
-            # Since the init task already checks for overwriting, we can safely pass the
-            # overwrite flag here.
-            # For future reference, we should consider checking for overwriting
-            # here as well.
-            # If we allow for partial overwriting.
-            overwrite=True,
+            overwrite=init_args.overwrite,
         )
     except Exception as e:
         logger.error(f"An error occurred while processing {tiled_image}.")

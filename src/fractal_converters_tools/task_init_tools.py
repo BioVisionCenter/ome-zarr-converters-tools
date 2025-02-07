@@ -13,6 +13,7 @@ from fractal_converters_tools.tiled_image import TiledImage
 def build_parallelization_list(
     zarr_dir: str,
     tiled_images: list[TiledImage],
+    overwrite: bool,
     advanced_compute_options: AdvancedComputeOptions,
     tmp_dir_name: str | None = None,
 ) -> list[dict]:
@@ -21,6 +22,7 @@ def build_parallelization_list(
     Args:
         zarr_dir (str): The path to the zarr directory.
         tiled_images (list[TiledImage]): A list of tiled images objects to convert.
+        overwrite (bool): Overwrite the existing zarr directory.
         advanced_compute_options (AdvancedComputeOptions): The advanced compute options.
         tmp_dir_name (str, optional): The name of the temporary directory to store the
             pickled tiled images.
@@ -40,6 +42,7 @@ def build_parallelization_list(
                 "zarr_url": str(zarr_dir),
                 "init_args": ConvertParallelInitArgs(
                     tiled_image_pickled_path=str(tile_pickle_path),
+                    overwrite=overwrite,
                     advanced_compute_options=advanced_compute_options,
                 ).model_dump(),
             }
