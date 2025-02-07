@@ -96,7 +96,6 @@ class TiledImage:
         path_builder: PathBuilder,
         channel_names: list[str] | None = None,
         wavelength_ids: list[int] | None = None,
-        num_levels: int = 5,
     ):
         """Initialize the acquisition."""
         self._name = name
@@ -105,7 +104,10 @@ class TiledImage:
 
         self._channel_names = channel_names
         self._wavelength_ids = wavelength_ids
-        self._num_levels = num_levels
+
+    def __repr__(self) -> str:
+        """Return the string representation of the object."""
+        return f"TiledImage(name={self.name}, path={self.path})"
 
     @property
     def tiles(self) -> list[Tile]:
@@ -142,8 +144,3 @@ class TiledImage:
         if len(self.tiles) == 0:
             return None
         return self.tiles[0].pixel_size
-
-    @property
-    def num_levels(self) -> int:
-        """Return the number of levels."""
-        return self._num_levels
