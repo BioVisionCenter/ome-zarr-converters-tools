@@ -19,7 +19,7 @@ from fractal_converters_tools.tiled_image import TiledImage
         (False, "_tmp_coverter_dir_test"),
     ],
 )
-def test_write_image(tmp_path, overwrite, tm_dir_name):
+def test_build_par_list(tmp_path, overwrite, tm_dir_name):
     images_path = tmp_path / "test_write_images"
 
     tiled_images = []
