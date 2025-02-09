@@ -81,11 +81,3 @@ def generic_compute_task(
             {"zarr_url": new_zarr_url, "types": p_types, "attributes": attributes}
         ]
     }
-
-
-def error_report(init_args: ConvertParallelInitArgs) -> str:
-    """Utility function to report an error."""
-    tiled_image_path = Path(init_args.tiled_image_pickled_path)
-    if not tiled_image_path.exists():
-        return f"Pickled file {tiled_image_path} does not exist."
-    return f"An error occurred while processing {tiled_image_path}."

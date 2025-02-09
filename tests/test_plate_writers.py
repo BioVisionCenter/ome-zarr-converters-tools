@@ -96,8 +96,10 @@ def test_init_multiplex(tmp_path):
 
     expected_attrs = {
         "plate": {
-            "acquisitions": [{"id": 0, "name": "plate_1_id0"},
-                             {"id": 1, "name": "plate_1_id1"}],
+            "acquisitions": [
+                {"id": 0, "name": "plate_1_id0"},
+                {"id": 1, "name": "plate_1_id1"},
+            ],
             "columns": [{"name": "1"}, {"name": "2"}],
             "name": "plate_1",
             "rows": [{"name": "A"}, {"name": "B"}],
