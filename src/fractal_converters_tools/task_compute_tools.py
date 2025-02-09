@@ -13,6 +13,23 @@ from fractal_converters_tools.tiled_image import PlatePathBuilder
 logger = logging.getLogger(__name__)
 
 
+def _clean_up_pickled_file(pickle_path: Path):
+    """Clean up the pickled file and the directory if it is empty.
+
+    Args:
+        pickle_path (Path): Path to the pickled file.
+    """
+    try:
+        pickle_path.unlink()
+        if not list(pickle_path.parent.iterdir()):
+            pickle_path.parent.rmdir()
+    except Exception as e:
+        # This path is not tested
+        # But if multiple processes are trying to clean up the same file
+        # it might raise an exception.
+        logger.error(f"An error occurred while cleaning up the pickled file: {e}")
+
+
 def generic_compute_task(
     *,
     # Fractal parameters
@@ -55,6 +72,7 @@ def generic_compute_task(
         )
     except Exception as e:
         logger.error(f"An error occurred while processing {tiled_image}.")
+        _clean_up_pickled_file(pickle_path)
         raise e
 
     p_types = {"is_3D": is_3d}
@@ -67,14 +85,7 @@ def generic_compute_task(
     else:
         attributes = {}
 
-    # Clean up the pickled file and the directory if it is empty
-
-    try:
-        Path(init_args.tiled_image_pickled_path).unlink()
-        if not list(Path(init_args.tiled_image_pickled_path).parent.iterdir()):
-            Path(init_args.tiled_image_pickled_path).parent.rmdir()
-    except Exception as e:
-        logger.error(f"An error occurred while cleaning up the pickled file: {e}")
+    _clean_up_pickled_file(pickle_path)
 
     return {
         "image_list_updates": [

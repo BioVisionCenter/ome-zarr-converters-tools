@@ -8,7 +8,10 @@ from fractal_converters_tools.task_common_models import (
     AdvancedComputeOptions,
     ConvertParallelInitArgs,
 )
-from fractal_converters_tools.task_compute_tools import generic_compute_task
+from fractal_converters_tools.task_compute_tools import (
+    _clean_up_pickled_file,
+    generic_compute_task,
+)
 from fractal_converters_tools.task_init_tools import build_parallelization_list
 
 
@@ -49,6 +52,7 @@ def test_compute(tmp_path):
     assert p_types == {"is_3D": False}
     assert attributes == {"well": "A0", "plate": "plate_1.zarr"}
 
+    # Test if overwrite is working
     par_args = build_parallelization_list(
         zarr_dir=images_path,
         tiled_images=tiled_images,
@@ -59,3 +63,18 @@ def test_compute(tmp_path):
     init_args = ConvertParallelInitArgs(**par_args["init_args"])
     with pytest.raises(NgioFileExistsError):
         generic_compute_task(zarr_url=zarr_url, init_args=init_args)
+
+    # This should not raise an error since the the pickle is removed
+    # after the first run failed
+    with pytest.raises(FileNotFoundError):
+        generic_compute_task(zarr_url=zarr_url, init_args=init_args)
+
+
+def test_pickle_cleanup(tmp_path):
+    pickle_path = tmp_path / "pickle_dir" / "test.pkl"
+    pickle_path.parent.mkdir(parents=True, exist_ok=True)
+    pickle_path.touch()
+    assert pickle_path.exists()
+    _clean_up_pickled_file(pickle_path)
+    assert not pickle_path.exists()
+    assert not pickle_path.parent.exists()
