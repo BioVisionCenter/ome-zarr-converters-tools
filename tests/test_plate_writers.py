@@ -78,6 +78,41 @@ def test_init_multi_plates(tmp_path):
         assert attrs == expected_attrs
 
 
+def test_init_multiplex(tmp_path):
+    plate_path = tmp_path / "test_write_multiplex"
+    tiled_images = generate_tiled_images(
+        plate_name="plate_1", rows=["A", "B"], columns=[1, 2], acquisition_ids=[0, 0]
+    )
+    tiled_images2 = generate_tiled_images(
+        plate_name="plate_1", rows=["A", "B"], columns=[1, 2], acquisition_ids=[1, 1]
+    )
+
+    tiled_images = tiled_images + tiled_images2
+    initiate_ome_zarr_plates(plate_path, tiled_images=tiled_images, overwrite=True)
+
+    plate_path_attr = plate_path / "plate_1.zarr" / ".zattrs"
+    with open(plate_path_attr) as f:
+        attrs = json.load(f)
+
+    expected_attrs = {
+        "plate": {
+            "acquisitions": [
+                {"id": 0, "name": "plate_1_id0"},
+                {"id": 1, "name": "plate_1_id1"},
+            ],
+            "columns": [{"name": "1"}, {"name": "2"}],
+            "name": "plate_1",
+            "rows": [{"name": "A"}, {"name": "B"}],
+            "version": "0.4.0",
+            "wells": [
+                {"columnIndex": 0, "path": "A/1", "rowIndex": 0},
+                {"columnIndex": 1, "path": "B/2", "rowIndex": 1},
+            ],
+        }
+    }
+    assert attrs == expected_attrs
+
+
 def test_overwrite_fail(tmp_path):
     plate_path = tmp_path / "test_write_plate.zarr"
     tiled_images = generate_tiled_images(

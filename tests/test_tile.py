@@ -28,6 +28,9 @@ def test_tile():
     assert tile1.cornersXY() == [Point(0, 0), Point(0, 1), Point(1, 1), Point(1, 0)]
     tile1_m = tile1.move_to(Point(1, 1))
     assert tile1_m.top_l == Point(1, 1)
+    assert tile1_m.diag == Vector(1, 1, 1, 1, 1)
+    assert np.allclose(tile1_m.diag.lengthXY(), np.sqrt(2))
+    assert np.allclose(tile1_m.diag.normalizeXY().lengthXY(), 1)
 
     tile1_m = tile1.move_by(Vector(1, 1))
     assert tile1_m.top_l == Point(1, 1)
