@@ -5,6 +5,18 @@ from fractal_converters_tools.tile import Point, Tile, Vector
 from fractal_converters_tools.tiled_image import PlatePathBuilder, TiledImage
 
 
+class DummyLoader:
+    def __init__(self, shape):
+        self.shape = shape
+
+    def load(self):
+        return np.zeros(self.shape, dtype="uint8")
+
+    @property
+    def dtype(self):
+        return "uint8"
+
+
 def generate_grid_tiles(
     overlap,
     tile_shape,
@@ -20,17 +32,6 @@ def generate_grid_tiles(
 
     if swap_xy:
         length_x, length_y = length_y, length_x
-
-    class DummyLoader:
-        def __init__(self, shape):
-            self.shape = shape
-
-        def load(self):
-            return np.zeros(self.shape, dtype="uint8")
-
-        @property
-        def dtype(self):
-            return "uint8"
 
     tiles = []
     for i in range(grid_size_x):

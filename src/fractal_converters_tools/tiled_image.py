@@ -107,7 +107,7 @@ class TiledImage:
 
     def __repr__(self) -> str:
         """Return the string representation of the object."""
-        return f"TiledImage(name={self.name}, path={self.path})"
+        return f"TiledImage(name={self._name}, path={self.path})"
 
     @property
     def tiles(self) -> list[Tile]:
