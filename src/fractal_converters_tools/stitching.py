@@ -37,7 +37,7 @@ def sort_tiles_by_distance(
         raise ValueError("Tiles are not coplanar")
 
     min_point = _min_point(tiles)
-    return sorted(tiles, key=lambda x: (x.top_l - min_point).length())
+    return sorted(tiles, key=lambda x: (x.top_l - min_point).lengthXY())
 
 
 def remove_tiles_offset(tiles: list[Tile]) -> list[Tile]:
@@ -115,7 +115,7 @@ def _remove_tile_XY_overalap(
         moved_bbox = query_tile.move_by(vec)
         iou = moved_bbox.iouXY(ref_tile)
         if iou < eps:
-            lengths.append(vec.length())
+            lengths.append(vec.lengthXY())
             vectors.append(vec)
 
     min_idx = np.argmin(lengths)
@@ -166,7 +166,7 @@ def resolve_grid_tiles_overlap(tiles: list[Tile], grid_setup: GridSetup) -> list
 
             # Find if a bounding box is close to the (x_in, y_in) position
             point = Point(x_in, y_in, z=z, c=c, t=t)
-            distances = [(point - bbox.top_l).length() for bbox in tiles]
+            distances = [(point - bbox.top_l).lengthXY() for bbox in tiles]
             min_dist = np.min(distances)
             closest_bbox = tiles[np.argmin(distances)]
 
@@ -246,7 +246,7 @@ def remove_pixel_gaps(tiles: list[Tile], max_gap: int = 1) -> list[Tile]:
             y_in = j * offset_y
 
             point = Point(x_in, y_in, z=z, c=c, t=t)
-            distances = [(point - bbox.top_l).length() for bbox in tiles]
+            distances = [(point - bbox.top_l).lengthXY() for bbox in tiles]
             min_dist = np.min(distances)
             closest_bbox = tiles[np.argmin(distances)]
 

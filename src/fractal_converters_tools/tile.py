@@ -79,20 +79,20 @@ class Vector:
             int(self.t * scalar),
         )
 
-    def normalize(self) -> "Vector":
+    def normalizeXY(self) -> "Vector":
         """Normalize the vector."""
-        length = self.length()
+        length = self.lengthXY()
         return Vector(
             self.x / length,
             self.y / length,
-            self.z / length,
-            int(self.c / length),
-            int(self.t / length),
+            self.z,
+            self.c,
+            self.t,
         )
 
-    def length(self) -> float:
+    def lengthXY(self) -> float:
         """Compute the length of the vector."""
-        return (self.x**2 + self.y**2 + self.z**2 + self.c**2 + self.t**2) ** 0.5
+        return (self.x**2 + self.y**2) ** 0.5
 
     def to_pixel_space(self, pixel_size: PixelSize) -> "Vector":
         """Convert the vector to pixel space."""
@@ -261,10 +261,10 @@ class Tile:
             else:
                 value = value.to_pixel_space()
 
-        if (self.top_l - value.top_l).length() > 1e-9:
+        if (self.top_l - value.top_l).lengthXY() > 1e-9:
             return False
 
-        if (self.diag - value.diag).length() > 1e-9:
+        if (self.diag - value.diag).lengthXY() > 1e-9:
             return False
 
         return True
