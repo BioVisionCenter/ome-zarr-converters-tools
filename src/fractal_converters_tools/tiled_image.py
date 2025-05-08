@@ -96,6 +96,7 @@ class TiledImage:
         path_builder: PathBuilder,
         channel_names: list[str] | None = None,
         wavelength_ids: list[str] | None = None,
+        attributes: dict[str, str] | None = None,
     ):
         """Initialize the acquisition."""
         self._name = name
@@ -104,6 +105,7 @@ class TiledImage:
 
         self._channel_names = channel_names
         self._wavelength_ids = wavelength_ids
+        self._attributes = attributes
 
     def __repr__(self) -> str:
         """Return the string representation of the object."""
@@ -137,6 +139,11 @@ class TiledImage:
     def wavelength_ids(self) -> list[str] | None:
         """Return the wavelength ids."""
         return self._wavelength_ids
+
+    @property
+    def attributes(self) -> dict[str, str] | None:
+        """Return the attributes."""
+        return self._attributes
 
     @property
     def pixel_size(self) -> PixelSize | None:
