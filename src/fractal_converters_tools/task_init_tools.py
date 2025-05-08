@@ -8,7 +8,33 @@ from fractal_converters_tools.task_common_models import (
     AdvancedComputeOptions,
     ConvertParallelInitArgs,
 )
-from fractal_converters_tools.tiled_image import TiledImage
+from fractal_converters_tools.tiled_image import PlatePathBuilder, TiledImage
+
+
+def _add_acquisition_attributes(tiled_images: list[TiledImage]) -> list[TiledImage]:
+    """Add acquisition attributes to the tiled images.
+
+    Args:
+        tiled_images (list[TiledImage]): A list of tiled images objects to convert.
+    """
+    unique_acquisition_ids = set()
+    for tile in tiled_images:
+        path_builder = tile.path_builder
+        if isinstance(path_builder, PlatePathBuilder):
+            unique_acquisition_ids.add(path_builder.acquisition_id)
+
+    if len(unique_acquisition_ids) <= 1:
+        return tiled_images
+
+    new_tiled_images = []
+    for tile in tiled_images:
+        path_builder = tile.path_builder
+        if isinstance(path_builder, PlatePathBuilder):
+            if tile._attributes is None:
+                tile._attributes = {}
+            tile._attributes["acquisition"] = str(path_builder.acquisition_id)
+        new_tiled_images.append(tile)
+    return new_tiled_images
 
 
 def build_parallelization_list(
@@ -33,6 +59,8 @@ def build_parallelization_list(
     tmp_dir_name = tmp_dir_name if tmp_dir_name else "_tmp_coverter_dir"
     pickle_dir = Path(zarr_dir) / tmp_dir_name
     pickle_dir.mkdir(parents=True, exist_ok=True)
+
+    tiled_images = _add_acquisition_attributes(tiled_images)
 
     for tile in tiled_images:
         tile_pickle_path = pickle_dir / f"{uuid4()}.pkl"
