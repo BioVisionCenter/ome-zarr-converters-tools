@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import pytest
-from ngio import NgffImage
+from ngio import open_ome_zarr_container
 from ngio.utils import NgioFileExistsError
 from utils import generate_tiled_image
 
@@ -26,17 +26,18 @@ def test_write_image(tmp_path):
     )
     assert Path(path).exists()
 
-    ngff_image = NgffImage(path)
-    assert len(ngff_image.tables.list()) == 2
-    assert set(ngff_image.tables.list()) == {"well_ROI_table", "FOV_ROI_table"}
+    ome_zarr_container = open_ome_zarr_container(path)
+    assert len(ome_zarr_container.list_tables()) == 2
+    assert set(ome_zarr_container.list_tables()) == {"well_ROI_table", "FOV_ROI_table"}
 
-    image = ngff_image.get_image()
+    image = ome_zarr_container.get_image()
     assert image.shape == (1, 1, 11 * 2, 10 * 2)
 
-    roi_table = ngff_image.tables.get_table("FOV_ROI_table")
-    assert len(roi_table.rois) == 4
-    for roi in roi_table.rois:
-        assert image.get_array_from_roi(roi).shape == (1, 1, 11, 10)
+    roi_table = ome_zarr_container.get_table("FOV_ROI_table")
+    assert len(roi_table.rois()) == 4
+    for roi in roi_table.rois():
+        roi_array = image.get_roi(roi)
+        assert roi_array.shape == (1, 1, 11, 10)
 
 
 def test_write_advanced_params(tmp_path):
@@ -61,10 +62,10 @@ def test_write_advanced_params(tmp_path):
     )
     assert Path(path).exists()
 
-    ngff_image = NgffImage(path)
-    assert ngff_image.num_levels == 2
-    image = ngff_image.get_image()
-    assert image.on_disk_array.chunks == (1, 1, 2, 2), image.on_disk_array.chunks
+    ome_zarr_container = open_ome_zarr_container(path)
+    assert ome_zarr_container.levels == 2
+    image = ome_zarr_container.get_image()
+    assert image.chunks == (1, 1, 2, 2)
 
 
 def test_write_fail_overwrite(tmp_path):

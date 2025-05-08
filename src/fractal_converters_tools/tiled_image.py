@@ -2,7 +2,7 @@
 
 from typing import Protocol
 
-from ngio.ngff_meta.fractal_image_meta import PixelSize
+from ngio import PixelSize
 
 from fractal_converters_tools.tile import Tile
 
@@ -95,7 +95,7 @@ class TiledImage:
         name: str,
         path_builder: PathBuilder,
         channel_names: list[str] | None = None,
-        wavelength_ids: list[int] | None = None,
+        wavelength_ids: list[str] | None = None,
     ):
         """Initialize the acquisition."""
         self._name = name
@@ -134,7 +134,7 @@ class TiledImage:
         return self._channel_names
 
     @property
-    def wavelength_ids(self) -> list[int] | None:
+    def wavelength_ids(self) -> list[str] | None:
         """Return the wavelength ids."""
         return self._wavelength_ids
 

@@ -1,6 +1,7 @@
 """Tools to initialize a conversion tasks."""
 
 import pickle
+from pathlib import Path
 from uuid import uuid4
 
 from fractal_converters_tools.task_common_models import (
@@ -11,7 +12,7 @@ from fractal_converters_tools.tiled_image import TiledImage
 
 
 def build_parallelization_list(
-    zarr_dir: str,
+    zarr_dir: str | Path,
     tiled_images: list[TiledImage],
     overwrite: bool,
     advanced_compute_options: AdvancedComputeOptions,
@@ -30,7 +31,7 @@ def build_parallelization_list(
     parallelization_list = []
 
     tmp_dir_name = tmp_dir_name if tmp_dir_name else "_tmp_coverter_dir"
-    pickle_dir = zarr_dir / tmp_dir_name
+    pickle_dir = Path(zarr_dir) / tmp_dir_name
     pickle_dir.mkdir(parents=True, exist_ok=True)
 
     for tile in tiled_images:

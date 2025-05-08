@@ -4,10 +4,8 @@ import copy
 from collections.abc import Callable
 from pathlib import Path
 
-from ngio import NgffImage
-from ngio.core.roi import RasterCooROI, WorldCooROI
-from ngio.core.utils import create_empty_ome_zarr_image
-from ngio.ngff_meta.fractal_image_meta import PixelSize
+from ngio import OmeZarrContainer, PixelSize, RoiPixels, create_empty_ome_zarr
+from ngio.tables import RoiTable
 
 from fractal_converters_tools.tile import Tile
 from fractal_converters_tools.tiled_image import TiledImage
@@ -60,19 +58,18 @@ def apply_stitching_pipe(
 
 
 def init_empty_ome_zarr_image(
-    zarr_dir: Path | str,
-    image_path: str,
+    zarr_url: str | Path,
     tiles: list[Tile],
     pixel_size: PixelSize,
-    channel_names: list[str],
-    wavelength_ids: list[int],
+    channel_names: list[str] | None,
+    wavelength_ids: list[str] | None,
     num_levels: int = 5,
     max_xy_chunk: int = 4096,
     z_chunk: int = 10,
     c_chunk: int = 1,
     t_chunk: int = 1,
     overwrite: bool = False,
-):
+) -> OmeZarrContainer:
     """Initialize an empty OME-Zarr image."""
     on_disk_axis = ("t", "c", "z", "y", "x")
     on_disk_shape = _find_shape(tiles)
@@ -100,83 +97,57 @@ def init_empty_ome_zarr_image(
 
     tile_dtype = _find_dtype(tiles)
 
-    zarr_dir = Path(zarr_dir)
-    zarr_dir.mkdir(parents=True, exist_ok=True)
-    new_zarr_url = str(zarr_dir / image_path)
-
-    create_empty_ome_zarr_image(
-        store=new_zarr_url,
-        on_disk_shape=on_disk_shape,
-        on_disk_axis=on_disk_axis,
+    return create_empty_ome_zarr(
+        store=zarr_url,
+        shape=on_disk_shape,
+        axes_names=on_disk_axis,
         chunks=chunk_shape,
         dtype=tile_dtype,
-        pixel_sizes=pixel_size,
+        xy_pixelsize=pixel_size.x,
+        z_spacing=pixel_size.z,
+        time_spacing=pixel_size.t,
         channel_labels=channel_names,
         channel_wavelengths=wavelength_ids,
         overwrite=overwrite,
         levels=num_levels,
     )
-    return new_zarr_url
 
 
-def write_tiles_as_rois(
-    ngff_image: NgffImage, tiles: list[Tile], well_roi: WorldCooROI
-):
+def write_tiles_as_rois(ome_zarr_container: OmeZarrContainer, tiles: list[Tile]):
     """Write the tiles as ROIs in the image."""
-    image = ngff_image.get_image()
+    image = ome_zarr_container.get_image()
     pixel_size = image.pixel_size
-    squeeze_t = True if "t" not in image.axes_names else False
+
+    squeeze_t = not ome_zarr_container.is_time_series
 
     # Create the well ROI
-    fov_roi_table = ngff_image.tables.new("FOV_ROI_table", table_type="roi_table")
     _fov_rois = []
     for i, tile in enumerate(tiles):
         # Create the ROI for the tile
-        roi = RasterCooROI(
+        roi = RoiPixels(
+            name=f"FOV_{i}",
             x=int(tile.top_l.x),
             y=int(tile.top_l.y),
             z=int(tile.top_l.z),
             x_length=int(tile.diag.x),
             y_length=int(tile.diag.y),
             z_length=int(tile.diag.z),
-            original_roi=well_roi,
-        ).to_world_coo_roi(pixel_size=pixel_size)
-        roi.infos = {"FieldIndex": f"FOV_{i}", **tile.origin._asdict()}
+            **tile.origin._asdict(),
+        ).to_roi(pixel_size=pixel_size)
         _fov_rois.append(roi)
 
         # Load the whole tile and set the data in the image
         tile_data = tile.load()
         tile_data = tile_data[0] if squeeze_t else tile_data
-        image.set_array_from_roi(tile_data, roi)
+        image.set_roi(roi=roi, patch=tile_data)
 
     # Set order to 0 if the image has the time axis
     order = 1 if squeeze_t else 0
     image.consolidate(order=order)
-    ngff_image.update_omero_window(start_percentile=1, end_percentile=99.9)
-    fov_roi_table.set_rois(_fov_rois)
-    fov_roi_table.consolidate()
+    ome_zarr_container.set_channel_percentiles(start_percentile=1, end_percentile=99.9)
+    table = RoiTable(rois=_fov_rois)
+    ome_zarr_container.add_table("FOV_ROI_table", table=table)
     return image
-
-
-def write_well_roi_table(ngff_image: NgffImage):
-    """Write the well ROI table."""
-    image = ngff_image.get_image()
-    dimensions = image.dimensions
-    well_roi_table = ngff_image.tables.new("well_ROI_table", table_type="roi_table")
-
-    well_roi = WorldCooROI(
-        x=0,
-        y=0,
-        z=0,
-        x_length=dimensions.get("x") * image.pixel_size.x,
-        y_length=dimensions.get("y") * image.pixel_size.y,
-        z_length=dimensions.get("z") * image.pixel_size.z,
-        unit="micrometer",
-        infos={"FieldIndex": "Well"},
-    )
-    well_roi_table.set_rois([well_roi])
-    well_roi_table.consolidate()
-    return well_roi
 
 
 def write_tiled_image(
@@ -192,11 +163,19 @@ def write_tiled_image(
 ) -> tuple[str, bool, bool]:
     """Build a tiled ome-zarr image from a TiledImage object."""
     tiles = apply_stitching_pipe(tiled_image, stiching_pipe)
-    new_zarr_url = init_empty_ome_zarr_image(
-        zarr_dir=zarr_dir,
-        image_path=tiled_image.path,
+
+    zarr_dir = Path(zarr_dir)
+    zarr_dir.mkdir(parents=True, exist_ok=True)
+    new_zarr_url = str(zarr_dir / tiled_image.path)
+
+    pixel_size = tiled_image.pixel_size
+    if pixel_size is None:
+        raise ValueError("Pixel size is not defined in the TiledImage object.")
+
+    ome_zarr_container = init_empty_ome_zarr_image(
+        zarr_url=new_zarr_url,
         tiles=tiles,
-        pixel_size=tiled_image.pixel_size,
+        pixel_size=pixel_size,
         channel_names=tiled_image.channel_names,
         wavelength_ids=tiled_image.wavelength_ids,
         num_levels=num_levels,
@@ -206,9 +185,9 @@ def write_tiled_image(
         t_chunk=t_chunk,
         overwrite=overwrite,
     )
-    ngff_image = NgffImage(store=new_zarr_url)
-    well_roi = write_well_roi_table(ngff_image)
+    well_roi = ome_zarr_container.build_image_roi_table("Well")
+    ome_zarr_container.add_table("well_ROI_table", table=well_roi)
 
     # Write the tiles as ROIs in the image
-    image = write_tiles_as_rois(ngff_image, tiles, well_roi)
+    image = write_tiles_as_rois(ome_zarr_container=ome_zarr_container, tiles=tiles)
     return new_zarr_url, image.is_3d, image.is_time_series

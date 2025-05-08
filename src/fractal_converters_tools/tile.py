@@ -8,7 +8,7 @@ from typing import Protocol
 
 import numpy as np
 from dask.array.core import Array
-from ngio.ngff_meta.fractal_image_meta import PixelSize
+from ngio import PixelSize
 
 
 def _find_prec(a: float | int) -> int:
@@ -250,7 +250,7 @@ class Tile:
             f"space={self.space})"
         )
 
-    def __eq__(self, value: "Tile") -> bool:
+    def __eq__(self, value) -> bool:
         """Check if two tiles are equal."""
         if not isinstance(value, Tile):
             return False
@@ -490,10 +490,15 @@ class Tile:
 
     def dtype(self) -> str:
         """Return the dtype of the tile."""
+        if self._data_loader is None:
+            raise ValueError("No data loader provided.")
         return self._data_loader.dtype
 
     @property
     def shape(self) -> tuple[int, int, int, int, int]:
         """Return the shape of the tile."""
         _shape = (self.diag.t, self.diag.c, self.diag.z, self.diag.y, self.diag.x)
-        return tuple(int(s) for s in _shape)
+        _shape = tuple(int(s) for s in _shape)
+        if len(_shape) != 5:
+            raise ValueError(f"Shape {_shape} is not 5D.")
+        return _shape

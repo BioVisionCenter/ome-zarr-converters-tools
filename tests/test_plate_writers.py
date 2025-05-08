@@ -1,6 +1,7 @@
 import json
 
 import pytest
+from ngio import open_ome_zarr_plate
 from utils import generate_tiled_images
 
 from fractal_converters_tools.omezarr_plate_writers import initiate_ome_zarr_plates
@@ -15,6 +16,7 @@ def test_init_plate(tmp_path):
     initiate_ome_zarr_plates(plate_path, tiled_images=tiled_images, overwrite=True)
 
     plate_path_attr = plate_path / "plate_1.zarr" / ".zattrs"
+    open_ome_zarr_plate(plate_path / "plate_1.zarr")
     assert plate_path_attr.exists()
     with open(plate_path_attr) as f:
         attrs = json.load(f)
@@ -25,7 +27,7 @@ def test_init_plate(tmp_path):
             "columns": [{"name": "1"}, {"name": "2"}],
             "name": "plate_1",
             "rows": [{"name": "A"}, {"name": "B"}],
-            "version": "0.4.0",
+            "version": "0.4",
             "wells": [
                 {"columnIndex": 0, "path": "A/1", "rowIndex": 0},
                 {"columnIndex": 1, "path": "B/2", "rowIndex": 1},
@@ -40,7 +42,7 @@ def test_init_plate(tmp_path):
         attrs = json.load(f)
 
     expected_attrs = {
-        "well": {"images": [{"acquisition": 0, "path": "0"}], "version": "0.4.0"}
+        "well": {"images": [{"acquisition": 0, "path": "0"}], "version": "0.4"}
     }
     assert attrs == expected_attrs
 
@@ -68,7 +70,7 @@ def test_init_multi_plates(tmp_path):
                 "columns": [{"name": "1"}, {"name": "2"}],
                 "name": plate_name,
                 "rows": [{"name": "A"}, {"name": "B"}],
-                "version": "0.4.0",
+                "version": "0.4",
                 "wells": [
                     {"columnIndex": 0, "path": "A/1", "rowIndex": 0},
                     {"columnIndex": 1, "path": "B/2", "rowIndex": 1},
@@ -103,7 +105,7 @@ def test_init_multiplex(tmp_path):
             "columns": [{"name": "1"}, {"name": "2"}],
             "name": "plate_1",
             "rows": [{"name": "A"}, {"name": "B"}],
-            "version": "0.4.0",
+            "version": "0.4",
             "wells": [
                 {"columnIndex": 0, "path": "A/1", "rowIndex": 0},
                 {"columnIndex": 1, "path": "B/2", "rowIndex": 1},

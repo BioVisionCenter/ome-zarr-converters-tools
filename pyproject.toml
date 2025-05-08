@@ -19,7 +19,7 @@ name = "fractal-converters-tools"
 dynamic = ["version"]
 description = "Tooling to build ome-zarr HCS plate converters"
 readme = "README.md"
-requires-python = ">=3.10, <3.13"
+requires-python = ">=3.11, <3.14"
 license = { text = "BSD-3-Clause" }
 authors = [{ name = "Lorenzo Cerrone", email = "lorenzo.cerrone@uzh.ch" }]
 # https://pypi.org/classifiers/
@@ -27,19 +27,13 @@ classifiers = [
     "Development Status :: 3 - Alpha",
     "License :: OSI Approved :: BSD License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Typing :: Typed",
 ]
 # add your package dependencies here
-dependencies = [
-    "fractal-tasks-core>=1.4.2,<1.5.0",
-    "ngio>=0.1.5,<0.2",
-    "tqdm",
-    "numpy",
-    "zarr",
-]
+dependencies = ["ngio>=0.2.5,<0.3.0", "tqdm", "numpy", "zarr"]
 
 # https://peps.python.org/pep-0621/#dependencies-optional-dependencies
 # "extras" (e.g. for `pip install .[test]`)

@@ -181,7 +181,7 @@ def resolve_grid_tiles_overlap(tiles: list[Tile], grid_setup: GridSetup) -> list
     return output_tiles
 
 
-def _resolve_auto_mode(tiles: list[Tile]) -> list[Tile]:
+def _resolve_auto_mode(tiles: list[Tile]) -> tuple[list[Tile], str]:
     """Resolve the overlap of a list of tiles."""
     error_message_or_none, grid_setup = check_if_regular_grid(tiles)
     if error_message_or_none is None:
@@ -278,8 +278,8 @@ def standard_stitching_pipe(
 
     tiles = sort_tiles_by_distance(tiles)
     tiles = remove_tiles_offset(tiles)
-    tiles, mode = resolve_tiles_overlap(tiles, mode=mode)
+    tiles, _mode = resolve_tiles_overlap(tiles, mode=mode)
     tiles = tiles_to_pixel_space(tiles)
-    if mode == "grid":
+    if _mode == "grid":
         tiles = remove_pixel_gaps(tiles)
     return tiles
