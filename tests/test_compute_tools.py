@@ -50,7 +50,11 @@ def test_compute(tmp_path):
 
     assert Path(new_zarr_url).exists()
     assert p_types == {"is_3D": False}
-    assert attributes == {"well": "A0", "plate": "plate_1.zarr"}
+    assert attributes == {
+        "well": "A0",
+        "plate": "plate_1.zarr",
+        "cell_line": "cell_line_1",
+    }
 
     # Test if overwrite is working
     par_args = build_parallelization_list(
