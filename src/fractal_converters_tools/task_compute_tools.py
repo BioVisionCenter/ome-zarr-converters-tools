@@ -49,6 +49,7 @@ def generic_compute_task(
             overwrite=init_args.overwrite,
         )
     except Exception as e:
+        remove_pkl(pickle_path)
         logger.error(f"An error occurred while processing {tiled_image}.")
         logger.exception(e)
         raise e
