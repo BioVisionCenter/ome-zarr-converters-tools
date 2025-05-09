@@ -39,7 +39,7 @@ class SimplePathBuilder:
 class PlatePathBuilder:
     """A class to build paths for a standard plate."""
 
-    def __init__(self, plate_name: str, row: str, column: int, acquisition_id: int):
+    def __init__(self, plate_name: str, row: str, column: int, acquisition_id: int = 0):
         """Initialize the path builder."""
         self._plate_name = plate_name
         self._row = row
@@ -141,9 +141,22 @@ class TiledImage:
         return self._wavelength_ids
 
     @property
-    def attributes(self) -> dict[str, str] | None:
+    def attributes(self) -> dict[str, str]:
         """Return the attributes."""
+        if self._attributes is None:
+            return {}
         return self._attributes
+
+    @attributes.setter
+    def attributes(self, attributes: dict[str, str]):
+        """Set the attributes."""
+        self._attributes = attributes
+
+    def update_attributes(self, attributes: dict[str, str]):
+        """Update the attributes."""
+        if self._attributes is None:
+            self._attributes = {}
+        self._attributes.update(attributes)
 
     @property
     def pixel_size(self) -> PixelSize | None:

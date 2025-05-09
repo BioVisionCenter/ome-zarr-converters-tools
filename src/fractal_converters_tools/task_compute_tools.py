@@ -54,26 +54,24 @@ def generic_compute_task(
         logger.exception(e)
         raise e
 
-    p_types = {"is_3D": is_3d}
+    p_types = {"is_3D": is_3d, "has_time": is_time_series}
 
     if isinstance(tiled_image.path_builder, PlatePathBuilder):
-        attributes = {
+        plate_attributes = {
             "well": f"{tiled_image.path_builder.row}{tiled_image.path_builder.column}",
             "plate": tiled_image.path_builder.plate_path,
+            "acquisition": tiled_image.path_builder.acquisition_id,
         }
-    else:
-        attributes = {}
-
-    if tiled_image.attributes is not None:
-        attributes = {
-            **attributes,
-            **tiled_image.attributes,
-        }
+        tiled_image.update_attributes(plate_attributes)
 
     remove_pkl(pickle_path)
 
     return {
         "image_list_updates": [
-            {"zarr_url": new_zarr_url, "types": p_types, "attributes": attributes}
+            {
+                "zarr_url": new_zarr_url,
+                "types": p_types,
+                "attributes": tiled_image.attributes,
+            }
         ]
     }
