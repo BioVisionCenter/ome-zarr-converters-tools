@@ -1,9 +1,8 @@
 """Tools to initialize a conversion tasks."""
 
-import pickle
 from pathlib import Path
-from uuid import uuid4
 
+from fractal_converters_tools.pkl_utils import create_pkl, remove_pkl_dir
 from fractal_converters_tools.task_common_models import (
     AdvancedComputeOptions,
     ConvertParallelInitArgs,
@@ -16,7 +15,7 @@ def build_parallelization_list(
     tiled_images: list[TiledImage],
     overwrite: bool,
     advanced_compute_options: AdvancedComputeOptions,
-    tmp_dir_name: str | None = None,
+    tmp_dir_name: str = "_tmp_coverter_dir",
 ) -> list[dict]:
     """Build a list of dictionaries to parallelize the conversion.
 
@@ -25,19 +24,18 @@ def build_parallelization_list(
         tiled_images (list[TiledImage]): A list of tiled images objects to convert.
         overwrite (bool): Overwrite the existing zarr directory.
         advanced_compute_options (AdvancedComputeOptions): The advanced compute options.
-        tmp_dir_name (str, optional): The name of the temporary directory to store the
+        tmp_dir_name (str): The name of the temporary directory to store the
             pickled tiled images.
     """
     parallelization_list = []
 
-    tmp_dir_name = tmp_dir_name if tmp_dir_name else "_tmp_coverter_dir"
     pickle_dir = Path(zarr_dir) / tmp_dir_name
-    pickle_dir.mkdir(parents=True, exist_ok=True)
+    if pickle_dir.exists():
+        # Reinitialize the directory
+        remove_pkl_dir(pickle_dir)
 
     for tile in tiled_images:
-        tile_pickle_path = pickle_dir / f"{uuid4()}.pkl"
-        with open(tile_pickle_path, "wb") as f:
-            pickle.dump(tile, f)
+        tile_pickle_path = create_pkl(pickle_dir=pickle_dir, tiled_image=tile)
         parallelization_list.append(
             {
                 "zarr_url": str(zarr_dir),

@@ -1,33 +1,16 @@
 """A generic task to convert a LIF plate to OME-Zarr."""
 
 import logging
-import pickle
 from functools import partial
 from pathlib import Path
 
 from fractal_converters_tools.omezarr_image_writers import write_tiled_image
+from fractal_converters_tools.pkl_utils import load_tiled_image, remove_pkl
 from fractal_converters_tools.stitching import standard_stitching_pipe
 from fractal_converters_tools.task_common_models import ConvertParallelInitArgs
 from fractal_converters_tools.tiled_image import PlatePathBuilder
 
 logger = logging.getLogger(__name__)
-
-
-def _clean_up_pickled_file(pickle_path: Path):
-    """Clean up the pickled file and the directory if it is empty.
-
-    Args:
-        pickle_path (Path): Path to the pickled file.
-    """
-    try:
-        pickle_path.unlink()
-        if not list(pickle_path.parent.iterdir()):
-            pickle_path.parent.rmdir()
-    except Exception as e:
-        # This path is not tested
-        # But if multiple processes are trying to clean up the same file
-        # it might raise an exception.
-        logger.error(f"An error occurred while cleaning up the pickled file: {e}")
 
 
 def generic_compute_task(
@@ -43,12 +26,7 @@ def generic_compute_task(
         init_args (ConvertScanrInitArgs): Arguments for the initialization task.
     """
     pickle_path = Path(init_args.tiled_image_pickled_path)
-    if not pickle_path.exists():
-        logger.error(f"Pickled file {pickle_path} does not exist.")
-        raise FileNotFoundError(f"Pickled file {pickle_path} does not exist.")
-
-    with open(pickle_path, "rb") as f:
-        tiled_image = pickle.load(f)
+    tiled_image = load_tiled_image(pickle_path)
 
     try:
         stitching_pipe = partial(
@@ -71,24 +49,29 @@ def generic_compute_task(
             overwrite=init_args.overwrite,
         )
     except Exception as e:
+        remove_pkl(pickle_path)
         logger.error(f"An error occurred while processing {tiled_image}.")
-        _clean_up_pickled_file(pickle_path)
+        logger.exception(e)
         raise e
 
-    p_types = {"is_3D": is_3d}
+    p_types = {"is_3D": is_3d, "has_time": is_time_series}
 
     if isinstance(tiled_image.path_builder, PlatePathBuilder):
-        attributes = {
+        plate_attributes = {
             "well": f"{tiled_image.path_builder.row}{tiled_image.path_builder.column}",
             "plate": tiled_image.path_builder.plate_path,
+            "acquisition": str(tiled_image.path_builder.acquisition_id),
         }
-    else:
-        attributes = {}
+        tiled_image.update_attributes(plate_attributes)
 
-    _clean_up_pickled_file(pickle_path)
+    remove_pkl(pickle_path)
 
     return {
         "image_list_updates": [
-            {"zarr_url": new_zarr_url, "types": p_types, "attributes": attributes}
+            {
+                "zarr_url": new_zarr_url,
+                "types": p_types,
+                "attributes": tiled_image.attributes,
+            }
         ]
     }

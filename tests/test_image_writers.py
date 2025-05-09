@@ -33,7 +33,7 @@ def test_write_image(tmp_path):
     image = ome_zarr_container.get_image()
     assert image.shape == (1, 1, 11 * 2, 10 * 2)
 
-    roi_table = ome_zarr_container.get_table("FOV_ROI_table")
+    roi_table = ome_zarr_container.get_table("FOV_ROI_table", check_type="roi_table")
     assert len(roi_table.rois()) == 4
     for roi in roi_table.rois():
         roi_array = image.get_roi(roi)

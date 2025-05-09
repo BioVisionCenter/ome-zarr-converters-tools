@@ -39,7 +39,7 @@ class SimplePathBuilder:
 class PlatePathBuilder:
     """A class to build paths for a standard plate."""
 
-    def __init__(self, plate_name: str, row: str, column: int, acquisition_id: int):
+    def __init__(self, plate_name: str, row: str, column: int, acquisition_id: int = 0):
         """Initialize the path builder."""
         self._plate_name = plate_name
         self._row = row
@@ -96,6 +96,7 @@ class TiledImage:
         path_builder: PathBuilder,
         channel_names: list[str] | None = None,
         wavelength_ids: list[str] | None = None,
+        attributes: dict[str, str] | None = None,
     ):
         """Initialize the acquisition."""
         self._name = name
@@ -104,6 +105,7 @@ class TiledImage:
 
         self._channel_names = channel_names
         self._wavelength_ids = wavelength_ids
+        self._attributes = attributes
 
     def __repr__(self) -> str:
         """Return the string representation of the object."""
@@ -137,6 +139,24 @@ class TiledImage:
     def wavelength_ids(self) -> list[str] | None:
         """Return the wavelength ids."""
         return self._wavelength_ids
+
+    @property
+    def attributes(self) -> dict[str, str]:
+        """Return the attributes."""
+        if self._attributes is None:
+            return {}
+        return self._attributes
+
+    @attributes.setter
+    def attributes(self, attributes: dict[str, str]):
+        """Set the attributes."""
+        self._attributes = attributes
+
+    def update_attributes(self, attributes: dict[str, str]):
+        """Update the attributes."""
+        if self._attributes is None:
+            self._attributes = {}
+        self._attributes.update(attributes)
 
     @property
     def pixel_size(self) -> PixelSize | None:

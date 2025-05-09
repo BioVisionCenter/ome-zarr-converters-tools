@@ -73,6 +73,7 @@ def generate_tiled_image(
         path_builder=path_builder,
         channel_names=["channel1"],
         wavelength_ids=["wavelength1"],
+        attributes={"cell_line": "cell_line_1"},
     )
 
     tiles = generate_grid_tiles(overlap=0.9, tile_shape=(1, 1, 1, 11, 10))
