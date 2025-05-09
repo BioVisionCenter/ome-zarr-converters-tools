@@ -4,12 +4,12 @@ import pytest
 from ngio.utils import NgioFileExistsError
 from utils import generate_tiled_image
 
+from fractal_converters_tools.pkl_utils import remove_pkl
 from fractal_converters_tools.task_common_models import (
     AdvancedComputeOptions,
     ConvertParallelInitArgs,
 )
 from fractal_converters_tools.task_compute_tools import (
-    _clean_up_pickled_file,
     generic_compute_task,
 )
 from fractal_converters_tools.task_init_tools import build_parallelization_list
@@ -79,7 +79,7 @@ def test_pickle_cleanup(tmp_path):
     pickle_path.parent.mkdir(parents=True, exist_ok=True)
     pickle_path.touch()
     assert pickle_path.exists()
-    _clean_up_pickled_file(pickle_path)
+    remove_pkl(pickle_path)
     assert not pickle_path.exists()
     assert not pickle_path.parent.exists()
 
