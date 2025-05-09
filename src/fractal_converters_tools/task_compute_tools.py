@@ -60,7 +60,7 @@ def generic_compute_task(
         plate_attributes = {
             "well": f"{tiled_image.path_builder.row}{tiled_image.path_builder.column}",
             "plate": tiled_image.path_builder.plate_path,
-            "acquisition": tiled_image.path_builder.acquisition_id,
+            "acquisition": str(tiled_image.path_builder.acquisition_id),
         }
         tiled_image.update_attributes(plate_attributes)
 
