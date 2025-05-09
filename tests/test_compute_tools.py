@@ -54,6 +54,7 @@ def test_compute(tmp_path):
         "well": "A0",
         "plate": "plate_1.zarr",
         "cell_line": "cell_line_1",
+        "acquisition": "0",
     }
 
     # Test if overwrite is working
@@ -114,7 +115,7 @@ def test_compute_multi_acquisition(tmp_path):
     )
     assert len(par_args) == 2
 
-    par_args = par_args[0]
+    par_args = par_args[1]
 
     zarr_url = par_args["zarr_url"]
     init_args = ConvertParallelInitArgs(**par_args["init_args"])
@@ -133,5 +134,5 @@ def test_compute_multi_acquisition(tmp_path):
         "well": "A0",
         "plate": "plate_1.zarr",
         "cell_line": "cell_line_1",
-        "acquisition": "0",
+        "acquisition": "1",
     }
