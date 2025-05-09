@@ -49,7 +49,7 @@ def test_compute(tmp_path):
     attributes = image_list_updates["image_list_updates"][0]["attributes"]
 
     assert Path(new_zarr_url).exists()
-    assert p_types == {"is_3D": False}
+    assert p_types == {"is_3D": False, "has_time": False}
     assert attributes == {
         "well": "A0",
         "plate": "plate_1.zarr",
@@ -128,7 +128,7 @@ def test_compute_multi_acquisition(tmp_path):
     attributes = image_list_updates["image_list_updates"][0]["attributes"]
 
     assert Path(new_zarr_url).exists()
-    assert p_types == {"is_3D": False}
+    assert p_types == {"is_3D": False, "has_time": False}
     assert attributes == {
         "well": "A0",
         "plate": "plate_1.zarr",
