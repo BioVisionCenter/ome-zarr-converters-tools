@@ -37,8 +37,8 @@ def generic_compute_task(
             invert_y=init_args.advanced_compute_options.invert_y,
         )
 
-        new_zarr_url, is_3d, is_time_series = write_tiled_image(
-            zarr_dir=zarr_url,
+        im_list_types = write_tiled_image(
+            zarr_url=zarr_url,
             tiled_image=tiled_image,
             stiching_pipe=stitching_pipe,
             num_levels=init_args.advanced_compute_options.num_levels,
@@ -54,8 +54,6 @@ def generic_compute_task(
         logger.exception(e)
         raise e
 
-    p_types = {"is_3D": is_3d, "has_time": is_time_series}
-
     if isinstance(tiled_image.path_builder, PlatePathBuilder):
         plate_attributes = {
             "well": f"{tiled_image.path_builder.row}{tiled_image.path_builder.column}",
@@ -69,8 +67,8 @@ def generic_compute_task(
     return {
         "image_list_updates": [
             {
-                "zarr_url": new_zarr_url,
-                "types": p_types,
+                "zarr_url": zarr_url,
+                "types": im_list_types,
                 "attributes": tiled_image.attributes,
             }
         ]
