@@ -28,17 +28,20 @@ def build_parallelization_list(
             pickled tiled images.
     """
     parallelization_list = []
+    if isinstance(zarr_dir, str):
+        zarr_dir = Path(zarr_dir)
 
-    pickle_dir = Path(zarr_dir) / tmp_dir_name
+    pickle_dir = zarr_dir / tmp_dir_name
     if pickle_dir.exists():
         # Reinitialize the directory
         remove_pkl_dir(pickle_dir)
 
     for tile in tiled_images:
         tile_pickle_path = create_pkl(pickle_dir=pickle_dir, tiled_image=tile)
+        zarr_url = str(zarr_dir / tile.path)
         parallelization_list.append(
             {
-                "zarr_url": str(zarr_dir),
+                "zarr_url": zarr_url,
                 "init_args": ConvertParallelInitArgs(
                     tiled_image_pickled_path=str(tile_pickle_path),
                     overwrite=overwrite,

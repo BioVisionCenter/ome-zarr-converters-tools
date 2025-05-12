@@ -151,7 +151,7 @@ def write_tiles_as_rois(ome_zarr_container: OmeZarrContainer, tiles: list[Tile])
 
 
 def write_tiled_image(
-    zarr_dir: Path | str,
+    zarr_url: Path | str,
     tiled_image: TiledImage,
     stiching_pipe: Callable[[list[Tile]], list[Tile]],
     num_levels: int = 5,
@@ -160,20 +160,19 @@ def write_tiled_image(
     c_chunk: int = 1,
     t_chunk: int = 1,
     overwrite: bool = False,
-) -> tuple[str, bool, bool]:
+) -> dict[str, bool]:
     """Build a tiled ome-zarr image from a TiledImage object."""
     tiles = apply_stitching_pipe(tiled_image, stiching_pipe)
 
-    zarr_dir = Path(zarr_dir)
-    zarr_dir.mkdir(parents=True, exist_ok=True)
-    new_zarr_url = str(zarr_dir / tiled_image.path)
+    zarr_url = Path(zarr_url)
+    zarr_url.mkdir(parents=True, exist_ok=True)
 
     pixel_size = tiled_image.pixel_size
     if pixel_size is None:
         raise ValueError("Pixel size is not defined in the TiledImage object.")
 
     ome_zarr_container = init_empty_ome_zarr_image(
-        zarr_url=new_zarr_url,
+        zarr_url=zarr_url,
         tiles=tiles,
         pixel_size=pixel_size,
         channel_names=tiled_image.channel_names,
@@ -190,4 +189,6 @@ def write_tiled_image(
 
     # Write the tiles as ROIs in the image
     image = write_tiles_as_rois(ome_zarr_container=ome_zarr_container, tiles=tiles)
-    return new_zarr_url, image.is_3d, image.is_time_series
+
+    im_list_types = {"is_3D": image.is_3d, "has_time": image.is_time_series}
+    return im_list_types
