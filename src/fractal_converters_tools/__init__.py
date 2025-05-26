@@ -2,6 +2,7 @@
 
 from importlib.metadata import PackageNotFoundError, version
 
+from fractal_converters_tools._microplate_utils import wellid_to_row_column
 from fractal_converters_tools._omezarr_plate_writers import initiate_ome_zarr_plates
 from fractal_converters_tools._task_common_models import (
     AdvancedComputeOptions,
@@ -29,4 +30,5 @@ __all__ = [
     "build_parallelization_list",
     "generic_compute_task",
     "initiate_ome_zarr_plates",
+    "wellid_to_row_column",
 ]

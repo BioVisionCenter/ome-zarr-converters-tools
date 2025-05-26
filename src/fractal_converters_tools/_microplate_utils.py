@@ -22,7 +22,7 @@ STANDARD_PLATES_LAYOUTS = {
 STANDARD_ROWS_NAMES = "ABCDEFGHIJKLMNOP"
 
 
-def get_row_column(well_id: int, layout: str) -> tuple[str, int]:
+def wellid_to_row_column(well_id: int, layout: str) -> tuple[str, int]:
     """Get row and column from well id."""
     if layout not in STANDARD_PLATES_LAYOUTS:
         raise ValueError(f"Layout {layout} not found.")
