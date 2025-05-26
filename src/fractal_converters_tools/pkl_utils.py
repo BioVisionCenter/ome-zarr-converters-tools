@@ -32,7 +32,7 @@ def load_tiled_image(pickle_path: Path) -> TiledImage:
     Returns:
         TiledImage: The loaded TiledImage object.
     """
-    num_retries = int(os.getenv("COVERTERS_TOOLS_NUM_RETRIES", 5))
+    num_retries = int(os.getenv("CONVERTERS_TOOLS_NUM_RETRIES", 5))
 
     if num_retries < 1:
         raise ValueError("NUM_RETRIES must be greater than 0")

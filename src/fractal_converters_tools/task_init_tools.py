@@ -15,7 +15,7 @@ def build_parallelization_list(
     tiled_images: list[TiledImage],
     overwrite: bool,
     advanced_compute_options: AdvancedComputeOptions,
-    tmp_dir_name: str = "_tmp_coverter_dir",
+    tmp_dir_name: str = "_tmp_converter_dir",
 ) -> list[dict]:
     """Build a list of dictionaries to parallelize the conversion.
 
