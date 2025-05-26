@@ -4,19 +4,19 @@ from pathlib import Path
 import pytest
 from utils import generate_tiled_image
 
-from fractal_converters_tools.task_common_models import (
+from fractal_converters_tools._task_common_models import (
     AdvancedComputeOptions,
     ConvertParallelInitArgs,
 )
-from fractal_converters_tools.task_init_tools import build_parallelization_list
-from fractal_converters_tools.tiled_image import TiledImage
+from fractal_converters_tools._task_init_tools import build_parallelization_list
+from fractal_converters_tools._tiled_image import TiledImage
 
 
 @pytest.mark.parametrize(
     "overwrite, tm_dir_name",
     [
-        (True, "_tmp_coverter_dir"),
-        (False, "_tmp_coverter_dir_test"),
+        (True, "_tmp_converter_dir"),
+        (False, "_tmp_converter_dir_test"),
     ],
 )
 def test_build_par_list(tmp_path, overwrite, tm_dir_name):
@@ -92,5 +92,5 @@ def test_clenup_par_list(tmp_path):
         advanced_compute_options=adv_comp_model,
     )
 
-    assert (images_path / "_tmp_coverter_dir").exists()
-    assert len(list((images_path / "_tmp_coverter_dir").iterdir())) == len(par_list)
+    assert (images_path / "_tmp_converter_dir").exists()
+    assert len(list((images_path / "_tmp_converter_dir").iterdir())) == len(par_list)

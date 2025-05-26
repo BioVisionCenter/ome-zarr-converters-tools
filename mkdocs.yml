@@ -1,0 +1,93 @@
+site_name: "Fractal Converters Tools"
+site_url: "https://github.com/fractal-analytics-platform/fractal-converters-tools"
+site_description: "A Python library for building OME-Zarr converters."
+repo_name: "fractal-converters-tools"
+repo_url: "https://github.com/fractal-analytics-platform/fractal-converters-tools"
+copyright: "Copyright &copy; 2025-, BioVisionCenter UZH"
+
+theme:
+  name: material
+  favicon: images/favicon.ico
+  #logo: logos/logo_white.png
+  icon:
+    repo: fontawesome/brands/github
+  palette:
+    # Palette toggle for light mode
+    - scheme: default
+      # primary: green
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - scheme: slate
+      # primary: teal
+      # accent: light-green
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - content.tooltips
+    - content.tabs.link
+    - content.code.annotate
+    - navigation.instant
+    - navigation.instant.progress
+    - navigation.sections
+    - navigation.path
+    - navigation.indexes
+    - navigation.footer
+    - toc.follow
+    - search.suggest
+    - search.share
+
+extra:
+  version:
+    provider: mike
+  social:
+    - icon: fontawesome/brands/github
+      link: "https://github.com/fractal-analytics-platform/fractal-converters-tools"
+      name: Fractal Converters Tools on GitHub
+
+plugins: 
+  - search
+  - autorefs
+  - markdown-exec
+  - mkdocstrings:
+      handlers:
+        python:
+          import:
+            - https://docs.python.org/3/objects.inv
+            - https://numpy.org/doc/stable/objects.inv
+          options:
+            heading_level: 3
+            docstring_style: google
+            show_source: true
+            show_signature_annotations: true
+            show_root_heading: true
+            show_root_full_path: true
+            show_bases: true
+            docstring_section_style: list
+  - git-revision-date-localized:
+      enable_creation_date: true
+  - git-committers:
+      repository: fractal-analytics-platform/fractal-converters-tools
+      branch: main
+  - mkdocs-jupyter:
+      execute: true
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - md_in_html
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+
+nav:
+  - "Fractal Converters Tools": index.md
+  - "Tutorials": tutorial.ipynb
+  - "API Reference": api.md

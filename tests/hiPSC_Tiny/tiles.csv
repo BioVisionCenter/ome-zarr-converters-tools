@@ -1,0 +1,5 @@
+path,row,column,acquisition_id,fov,channel,z,t,pos_x,pos_y,shape_x,shape_y
+20200812-CardiomyocyteDifferentiation14-Cycle1_B03_T0001F001L01A01Z01C01.png,B,3,0,1,0,0,0,-1448.3,1517.7,2560,2160
+20200812-CardiomyocyteDifferentiation14-Cycle1_B03_T0001F001L01A01Z02C01.png,B,3,0,1,0,1,0,-1448.3,1517.7,2560,2160
+20200812-CardiomyocyteDifferentiation14-Cycle1_B03_T0001F002L01A01Z01C01.png,B,3,0,2,0,0,0,-1032.3,1517.7,2560,2160
+20200812-CardiomyocyteDifferentiation14-Cycle1_B03_T0001F002L01A01Z02C01.png,B,3,0,2,0,1,0,-1032.3,1517.7,2560,2160

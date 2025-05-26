@@ -1,0 +1,11 @@
+{
+    "plate_name": "hiPSC_Tiny",
+    "channel_names": ["DAPI"],
+    "wavelength_ids": ["DAPI"],
+    "pixel_size": {
+        "x": 0.1625,
+        "y": 0.1625,
+        "z": 0.5,
+        "t": 1.0
+    }
+}
