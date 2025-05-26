@@ -5,8 +5,8 @@ from ngio import open_ome_zarr_container
 from ngio.utils import NgioFileExistsError
 from utils import generate_tiled_image
 
-from fractal_converters_tools.omezarr_image_writers import write_tiled_image
-from fractal_converters_tools.stitching import standard_stitching_pipe
+from fractal_converters_tools._omezarr_image_writers import write_tiled_image
+from fractal_converters_tools._stitching import standard_stitching_pipe
 
 
 def test_write_image(tmp_path):

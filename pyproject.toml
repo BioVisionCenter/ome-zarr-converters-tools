@@ -52,6 +52,23 @@ dev = [
     "ruff",
 ]
 
+docs = [
+    "mkdocs",
+    "mkdocs-material",
+    "mkdocstrings[python]",
+    "mkdocs-jupyter",
+    "mkdocs-autorefs",
+    "mkdocs-git-revision-date-localized-plugin",
+    "mkdocs-git-committers-plugin-2",
+    "markdown-exec[ansi]",
+    "scikit-image",
+    "matplotlib",
+    "tabulate",
+    "rich",
+    "mike",
+]
+
+
 [project.urls]
 homepage = "https://github.com/fractal-analytics-platform/fractal-converters-tools"
 repository = "https://github.com/fractal-analytics-platform/fractal-converters-tools"
@@ -168,6 +185,7 @@ fractal-converters-tools = { path = ".", editable = true }
 default = { solve-group = "default" }
 dev = { features = ["dev", "test"], solve-group = "default" }
 test = { features = ["test"], solve-group = "default" }
+docs = { features = ["docs"], solve-group = "default" }
 
 [tool.pixi.feature.dev.tasks]
 ruff-fix-imports = { cmd = "ruff check --select I --fix" }

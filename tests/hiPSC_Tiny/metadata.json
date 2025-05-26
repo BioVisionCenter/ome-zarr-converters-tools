@@ -1,0 +1,10 @@
+{
+    "channels_names": ["DAPI"],
+    "channel_wavelengths": ["DAPI"],
+    "pixel_size": {
+        "x": 0.162,
+        "y": 0.162,
+        "z": 0.5,
+        "t": 1.0
+    }
+}
