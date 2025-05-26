@@ -2,14 +2,15 @@
 
 from importlib.metadata import PackageNotFoundError, version
 
-from fractal_converters_tools.omezarr_plate_writers import initiate_ome_zarr_plates
-from fractal_converters_tools.task_common_models import (
+from fractal_converters_tools._omezarr_plate_writers import initiate_ome_zarr_plates
+from fractal_converters_tools._task_common_models import (
     AdvancedComputeOptions,
     ConvertParallelInitArgs,
 )
-from fractal_converters_tools.task_compute_tools import generic_compute_task
-from fractal_converters_tools.task_init_tools import build_parallelization_list
-from fractal_converters_tools.tiled_image import TiledImage
+from fractal_converters_tools._task_compute_tools import generic_compute_task
+from fractal_converters_tools._task_init_tools import build_parallelization_list
+from fractal_converters_tools._tile import Point, Tile, Vector
+from fractal_converters_tools._tiled_image import TiledImage
 
 try:
     __version__ = version("fractal-converters-tools")

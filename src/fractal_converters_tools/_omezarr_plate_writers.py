@@ -4,7 +4,7 @@ from pathlib import Path
 
 from ngio import ImageInWellPath, create_empty_plate
 
-from fractal_converters_tools.tiled_image import PlatePathBuilder, TiledImage
+from fractal_converters_tools._tiled_image import PlatePathBuilder, TiledImage
 
 
 def _initiate_ome_zarr_plate(

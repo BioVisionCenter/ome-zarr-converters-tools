@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from fractal_converters_tools.tile import Tile
+from fractal_converters_tools._tile import Tile
 
 
 def _first_if_allclose(values: list[float]) -> tuple[bool, float]:
@@ -78,7 +78,7 @@ def check_if_regular_grid(tiles: list[Tile]) -> tuple[str | None, GridSetup]:
     pos_top_l_x = [tile.top_l.x for tile in tiles]
     pos_top_l_x = np.sort(pos_top_l_x)
     offsets_x = np.diff(pos_top_l_x)
-    offsets_x = offsets_x[offsets_x > 1e-6]
+    offsets_x = offsets_x[offsets_x > 1e-6].tolist()
     check, offset_x = _first_if_allclose(offsets_x)
     if not check:
         # all x_offset are not the same
@@ -88,7 +88,7 @@ def check_if_regular_grid(tiles: list[Tile]) -> tuple[str | None, GridSetup]:
     pos_top_l_y = [tile.top_l.y for tile in tiles]
     pos_top_l_y = np.sort(pos_top_l_y)
     offsets_y = np.diff(pos_top_l_y)
-    offsets_y = offsets_y[offsets_y > 1e-6]
+    offsets_y = offsets_y[offsets_y > 1e-6].tolist()
     check, offset_y = _first_if_allclose(offsets_y)
     if not check:
         # all y_offset are not the same

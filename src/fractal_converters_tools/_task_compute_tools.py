@@ -4,11 +4,11 @@ import logging
 from functools import partial
 from pathlib import Path
 
-from fractal_converters_tools.omezarr_image_writers import write_tiled_image
-from fractal_converters_tools.pkl_utils import load_tiled_image, remove_pkl
-from fractal_converters_tools.stitching import standard_stitching_pipe
-from fractal_converters_tools.task_common_models import ConvertParallelInitArgs
-from fractal_converters_tools.tiled_image import PlatePathBuilder
+from fractal_converters_tools._omezarr_image_writers import write_tiled_image
+from fractal_converters_tools._pkl_utils import load_tiled_image, remove_pkl
+from fractal_converters_tools._stitching import standard_stitching_pipe
+from fractal_converters_tools._task_common_models import ConvertParallelInitArgs
+from fractal_converters_tools._tiled_image import PlatePathBuilder
 
 logger = logging.getLogger(__name__)
 
