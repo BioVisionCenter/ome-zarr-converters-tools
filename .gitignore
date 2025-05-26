@@ -116,4 +116,7 @@ pixi.lock
 *.egg-info
 *ipynb_checkpoints
 *.ipynb
+!docs/tutorial.ipynb
 
+# zarr
+*.zarr

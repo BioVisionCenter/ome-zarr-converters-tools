@@ -32,6 +32,7 @@ def build_parallelization_list(
         zarr_dir = Path(zarr_dir)
 
     pickle_dir = zarr_dir / tmp_dir_name
+
     if pickle_dir.exists():
         # Reinitialize the directory
         remove_pkl_dir(pickle_dir)

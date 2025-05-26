@@ -10,8 +10,13 @@ from fractal_converters_tools._task_common_models import (
 )
 from fractal_converters_tools._task_compute_tools import generic_compute_task
 from fractal_converters_tools._task_init_tools import build_parallelization_list
-from fractal_converters_tools._tile import Point, Tile, Vector
-from fractal_converters_tools._tiled_image import TiledImage
+from fractal_converters_tools._tile import OriginDict, Point, Tile, Vector
+from fractal_converters_tools._tiled_image import (
+    PathBuilder,
+    PlatePathBuilder,
+    SimplePathBuilder,
+    TiledImage,
+)
 
 try:
     __version__ = version("fractal-converters-tools")
@@ -23,7 +28,11 @@ __email__ = "lorenzo.cerrone@uzh.ch"
 __all__ = [
     "AdvancedComputeOptions",
     "ConvertParallelInitArgs",
+    "OriginDict",
+    "PathBuilder",
+    "PlatePathBuilder",
     "Point",
+    "SimplePathBuilder",
     "Tile",
     "TiledImage",
     "Vector",
