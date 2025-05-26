@@ -7,11 +7,8 @@ import numpy as np
 from fractal_converters_tools._tile import Tile
 
 
-def _first_if_allclose(values: list[float]) -> tuple[bool, float]:
+def __first_if_allclose(values: list[float]) -> tuple[bool, float]:
     """Return the first value if all values are close."""
-    if len(values) == 0:
-        raise ValueError("Empty list of values")
-
     if np.allclose(values, values[0]):
         return True, values[0]
     return False, 0.0
@@ -21,7 +18,6 @@ def _find_grid_size(tiles: list[Tile], offset_x, offset_y) -> tuple[int, int]:
     """Find the grid size of a list of tiles."""
     x = [tile.top_l.x for tile in tiles]
     y = [tile.top_l.y for tile in tiles]
-
     num_x = int(np.round(max(x) / offset_x)) + 1
     num_y = int(np.round(max(y) / offset_y)) + 1
     return num_x, num_y
@@ -61,14 +57,22 @@ def check_if_regular_grid(tiles: list[Tile]) -> tuple[str | None, GridSetup]:
     # Test 1: Check if all lengths are the same
     # ------------------------------------------
     tiles_length_x = [bbox.bot_r.x - bbox.top_l.x for bbox in tiles]
-    check, length_x = _first_if_allclose(tiles_length_x)
-    if not check:
+    if len(tiles_length_x) == 0:
+        return "Empty list of tiles", GridSetup()
+
+    if np.allclose(tiles_length_x, tiles_length_x[0]):
+        length_x = tiles_length_x[0]
+    else:
         all_lengths = np.unique(tiles_length_x)
         return f"Not all lengths are the same: {all_lengths}", GridSetup()
 
     tiles_length_y = [bbox.bot_r.y - bbox.top_l.y for bbox in tiles]
-    check, length_y = _first_if_allclose(tiles_length_y)
-    if not check:
+    if len(tiles_length_y) == 0:
+        return "Empty list of tiles", GridSetup()
+
+    if np.allclose(tiles_length_y, tiles_length_y[0]):
+        length_y = tiles_length_y[0]
+    else:
         all_lengths = np.unique(tiles_length_y)
         return f"Not all lengths are the same: {all_lengths}", GridSetup()
     # ------------------------------------------
@@ -79,9 +83,13 @@ def check_if_regular_grid(tiles: list[Tile]) -> tuple[str | None, GridSetup]:
     pos_top_l_x = np.sort(pos_top_l_x)
     offsets_x = np.diff(pos_top_l_x)
     offsets_x = offsets_x[offsets_x > 1e-6].tolist()
-    check, offset_x = _first_if_allclose(offsets_x)
-    if not check:
-        # all x_offset are not the same
+
+    if len(offsets_x) == 0:
+        offset_x = 1.0
+    elif np.allclose(offsets_x, offsets_x[0]):
+        offset_x = offsets_x[0]
+    else:
+        # Not all offsets are the same
         unique_offsets = np.unique(offsets_x)
         return f"Not all x offsets are the same: {unique_offsets}", GridSetup()
 
@@ -89,9 +97,13 @@ def check_if_regular_grid(tiles: list[Tile]) -> tuple[str | None, GridSetup]:
     pos_top_l_y = np.sort(pos_top_l_y)
     offsets_y = np.diff(pos_top_l_y)
     offsets_y = offsets_y[offsets_y > 1e-6].tolist()
-    check, offset_y = _first_if_allclose(offsets_y)
-    if not check:
-        # all y_offset are not the same
+
+    if len(offsets_y) == 0:
+        offset_y = 1.0
+    elif np.allclose(offsets_y, offsets_y[0]):
+        offset_y = offsets_y[0]
+    else:
+        # Not all offsets are the same
         unique_offsets = np.unique(offsets_y)
         return f"Not all y offsets are the same: {unique_offsets}", GridSetup()
     # ------------------------------------------
