@@ -25,4 +25,4 @@ pip install fractal-converters-tools
 
 For detailed documentation on how to use Fractal Converters Tools, please refer to the [official documentation](https://fractal-analytics-platform.github.io/fractal-converters-tools/).
 
-We also provide a minimal step-by-step guide to how to create a convererter. You can find it in the [examples](https://fractal-analytics-platform.github.io/fractal-converters-tools/examples/) section of the documentation.
+We also provide a minimal step-by-step guide to how to create a converter. You can find it in the [tutorial](https://fractal-analytics-platform.github.io/fractal-converters-tools/latest/tutorial/) section of the documentation.
