@@ -134,6 +134,10 @@ def write_tiles_as_rois(ome_zarr_container: OmeZarrContainer, tiles: list[Tile])
             z_length=int(tile.diag.z),
             **tile.origin._asdict(),
         ).to_roi(pixel_size=pixel_size)
+        # set original coordinates
+        roi.x_micrometer_original = tile.origin.x_micrometer_original
+        roi.y_micrometer_original = tile.origin.y_micrometer_original
+        roi.z_micrometer_original = tile.origin.z_micrometer_original
         _fov_rois.append(roi)
 
         # Load the whole tile and set the data in the image
