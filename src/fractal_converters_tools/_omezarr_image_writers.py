@@ -124,21 +124,23 @@ def write_tiles_as_rois(ome_zarr_container: OmeZarrContainer, tiles: list[Tile])
     _fov_rois = []
     for i, tile in enumerate(tiles):
         # Create the ROI for the tile
-        roi = RoiPixels(
+        # Load the whole tile and set the data in the image
+        tile_data = tile.load()
+        _, _, s_z, s_y, s_x = tile_data.shape
+
+        tile_data = tile_data[0] if squeeze_t else tile_data
+        roi_pix = RoiPixels(
             name=f"FOV_{i}",
             x=int(tile.top_l.x),
             y=int(tile.top_l.y),
             z=int(tile.top_l.z),
-            x_length=int(tile.diag.x),
-            y_length=int(tile.diag.y),
-            z_length=int(tile.diag.z),
+            x_length=s_x,
+            y_length=s_y,
+            z_length=s_z,
             **tile.origin._asdict(),
-        ).to_roi(pixel_size=pixel_size)
+        )
+        roi = roi_pix.to_roi(pixel_size=pixel_size)
         _fov_rois.append(roi)
-
-        # Load the whole tile and set the data in the image
-        tile_data = tile.load()
-        tile_data = tile_data[0] if squeeze_t else tile_data
         image.set_roi(roi=roi, patch=tile_data)
 
     # Set order to 0 if the image has the time axis

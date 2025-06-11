@@ -4,11 +4,14 @@ from collections import namedtuple
 from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
+from logging import getLogger
 from typing import Protocol
 
 import numpy as np
 from dask.array.core import Array
 from ngio import PixelSize
+
+logger = getLogger(__name__)
 
 
 def _find_prec(a: float | int) -> int:
@@ -237,12 +240,25 @@ class Tile:
         diag: Vector,
         pixel_size: PixelSize,
         origin: OriginDict | None = None,
+        shape: tuple[int, int, int, int, int] | None = None,
         space: TileSpace = TileSpace.REAL,
         data_loader: TileLoader | None = None,
     ):
-        """Initialize the tile with the top-left corner and the diagonal vector."""
+        """Initialize the tile with the top-left corner and the diagonal vector.
+
+        Args:
+            top_l (Point): The top-left corner of the tile.
+            diag (Vector): The diagonal vector of the tile.
+            pixel_size (PixelSize): The pixel size of the tile.
+            origin (OriginDict | None): The origin reference of the tile.
+                If None, the origin is set to the top-left corner position.
+            shape (tuple[int, int, int, int, int] | None): The shape of the tile in
+                the format (t, c, z, y, x). This is redundant and can be omitted,
+                but if known it can help to avoid off-by-one rounding errors.
+            space (TileSpace): The space of the tile (REAL or PIXEL).
+            data_loader (TileLoader | None): A data loader to load the tile data.
+        """
         self._top_l = top_l
-        self._diag = diag
 
         if origin is None:
             self._origin = OriginDict(
@@ -254,8 +270,14 @@ class Tile:
             self._origin = origin
 
         self._data_loader = data_loader
+        self._shape = shape
         self._space = space
         self._pixel_size = pixel_size
+
+        if shape is not None:
+            diag = self._align_diag_to_shape(shape)
+        self._diag = diag
+
         self._validate()
 
     def __repr__(self) -> str:
@@ -342,6 +364,7 @@ class Tile:
         pixel_size: PixelSize,
         origin: OriginDict | None = None,
         space: TileSpace = TileSpace.REAL,
+        shape: tuple[int, int, int, int, int] | None = None,
         data_loader: TileLoader | None = None,
     ):
         """Create a tile from two points (top-left and bottom-right corners)."""
@@ -352,6 +375,7 @@ class Tile:
             pixel_size=pixel_size,
             origin=origin,
             space=space,
+            shape=shape,
             data_loader=data_loader,
         )
 
@@ -364,6 +388,7 @@ class Tile:
             origin=self._origin,
             data_loader=self._data_loader,
             space=self._space,
+            shape=self._shape,
         )
 
     def derive_from_points(self, top_l: Point, bot_r: Point) -> "Tile":
@@ -376,6 +401,7 @@ class Tile:
             origin=self._origin,
             data_loader=self._data_loader,
             space=self._space,
+            shape=self._shape,
         )
 
     def move_by(self, vec: Vector) -> "Tile":
@@ -399,6 +425,26 @@ class Tile:
         if not self.diag.is_all_positive():
             raise ValueError("Tile diagonal vector must have all components positive.")
 
+    def _align_diag_to_shape(self, shape: tuple[int, int, int, int, int]) -> Vector:
+        """Align the diagonal vector to the shape of the tile."""
+        if self.space == TileSpace.REAL:
+            diag = Vector(
+                x=shape[4] * self.pixel_size.x,
+                y=shape[3] * self.pixel_size.y,
+                z=shape[2] * self.pixel_size.z,
+                c=shape[1],
+                t=shape[0],
+            )
+        else:
+            diag = Vector(
+                x=shape[4],
+                y=shape[3],
+                z=shape[2],
+                c=shape[1],
+                t=shape[0],
+            )
+        return diag
+
     def reset_origin(self) -> "Tile":
         """Reset the origin reference of the tile to the current position."""
         return Tile(
@@ -408,6 +454,7 @@ class Tile:
             origin=None,
             data_loader=self._data_loader,
             space=self._space,
+            shape=self._shape,
         )
 
     def to_pixel_space(self) -> "Tile":
@@ -423,6 +470,7 @@ class Tile:
             origin=self._origin,
             data_loader=self._data_loader,
             space=TileSpace.PIXEL,
+            shape=self._shape,
         )
 
     def to_real_space(self) -> "Tile":
@@ -438,6 +486,7 @@ class Tile:
             origin=self._origin,
             data_loader=self._data_loader,
             space=TileSpace.REAL,
+            shape=self._shape,
         )
 
     def is_coplanar(self, other: "Tile", z_tol: float = 1e-6) -> bool:
@@ -540,9 +589,18 @@ class Tile:
 
         data = self._data_loader.load()
         if expected_shape != data.shape:
-            raise ValueError(
-                f"Data shape {data.shape} does not match tile shape {self.shape}."
-            )
+            max_diff = np.max(np.abs(np.array(expected_shape) - np.array(data.shape)))
+            if max_diff == 1:
+                logger.warning(
+                    f"Data shape {data.shape} is off by 1 from tile "
+                    f"shape {expected_shape}. This might be due to "
+                    "rounding errors in the pixel size or tile position."
+                )
+            else:
+                raise ValueError(
+                    f"Data shape {data.shape} does not match expected "
+                    f"tile shape {expected_shape}."
+                )
         return data
 
     def dtype(self) -> str:
@@ -554,6 +612,8 @@ class Tile:
     @property
     def shape(self) -> tuple[int, int, int, int, int]:
         """Return the shape of the tile."""
+        if self._shape is not None:
+            return self._shape
         _shape = (self.diag.t, self.diag.c, self.diag.z, self.diag.y, self.diag.x)
         _shape = tuple(int(s) for s in _shape)
         if len(_shape) != 5:

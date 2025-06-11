@@ -1,10 +1,16 @@
 from pathlib import Path
 
 import pytest
-from ngio import open_ome_zarr_container
+from ngio import PixelSize, open_ome_zarr_container
 from ngio.utils import NgioFileExistsError
-from utils import generate_tiled_image
+from utils import (
+    DummyLoader,
+    PlatePathBuilder,
+    TiledImage,
+    generate_tiled_image,
+)
 
+from fractal_converters_tools import Point, Tile
 from fractal_converters_tools._omezarr_image_writers import write_tiled_image
 from fractal_converters_tools._stitching import standard_stitching_pipe
 
@@ -59,6 +65,47 @@ def test_write_image(tmp_path):
         "y_micrometer_original",
         "z_micrometer_original",
     }, roi_df.columns
+
+
+def test_write_image_with_rounding_errors(tmp_path):
+    plate_path = tmp_path / "test_write_images"
+    path_builder = PlatePathBuilder(
+        plate_name="plate_1",
+        row="A",
+        column=1,
+        acquisition_id=0,
+    )
+    tiled_image = TiledImage(
+        name="image_1",
+        path_builder=path_builder,
+        channel_names=["channel1"],
+        wavelength_ids=["wavelength1"],
+        attributes={"cell_line": "cell_line_1"},
+    )
+    top_l = Point(x=645.814, y=-645.814, z=0, c=0, t=0)
+    bot_r = Point(
+        x=+645.814 + 1291.628,
+        y=-645.814 + 1291.6283348666052,
+        z=1.0,
+        c=1,
+        t=1,
+    )
+    tiled_image.add_tile(
+        Tile.from_points(
+            top_l=top_l,
+            bot_r=bot_r,
+            pixel_size=PixelSize(x=1.195952, y=1.195952, z=1.0),
+            shape=(1, 1, 1, 1080, 1080),
+            data_loader=DummyLoader(shape=(1, 1, 1, 1080, 1080)),
+        )
+    )
+
+    image_url = plate_path / tiled_image.path
+    write_tiled_image(
+        zarr_url=str(image_url),
+        tiled_image=tiled_image,
+        stiching_pipe=standard_stitching_pipe,
+    )
 
 
 def test_write_advanced_params(tmp_path):
