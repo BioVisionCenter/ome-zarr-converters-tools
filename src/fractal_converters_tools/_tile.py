@@ -49,6 +49,19 @@ class Vector:
     c: int = 0
     t: int = 0
 
+    def __post_init__(self):
+        """Post-initialization checks."""
+        if not isinstance(self.c, int):
+            raise ValueError("Channel c must be an integer.")
+        if not isinstance(self.t, int):
+            raise ValueError("Time t must be an integer.")
+        if not isinstance(self.z, int | float):
+            raise ValueError("Z coordinate must be a number.")
+        if not isinstance(self.x, int | float):
+            raise ValueError("X coordinate must be a number.")
+        if not isinstance(self.y, int | float):
+            raise ValueError("Y coordinate must be a number.")
+
     def __add__(self, other: "Vector") -> "Vector":
         """Add two vectors."""
         return Vector(
@@ -94,6 +107,13 @@ class Vector:
         """Compute the length of the vector."""
         return (self.x**2 + self.y**2) ** 0.5
 
+    def is_all_positive(self) -> bool:
+        """Check if all components of the vector are positive."""
+        return all(
+            isinstance(comp, int | float) and comp >= 0
+            for comp in (self.x, self.y, self.z, self.c, self.t)
+        )
+
     def to_pixel_space(self, pixel_size: PixelSize) -> "Vector":
         """Convert the vector to pixel space."""
         x = int(self.x / pixel_size.x)
@@ -120,6 +140,19 @@ class Point:
     z: int | float = 0.0
     c: int = 0
     t: int = 0
+
+    def __post_init__(self):
+        """Post-initialization checks."""
+        if not isinstance(self.c, int):
+            raise ValueError("Channel c must be an integer.")
+        if not isinstance(self.t, int):
+            raise ValueError("Time t must be an integer.")
+        if not isinstance(self.z, int | float):
+            raise ValueError("Z coordinate must be a number.")
+        if not isinstance(self.x, int | float):
+            raise ValueError("X coordinate must be a number.")
+        if not isinstance(self.y, int | float):
+            raise ValueError("Y coordinate must be a number.")
 
     def __add__(self, other: Vector) -> "Point":
         """Add a vector to a point."""
@@ -223,6 +256,7 @@ class Tile:
         self._data_loader = data_loader
         self._space = space
         self._pixel_size = pixel_size
+        self._validate()
 
     def __repr__(self) -> str:
         """String representation of the tile."""
@@ -352,16 +386,26 @@ class Tile:
         """Move the tile to a new point."""
         return self.derive_from_points(point, point + self.diag)
 
+    def _validate(self) -> None:
+        """Validate the tile properties."""
+        if self.top_l.c != 0:
+            raise ValueError("Tile top-left corner must have channel c=0.")
+        if not isinstance(self.top_l.c, int):
+            raise ValueError("Tile top-left corner channel c must be an integer.")
+        if self.diag.c < 0:
+            raise ValueError("Tile diagonal vector must have channel c >= 0.")
+        if not isinstance(self.diag.c, int):
+            raise ValueError("Tile diagonal vector channel c must be an integer.")
+        if not self.diag.is_all_positive():
+            raise ValueError("Tile diagonal vector must have all components positive.")
+
     def reset_origin(self) -> "Tile":
         """Reset the origin reference of the tile to the current position."""
-        new_origin = OriginDict(
-            x_micrometer_original=self.top_l.x, y_micrometer_original=self.top_l.y
-        )
         return Tile(
             top_l=self.top_l,
             diag=self.diag,
             pixel_size=self._pixel_size,
-            origin=new_origin,
+            origin=None,
             data_loader=self._data_loader,
             space=self._space,
         )
@@ -396,15 +440,27 @@ class Tile:
             space=TileSpace.REAL,
         )
 
-    def is_coplanar(self, bbox: "Tile", z_tol: float = 1e-6) -> bool:
-        """Check if two tiles are coplanar on the XY plane."""
-        if abs(self.top_l.z - bbox.top_l.z) > z_tol:
+    def is_coplanar(self, other: "Tile", z_tol: float = 1e-6) -> bool:
+        """Check if two tiles are coplanar on the XY plane.
+
+        With coplanar we mean that they have the same Z, C, and T coordinates.
+        """
+        if abs(self.top_l.z - other.top_l.z) > z_tol:
             return False
 
-        if self.top_l.c != bbox.top_l.c:
+        if abs(self.diag.z - other.diag.z) > z_tol:
             return False
 
-        if self.top_l.t != bbox.top_l.t:
+        if self.top_l.c != other.top_l.c:
+            return False
+
+        if self.diag.c != other.diag.c:
+            return False
+
+        if self.top_l.t != other.top_l.t:
+            return False
+
+        if self.diag.t != other.diag.t:
             return False
 
         return True

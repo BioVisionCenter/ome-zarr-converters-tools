@@ -26,8 +26,8 @@ def generate_grid_tiles(
     invert_x=False,
     invert_y=False,
     swap_xy=False,
-    z_offset=0,
-    t_offset=0,
+    z_offset: int | float = 0,
+    t_offset: int = 0,
 ) -> list[Tile]:
     length_y = tile_shape[3] * pixel_size_xy
     length_x = tile_shape[4] * pixel_size_xy

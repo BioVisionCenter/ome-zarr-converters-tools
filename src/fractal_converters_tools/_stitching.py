@@ -13,12 +13,19 @@ from fractal_converters_tools._grid_utils import (
 from fractal_converters_tools._tile import Point, Tile, TileSpace, Vector
 
 
-def check_tiles_coplanar(tiles: list[Tile]) -> bool:
+def check_tiles_coplanar(tiles: list[Tile]) -> None:
     """Check if all the Tiles are coplanar on the XY plane."""
     if len(tiles) == 0:
-        return True
+        return None
 
-    return all(tiles[0].is_coplanar(tile) for tile in tiles)
+    if all(tiles[0].is_coplanar(tile) for tile in tiles):
+        return None
+
+    raise ValueError(
+        "Tiles are not coplanar. "
+        "All tiles in a tiled image must have the same Z, C, "
+        "and T coordinates."
+    )
 
 
 def _min_point(tiles: list[Tile]) -> Point:
@@ -28,14 +35,8 @@ def _min_point(tiles: list[Tile]) -> Point:
     return Point(min_x, min_y, z=0, c=0, t=0)
 
 
-def sort_tiles_by_distance(
-    tiles: list[Tile], check_coplanar: bool = False
-) -> list[Tile]:
+def sort_tiles_by_distance(tiles: list[Tile]) -> list[Tile]:
     """Sort a list of tiles by distance from the origin."""
-    # Check if the tiles are coplanar on the XY plane
-    if check_coplanar and not check_tiles_coplanar(tiles):
-        raise ValueError("Tiles are not coplanar")
-
     min_point = _min_point(tiles)
     return sorted(tiles, key=lambda x: (x.top_l - min_point).lengthXY())
 
@@ -273,6 +274,9 @@ def standard_stitching_pipe(
     invert_y: bool = False,
 ) -> list[Tile]:
     """Standard stitching pipe for a list of tiles."""
+    # The standard stitching pipe will is implemented for
+    # coplanar tiles only.
+    check_tiles_coplanar(tiles)
     tiles = copy.deepcopy(tiles)
     if swap_xy:
         tiles = swap_xy_tiles(tiles)

@@ -17,8 +17,8 @@ def test_write_image(tmp_path):
         column=1,
         acquisition_id=0,
         tiled_image_name="image_1",
-        z_offset=1,
-        t_offset=0,
+        z_offset=2.5,
+        t_offset=1,
     )
     image_url = plate_path / tiled_image.path
     im_list_types = write_tiled_image(
@@ -43,6 +43,8 @@ def test_write_image(tmp_path):
 
     for roi in roi_table.rois():
         roi_array = image.get_roi(roi)
+        assert roi.z == 0
+        assert roi.z_micrometer_original == 2.5
         assert roi_array.shape == (1, 1, 11, 10)
 
     roi_df = roi_table.dataframe
