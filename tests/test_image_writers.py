@@ -17,6 +17,8 @@ def test_write_image(tmp_path):
         column=1,
         acquisition_id=0,
         tiled_image_name="image_1",
+        z_offset=1,
+        t_offset=0,
     )
     image_url = plate_path / tiled_image.path
     im_list_types = write_tiled_image(

@@ -40,11 +40,19 @@ def sort_tiles_by_distance(
     return sorted(tiles, key=lambda x: (x.top_l - min_point).lengthXY())
 
 
-def remove_tiles_offset(tiles: list[Tile]) -> list[Tile]:
-    """Remove the offset from a list of tiles."""
+def remove_tiles_offset_xy(tiles: list[Tile]) -> list[Tile]:
+    """Remove the offset from a list of tiles in the XY dimensions."""
     min_point = _min_point(tiles)
     offset_vector = Vector(-min_point.x, -min_point.y, z=0, c=0, t=0)
     return [tile.move_by(vec=offset_vector) for tile in tiles]
+
+
+def remove_tiles_offset_zt(tiles: list[Tile]) -> list[Tile]:
+    """Remove the offset from a list of tiles in the Z and T dimensions."""
+    return [
+        tile.move_by(vec=Vector(x=0, y=0, z=-tile.top_l.z, t=-tile.top_l.t))
+        for tile in tiles
+    ]
 
 
 def tiles_to_pixel_space(tiles: list[Tile]) -> list[Tile]:
@@ -277,7 +285,8 @@ def standard_stitching_pipe(
         tiles = reset_tiles_origin(tiles)
 
     tiles = sort_tiles_by_distance(tiles)
-    tiles = remove_tiles_offset(tiles)
+    tiles = remove_tiles_offset_xy(tiles)
+    tiles = remove_tiles_offset_zt(tiles)
     tiles, _mode = resolve_tiles_overlap(tiles, mode=mode)
     tiles = tiles_to_pixel_space(tiles)
     if _mode == "grid":

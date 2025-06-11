@@ -213,7 +213,9 @@ class Tile:
 
         if origin is None:
             self._origin = OriginDict(
-                x_micrometer_original=top_l.x, y_micrometer_original=top_l.y
+                x_micrometer_original=top_l.x,
+                y_micrometer_original=top_l.y,
+                z_micrometer_original=top_l.z,
             )
         else:
             self._origin = origin
