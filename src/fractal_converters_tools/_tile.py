@@ -184,9 +184,8 @@ OriginDict = namedtuple(
         "x_micrometer_original",
         "y_micrometer_original",
         "z_micrometer_original",
-        "t_original",
     ],
-    defaults=[0.0, 0.0, 0.0, 0.0],
+    defaults=[0.0, 0.0, 0.0],
 )
 
 

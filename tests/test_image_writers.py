@@ -38,9 +38,23 @@ def test_write_image(tmp_path):
 
     roi_table = ome_zarr_container.get_table("FOV_ROI_table", check_type="roi_table")
     assert len(roi_table.rois()) == 4
+
     for roi in roi_table.rois():
         roi_array = image.get_roi(roi)
         assert roi_array.shape == (1, 1, 11, 10)
+
+    roi_df = roi_table.dataframe
+    assert set(roi_df.columns) == {
+        "len_x_micrometer",
+        "len_y_micrometer",
+        "len_z_micrometer",
+        "x_micrometer",
+        "y_micrometer",
+        "z_micrometer",
+        "x_micrometer_original",
+        "y_micrometer_original",
+        "z_micrometer_original",
+    }, roi_df.columns
 
 
 def test_write_advanced_params(tmp_path):
