@@ -98,7 +98,23 @@ class TiledImage:
         wavelength_ids: list[str] | None = None,
         attributes: dict[str, str] | None = None,
     ):
-        """Initialize the acquisition."""
+        """Initialize the tiled image.
+
+        Each tiled image is going to be converted in a OME-Zarr image.
+        Tiled images can contain multiple tiles, each tile represents a
+        a single microscope acquisition.
+
+        Args:
+            name (str): The name of the tiled image.
+            path_builder (PathBuilder): The path builder to build the zarr relative path
+                This is used to post the tiled image in the right place in an OME-Zarr
+                Collection. For example, a plate path builder will
+                post the tiled image in a plate/{row}/{column}/{acquisition_id} path.
+            channel_names (list[str] | None): The channel names of the tiled image.
+            wavelength_ids (list[str] | None): The wavelength ids of the tiled image.
+            attributes (dict[str, str] | None): The attributes of the tiled image.
+
+        """
         self._name = name
         self._path_builder = path_builder
         self._tiles = []

@@ -13,12 +13,19 @@ from fractal_converters_tools._grid_utils import (
 from fractal_converters_tools._tile import Point, Tile, TileSpace, Vector
 
 
-def check_tiles_coplanar(tiles: list[Tile]) -> bool:
+def check_tiles_coplanar(tiles: list[Tile]) -> None:
     """Check if all the Tiles are coplanar on the XY plane."""
     if len(tiles) == 0:
-        return True
+        return None
 
-    return all(tiles[0].is_coplanar(tile) for tile in tiles)
+    if all(tiles[0].is_coplanar(tile) for tile in tiles):
+        return None
+
+    raise ValueError(
+        "Tiles are not coplanar. "
+        "All tiles in a tiled image must have the same Z, C, "
+        "and T coordinates."
+    )
 
 
 def _min_point(tiles: list[Tile]) -> Point:
@@ -28,23 +35,25 @@ def _min_point(tiles: list[Tile]) -> Point:
     return Point(min_x, min_y, z=0, c=0, t=0)
 
 
-def sort_tiles_by_distance(
-    tiles: list[Tile], check_coplanar: bool = False
-) -> list[Tile]:
+def sort_tiles_by_distance(tiles: list[Tile]) -> list[Tile]:
     """Sort a list of tiles by distance from the origin."""
-    # Check if the tiles are coplanar on the XY plane
-    if check_coplanar and not check_tiles_coplanar(tiles):
-        raise ValueError("Tiles are not coplanar")
-
     min_point = _min_point(tiles)
     return sorted(tiles, key=lambda x: (x.top_l - min_point).lengthXY())
 
 
-def remove_tiles_offset(tiles: list[Tile]) -> list[Tile]:
-    """Remove the offset from a list of tiles."""
+def remove_tiles_offset_xy(tiles: list[Tile]) -> list[Tile]:
+    """Remove the offset from a list of tiles in the XY dimensions."""
     min_point = _min_point(tiles)
     offset_vector = Vector(-min_point.x, -min_point.y, z=0, c=0, t=0)
     return [tile.move_by(vec=offset_vector) for tile in tiles]
+
+
+def remove_tiles_offset_zt(tiles: list[Tile]) -> list[Tile]:
+    """Remove the offset from a list of tiles in the Z and T dimensions."""
+    return [
+        tile.move_by(vec=Vector(x=0, y=0, z=-tile.top_l.z, t=-tile.top_l.t))
+        for tile in tiles
+    ]
 
 
 def tiles_to_pixel_space(tiles: list[Tile]) -> list[Tile]:
@@ -265,6 +274,9 @@ def standard_stitching_pipe(
     invert_y: bool = False,
 ) -> list[Tile]:
     """Standard stitching pipe for a list of tiles."""
+    # The standard stitching pipe will is implemented for
+    # coplanar tiles only.
+    check_tiles_coplanar(tiles)
     tiles = copy.deepcopy(tiles)
     if swap_xy:
         tiles = swap_xy_tiles(tiles)
@@ -277,7 +289,8 @@ def standard_stitching_pipe(
         tiles = reset_tiles_origin(tiles)
 
     tiles = sort_tiles_by_distance(tiles)
-    tiles = remove_tiles_offset(tiles)
+    tiles = remove_tiles_offset_xy(tiles)
+    tiles = remove_tiles_offset_zt(tiles)
     tiles, _mode = resolve_tiles_overlap(tiles, mode=mode)
     tiles = tiles_to_pixel_space(tiles)
     if _mode == "grid":

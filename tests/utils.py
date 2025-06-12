@@ -26,6 +26,8 @@ def generate_grid_tiles(
     invert_x=False,
     invert_y=False,
     swap_xy=False,
+    z_offset: int | float = 0,
+    t_offset: int = 0,
 ) -> list[Tile]:
     length_y = tile_shape[3] * pixel_size_xy
     length_x = tile_shape[4] * pixel_size_xy
@@ -49,7 +51,7 @@ def generate_grid_tiles(
                 x, y = y, x
 
             tile = Tile(
-                top_l=Point(x=x, y=y),
+                top_l=Point(x=x, y=y, z=z_offset, t=t_offset),
                 diag=Vector(x=length_x, y=length_y, z=1, t=1, c=1),
                 pixel_size=PixelSize(x=pixel_size_xy, y=pixel_size_xy, z=1),
                 data_loader=DummyLoader(tile_shape),
@@ -60,7 +62,13 @@ def generate_grid_tiles(
 
 
 def generate_tiled_image(
-    plate_name: str, tiled_image_name: str, row: str, column: int, acquisition_id: int
+    plate_name: str,
+    tiled_image_name: str,
+    row: str,
+    column: int,
+    acquisition_id: int,
+    z_offset: int | float = 0,
+    t_offset: int = 0,
 ) -> TiledImage:
     path_builder = PlatePathBuilder(
         plate_name=plate_name,
@@ -76,7 +84,9 @@ def generate_tiled_image(
         attributes={"cell_line": "cell_line_1"},
     )
 
-    tiles = generate_grid_tiles(overlap=0.9, tile_shape=(1, 1, 1, 11, 10))
+    tiles = generate_grid_tiles(
+        overlap=0.9, tile_shape=(1, 1, 1, 11, 10), z_offset=z_offset, t_offset=t_offset
+    )
     for tile in tiles:
         tiled_image.add_tile(tile)
     return tiled_image
