@@ -68,6 +68,7 @@ def test_write_image(tmp_path):
 
 
 def test_write_image_with_rounding_errors(tmp_path):
+    """Test if the shape can fix rounding errors in the pixel size/position."""
     plate_path = tmp_path / "test_write_images"
     path_builder = PlatePathBuilder(
         plate_name="plate_1",
