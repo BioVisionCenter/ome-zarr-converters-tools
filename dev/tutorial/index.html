@@ -1495,7 +1495,9 @@ agg_tiles_meta</div>
     <span class="n">bottom_right</span> <span class="o">=</span> <span class="n">Point</span><span class="p">(</span>
         <span class="n">x</span><span class="o">=</span><span class="n">pos_x</span> <span class="o">+</span> <span class="n">size_x</span><span class="p">,</span>
         <span class="n">y</span><span class="o">=</span><span class="n">pos_y</span> <span class="o">+</span> <span class="n">size_y</span><span class="p">,</span>
-        <span class="n">t</span><span class="o">=</span><span class="p">(</span><span class="n">max_t</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">pixel_size</span><span class="o">.</span><span class="n">t</span><span class="p">,</span>  <span class="c1"># +1 because we want to include the last pixel</span>
+        <span class="n">t</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">max_t</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">pixel_size</span><span class="o">.</span><span class="n">t</span>
+        <span class="p">),</span>  <span class="c1"># +1 because we want to include the last pixel</span>
         <span class="n">z</span><span class="o">=</span><span class="p">(</span><span class="n">max_z</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">pixel_size</span><span class="o">.</span><span class="n">z</span><span class="p">,</span>  <span class="c1"># +1 because we want to include the last pixel</span>
         <span class="n">c</span><span class="o">=</span><span class="n">max_c</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
     <span class="p">)</span>
@@ -1507,7 +1509,6 @@ agg_tiles_meta</div>
         <span class="n">x_micrometer_original</span><span class="o">=</span><span class="n">pos_x</span><span class="p">,</span>
         <span class="n">y_micrometer_original</span><span class="o">=</span><span class="n">pos_y</span><span class="p">,</span>
         <span class="n">z_micrometer_original</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-        <span class="n">t_original</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1"># Create a loader object for the tile</span>
@@ -1559,7 +1560,9 @@ for tile in agg_tiles_meta.itertuples():
     bottom_right = Point(
         x=pos_x + size_x,
         y=pos_y + size_y,
-        t=(max_t + 1) * pixel_size.t,  # +1 because we want to include the last pixel
+        t=int(
+            (max_t + 1) * pixel_size.t
+        ),  # +1 because we want to include the last pixel
         z=(max_z + 1) * pixel_size.z,  # +1 because we want to include the last pixel
         c=max_c + 1,
     )
@@ -1571,7 +1574,6 @@ for tile in agg_tiles_meta.itertuples():
         x_micrometer_original=pos_x,
         y_micrometer_original=pos_y,
         z_micrometer_original=0,
-        t_original=0,
     )
 
     # Create a loader object for the tile
@@ -1730,7 +1732,7 @@ for task in parallelization_list:
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Running task: {'zarr_url': 'test_zarr/hiPSC_Tiny.zarr/B/3/0', 'init_args': {'tiled_image_pickled_path': 'test_zarr/_tmp_converter_dir/c7747f9d-0333-49ce-8215-c381740bc9eb.pkl', 'overwrite': True, 'advanced_compute_options': {'num_levels': 5, 'tiling_mode': 'auto', 'swap_xy': False, 'invert_x': False, 'invert_y': False, 'max_xy_chunk': 4096, 'z_chunk': 10, 'c_chunk': 1, 't_chunk': 1}}}
+<pre>Running task: {'zarr_url': 'test_zarr/hiPSC_Tiny.zarr/B/3/0', 'init_args': {'tiled_image_pickled_path': 'test_zarr/_tmp_converter_dir/b0d5cddf-ceaa-4d56-a8b8-e5dc1d0da54c.pkl', 'overwrite': True, 'advanced_compute_options': {'num_levels': 5, 'tiling_mode': 'auto', 'swap_xy': False, 'invert_x': False, 'invert_y': False, 'max_xy_chunk': 4096, 'z_chunk': 10, 'c_chunk': 1, 't_chunk': 1}}}
 </pre>
 </div>
 </div>
@@ -1834,6 +1836,33 @@ container</div>
 </div>
 </div>
 </div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=18">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="CodeMirror cm-s-jupyter">
+<div class="zeroclipboard-container">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-11">
+<div>
+<span class="notice" hidden="">Copied!</span>
+<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
+<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+</clipboard-copy>
+</div>
+<div class="highlight-ipynb hl-python"><pre><span></span>
+</pre></div>
+<div class="clipboard-copy-txt" id="cell-11"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
 </div>
 </div> <!-- jp-Notebook -->
 </div> <!-- jupyter-wrapper -->
@@ -1864,7 +1893,7 @@ container</div>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 26, 2025 16:35:58 UTC">May 26, 2025</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 12, 2025 11:21:04 UTC">June 12, 2025</span>
   </span>
 
     
