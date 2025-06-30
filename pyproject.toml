@@ -15,7 +15,7 @@ sources = ["src"]
 
 # https://peps.python.org/pep-0621/
 [project]
-name = "fractal-converters-tools"
+name = "ome-zarr-converters-tools"
 dynamic = ["version"]
 description = "Tooling to build ome-zarr HCS plate converters"
 readme = "README.md"
@@ -70,17 +70,17 @@ docs = [
 
 
 [project.urls]
-homepage = "https://github.com/fractal-analytics-platform/fractal-converters-tools"
-repository = "https://github.com/fractal-analytics-platform/fractal-converters-tools"
+homepage = "https://github.com/BioVisionCenter/ome-zarr-converters-tools"
+repository = "https://github.com/BioVisionCenter/ome-zarr-converters-tools"
 
 # Entry points
 # https://peps.python.org/pep-0621/#entry-points
 # same as console_scripts entry point
 # [project.scripts]
-# fractal-converters-tools-cli = "fractal_converters_tools:main_cli"
+# ome-zarr-converters-tools-cli = "ome_zarr_converters_tools:main_cli"
 
 # [project.entry-points."some.group"]
-# tomatoes = "fractal_converters_tools:main_tomatoes"
+# tomatoes = "ome_zarr_converters_tools:main_tomatoes"
 
 # https://docs.astral.sh/ruff
 [tool.ruff]
@@ -166,7 +166,7 @@ exclude_lines = [
 ]
 
 [tool.coverage.run]
-source = ["fractal_converters_tools"]
+source = ["ome_zarr_converters_tools"]
 
 # https://github.com/mgedmin/check-manifest#configuration
 # add files that you want check-manifest to explicitly ignore here
@@ -179,7 +179,7 @@ channels = ["conda-forge"]
 platforms = ["osx-arm64", "linux-64"]
 
 [tool.pixi.pypi-dependencies]
-fractal-converters-tools = { path = ".", editable = true }
+ome-zarr-converters-tools = { path = ".", editable = true }
 
 [tool.pixi.environments]
 default = { solve-group = "default" }

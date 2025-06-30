@@ -4,12 +4,12 @@ from pathlib import Path
 import pytest
 from utils import generate_tiled_image
 
-from fractal_converters_tools._task_common_models import (
+from ome_zarr_converters_tools._task_common_models import (
     AdvancedComputeOptions,
     ConvertParallelInitArgs,
 )
-from fractal_converters_tools._task_init_tools import build_parallelization_list
-from fractal_converters_tools._tiled_image import TiledImage
+from ome_zarr_converters_tools._task_init_tools import build_parallelization_list
+from ome_zarr_converters_tools._tiled_image import TiledImage
 
 
 @pytest.mark.parametrize(

@@ -5,12 +5,12 @@ from typing import Literal
 
 import numpy as np
 
-from fractal_converters_tools._grid_utils import (
+from ome_zarr_converters_tools._grid_utils import (
     GridSetup,
     _find_grid_size,
     check_if_regular_grid,
 )
-from fractal_converters_tools._tile import Point, Tile, TileSpace, Vector
+from ome_zarr_converters_tools._tile import Point, Tile, TileSpace, Vector
 
 
 def check_tiles_coplanar(tiles: list[Tile]) -> None:

@@ -7,8 +7,8 @@ from pathlib import Path
 from ngio import OmeZarrContainer, PixelSize, RoiPixels, create_empty_ome_zarr
 from ngio.tables import RoiTable
 
-from fractal_converters_tools._tile import Tile
-from fractal_converters_tools._tiled_image import TiledImage
+from ome_zarr_converters_tools._tile import Tile
+from ome_zarr_converters_tools._tiled_image import TiledImage
 
 
 def _find_shape(tiles: list[Tile]) -> tuple[int, int, int, int, int]:

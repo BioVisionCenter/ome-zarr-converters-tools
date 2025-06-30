@@ -1,7 +1,7 @@
 import numpy as np
 from ngio import PixelSize
 
-from fractal_converters_tools._tile import Point, Tile, Vector
+from ome_zarr_converters_tools._tile import Point, Tile, Vector
 
 
 def test_tile():

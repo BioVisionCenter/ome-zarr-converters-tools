@@ -1,4 +1,4 @@
-"""Shared models for the fractal_converters_tools tasks."""
+"""Shared models for the ome_zarr_converters_tools tasks."""
 
 from typing import Literal
 
