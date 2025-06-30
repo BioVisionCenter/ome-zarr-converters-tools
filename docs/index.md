@@ -1,6 +1,6 @@
-# Welcome to Fractal Converters Tools
+# Welcome to OME-Zarr Converters Tools
 
-Fractal Converters Tools is a Python package that provides tooling for building OME-Zarr converters for the Fractal platform.
+OME-Zarr Converters Tools is a Python package that provides tooling for building OME-Zarr converters.
 
 It includes three main components:
 
@@ -11,7 +11,7 @@ It includes three main components:
 
 In general a single microscopy image is not acquired in a single big array in a single file, but rather in multiple smaller tiles. How atomic these tiles are depends on the specific microscope and the acquisition settings.
 
-To make building converters easier, Fractal Converters Tools provides an abstraction layer that allows you to map these on-disk raw data to an Image object which we call `Tile`.
+To make building converters easier, OME-Zarr Converters Tools provides an abstraction layer that allows you to map these on-disk raw data to an Image object which we call `Tile`.
 
 Moreover, usually a single microscopy image is not composed of a single tile, but rather multiple tiles that are stitched together to form a complete image. We call these objects `TiledImage`.
 
@@ -37,11 +37,11 @@ flowchart LR
     D -->|Many...| E2[Compute ...]
 ```
 
-Additional Fractal Converters Tools supports high-content screening HCS applications. In the context of HCS it is common to have multiple images that are related to each other in a single plate collection. Plates are standardized in OME-Zarr and Fractal Converters Tools provides the necessary tools to correctly place the images in a plate collection.
+Additional OME-Zarr Converters Tools supports high-content screening HCS applications. In the context of HCS it is common to have multiple images that are related to each other in a single plate collection. Plates are standardized in OME-Zarr and OME-Zarr Converters Tools provides the necessary tools to correctly place the images in a plate collection.
 
 ## Installation
 
-To get started with Fractal Converters Tools, you can install it via pip:
+To get started with OME-Zarr Converters Tools, you can install it via pip:
 
 ```bash
 pip install ome-zarr-converters-tools
