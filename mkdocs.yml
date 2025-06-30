@@ -1,4 +1,4 @@
-site_name: "Fractal Converters Tools"
+site_name: "OME-Zarr Converters Tools"
 site_url: "https://github.com/BioVisionCenter/ome-zarr-converters-tools"
 site_description: "A Python library for building OME-Zarr converters."
 repo_name: "ome-zarr-converters-tools"
@@ -46,7 +46,7 @@ extra:
   social:
     - icon: fontawesome/brands/github
       link: "https://github.com/BioVisionCenter/ome-zarr-converters-tools"
-      name: Fractal Converters Tools on GitHub
+      name: OME-Zarr Converters Tools on GitHub
 
 plugins: 
   - search
@@ -88,6 +88,6 @@ markdown_extensions:
           format: !!python/name:pymdownx.superfences.fence_code_format
 
 nav:
-  - "Fractal Converters Tools": index.md
+  - "OME-Zarr Converters Tools": index.md
   - "Tutorials": tutorial.ipynb
   - "API Reference": api.md

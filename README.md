@@ -6,7 +6,7 @@
 [![CI](https://github.com/BioVisionCenter/ome-zarr-converters-tools/actions/workflows/ci.yml/badge.svg)](https://github.com/BioVisionCenter/ome-zarr-converters-tools/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/BioVisionCenter/ome-zarr-converters-tools/branch/main/graph/badge.svg)](https://codecov.io/gh/BioVisionCenter/ome-zarr-converters-tools)
 
-Fractal Converters Tools is a Python package that provides tooling for building OME-Zarr converters for the Fractal platform.
+OME-Zarr Converters Tools is a Python package that provides tooling for building OME-Zarr converters for the Fractal platform.
 
 It includes three main components:
 
@@ -15,7 +15,7 @@ It includes three main components:
 
 ## Getting Started
 
-To get started with Fractal Converters Tools, you can install it via pip:
+To get started with OME-Zarr Converters Tools, you can install it via pip:
 
 ```bash
 pip install ome-zarr-converters-tools
@@ -23,6 +23,6 @@ pip install ome-zarr-converters-tools
 
 ## Documentation
 
-For detailed documentation on how to use Fractal Converters Tools, please refer to the [official documentation](https://BioVisionCenter.github.io/ome-zarr-converters-tools/).
+For detailed documentation on how to use OME-Zarr Converters Tools, please refer to the [official documentation](https://BioVisionCenter.github.io/ome-zarr-converters-tools/).
 
 We also provide a minimal step-by-step guide to how to create a converter. You can find it in the [tutorial](https://BioVisionCenter.github.io/ome-zarr-converters-tools/stable/tutorial/) section of the documentation.
