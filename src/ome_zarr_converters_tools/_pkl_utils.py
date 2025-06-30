@@ -7,7 +7,7 @@ import time
 from pathlib import Path
 from uuid import uuid4
 
-from fractal_converters_tools._tiled_image import TiledImage
+from ome_zarr_converters_tools._tiled_image import TiledImage
 
 logger = logging.getLogger(__name__)
 

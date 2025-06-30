@@ -2,12 +2,12 @@
 
 from pathlib import Path
 
-from fractal_converters_tools._pkl_utils import create_pkl, remove_pkl_dir
-from fractal_converters_tools._task_common_models import (
+from ome_zarr_converters_tools._pkl_utils import create_pkl, remove_pkl_dir
+from ome_zarr_converters_tools._task_common_models import (
     AdvancedComputeOptions,
     ConvertParallelInitArgs,
 )
-from fractal_converters_tools._tiled_image import TiledImage
+from ome_zarr_converters_tools._tiled_image import TiledImage
 
 
 def build_parallelization_list(

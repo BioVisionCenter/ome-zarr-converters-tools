@@ -10,9 +10,9 @@ from utils import (
     generate_tiled_image,
 )
 
-from fractal_converters_tools import Point, Tile
-from fractal_converters_tools._omezarr_image_writers import write_tiled_image
-from fractal_converters_tools._stitching import standard_stitching_pipe
+from ome_zarr_converters_tools import Point, Tile
+from ome_zarr_converters_tools._omezarr_image_writers import write_tiled_image
+from ome_zarr_converters_tools._stitching import standard_stitching_pipe
 
 
 def test_write_image(tmp_path):

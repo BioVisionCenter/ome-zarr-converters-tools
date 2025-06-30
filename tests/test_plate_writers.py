@@ -4,7 +4,7 @@ import pytest
 from ngio import open_ome_zarr_plate
 from utils import generate_tiled_images
 
-from fractal_converters_tools._omezarr_plate_writers import initiate_ome_zarr_plates
+from ome_zarr_converters_tools._omezarr_plate_writers import initiate_ome_zarr_plates
 
 
 def test_init_plate(tmp_path):

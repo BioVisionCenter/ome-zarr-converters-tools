@@ -3,7 +3,7 @@ import copy
 import pytest
 from utils import generate_grid_tiles
 
-from fractal_converters_tools._stitching import standard_stitching_pipe
+from ome_zarr_converters_tools._stitching import standard_stitching_pipe
 
 
 @pytest.mark.parametrize("overalap", [0.1, 0.5, 0.9])

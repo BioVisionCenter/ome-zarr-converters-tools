@@ -6,7 +6,7 @@ author_name: Lorenzo Cerrone
 git_versioning: true
 github_username: fractal-analytics-platform
 mode: customize
-module_name: fractal_converters_tools
+module_name: ome_zarr_converters_tools
 project_license: BSD-3-Clause
 project_name: fractal-converters-tools
 project_short_description: Tooling to build ome-zarr HCS plate converters
