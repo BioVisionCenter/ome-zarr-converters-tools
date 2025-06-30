@@ -19,7 +19,7 @@ from ome_zarr_converters_tools._tiled_image import (
 )
 
 try:
-    __version__ = version("fractal-converters-tools")
+    __version__ = version("ome-zarr-converters-tools")
 except PackageNotFoundError:
     __version__ = "uninstalled"
 __author__ = "Lorenzo Cerrone"

@@ -1,10 +1,10 @@
-# fractal-converters-tools
+# ome-zarr-converters-tools
 
-[![License](https://img.shields.io/pypi/l/fractal-converters-tools.svg?color=green)](https://github.com/fractal-analytics-platform/fractal-converters-tools/raw/main/LICENSE)
-[![PyPI](https://img.shields.io/pypi/v/fractal-converters-tools.svg?color=green)](https://pypi.org/project/fractal-converters-tools)
-[![Python Version](https://img.shields.io/pypi/pyversions/fractal-converters-tools.svg?color=green)](https://python.org)
-[![CI](https://github.com/fractal-analytics-platform/fractal-converters-tools/actions/workflows/ci.yml/badge.svg)](https://github.com/fractal-analytics-platform/fractal-converters-tools/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/fractal-analytics-platform/fractal-converters-tools/branch/main/graph/badge.svg)](https://codecov.io/gh/fractal-analytics-platform/fractal-converters-tools)
+[![License](https://img.shields.io/pypi/l/ome-zarr-converters-tools.svg?color=green)](https://github.com/BioVisionCenter/ome-zarr-converters-tools/raw/main/LICENSE)
+[![PyPI](https://img.shields.io/pypi/v/ome-zarr-converters-tools.svg?color=green)](https://pypi.org/project/ome-zarr-converters-tools)
+[![Python Version](https://img.shields.io/pypi/pyversions/ome-zarr-converters-tools.svg?color=green)](https://python.org)
+[![CI](https://github.com/BioVisionCenter/ome-zarr-converters-tools/actions/workflows/ci.yml/badge.svg)](https://github.com/BioVisionCenter/ome-zarr-converters-tools/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/BioVisionCenter/ome-zarr-converters-tools/branch/main/graph/badge.svg)](https://codecov.io/gh/BioVisionCenter/ome-zarr-converters-tools)
 
 Fractal Converters Tools is a Python package that provides tooling for building OME-Zarr converters for the Fractal platform.
 
@@ -18,11 +18,11 @@ It includes three main components:
 To get started with Fractal Converters Tools, you can install it via pip:
 
 ```bash
-pip install fractal-converters-tools
+pip install ome-zarr-converters-tools
 ```
 
 ## Documentation
 
-For detailed documentation on how to use Fractal Converters Tools, please refer to the [official documentation](https://fractal-analytics-platform.github.io/fractal-converters-tools/).
+For detailed documentation on how to use Fractal Converters Tools, please refer to the [official documentation](https://BioVisionCenter.github.io/ome-zarr-converters-tools/).
 
-We also provide a minimal step-by-step guide to how to create a converter. You can find it in the [tutorial](https://fractal-analytics-platform.github.io/fractal-converters-tools/stable/tutorial/) section of the documentation.
+We also provide a minimal step-by-step guide to how to create a converter. You can find it in the [tutorial](https://BioVisionCenter.github.io/ome-zarr-converters-tools/stable/tutorial/) section of the documentation.

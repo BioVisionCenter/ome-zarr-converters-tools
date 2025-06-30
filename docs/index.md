@@ -44,5 +44,5 @@ Additional Fractal Converters Tools supports high-content screening HCS applicat
 To get started with Fractal Converters Tools, you can install it via pip:
 
 ```bash
-pip install fractal-converters-tools
+pip install ome-zarr-converters-tools
 ```

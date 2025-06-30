@@ -1,4 +1,4 @@
-* fractal-converters-tools version:
+* ome-zarr-converters-tools version:
 * Python version:
 * Operating System:
 
