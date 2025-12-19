@@ -2,6 +2,7 @@ import pytest
 
 pytest.skip(allow_module_level=True)
 
+
 @pytest.fixture(autouse=True)
 def set_env_vars(monkeypatch):
     # Set the number of retries for the test to 1
