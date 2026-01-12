@@ -94,6 +94,7 @@ def build_parallelization_list(
                     store_url=store.root.as_uri(),
                     json_file_name=json_name,
                     converter_options=context.converter_options,
+                    acquisition_details=context.acquisition_details,
                     overwrite_mode=context.overwrite_mode,
                 ).model_dump(),
             }
