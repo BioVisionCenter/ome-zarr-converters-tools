@@ -1,16 +1,21 @@
 """Functions to build TiledImage models from Tile models."""
 
+from zarr.storage import LocalStore
+
 from ome_zarr_converters_tools.collection_setup import (
     SetupCollectionStep,
     setup_collection,
 )
+from ome_zarr_converters_tools.collection_setup._store_utils import ConverterStorageType
 from ome_zarr_converters_tools.filters import FilterStep, apply_filter_pipeline
 from ome_zarr_converters_tools.models import (
     BaseTile,
     ContextModel,
+    ConvertParallelInitArgs,
     TiledImage,
 )
 from ome_zarr_converters_tools.utils import tiled_image_from_tiles
+from ome_zarr_converters_tools.utils._json_utils import cleanup_if_exists, dump_to_json
 from ome_zarr_converters_tools.validators import ValidatorStep, apply_validator_pipeline
 
 
@@ -54,51 +59,43 @@ def tiles_preprocessing_pipeline(
     return tiled_images
 
 
-def remove_pkl_dir(pickle_dir):
-    pass
-
-
-def create_pkl(pickle_dir, tiled_image):
-    pass
-
-
 def build_parallelization_list(
+    store: ConverterStorageType,
     tiled_images: list[TiledImage],
-    tmp_dir_name: str = "_tmp_converter_dir",
+    context: ContextModel,
+    tmp_path: str = "_tmp_json",
 ) -> list[dict]:
     """Build a list of dictionaries to parallelize the conversion.
 
     Args:
+        store (ConverterStorageType): The base store for the zarr data.
         tiled_images (list[TiledImage]): A list of tiled images objects to convert.
-        tmp_dir_name (str): The name of the temporary directory to store the
+        context (ContextModel): Full context model for the conversion.
+        tmp_path (str): The name of the temporary directory to store the
             pickled tiled images.
     """
+    if isinstance(store, LocalStore):
+        zarr_base = str(store.root)
+    else:
+        raise NotImplementedError(
+            "Parallelization list building is only implemented for LocalStore."
+        )
+    cleanup_if_exists(store, tmp_path=tmp_path)
     parallelization_list = []
     for image in tiled_images:
-        zarr_url = str(image.path)
-    """
-    if isinstance(zarr_dir, str):
-        zarr_dir = Path(zarr_dir)
-
-    pickle_dir = zarr_dir / tmp_dir_name
-
-    if pickle_dir.exists():
-        # Reinitialize the directory
-        remove_pkl_dir(pickle_dir)
-
-    for tile in tiled_images:
-        tile_pickle_path = create_pkl(pickle_dir=pickle_dir, tiled_image=tile)
-        zarr_url = str(zarr_dir / tile.path)
+        json_name = dump_to_json(store, image, tmp_path=tmp_path)
+        # This is not used directly but kept for api consistency
+        zarr_url = f"{zarr_base}/{image.path}"
         parallelization_list.append(
             {
                 "zarr_url": zarr_url,
                 "init_args": ConvertParallelInitArgs(
-                    tiled_image_pickled_path=str(tile_pickle_path),
-                    overwrite=overwrite,
-                    advanced_compute_options=advanced_compute_options,
+                    store_type="local",  # fsspec not yet supported
+                    store_url=store.root.as_uri(),
+                    json_file_name=json_name,
+                    converter_options=context.converter_options,
+                    overwrite_mode=context.overwrite_mode,
                 ).model_dump(),
             }
         )
-    return parallelization_list
-    """
     return parallelization_list

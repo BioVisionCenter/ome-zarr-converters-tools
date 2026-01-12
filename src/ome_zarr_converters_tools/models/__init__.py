@@ -14,6 +14,7 @@ from ome_zarr_converters_tools.models._collection import (
     ImageInPlate,
     SingleImage,
 )
+from ome_zarr_converters_tools.models._fractal import ConvertParallelInitArgs
 from ome_zarr_converters_tools.models._loader import (
     DefaultImageLoader,
     ImageLoaderInterfaceType,
@@ -28,6 +29,7 @@ __all__ = [
     "BaseTile",
     "CollectionInterfaceType",
     "ContextModel",
+    "ConvertParallelInitArgs",
     "ConverterOptions",
     "ConverterOptions",
     "DefaultImageLoader",
