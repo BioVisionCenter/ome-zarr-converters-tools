@@ -9,7 +9,10 @@ from pydantic import (
     Field,
     field_validator,
 )
-from zarr.abc.store import Store
+from zarr.storage import FsspecStore, LocalStore
+
+ConverterStorageType = LocalStore | FsspecStore
+
 
 CANONICAL_AXES_TYPE = Literal["t", "c", "z", "y", "x"]
 canonical_axes: list[CANONICAL_AXES_TYPE] = ["t", "c", "z", "y", "x"]
@@ -108,7 +111,7 @@ class ContextModel(BaseModel):
     process, including acquisition details and converter options.
     """
 
-    store: Store
+    store: ConverterStorageType
     acquisition_details: AcquisitionDetails
     converter_options: ConverterOptions
     overwrite_mode: OVERWRITE_MODES = "no_overwrite"

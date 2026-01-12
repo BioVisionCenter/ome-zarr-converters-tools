@@ -3,16 +3,16 @@
 from typing import Protocol, TypedDict
 
 from ngio import DefaultNgffVersion, NgffVersions
-from zarr.abc.store import Store
 
 from ome_zarr_converters_tools.collection_setup._plate_setup import setup_plates
+from ome_zarr_converters_tools.collection_setup._store_utils import ConverterStorageType
 from ome_zarr_converters_tools.models._acquisition import OVERWRITE_MODES
 from ome_zarr_converters_tools.models._tile_region import TiledImage
 
 
 class SetupCollectionStep(TypedDict):
     name: str
-    store: Store
+    store: ConverterStorageType
     ngff_version: NgffVersions
     overwrite_mode: OVERWRITE_MODES
 
@@ -28,7 +28,7 @@ class SetupCollectionFunction(Protocol):
 
     def __call__(
         self,
-        store: Store,
+        store: ConverterStorageType,
         tiled_images: list[TiledImage],
         ngff_version: NgffVersions = DefaultNgffVersion,
         overwrite_mode: OVERWRITE_MODES = "no_overwrite",

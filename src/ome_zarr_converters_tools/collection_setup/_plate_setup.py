@@ -4,8 +4,11 @@ import zarr
 from ngio import DefaultNgffVersion, NgffVersions
 from ngio.hcs import create_empty_plate, open_ome_zarr_plate
 from ngio.hcs._plate import ImageInWellPath
-from zarr.abc.store import Store
 
+from ome_zarr_converters_tools.collection_setup._store_utils import (
+    ConverterStorageType,
+    concat_storage,
+)
 from ome_zarr_converters_tools.models._acquisition import (
     OVERWRITE_MODES,
 )
@@ -16,7 +19,7 @@ from ome_zarr_converters_tools.models._tile_region import TiledImage
 
 
 def setup_plates(
-    store: Store,
+    store: ConverterStorageType,
     tiled_images: list[TiledImage],
     ngff_version: NgffVersions = DefaultNgffVersion,
     overwrite_mode: OVERWRITE_MODES = "no_overwrite",
@@ -44,9 +47,9 @@ def setup_plates(
             mode = "w"
         else:  # extend
             mode = "a"
-        group = zarr.open_group(
-            store, mode=mode, path=plate_path, zarr_format=zarr_format
-        )
+
+        store = concat_storage(store, plate_path)
+        group = zarr.open_group(store, mode=mode, zarr_format=zarr_format)
         try:
             # This can only succeed in "extend" mode if the group already exists
             plate = open_ome_zarr_plate(group, cache=True)

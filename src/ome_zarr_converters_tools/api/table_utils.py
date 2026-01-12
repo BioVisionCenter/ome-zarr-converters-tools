@@ -5,12 +5,12 @@ from typing import Any
 
 import pandas as pd
 import toml
-from zarr.abc.store import Store
 
 from ome_zarr_converters_tools.api.tiles_preprocessing_pipeline import (
     tiles_preprocessing_pipeline,
 )
 from ome_zarr_converters_tools.collection_setup import (
+    ConverterStorageType,
     SetupCollectionStep,
 )
 from ome_zarr_converters_tools.filters import FilterStep
@@ -141,7 +141,7 @@ def hcs_images_from_csv(
     plate_name: str,
     acquisition: int,
     converter_options: ConverterOptions,
-    store: Store,
+    store: ConverterStorageType,
     table_name: str = "tiles.csv",
     acquisition_details_name: str = "acquisition_details.toml",
     filters: list[FilterStep] | None = None,
