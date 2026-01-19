@@ -19,6 +19,7 @@ from ome_zarr_converters_tools.models._loader import (
 
 
 def safe_to_world(
+    *,
     start: float,
     spacing: float,
     coo_system: COO_TYPE,
@@ -140,7 +141,9 @@ class Tile(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfaceType]
             start = getattr(self, start_field)
             start_coo_system = getattr(self, f"{start_field}_coo", None)
             if start_coo_system is not None:
-                start = safe_to_world(start, spacing[ax], start_coo_system)
+                start = safe_to_world(
+                    start=start, spacing=spacing[ax], coo_system=start_coo_system
+                )
 
             if ax == "x" and self.flip_x:
                 start = -start
@@ -151,7 +154,9 @@ class Tile(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfaceType]
             length = getattr(self, length_field)
             length_coo_system = getattr(self, f"{length_field}_coo", None)
             if length_coo_system is not None:
-                length = safe_to_world(length, spacing[ax], length_coo_system)
+                length = safe_to_world(
+                    start=length, spacing=spacing[ax], coo_system=length_coo_system
+                )
             roi_slices[ax] = RoiSlice(start=start, length=length, axis_name=ax)
             if ax in ["x", "y", "z"]:
                 origins[f"{ax}_micrometer_original"] = start

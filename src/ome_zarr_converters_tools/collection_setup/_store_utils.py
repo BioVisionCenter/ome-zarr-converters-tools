@@ -4,6 +4,7 @@ ConverterStorageType = LocalStore | FsspecStore
 
 
 def concat_storage(
+    *,
     store: ConverterStorageType,
     path: str,
 ) -> ConverterStorageType:

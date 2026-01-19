@@ -2,9 +2,7 @@
 
 from typing import Any
 
-from ome_zarr_converters_tools.models._acquisition import (
-    ContextModel,
-)
+from ome_zarr_converters_tools.models._acquisition import ContextModel, TilingMode
 from ome_zarr_converters_tools.models._tile import Tile
 from ome_zarr_converters_tools.models._tile_region import (
     TiledImage,
@@ -27,7 +25,7 @@ def tiled_image_from_tiles(
         A list of TiledImage models created from the tiles.
 
     """
-    split_tiles = context.converter_options.tiling_mode == "no_tiling"
+    split_tiles = context.converter_options.tiling_mode == TilingMode.NO_TILING
     tiled_images = {}
 
     if len(tiles) == 0:

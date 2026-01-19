@@ -23,6 +23,7 @@ from ome_zarr_converters_tools.validators import ValidatorStep
 
 
 def _build_default_image_loader(
+    *,
     data: dict[str, Any],
 ) -> dict[str, Any]:
     """Build an image loader for a tile row dictionary."""
@@ -39,7 +40,7 @@ def _build_default_image_loader(
 
 
 def _build_plate_collection(
-    data: dict[str, Any], plate_name: str, acquisition: int
+    *, data: dict[str, Any], plate_name: str, acquisition: int
 ) -> dict[str, Any]:
     """Build an ImageInPlate collection for a tile row dictionary."""
     collection_data = {}
@@ -57,6 +58,7 @@ def _build_plate_collection(
 
 
 def _open_hcs_dir(
+    *,
     acquisition_path: Path,
     table_name: str = "tiles.csv",
     acquisition_details_name: str = "acquisition_details.toml",
@@ -85,6 +87,7 @@ def _open_hcs_dir(
 
 
 def hcs_images_from_dataframe(
+    *,
     tiles_table: pd.DataFrame,
     context: HCSContextModel,
     filters: list[FilterStep] | None = None,
@@ -103,9 +106,9 @@ def hcs_images_from_dataframe(
     tiles = []
     for _, row in tiles_table.iterrows():
         row_dict = row.to_dict()
-        row_dict = _build_default_image_loader(row_dict)
+        row_dict = _build_default_image_loader(data=row_dict)
         row_dict = _build_plate_collection(
-            row_dict,
+            data=row_dict,
             plate_name=context.plate_name,
             acquisition=context.acquisition_id,
         )
@@ -126,6 +129,7 @@ def hcs_images_from_dataframe(
 
 
 def hcs_images_from_csv(
+    *,
     acquisition_path: Path,
     plate_name: str,
     acquisition: int,

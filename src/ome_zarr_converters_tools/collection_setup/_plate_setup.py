@@ -46,8 +46,8 @@ def setup_plates(
         else:  # extend
             mode = "a"
 
-        store = concat_storage(store, plate_path)
-        group = zarr.open_group(store, mode=mode, zarr_format=zarr_format)
+        store = concat_storage(store=store, path=plate_path)
+        group = zarr.open_group(store=store, mode=mode, zarr_format=zarr_format)
         try:
             # This can only succeed in "extend" mode if the group already exists
             plate = open_ome_zarr_plate(group, cache=True)

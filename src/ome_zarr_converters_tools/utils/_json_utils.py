@@ -58,7 +58,7 @@ def _create_tmp_json_store(
     store: ConverterStorageType, dir_path: str
 ) -> ConverterStorageType:
     """Create a directory in the given store."""
-    json_store = concat_storage(store, dir_path)
+    json_store = concat_storage(store=store, path=dir_path)
     if isinstance(json_store, LocalStore):
         json_store.root.mkdir(parents=True, exist_ok=True)
         return json_store
@@ -125,7 +125,7 @@ def tiled_image_from_json(
     if num_retries < 1:
         raise ValueError("NUM_RETRIES must be greater than 0")
 
-    json_store = concat_storage(store, tmp_path)
+    json_store = concat_storage(store=store, path=tmp_path)
     if not isinstance(json_store, LocalStore):
         raise NotImplementedError(
             "JSON loading for non-LocalStore is not implemented yet."
@@ -165,7 +165,7 @@ def remove_json(
         store (ConverterStorageType): The Zarr store where the json file is located.
         tmp_path (str): The temporary directory where the json file is stored.
     """
-    json_store = concat_storage(store, tmp_path)
+    json_store = concat_storage(store=store, path=tmp_path)
     try:
         if not isinstance(json_store, LocalStore):
             raise NotImplementedError(
@@ -195,7 +195,7 @@ def cleanup_if_exists(store: ConverterStorageType, tmp_path: str = "_tmp_json"):
         store (ConverterStorageType): The Zarr store where the json files are located.
         tmp_path (str): The temporary directory where the json files are stored.
     """
-    json_store = concat_storage(store, tmp_path)
+    json_store = concat_storage(store=store, path=tmp_path)
     try:
         if not isinstance(json_store, LocalStore):
             raise NotImplementedError(

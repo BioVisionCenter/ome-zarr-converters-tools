@@ -52,40 +52,6 @@ def tiled_image_creation_pipeline(
     return updates
 
 
-def retry_decorator(
-    func,
-    num_retries=3,
-    exceptions: tuple[type[Exception], ...] | None = None,
-    logger: logging.Logger | None = None,
-    on_retry_msg: str | None = None,
-    on_fail_msg: str | None = None,
-):
-    """Decorator to retry a function on FileNotFoundError."""
-    if exceptions is None:
-        # Match any exception
-        exceptions = (Exception,)
-
-    if on_retry_msg is None:
-        on_retry_msg = "Function failed, retrying..."
-    if on_fail_msg is None:
-        on_fail_msg = "Function failed after retries."
-
-    def wrapper(*args, **kwargs):
-        for t in range(num_retries):  # Retry up to num_retries times
-            try:
-                return func(*args, **kwargs)
-            except exceptions as e:
-                if logger:
-                    logger.error(str(e))
-                    logger.info(on_retry_msg)
-                sleep_time = 2 ** (t + 1)
-                time.sleep(sleep_time)
-        else:
-            raise Exception(on_fail_msg)
-
-    return wrapper
-
-
 def generic_compute_task(
     *,
     # Fractal parameters

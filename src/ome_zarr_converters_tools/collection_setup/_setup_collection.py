@@ -39,6 +39,7 @@ _collection_setup_registry: dict[str, SetupCollectionFunction] = {
 
 
 def add_collection_handler(
+    *,
     function: SetupCollectionFunction,
     collection_type: str | None = None,
     overwrite: bool = False,

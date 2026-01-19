@@ -48,6 +48,7 @@ _filter_registry: dict[str, FilterFunctionProtocol] = {
 
 
 def add_filter(
+    *,
     function: FilterFunctionProtocol,
     name: str | None = None,
     overwrite: bool = False,
@@ -68,7 +69,7 @@ def add_filter(
 
 
 def apply_filter_pipeline(
-    tiles: list[Tile], filters_config: list[FilterStep]
+    tiles: list[Tile], *, filters_config: list[FilterStep]
 ) -> list[Tile]:
     for step in filters_config:
         step_name = step.get("name")
