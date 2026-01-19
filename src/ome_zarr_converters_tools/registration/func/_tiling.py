@@ -1,4 +1,4 @@
-from ome_zarr_converters_tools.models._acquisition import TILING_MODES
+from ome_zarr_converters_tools.models._acquisition import TilingMode
 from ome_zarr_converters_tools.models._roi_utils import move_roi_by
 from ome_zarr_converters_tools.models._tile_region import TiledImage, TileSlice
 from ome_zarr_converters_tools.registration.func._snap_utils import (
@@ -37,15 +37,17 @@ def _auto_tiling(
 
 def _find_tiling(
     regions: dict[str, TileSlice],
-    tiling_mode: TILING_MODES,
+    tiling_mode: TilingMode,
 ) -> dict[str, dict[str, float]]:
-    if tiling_mode in ["inplace", "no_tiling"]:
+    if tiling_mode == TilingMode.INPLACE or tiling_mode == TilingMode.NO_TILING:
         return _no_tiling(regions)
-    if tiling_mode == "auto":
+    if tiling_mode in [TilingMode.INPLACE, TilingMode.NO_TILING]:
+        return _no_tiling(regions)
+    if tiling_mode == TilingMode.AUTO:
         return _auto_tiling(regions)
-    if tiling_mode == "snap_to_corners":
+    if tiling_mode == TilingMode.SNAP_TO_CORNERS:
         return _snap_to_corners_tiling(regions)
-    if tiling_mode == "snap_to_grid":
+    if tiling_mode == TilingMode.SNAP_TO_GRID:
         return _snap_to_grid_tiling(regions)
     raise ValueError(f"Tiling mode '{tiling_mode}' is not recognized.")
 
@@ -60,7 +62,7 @@ def _tile_regions(
 
 def apply_mosaic_tiling(
     tiled_image: TiledImage,
-    tiling_mode: TILING_MODES,
+    tiling_mode: TilingMode,
 ) -> TiledImage:
     """Tile all the TiledImages to the reference region of the first TiledImage.
 
