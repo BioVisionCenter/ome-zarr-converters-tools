@@ -1,6 +1,6 @@
 """Collection setup functions for OME-Zarr converters tools."""
 
-from typing import Protocol, TypedDict
+from typing import NamedTuple, Protocol
 
 from ngio import DefaultNgffVersion, NgffVersions
 
@@ -10,8 +10,10 @@ from ome_zarr_converters_tools.models._acquisition import OVERWRITE_MODES
 from ome_zarr_converters_tools.models._tile_region import TiledImage
 
 
-class SetupCollectionStep(TypedDict):
-    name: str
+class CollectionConfig(NamedTuple):
+    """Configuration for collection setup step."""
+
+    collection_type: str
     store: ConverterStorageType
     ngff_version: NgffVersions
     overwrite_mode: OVERWRITE_MODES
@@ -44,7 +46,7 @@ _collection_setup_registry: dict[str, SetupCollectionFunction] = {
 
 def add_collection_handler(
     function: SetupCollectionFunction,
-    name: str | None = None,
+    collection_type: str | None = None,
     overwrite: bool = False,
 ) -> None:
     """Register a new collection setup handler.
@@ -53,23 +55,25 @@ def add_collection_handler(
     collection structure and metadata in the Zarr group.
 
     Args:
-        name: Name of the collection setup handler. By convention,
-            the name of the CollectionInterfaceType,
-            e.g., 'SingleImage' or 'ImageInPlate'.
+        collection_type: Name of the collection setup handler. By convention,
+            the name of the CollectionInterfaceType, e.g., 'SingleImage'
+            or 'ImageInPlate'.
         function: Function that performs the collection setup step.
         overwrite: Whether to overwrite an existing collection setup step
             with the same name.
     """
-    if name is None:
-        name = function.__name__
-    if not overwrite and name in _collection_setup_registry:
-        raise ValueError(f"Collection setup handler '{name}' is already registered.")
-    _collection_setup_registry[name] = function
+    if collection_type is None:
+        collection_type = function.__name__
+    if not overwrite and collection_type in _collection_setup_registry:
+        raise ValueError(
+            f"Collection setup handler '{collection_type}' is already registered."
+        )
+    _collection_setup_registry[collection_type] = function
 
 
 def setup_collection(
     tiled_images: list[TiledImage],
-    setup_collection_step: SetupCollectionStep,
+    setup_collection_step: CollectionConfig,
 ) -> None:
     """Set up the collection in the Zarr group using the specified handler.
 
@@ -80,15 +84,16 @@ def setup_collection(
     Returns:
         The list of TiledImage after applying the collection setup handler.
     """
-    setup_function = _collection_setup_registry.get(setup_collection_step["name"])
+    collection_type = setup_collection_step.collection_type
+    setup_function = _collection_setup_registry.get(collection_type)
     if setup_function is None:
         raise ValueError(
-            f"Collection setup handler '{setup_collection_step['name']}' "
+            f"Collection setup handler '{setup_collection_step.collection_type}' "
             "is not registered."
         )
     return setup_function(
         tiled_images=tiled_images,
-        store=setup_collection_step["store"],
-        ngff_version=setup_collection_step.get("ngff_version", DefaultNgffVersion),
-        overwrite_mode=setup_collection_step.get("overwrite_mode", "no_overwrite"),
+        store=setup_collection_step.store,
+        ngff_version=setup_collection_step.ngff_version,
+        overwrite_mode=setup_collection_step.overwrite_mode,
     )

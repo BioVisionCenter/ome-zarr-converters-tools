@@ -1,7 +1,7 @@
 """Collection setup functions for OME-Zarr converters tools."""
 
 from ome_zarr_converters_tools.collection_setup._setup_collection import (
-    SetupCollectionStep,
+    CollectionConfig,
     add_collection_handler,
     setup_collection,
 )
@@ -12,7 +12,7 @@ from ome_zarr_converters_tools.collection_setup._store_utils import (
 
 __all__ = [
     "ConverterStorageType",
-    "SetupCollectionStep",
+    "CollectionConfig",
     "add_collection_handler",
     "concat_storage",
     "setup_collection",

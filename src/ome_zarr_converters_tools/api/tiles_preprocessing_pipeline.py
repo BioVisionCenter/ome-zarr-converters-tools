@@ -8,6 +8,7 @@ from ome_zarr_converters_tools.models import (
     ContextModel,
     ConvertParallelInitArgs,
     Tile,
+    TiledImage,
     TiledImageWithContext,
 )
 from ome_zarr_converters_tools.utils import tiled_image_from_tiles
@@ -45,54 +46,24 @@ def tiles_preprocessing_pipeline(
         tiled_images = apply_validator_pipeline(
             tiled_images, validators_config=validators
         )
-    # Wrap each TiledImage with its context
     tiled_images = [
         TiledImageWithContext(tiled_image=ti, context=context) for ti in tiled_images
     ]
     return tiled_images
 
 
-def stup_ome_zarr_collection(
-    store: ConverterStorageType, tiled_image: list[TiledImageWithContext]
-) -> None:
-    """Set up an OME-Zarr collection in the given store.
-
-    Args:
-        store: The Zarr store where the collection will be set up.
-        tiled_image: A list of TiledImageWithContext objects to set up the
-            collection for.
-    """
-    # Currently a placeholder for potential future setup steps
-    from ome_zarr_converters_tools.collection_setup import (
-        SetupCollectionStep,
-        setup_collection,
-    )
-
-    step = SetupCollectionStep(
-        name="ImageInPlate",
-        store=store,
-        ngff_version=tiled_image[
-            0
-        ].context.converter_options.omezarr_options.ngff_version,
-        overwrite_mode=tiled_image[0].context.overwrite_mode,
-    )
-    setup_collection(
-        tiled_images=[ti.tiled_image for ti in tiled_image], setup_collection_step=step
-    )
-
-
 def build_parallelization_list(
     store: ConverterStorageType,
-    tiled_images: list[TiledImageWithContext],
+    tiled_images: list[TiledImage],
+    context: ContextModel,
     tmp_path: str = "_tmp_json",
 ) -> list[dict]:
     """Build a list of dictionaries to parallelize the conversion.
 
     Args:
         store (ConverterStorageType): The base store for the zarr data.
-        tiled_images (list[TiledImageWithContext]): A list of tiled images objects
-            to convert, since tiled images can come from different acquisitions,
-            each tiled image keeps its own context.
+        tiled_images (list[TiledImage]): A list of tiled images objects to convert.
+        context (ContextModel): Full context model for the conversion.
         tmp_path (str): The name of the temporary directory to store the
             pickled tiled images.
     """
@@ -104,7 +75,7 @@ def build_parallelization_list(
         )
     cleanup_if_exists(store, tmp_path=tmp_path)
     parallelization_list = []
-    for image, context in tiled_images:
+    for image in tiled_images:
         json_name = dump_to_json(store, image, tmp_path=tmp_path)
         # This is not used directly but kept for api consistency
         zarr_url = f"{zarr_base}/{image.path}"
