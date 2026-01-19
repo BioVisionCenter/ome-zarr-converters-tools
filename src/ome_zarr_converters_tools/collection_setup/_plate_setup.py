@@ -39,9 +39,9 @@ def setup_plates(
         plates[plate_path]["images"].append(image_in_well)
     for plate_path, plate_info in plates.items():
         zarr_format = 2 if ngff_version == "0.4" else 3
-        if overwrite_mode == "no_overwrite":
+        if overwrite_mode == OverwriteMode.NO_OVERWRITE:
             mode = "w-"
-        elif overwrite_mode == "overwrite":
+        elif overwrite_mode == OverwriteMode.OVERWRITE:
             mode = "w"
         else:  # extend
             mode = "a"
