@@ -1,22 +1,16 @@
 """Collection setup functions for OME-Zarr converters tools."""
 
-from typing import NamedTuple, Protocol
+from typing import Protocol
 
 from ngio import DefaultNgffVersion, NgffVersions
 
 from ome_zarr_converters_tools.collection_setup._plate_setup import setup_plates
 from ome_zarr_converters_tools.collection_setup._store_utils import ConverterStorageType
-from ome_zarr_converters_tools.models._acquisition import OVERWRITE_MODES
-from ome_zarr_converters_tools.models._tile_region import TiledImage
-
-
-class CollectionConfig(NamedTuple):
-    """Configuration for collection setup step."""
-
-    collection_type: str
-    store: ConverterStorageType
-    ngff_version: NgffVersions
-    overwrite_mode: OVERWRITE_MODES
+from ome_zarr_converters_tools.models._acquisition import OverwriteMode
+from ome_zarr_converters_tools.models._tile_region import (
+    TiledImage,
+    TiledImageWithContext,
+)
 
 
 class SetupCollectionFunction(Protocol):
@@ -33,7 +27,7 @@ class SetupCollectionFunction(Protocol):
         store: ConverterStorageType,
         tiled_images: list[TiledImage],
         ngff_version: NgffVersions = DefaultNgffVersion,
-        overwrite_mode: OVERWRITE_MODES = "no_overwrite",
+        overwrite_mode: OverwriteMode = OverwriteMode.NO_OVERWRITE,
     ) -> None:
         """Set up the collection in the Zarr store."""
         ...
@@ -71,29 +65,36 @@ def add_collection_handler(
     _collection_setup_registry[collection_type] = function
 
 
-def setup_collection(
-    tiled_images: list[TiledImage],
-    setup_collection_step: CollectionConfig,
+def setup_ome_zarr_collection(
+    *,
+    tiled_images: list[TiledImageWithContext],
+    collection_type: str,
+    store: ConverterStorageType,
+    ngff_version: NgffVersions = DefaultNgffVersion,
+    overwrite_mode: OverwriteMode = OverwriteMode.NO_OVERWRITE,
 ) -> None:
     """Set up the collection in the Zarr group using the specified handler.
 
     Args:
         tiled_images: List of TiledImage to set up the collection for.
-        setup_collection_step: Configuration for the collection setup step.
+        collection_type: Type of collection setup handler to use.
+        store: The Zarr store to set up the collection in.
+        ngff_version: NGFF version to use for the collection setup.
+        overwrite_mode: Overwrite mode to use for the collection setup.
 
     Returns:
         The list of TiledImage after applying the collection setup handler.
     """
-    collection_type = setup_collection_step.collection_type
+    collection_type = collection_type
     setup_function = _collection_setup_registry.get(collection_type)
     if setup_function is None:
         raise ValueError(
-            f"Collection setup handler '{setup_collection_step.collection_type}' "
-            "is not registered."
+            f"Collection setup handler '{collection_type}' is not registered."
         )
+    _tiled_images = [ti.tiled_image for ti in tiled_images]
     return setup_function(
-        tiled_images=tiled_images,
-        store=setup_collection_step.store,
-        ngff_version=setup_collection_step.ngff_version,
-        overwrite_mode=setup_collection_step.overwrite_mode,
+        tiled_images=_tiled_images,
+        store=store,
+        ngff_version=ngff_version,
+        overwrite_mode=overwrite_mode,
     )

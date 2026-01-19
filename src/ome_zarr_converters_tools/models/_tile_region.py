@@ -1,12 +1,13 @@
 """Models for defining regions to be converted into OME-Zarr format."""
 
-from typing import Any, Generic, Literal, NamedTuple, Self
+from typing import Any, Generic, NamedTuple, Self
 
 import numpy as np
 from ngio import PixelSize, Roi
 from pydantic import BaseModel, ConfigDict, Field
 
 from ome_zarr_converters_tools.models._acquisition import (
+    CANONICAL_AXES_TYPE,
     ContextModel,
 )
 from ome_zarr_converters_tools.models._collection import CollectionInterfaceType
@@ -19,9 +20,6 @@ from ome_zarr_converters_tools.models._roi_utils import (
     shape_from_rois,
 )
 from ome_zarr_converters_tools.models._tile import Tile
-
-CANONICAL_AXES_TYPE = Literal["t", "c", "z", "y", "x"]
-COO_TYPE = Literal["world", "pixel"]
 
 
 class TileSlice(BaseModel, Generic[ImageLoaderInterfaceType]):

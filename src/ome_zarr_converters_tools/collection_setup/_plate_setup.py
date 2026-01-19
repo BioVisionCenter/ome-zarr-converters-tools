@@ -9,9 +9,7 @@ from ome_zarr_converters_tools.collection_setup._store_utils import (
     ConverterStorageType,
     concat_storage,
 )
-from ome_zarr_converters_tools.models._acquisition import (
-    OVERWRITE_MODES,
-)
+from ome_zarr_converters_tools.models._acquisition import OverwriteMode
 from ome_zarr_converters_tools.models._collection import (
     ImageInPlate,
 )
@@ -22,7 +20,7 @@ def setup_plates(
     store: ConverterStorageType,
     tiled_images: list[TiledImage],
     ngff_version: NgffVersions = DefaultNgffVersion,
-    overwrite_mode: OVERWRITE_MODES = "no_overwrite",
+    overwrite_mode: OverwriteMode = OverwriteMode.NO_OVERWRITE,
 ) -> None:
     """Set up an ImageInPlate collection in the Zarr group."""
     assert isinstance(tiled_images[0].collection, ImageInPlate)

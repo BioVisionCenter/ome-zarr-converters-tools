@@ -9,9 +9,10 @@ from zarr.storage import LocalStore
 
 from ome_zarr_converters_tools.models import (
     CollectionInterfaceType,
-    ContextModel,
+    ConverterOptions,
     ConvertParallelInitArgs,
     ImageLoaderInterfaceType,
+    OverwriteMode,
     TiledImage,
 )
 from ome_zarr_converters_tools.registration import (
@@ -31,17 +32,22 @@ logger = logging.getLogger(__name__)
 
 
 def tiled_image_creation_pipeline(
+    *,
     base_store: NgioSupportedStore,
     tiled_image: TiledImage,
     registration_pipeline: list[RegistrationStep],
-    context: ContextModel,
+    converter_options: ConverterOptions,
+    overwrite_mode: OverwriteMode,
+    resource: Any | None = None,
 ) -> dict[str, Any]:
     """Write a TiledImage from a dictionary."""
     tiled_image = apply_registration_pipeline(tiled_image, registration_pipeline)
     updates = write_tiled_image_as_zarr(
         base_store=base_store,
         tiled_image=tiled_image,
-        context=context,
+        converter_options=converter_options,
+        overwrite_mode=overwrite_mode,
+        resource=resource,
     )
     return updates
 
@@ -127,18 +133,13 @@ def generic_compute_task(
         tiling_mode=init_args.converter_options.tiling_mode,
     )
 
-    context = ContextModel(
-        store=store,
-        acquisition_details=init_args.acquisition_details,
-        converter_options=init_args.converter_options,
-        overwrite_mode=init_args.overwrite_mode,
-        resource=resource,
-    )
     tiled_image_creation_pipeline(
         base_store=store,
         tiled_image=tiled_image_loaded,
         registration_pipeline=registration_pipeline,
-        context=context,
+        converter_options=init_args.converter_options,
+        overwrite_mode=init_args.overwrite_mode,
+        resource=resource,
     )
     remove_json(init_args.json_file_name, store)
     return {}

@@ -1,13 +1,15 @@
 """Models for defining regions to be converted into OME-Zarr format."""
 
 from ome_zarr_converters_tools.models._acquisition import (
-    TILING_MODES,
     AcquisitionDetails,
     AlignmentCorrections,
+    BackendType,
     ContextModel,
     ConverterOptions,
     HCSContextModel,
     OmeZarrOptions,
+    OverwriteMode,
+    TilingMode,
 )
 from ome_zarr_converters_tools.models._collection import (
     CollectionInterfaceType,
@@ -27,9 +29,9 @@ from ome_zarr_converters_tools.models._tile_region import (
 )
 
 __all__ = [
-    "TILING_MODES",
     "AcquisitionDetails",
     "AlignmentCorrections",
+    "BackendType",
     "CollectionInterfaceType",
     "ContextModel",
     "ConvertParallelInitArgs",
@@ -42,10 +44,12 @@ __all__ = [
     "ImageLoaderInterfaceType",
     "OmeZarrOptions",
     "OmeZarrOptions",
+    "OverwriteMode",
     "SingleImage",
     "SingleImage",
     "Tile",
     "TileSlice",
     "TiledImage",
     "TiledImageWithContext",
+    "TilingMode",
 ]

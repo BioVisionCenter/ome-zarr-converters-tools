@@ -1,5 +1,7 @@
 """Functions to build TiledImage models from Tile models."""
 
+from typing import Any
+
 from ome_zarr_converters_tools.models._acquisition import (
     ContextModel,
 )
@@ -9,34 +11,17 @@ from ome_zarr_converters_tools.models._tile_region import (
 )
 
 
-def _find_data_type(
-    tile: Tile,
-    context: ContextModel,
-) -> str:
-    """Find the data type for a tile given the context.
-
-    Args:
-        tile: Tile model to find the data type for.
-        context: Full context model for the conversion.
-
-    Returns:
-        The data type as a string.
-
-    """
-    return context.acquisition_details.data_type or tile.image_loader.find_data_type(
-        context.resource
-    )
-
-
 def tiled_image_from_tiles(
     tiles: list[Tile],
     context: ContextModel,
+    resource: Any | None = None,
 ) -> list[TiledImage]:
     """Create a TiledImage from a dictionary.
 
     Args:
         tiles: List of Tile models to build the TiledImage from.
         context: Full context model for the conversion.
+        resource: Optional resource to assist in processing.
 
     Returns:
         A list of TiledImage models created from the tiles.
@@ -47,7 +32,11 @@ def tiled_image_from_tiles(
 
     if len(tiles) == 0:
         raise ValueError("No tiles provided to build TiledImage.")
-    data_type = _find_data_type(tiles[0], context)
+    if context.acquisition_details.data_type is not None:
+        data_type = context.acquisition_details.data_type
+    else:
+        data_type = tiles[0].image_loader.find_data_type(resource)
+
     for tile in tiles:
         suffix = "" if not split_tiles else f"_{tile.fov_name}"
         tile.collection.suffix = suffix

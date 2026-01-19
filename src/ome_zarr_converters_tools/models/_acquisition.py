@@ -1,6 +1,7 @@
 """Models for defining regions to be converted into OME-Zarr format."""
 
-from typing import Any, Literal
+from enum import StrEnum
+from typing import Literal
 
 from ngio import DefaultNgffVersion, NgffVersions
 from pydantic import (
@@ -18,11 +19,27 @@ CANONICAL_AXES_TYPE = Literal["t", "c", "z", "y", "x"]
 canonical_axes: list[CANONICAL_AXES_TYPE] = ["t", "c", "z", "y", "x"]
 COO_TYPE = Literal["world", "pixel"]
 ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-TILING_MODES = Literal[
-    "auto", "snap_to_grid", "snap_to_corners", "inplace", "no_tiling"
-]
-TABLE_BACKENDS = Literal["anndata", "json", "csv", "parquet"]
-OVERWRITE_MODES = Literal["no_overwrite", "overwrite", "extend"]
+
+
+class OverwriteMode(StrEnum):
+    NO_OVERWRITE = "No Overwrite"
+    OVERWRITE = "Overwrite"
+    EXTEND = "Extend"
+
+
+class TilingMode(StrEnum):
+    AUTO = "Auto"
+    SNAP_TO_GRID = "Snap to Grid"
+    SNAP_TO_CORNERS = "Snap to Corners"
+    INPLACE = "Inplace"
+    NO_TILING = "No Tiling"
+
+
+class BackendType(StrEnum):
+    ANNDATA = "anndata"
+    JSON = "json"
+    CSV = "csv"
+    PARQUET = "parquet"
 
 
 class AcquisitionDetails(BaseModel):
@@ -90,12 +107,12 @@ class OmeZarrOptions(BaseModel):
     c_chunk: int = Field(default=1, ge=1)
     t_chunk: int = Field(default=1, ge=1)
     ngff_version: NgffVersions = DefaultNgffVersion
-    table_backend: TABLE_BACKENDS = "anndata"
+    table_backend: BackendType = BackendType.ANNDATA
     model_config = ConfigDict(extra="forbid")
 
 
 class ConverterOptions(BaseModel):
-    tiling_mode: TILING_MODES = "auto"
+    tiling_mode: TilingMode = TilingMode.AUTO
     stage_correction: StageCorrections = Field(default_factory=StageCorrections)
     alignment_correction: AlignmentCorrections = Field(
         default_factory=AlignmentCorrections
@@ -111,11 +128,8 @@ class ContextModel(BaseModel):
     process, including acquisition details and converter options.
     """
 
-    store: ConverterStorageType
     acquisition_details: AcquisitionDetails
     converter_options: ConverterOptions
-    overwrite_mode: OVERWRITE_MODES = "no_overwrite"
-    resource: Any | None = None
     model_config = ConfigDict(extra="forbid", arbitrary_types_allowed=True)
 
 
@@ -123,9 +137,9 @@ class HCSContextModel(ContextModel):
     """Context model for HCS data during conversion.
 
     This model extends the base ContextModel to include HCS-specific
-    information such as plate names and acquisition indices.
+    information such as plate names and acquisition IDs.
     """
 
     plate_name: str
-    acquisition_index: int = Field(ge=0)
+    acquisition_id: int = Field(ge=0)
     model_config = ConfigDict(extra="forbid")

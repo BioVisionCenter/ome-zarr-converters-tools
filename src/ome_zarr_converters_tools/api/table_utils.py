@@ -9,9 +9,6 @@ import toml
 from ome_zarr_converters_tools.api.tiles_preprocessing_pipeline import (
     tiles_preprocessing_pipeline,
 )
-from ome_zarr_converters_tools.collection_setup import (
-    ConverterStorageType,
-)
 from ome_zarr_converters_tools.filters import FilterStep
 from ome_zarr_converters_tools.models import (
     AcquisitionDetails,
@@ -22,7 +19,6 @@ from ome_zarr_converters_tools.models import (
     Tile,
     TiledImageWithContext,
 )
-from ome_zarr_converters_tools.models._acquisition import OVERWRITE_MODES
 from ome_zarr_converters_tools.validators import ValidatorStep
 
 
@@ -110,7 +106,7 @@ def hcs_images_from_dataframe(
         row_dict = _build_plate_collection(
             row_dict,
             plate_name=context.plate_name,
-            acquisition=context.acquisition_index,
+            acquisition=context.acquisition_id,
         )
 
         tile = Tile[ImageInPlate, DefaultImageLoader].model_validate(
@@ -132,12 +128,10 @@ def hcs_images_from_csv(
     plate_name: str,
     acquisition: int,
     converter_options: ConverterOptions,
-    store: ConverterStorageType,
     table_name: str = "tiles.csv",
     acquisition_details_name: str = "acquisition_details.toml",
     filters: list[FilterStep] | None = None,
     validators: list[ValidatorStep] | None = None,
-    overwrite_mode: OVERWRITE_MODES = "no_overwrite",
 ) -> list[TiledImageWithContext]:
     """Build tiles for HCS data from a table.
 
@@ -146,12 +140,10 @@ def hcs_images_from_csv(
         plate_name: Name of the plate.
         acquisition: Acquisition index.
         converter_options: Converter options.
-        store: Zarr store to set up the collection in.
         table_name: Name of the table file.
         acquisition_details_name: Name of the acquisition details file.
         filters: Optional list of filter steps to apply to the tiles.
         validators: Optional list of validator steps to apply to the tiles.
-        overwrite_mode: Whether to overwrite existing Zarr files.
 
     Returns:
         A list of TiledImage models created from the tiles and the context model.
@@ -162,13 +154,10 @@ def hcs_images_from_csv(
         acquisition_details_name=acquisition_details_name,
     )
     context = HCSContextModel(
-        store=store,
         plate_name=plate_name,
-        acquisition_index=acquisition,
+        acquisition_id=acquisition,
         acquisition_details=acquisition_details,
         converter_options=converter_options,
-        overwrite_mode=overwrite_mode,
-        resource=acquisition_path,
     )
     images = hcs_images_from_dataframe(
         tiles_table=df,

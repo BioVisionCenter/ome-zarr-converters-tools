@@ -1,11 +1,13 @@
 """Models for defining regions to be converted into OME-Zarr format."""
 
-from typing import Any, Generic, Literal
+from typing import Any, Generic
 
 from ngio.common._roi import Roi, RoiSlice, pixel_to_world, world_to_pixel
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from ome_zarr_converters_tools.models._acquisition import (
+    CANONICAL_AXES_TYPE,
+    COO_TYPE,
     AcquisitionDetails,
 )
 from ome_zarr_converters_tools.models._collection import (
@@ -14,9 +16,6 @@ from ome_zarr_converters_tools.models._collection import (
 from ome_zarr_converters_tools.models._loader import (
     ImageLoaderInterfaceType,
 )
-
-CANONICAL_AXES_TYPE = Literal["t", "c", "z", "y", "x"]
-COO_TYPE = Literal["world", "pixel"]
 
 
 def safe_to_world(
