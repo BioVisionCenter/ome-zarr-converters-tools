@@ -2,21 +2,21 @@ import re
 from typing import Any, ParamSpec, Protocol, TypedDict
 
 from ome_zarr_converters_tools.models._collection import ImageInPlate
-from ome_zarr_converters_tools.models._tile import BaseTile
+from ome_zarr_converters_tools.models._tile import Tile
 
 
-def apply_path_include_regex_filter(tile: BaseTile, regex: str) -> bool:
+def apply_path_include_regex_filter(tile: Tile, regex: str) -> bool:
     base_path = tile.collection.path()
     if re.search(regex, base_path):
         return True
     return False
 
 
-def apply_path_exclude_regex_filter(tile: BaseTile, regex: str) -> bool:
+def apply_path_exclude_regex_filter(tile: Tile, regex: str) -> bool:
     return not apply_path_include_regex_filter(tile, regex)
 
 
-def apply_well_filter(tile: BaseTile, wells_to_remove: list[str]) -> bool:
+def apply_well_filter(tile: Tile, wells_to_remove: list[str]) -> bool:
     if not isinstance(tile.collection, ImageInPlate):
         raise ValueError(
             "Well filter can only be applied to To tile with ImageInPlate collection."
@@ -37,7 +37,7 @@ class FilterStep(TypedDict):
 class FilterFunctionProtocol(Protocol[P]):
     __name__: str
 
-    def __call__(self, tile: BaseTile, *args: P.args, **kwargs: P.kwargs) -> bool: ...
+    def __call__(self, tile: Tile, *args: P.args, **kwargs: P.kwargs) -> bool: ...
 
 
 _filter_registry: dict[str, FilterFunctionProtocol] = {
@@ -68,8 +68,8 @@ def add_filter(
 
 
 def apply_filter_pipeline(
-    tiles: list[BaseTile], filters_config: list[FilterStep]
-) -> list[BaseTile]:
+    tiles: list[Tile], filters_config: list[FilterStep]
+) -> list[Tile]:
     for step in filters_config:
         step_name = step.get("name")
         step_params = step.get("params", {})

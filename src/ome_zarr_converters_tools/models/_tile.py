@@ -45,7 +45,7 @@ def safe_to_world(
     return world_coord
 
 
-class BaseTile(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfaceType]):
+class Tile(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfaceType]):
     fov_name: str
     # Positions
     start_x: float
@@ -107,7 +107,7 @@ class BaseTile(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfaceT
 
         acq_details: AcquisitionDetails = info.context.acquisition_details
         acq_fields = AcquisitionDetails.model_fields.keys()
-        self_fields = BaseTile.model_fields.keys()
+        self_fields = Tile.model_fields.keys()
         for field in acq_fields:
             if field in self_fields and field not in data:
                 data[field] = getattr(acq_details, field)
@@ -163,37 +163,3 @@ class BaseTile(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfaceT
             space="world",
             **origins,
         )
-
-
-class Tile(BaseTile[CollectionInterfaceType, ImageLoaderInterfaceType]):
-    """Model defining a Tile to be converted into OME-Zarr format.
-
-    This model is a simplified version of BaseTile without explicit
-    context-dependent fields.
-
-    This model require to know the acquisition context to be built correctly.
-
-    Example:
-        >>> from ome_zarr_converters_tools.models import Tile
-        >>> tile = Tile.model_validate(data, context=context)
-    """
-
-    fov_name: str
-    # Positions
-    start_x: float
-    start_y: float
-    start_z: float = 0.0
-    start_c: int = 0
-    start_t: float = 0.0
-
-    # Sizes
-    length_x: float = Field(gt=0)
-    length_y: float = Field(gt=0)
-    length_z: float = Field(default=1.0, gt=0)
-    length_c: int = Field(default=1, gt=0)
-    length_t: float = Field(default=1.0, gt=0)
-
-    # Collection model defining how to build the path to the image(s)
-    collection: CollectionInterfaceType
-    # Image loader
-    image_loader: ImageLoaderInterfaceType

@@ -11,17 +11,16 @@ from ome_zarr_converters_tools.api.tiles_preprocessing_pipeline import (
 )
 from ome_zarr_converters_tools.collection_setup import (
     ConverterStorageType,
-    SetupCollectionStep,
 )
 from ome_zarr_converters_tools.filters import FilterStep
 from ome_zarr_converters_tools.models import (
     AcquisitionDetails,
-    BaseTile,
     ConverterOptions,
     DefaultImageLoader,
     HCSContextModel,
     ImageInPlate,
-    TiledImage,
+    Tile,
+    TiledImageWithContext,
 )
 from ome_zarr_converters_tools.models._acquisition import OVERWRITE_MODES
 from ome_zarr_converters_tools.validators import ValidatorStep
@@ -94,7 +93,7 @@ def hcs_images_from_dataframe(
     context: HCSContextModel,
     filters: list[FilterStep] | None = None,
     validators: list[ValidatorStep] | None = None,
-) -> list[TiledImage]:
+) -> list[TiledImageWithContext]:
     """Build a list of TiledImages belonging to an HCS acquisition.
 
     Args:
@@ -114,24 +113,16 @@ def hcs_images_from_dataframe(
             acquisition=context.acquisition_index,
         )
 
-        tile = BaseTile[ImageInPlate, DefaultImageLoader].model_validate(
+        tile = Tile[ImageInPlate, DefaultImageLoader].model_validate(
             row_dict,
             context=context,
         )
         tiles.append(tile)
-
-    setup_step = SetupCollectionStep(
-        name="ImageInPlate",
-        store=context.store,
-        ngff_version=context.converter_options.omezarr_options.ngff_version,
-        overwrite_mode=context.overwrite_mode,
-    )
     tiled_images = tiles_preprocessing_pipeline(
         tiles=tiles,
         context=context,
         validators=validators,
         filters=filters,
-        setup_collection_step=setup_step,
     )
     return tiled_images
 
@@ -147,7 +138,7 @@ def hcs_images_from_csv(
     filters: list[FilterStep] | None = None,
     validators: list[ValidatorStep] | None = None,
     overwrite_mode: OVERWRITE_MODES = "no_overwrite",
-) -> tuple[list[TiledImage], HCSContextModel]:
+) -> list[TiledImageWithContext]:
     """Build tiles for HCS data from a table.
 
     Args:
@@ -161,6 +152,9 @@ def hcs_images_from_csv(
         filters: Optional list of filter steps to apply to the tiles.
         validators: Optional list of validator steps to apply to the tiles.
         overwrite_mode: Whether to overwrite existing Zarr files.
+
+    Returns:
+        A list of TiledImage models created from the tiles and the context model.
     """
     df, acquisition_details = _open_hcs_dir(
         acquisition_path=acquisition_path,
@@ -182,4 +176,4 @@ def hcs_images_from_csv(
         filters=filters,
         validators=validators,
     )
-    return images, context
+    return images

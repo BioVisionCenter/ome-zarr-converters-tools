@@ -3,12 +3,14 @@
 from ome_zarr_converters_tools.models._acquisition import (
     ContextModel,
 )
-from ome_zarr_converters_tools.models._tile import BaseTile
-from ome_zarr_converters_tools.models._tile_region import TiledImage
+from ome_zarr_converters_tools.models._tile import Tile
+from ome_zarr_converters_tools.models._tile_region import (
+    TiledImage,
+)
 
 
 def _find_data_type(
-    tile: BaseTile,
+    tile: Tile,
     context: ContextModel,
 ) -> str:
     """Find the data type for a tile given the context.
@@ -27,7 +29,7 @@ def _find_data_type(
 
 
 def tiled_image_from_tiles(
-    tiles: list[BaseTile],
+    tiles: list[Tile],
     context: ContextModel,
 ) -> list[TiledImage]:
     """Create a TiledImage from a dictionary.
@@ -37,7 +39,7 @@ def tiled_image_from_tiles(
         context: Full context model for the conversion.
 
     Returns:
-        A TiledImage model.
+        A list of TiledImage models created from the tiles.
 
     """
     split_tiles = context.converter_options.tiling_mode == "no_tiling"
@@ -66,4 +68,5 @@ def tiled_image_from_tiles(
                 attributes=attributes,
             )
         tiled_images[path].add_tile(tile)
+
     return list(tiled_images.values())

@@ -19,14 +19,17 @@ from ome_zarr_converters_tools.models._loader import (
     DefaultImageLoader,
     ImageLoaderInterfaceType,
 )
-from ome_zarr_converters_tools.models._tile import BaseTile
-from ome_zarr_converters_tools.models._tile_region import TiledImage, TileSlice
+from ome_zarr_converters_tools.models._tile import Tile
+from ome_zarr_converters_tools.models._tile_region import (
+    TiledImage,
+    TiledImageWithContext,
+    TileSlice,
+)
 
 __all__ = [
     "TILING_MODES",
     "AcquisitionDetails",
     "AlignmentCorrections",
-    "BaseTile",
     "CollectionInterfaceType",
     "ContextModel",
     "ConvertParallelInitArgs",
@@ -41,6 +44,8 @@ __all__ = [
     "OmeZarrOptions",
     "SingleImage",
     "SingleImage",
+    "Tile",
     "TileSlice",
     "TiledImage",
+    "TiledImageWithContext",
 ]

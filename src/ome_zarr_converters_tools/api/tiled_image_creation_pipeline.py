@@ -1,5 +1,7 @@
 """Functions to write TiledImage models from Tile models."""
 
+import logging
+import time
 from typing import Any
 
 from ngio.utils._zarr_utils import NgioSupportedStore
@@ -25,6 +27,8 @@ from ome_zarr_converters_tools.utils._json_utils import (
 )
 from ome_zarr_converters_tools.utils._write_ome_zarr import write_tiled_image_as_zarr
 
+logger = logging.getLogger(__name__)
+
 
 def tiled_image_creation_pipeline(
     base_store: NgioSupportedStore,
@@ -40,6 +44,40 @@ def tiled_image_creation_pipeline(
         context=context,
     )
     return updates
+
+
+def retry_decorator(
+    func,
+    num_retries=3,
+    exceptions: tuple[type[Exception], ...] | None = None,
+    logger: logging.Logger | None = None,
+    on_retry_msg: str | None = None,
+    on_fail_msg: str | None = None,
+):
+    """Decorator to retry a function on FileNotFoundError."""
+    if exceptions is None:
+        # Match any exception
+        exceptions = (Exception,)
+
+    if on_retry_msg is None:
+        on_retry_msg = "Function failed, retrying..."
+    if on_fail_msg is None:
+        on_fail_msg = "Function failed after retries."
+
+    def wrapper(*args, **kwargs):
+        for t in range(num_retries):  # Retry up to num_retries times
+            try:
+                return func(*args, **kwargs)
+            except exceptions as e:
+                if logger:
+                    logger.error(str(e))
+                    logger.info(on_retry_msg)
+                sleep_time = 2 ** (t + 1)
+                time.sleep(sleep_time)
+        else:
+            raise Exception(on_fail_msg)
+
+    return wrapper
 
 
 def generic_compute_task(
@@ -65,12 +103,25 @@ def generic_compute_task(
     else:
         raise NotImplementedError("Only local store is currently supported.")
 
-    tiled_image_loaded = tiled_image_from_json(
-        json_file_name=init_args.json_file_name,
-        store=store,
-        collection_type=collection_type,
-        image_loader_type=image_loader_type,
-    )
+    for t in range(3):  # Retry up to 3 times
+        try:
+            tiled_image_loaded = tiled_image_from_json(
+                json_file_name=init_args.json_file_name,
+                store=store,
+                collection_type=collection_type,
+                image_loader_type=image_loader_type,
+            )
+            break  # Exit loop if successful
+        except FileNotFoundError:
+            logger.error(
+                f"JSON file does not exist: {init_args.json_file_name}, retrying..."
+            )
+            sleep_time = 2 ** (t + 1)
+            time.sleep(sleep_time)
+    else:
+        raise FileNotFoundError(
+            f"JSON file does not exist after 3 retries: {init_args.json_file_name}"
+        )
     registration_pipeline = build_default_registration_pipeline(
         alignment_corrections=init_args.converter_options.alignment_correction,
         tiling_mode=init_args.converter_options.tiling_mode,

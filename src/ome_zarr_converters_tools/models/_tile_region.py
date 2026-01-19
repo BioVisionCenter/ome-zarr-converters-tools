@@ -1,11 +1,14 @@
 """Models for defining regions to be converted into OME-Zarr format."""
 
-from typing import Any, Generic, Literal, Self
+from typing import Any, Generic, Literal, NamedTuple, Self
 
 import numpy as np
 from ngio import PixelSize, Roi
 from pydantic import BaseModel, ConfigDict, Field
 
+from ome_zarr_converters_tools.models._acquisition import (
+    ContextModel,
+)
 from ome_zarr_converters_tools.models._collection import CollectionInterfaceType
 from ome_zarr_converters_tools.models._loader import (
     ImageLoaderInterfaceType,
@@ -15,7 +18,7 @@ from ome_zarr_converters_tools.models._roi_utils import (
     roi_to_point_distance,
     shape_from_rois,
 )
-from ome_zarr_converters_tools.models._tile import BaseTile
+from ome_zarr_converters_tools.models._tile import Tile
 
 CANONICAL_AXES_TYPE = Literal["t", "c", "z", "y", "x"]
 COO_TYPE = Literal["world", "pixel"]
@@ -34,7 +37,7 @@ class TileSlice(BaseModel, Generic[ImageLoaderInterfaceType]):
     model_config = ConfigDict(extra="forbid")
 
     @classmethod
-    def from_tile(cls, tile: BaseTile) -> Self:
+    def from_tile(cls, tile: Tile) -> Self:
         """Create a TileSlice from a Tile."""
         return cls(
             roi=tile.to_roi(),
@@ -139,7 +142,7 @@ class TiledImage(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfac
             t=self.t_spacing,
         )
 
-    def add_tile(self, tile: BaseTile) -> None:
+    def add_tile(self, tile: Tile) -> None:
         """Add a Tile to the TiledImage as a TileRegion."""
         if self.channel_names != tile.channel_names:
             raise ValueError(
@@ -171,3 +174,10 @@ class TiledImage(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfac
         union_roi = bulk_roi_union([region.roi for region in self.regions])
         union_roi.name = self.name or self.path
         return union_roi
+
+
+class TiledImageWithContext(NamedTuple):
+    """A TiledImage along with its associated ContextModel."""
+
+    tiled_image: TiledImage
+    context: ContextModel

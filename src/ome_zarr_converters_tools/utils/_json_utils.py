@@ -20,6 +20,40 @@ from ome_zarr_converters_tools.models import (
 logger = logging.getLogger(__name__)
 
 
+def retry_decorator(
+    func,
+    num_retries: int | None = None,
+    exceptions: tuple[type[Exception], ...] | None = None,
+    on_retry_msg: str | None = None,
+    on_fail_msg: str | None = None,
+):
+    """Decorator to retry a function on FileNotFoundError."""
+    if exceptions is None:
+        # Match any exception
+        exceptions = (Exception,)
+    if on_retry_msg is None:
+        on_retry_msg = "Function failed, retrying..."
+    if on_fail_msg is None:
+        on_fail_msg = "Function failed after retries."
+    if num_retries is None:
+        num_retries = int(os.getenv("CONVERTERS_TOOLS_NUM_RETRIES", 5))
+
+    def wrapper(*args, **kwargs):
+        for t in range(num_retries):  # Retry up to num_retries times
+            try:
+                return func(*args, **kwargs)
+            except exceptions as e:
+                if logger:
+                    logger.error(str(e))
+                    logger.info(on_retry_msg)
+                sleep_time = 2 ** (t + 1)
+                time.sleep(sleep_time)
+        else:
+            raise Exception(on_fail_msg)
+
+    return wrapper
+
+
 def _create_tmp_json_store(
     store: ConverterStorageType, dir_path: str
 ) -> ConverterStorageType:
