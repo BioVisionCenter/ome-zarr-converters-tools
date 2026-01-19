@@ -89,6 +89,7 @@ def hcs_images_from_dataframe(
     context: HCSContextModel,
     filters: list[FilterStep] | None = None,
     validators: list[ValidatorStep] | None = None,
+    resource: Any | None = None,
 ) -> list[TiledImageWithContext]:
     """Build a list of TiledImages belonging to an HCS acquisition.
 
@@ -119,6 +120,7 @@ def hcs_images_from_dataframe(
         context=context,
         validators=validators,
         filters=filters,
+        resource=resource,
     )
     return tiled_images
 
@@ -164,5 +166,6 @@ def hcs_images_from_csv(
         context=context,
         filters=filters,
         validators=validators,
+        resource=acquisition_path,
     )
     return images
