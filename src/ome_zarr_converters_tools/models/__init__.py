@@ -1,4 +1,6 @@
-"""Models for defining regions to be converted into OME-Zarr format."""
+"""Models and types definitions for the ome_zarr_converters_tools."""
+
+from zarr.storage import FsspecStore, LocalStore
 
 from ome_zarr_converters_tools.models._acquisition import (
     AcquisitionDetails,
@@ -6,7 +8,9 @@ from ome_zarr_converters_tools.models._acquisition import (
     BackendType,
     ContextModel,
     ConverterOptions,
+    DefaultNgffVersion,
     HCSContextModel,
+    NgffVersions,
     OmeZarrOptions,
     OverwriteMode,
     TilingMode,
@@ -28,6 +32,8 @@ from ome_zarr_converters_tools.models._tile_region import (
     TileSlice,
 )
 
+ConverterStorageType = LocalStore | FsspecStore
+
 __all__ = [
     "AcquisitionDetails",
     "AlignmentCorrections",
@@ -37,11 +43,14 @@ __all__ = [
     "ConvertParallelInitArgs",
     "ConverterOptions",
     "ConverterOptions",
+    "ConverterStorageType",
     "DefaultImageLoader",
+    "DefaultNgffVersion",
     "HCSContextModel",
     "ImageInPlate",
     "ImageInPlate",
     "ImageLoaderInterfaceType",
+    "NgffVersions",
     "OmeZarrOptions",
     "OmeZarrOptions",
     "OverwriteMode",

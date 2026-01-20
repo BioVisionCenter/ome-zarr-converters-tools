@@ -1,6 +1,6 @@
 from zarr.storage import FsspecStore, LocalStore
 
-ConverterStorageType = LocalStore | FsspecStore
+from ome_zarr_converters_tools.models import ConverterStorageType
 
 
 def concat_storage(

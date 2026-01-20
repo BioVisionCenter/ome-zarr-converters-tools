@@ -1,4 +1,4 @@
-"""Utility functions for ome_zarr_converters_tools."""
+"""Low levels utility functions for ome_zarr_converters_tools."""
 
 from ome_zarr_converters_tools.utils._plotting import plot_tiled_images
 from ome_zarr_converters_tools.utils._tile_to_tiled_images import (
