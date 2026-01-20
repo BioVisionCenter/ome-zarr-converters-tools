@@ -9,7 +9,6 @@ from ome_zarr_converters_tools.models._acquisition import (
     ContextModel,
     ConverterOptions,
     DefaultNgffVersion,
-    HCSContextModel,
     NgffVersions,
     OmeZarrOptions,
     OverwriteMode,
@@ -28,7 +27,6 @@ from ome_zarr_converters_tools.models._loader import (
 from ome_zarr_converters_tools.models._tile import Tile
 from ome_zarr_converters_tools.models._tile_region import (
     TiledImage,
-    TiledImageWithContext,
     TileSlice,
 )
 
@@ -46,7 +44,6 @@ __all__ = [
     "ConverterStorageType",
     "DefaultImageLoader",
     "DefaultNgffVersion",
-    "HCSContextModel",
     "ImageInPlate",
     "ImageInPlate",
     "ImageLoaderInterfaceType",
@@ -59,6 +56,5 @@ __all__ = [
     "Tile",
     "TileSlice",
     "TiledImage",
-    "TiledImageWithContext",
     "TilingMode",
 ]

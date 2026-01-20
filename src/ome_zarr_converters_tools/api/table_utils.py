@@ -12,12 +12,12 @@ from ome_zarr_converters_tools.api.tiles_preprocessing_pipeline import (
 from ome_zarr_converters_tools.filters import FilterStep
 from ome_zarr_converters_tools.models import (
     AcquisitionDetails,
+    ContextModel,
     ConverterOptions,
     DefaultImageLoader,
-    HCSContextModel,
     ImageInPlate,
     Tile,
-    TiledImageWithContext,
+    TiledImage,
 )
 from ome_zarr_converters_tools.validators import ValidatorStep
 
@@ -89,38 +89,48 @@ def _open_hcs_dir(
 def hcs_images_from_dataframe(
     *,
     tiles_table: pd.DataFrame,
-    context: HCSContextModel,
+    acquisition_details: AcquisitionDetails,
+    converter_options: ConverterOptions,
+    plate_name: str | None = None,
+    acquisition_id: int = 0,
     filters: list[FilterStep] | None = None,
     validators: list[ValidatorStep] | None = None,
     resource: Any | None = None,
-) -> list[TiledImageWithContext]:
+) -> list[TiledImage]:
     """Build a list of TiledImages belonging to an HCS acquisition.
 
     Args:
         tiles_table: DataFrame containing the tiles table.
-        context: Full context model for the conversion.
+        acquisition_details: AcquisitionDetails model for the acquisition.
+        converter_options: ConverterOptions model for the conversion.
+        plate_name: Optional name of the plate.
+        acquisition_id: Acquisition index.
         filters: Optional list of filter steps to apply to the tiles.
         validators: Optional list of validator steps to apply to the tiles.
         resource: Optional resource to pass to image loaders.
     """
+    plate_name = plate_name or "Plate"
     tiles = []
     for _, row in tiles_table.iterrows():
         row_dict = row.to_dict()
         row_dict = _build_default_image_loader(data=row_dict)
         row_dict = _build_plate_collection(
             data=row_dict,
-            plate_name=context.plate_name,
-            acquisition=context.acquisition_id,
+            plate_name=plate_name,
+            acquisition=acquisition_id,
         )
 
         tile = Tile[ImageInPlate, DefaultImageLoader].model_validate(
             row_dict,
-            context=context,
+            context=ContextModel(
+                acquisition_details=acquisition_details,
+                converter_options=converter_options,
+            ),
         )
         tiles.append(tile)
     tiled_images = tiles_preprocessing_pipeline(
         tiles=tiles,
-        context=context,
+        converter_options=converter_options,
         validators=validators,
         filters=filters,
         resource=resource,
@@ -138,7 +148,7 @@ def hcs_images_from_csv(
     acquisition_details_name: str = "acquisition_details.toml",
     filters: list[FilterStep] | None = None,
     validators: list[ValidatorStep] | None = None,
-) -> list[TiledImageWithContext]:
+) -> list[TiledImage]:
     """Build tiles for HCS data from a table.
 
     Args:
@@ -159,15 +169,12 @@ def hcs_images_from_csv(
         table_name=table_name,
         acquisition_details_name=acquisition_details_name,
     )
-    context = HCSContextModel(
-        plate_name=plate_name,
-        acquisition_id=acquisition,
-        acquisition_details=acquisition_details,
-        converter_options=converter_options,
-    )
     images = hcs_images_from_dataframe(
         tiles_table=df,
-        context=context,
+        acquisition_details=acquisition_details,
+        converter_options=converter_options,
+        plate_name=plate_name,
+        acquisition_id=acquisition,
         filters=filters,
         validators=validators,
         resource=acquisition_path,

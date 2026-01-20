@@ -4,9 +4,9 @@ from typing import Any
 
 from ome_zarr_converters_tools.filters import FilterStep, apply_filter_pipeline
 from ome_zarr_converters_tools.models import (
-    ContextModel,
+    ConverterOptions,
     Tile,
-    TiledImageWithContext,
+    TiledImage,
 )
 from ome_zarr_converters_tools.utils import tiled_image_from_tiles
 from ome_zarr_converters_tools.validators import ValidatorStep, apply_validator_pipeline
@@ -15,11 +15,11 @@ from ome_zarr_converters_tools.validators import ValidatorStep, apply_validator_
 def tiles_preprocessing_pipeline(
     tiles: list[Tile],
     *,
-    context: ContextModel,
+    converter_options: ConverterOptions,
     filters: list[FilterStep] | None = None,
     validators: list[ValidatorStep] | None = None,
     resource: Any | None = None,
-) -> list[TiledImageWithContext]:
+) -> list[TiledImage]:
     """Process tiles through the preprocessing pipeline to create TiledImages.
 
     This function applies optional filters to the input tiles and then
@@ -27,7 +27,7 @@ def tiles_preprocessing_pipeline(
 
     Args:
         tiles: List of Tile models to process.
-        context: Full context model for the conversion.
+        converter_options: ConverterOptions model for the conversion.
         filters: Optional list of filter steps to apply to the tiles.
         validators: Optional list of validator steps to apply to the tiles.
         resource: Optional resource to assist in processing.
@@ -39,14 +39,11 @@ def tiles_preprocessing_pipeline(
         tiles = apply_filter_pipeline(tiles, filters_config=filters)
     tiled_images = tiled_image_from_tiles(
         tiles=tiles,
-        context=context,
+        converter_options=converter_options,
         resource=resource,
     )
     if validators is not None:
         tiled_images = apply_validator_pipeline(
             tiled_images, validators_config=validators
         )
-    tiled_images = [
-        TiledImageWithContext(tiled_image=ti, context=context) for ti in tiled_images
-    ]
     return tiled_images

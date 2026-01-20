@@ -9,7 +9,6 @@ from ome_zarr_converters_tools.collection_setup._store_utils import ConverterSto
 from ome_zarr_converters_tools.models._acquisition import OverwriteMode
 from ome_zarr_converters_tools.models._tile_region import (
     TiledImage,
-    TiledImageWithContext,
 )
 
 
@@ -68,7 +67,7 @@ def add_collection_handler(
 
 def setup_ome_zarr_collection(
     *,
-    tiled_images: list[TiledImageWithContext],
+    tiled_images: list[TiledImage],
     collection_type: str,
     store: ConverterStorageType,
     ngff_version: NgffVersions = DefaultNgffVersion,
@@ -92,9 +91,8 @@ def setup_ome_zarr_collection(
         raise ValueError(
             f"Collection setup handler '{collection_type}' is not registered."
         )
-    _tiled_images = [ti.tiled_image for ti in tiled_images]
     return setup_function(
-        tiled_images=_tiled_images,
+        tiled_images=tiled_images,
         store=store,
         ngff_version=ngff_version,
         overwrite_mode=overwrite_mode,

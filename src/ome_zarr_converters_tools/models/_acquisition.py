@@ -1,7 +1,7 @@
 """Models for defining regions to be converted into OME-Zarr format."""
 
 from enum import StrEnum
-from typing import Literal
+from typing import Literal, NamedTuple
 
 from ngio import DefaultNgffVersion, NgffVersions
 from pydantic import (
@@ -121,7 +121,7 @@ class ConverterOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
-class ContextModel(BaseModel):
+class ContextModel(NamedTuple):
     """Base model for context information during conversion.
 
     This models holds the all context information needed during the conversion
@@ -130,16 +130,3 @@ class ContextModel(BaseModel):
 
     acquisition_details: AcquisitionDetails
     converter_options: ConverterOptions
-    model_config = ConfigDict(extra="forbid", arbitrary_types_allowed=True)
-
-
-class HCSContextModel(ContextModel):
-    """Context model for HCS data during conversion.
-
-    This model extends the base ContextModel to include HCS-specific
-    information such as plate names and acquisition IDs.
-    """
-
-    plate_name: str
-    acquisition_id: int = Field(ge=0)
-    model_config = ConfigDict(extra="forbid")

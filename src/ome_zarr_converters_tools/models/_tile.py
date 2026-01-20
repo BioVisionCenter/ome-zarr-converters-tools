@@ -9,11 +9,15 @@ from ome_zarr_converters_tools.models._acquisition import (
     CANONICAL_AXES_TYPE,
     COO_TYPE,
     AcquisitionDetails,
+    ContextModel,
+    ConverterOptions,
 )
 from ome_zarr_converters_tools.models._collection import (
+    CollectionInterface,
     CollectionInterfaceType,
 )
 from ome_zarr_converters_tools.models._loader import (
+    ImageLoaderInterface,
     ImageLoaderInterfaceType,
 )
 
@@ -84,6 +88,9 @@ class Tile(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfaceType]
     channel_names: list[str]
     wavelengths: list[float]
     axes: list[CANONICAL_AXES_TYPE]
+
+    # Data type of the image data
+    data_type: str | None
 
     # Context from the converter options
     # Stage corrections
@@ -167,3 +174,86 @@ class Tile(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfaceType]
             space="world",
             **origins,
         )
+
+    def find_data_type(self, resource: Any | None = None) -> str:
+        """Find the data type of the image data."""
+        if self.data_type is not None:
+            return self.data_type
+        return self.image_loader.find_data_type(resource)
+
+
+def build_tile(
+    *,
+    fov_name: str,
+    start_x: float,
+    length_x: float,
+    start_y: float,
+    length_y: float,
+    acquisition_details: AcquisitionDetails,
+    converter_options: ConverterOptions,
+    collection: CollectionInterface,
+    image_loader: ImageLoaderInterface,
+    start_z: float = 0.0,
+    length_z: float = 1.0,
+    start_c: int = 0,
+    length_c: int = 1,
+    start_t: float = 0.0,
+    length_t: float = 1.0,
+    attributes: dict[str, str] | None = None,
+) -> Tile:
+    """Tile builder function to create Tile models.
+
+    Since context is required to correctly build the Tile, this function
+    takes the context as an argument.
+
+    Args:
+        fov_name: Field of view name. This will be used to group tiles
+            into TiledImages.
+        start_x: Start position in X
+            (world or pixel coordinates based on context).
+        length_x: Length in X (world or pixel coordinates based on context).
+        start_y: Start position in Y
+            (world or pixel coordinates based on context).
+        length_y: Length in Y (world or pixel coordinates based on context).
+        acquisition_details: AcquisitionDetails model for the acquisition.
+        converter_options: ConverterOptions model for the conversion.
+        collection: CollectionInterface model to define how to build the path.
+        image_loader: ImageLoaderInterface model to load the image data.
+        start_z: Start position in Z
+            (world or pixel coordinates based on context).
+        length_z: Length in Z (world or pixel coordinates based on context).
+        start_c: Start position in C (channel index).
+        length_c: Length in C (number of channels).
+        start_t: Start position in T
+            (world or pixel coordinates based on context).
+        length_t: Length in T (world or pixel coordinates based on conxtext).
+        attributes: Optional dictionary of additional attributes to add to the Tile.
+
+    Returns:
+        Tile model built from the provided parameters and context.
+    """
+    _attributes = attributes or {}
+    tile_dict = {
+        "fov_name": fov_name,
+        "start_x": start_x,
+        "length_x": length_x,
+        "start_y": start_y,
+        "length_y": length_y,
+        "start_z": start_z,
+        "length_z": length_z,
+        "start_c": start_c,
+        "length_c": length_c,
+        "start_t": start_t,
+        "length_t": length_t,
+        "collection": collection,
+        "image_loader": image_loader,
+        "attributes": _attributes,
+    }
+    tile = Tile.model_validate(
+        obj=tile_dict,
+        context=ContextModel(
+            acquisition_details=acquisition_details,
+            converter_options=converter_options,
+        ),
+    )
+    return tile

@@ -1,6 +1,6 @@
 """Models for defining regions to be converted into OME-Zarr format."""
 
-from typing import Any, Generic, NamedTuple, Self
+from typing import Any, Generic, Self
 
 import numpy as np
 from ngio import PixelSize, Roi
@@ -8,7 +8,6 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from ome_zarr_converters_tools.models._acquisition import (
     CANONICAL_AXES_TYPE,
-    ContextModel,
 )
 from ome_zarr_converters_tools.models._collection import CollectionInterfaceType
 from ome_zarr_converters_tools.models._loader import (
@@ -172,10 +171,3 @@ class TiledImage(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfac
         union_roi = bulk_roi_union([region.roi for region in self.regions])
         union_roi.name = self.name or self.path
         return union_roi
-
-
-class TiledImageWithContext(NamedTuple):
-    """A TiledImage along with its associated ContextModel."""
-
-    tiled_image: TiledImage
-    context: ContextModel
