@@ -186,8 +186,8 @@ def bulk_roi_union(
             if end > max_:
                 max_ = end
                 max_roi = roi
-        min_max_rois[min_roi.get_name()] = min_roi
-        min_max_rois[max_roi.get_name()] = max_roi
+        min_max_rois[f"{min_roi.get_name()}_{ax.axis_name}_min"] = min_roi
+        min_max_rois[f"{max_roi.get_name()}_{ax.axis_name}_max"] = max_roi
 
     min_max_rois_values = list(min_max_rois.values())
     union_roi = min_max_rois_values[0]
