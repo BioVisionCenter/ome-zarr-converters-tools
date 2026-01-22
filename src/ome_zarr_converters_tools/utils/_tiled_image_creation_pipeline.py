@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from ngio import NgioSupportedStore, OmeZarrContainer
+from ngio import OmeZarrContainer
 
 from ome_zarr_converters_tools.models import (
     ConverterOptions,

@@ -9,7 +9,6 @@ from ngio import (
     open_ome_zarr_container,
 )
 from ngio.tables import RoiTable
-from ngio.utils._zarr_utils import NgioSupportedStore
 
 from ome_zarr_converters_tools.models._acquisition import (
     ConverterOptions,
@@ -91,17 +90,19 @@ def write_tiled_image_as_zarr(
     Returns:
         OmeZarrContainer: The written OME-Zarr container.
     """
-    tiled_image.regions = _region_to_pixel_coordinates(
-        tiled_image.regions,
-        tiled_image.pixel_size,
-    )
     if overwrite_mode == OverwriteMode.NO_OVERWRITE:
         mode = "w-"
     elif overwrite_mode == OverwriteMode.OVERWRITE:
         mode = "w"
     else:  # extend
         mode = "a"
-    base_group = zarr.open_group(store=zarr_url, mode=mode)
+    zarr_format = 2 if converter_options.omezarr_options.ngff_version == "0.4" else 3
+
+    tiled_image.regions = _region_to_pixel_coordinates(
+        tiled_image.regions,
+        tiled_image.pixel_size,
+    )
+    base_group = zarr.open_group(store=zarr_url, mode=mode, zarr_format=zarr_format)
     omezarr_options = converter_options.omezarr_options
     try:
         # This can only succeed in "extend" mode if the group already exists
@@ -136,8 +137,12 @@ def write_tiled_image_as_zarr(
             rois.append(roi_union)
 
         roi_table = RoiTable(rois=rois)
-        ome_zarr.add_table("FOV_ROI_table", roi_table, backend="csv")
+        ome_zarr.add_table(
+            "FOV_ROI_table", roi_table, backend=omezarr_options.table_backend
+        )
 
     well_roi = ome_zarr.build_image_roi_table()
-    ome_zarr.add_table("well_ROI_table", well_roi, backend="csv")
+    ome_zarr.add_table(
+        "well_ROI_table", well_roi, backend=omezarr_options.table_backend
+    )
     return ome_zarr

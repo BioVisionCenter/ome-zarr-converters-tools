@@ -153,7 +153,6 @@ def calculate_snap_to_grid_offset(
         assert slice_x is not None
         x = slice_x.start
         assert x is not None
-        print(grid_setup.offset_x)
         x_grid = (x / grid_setup.offset_x) * grid_setup.length_x
         # Find the y grid position
         slice_y = tile.roi.get("y")

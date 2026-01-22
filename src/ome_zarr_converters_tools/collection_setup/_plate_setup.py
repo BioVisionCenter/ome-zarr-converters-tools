@@ -42,9 +42,8 @@ def setup_plates(
         )
         plates[plate_path]["images"].append(image_in_well)
     for plate_path, plate_info in plates.items():
-        group = zarr.open_group(
-            store=zarr_dir, path=plate_path, mode=mode, zarr_format=zarr_format
-        )
+        plante_url = f"{zarr_dir}/{plate_path}"
+        group = zarr.open_group(store=plante_url, mode=mode, zarr_format=zarr_format)
         try:
             # This can only succeed in "extend" mode if the group already exists
             plate = open_ome_zarr_plate(group, cache=True)

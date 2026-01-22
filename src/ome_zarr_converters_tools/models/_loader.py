@@ -29,18 +29,18 @@ ImageLoaderInterfaceType = TypeVar(
 
 
 class DefaultImageLoader(ImageLoaderInterface):
-    file_name: str
+    file_path: str
 
     def load_data(self, resource: Any = None) -> np.ndarray:
         """Load the image data as a NumPy array."""
         if resource and isinstance(resource, (Path, str)):
-            path = Path(resource) / "data" / self.file_name
+            path = Path(resource) / self.file_path
         elif resource is None:
-            path = Path(self.file_name)
+            path = Path(self.file_path)
         else:
             raise ValueError(
                 "DefaultImageLoader cannot handle resource of "
-                f"type {type(resource)}, expected Path or str."
+                f"type {type(resource)}, expected Path or str or None."
             )
 
         if not path.exists():
