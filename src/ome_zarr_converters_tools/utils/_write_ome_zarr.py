@@ -8,6 +8,7 @@ from ngio import (
     create_empty_ome_zarr,
     open_ome_zarr_container,
 )
+from ngio.ome_zarr_meta import Channel, ChannelVisualisation
 from ngio.tables import RoiTable
 
 from ome_zarr_converters_tools.models._acquisition import (
@@ -70,6 +71,36 @@ def _region_to_pixel_coordinates(
     return regions
 
 
+def build_channels_meta(tiled_image: TiledImage) -> list[Channel] | None:
+    """Build channel metadata from a TiledImage.
+
+    Args:
+        tiled_image: TiledImage model to extract channel metadata from.
+
+    Returns:
+        List of Channel metadata or None if no channel names are provided.
+    """
+    if tiled_image.channel_names is None:
+        return None
+    channels = []
+    for idx, name in enumerate(tiled_image.channel_names):
+        if tiled_image.wavelength_ids is not None:
+            wavelength_id = tiled_image.wavelength_ids[idx]
+        else:
+            wavelength_id = None
+        if tiled_image.colors is not None:
+            color = tiled_image.colors[idx]
+        else:
+            color = None
+        channel = Channel(
+            label=name,
+            wavelength_id=wavelength_id,
+            channel_visualisation=ChannelVisualisation(color=color),
+        )
+        channels.append(channel)
+    return channels
+
+
 def write_tiled_image_as_zarr(
     *,
     zarr_url: str,
@@ -110,6 +141,7 @@ def write_tiled_image_as_zarr(
         return ome_zarr
 
     except Exception:
+        channels_meta = build_channels_meta(tiled_image)
         ome_zarr = create_empty_ome_zarr(
             store=base_group,
             axes_names=tiled_image.axes,
@@ -119,6 +151,7 @@ def write_tiled_image_as_zarr(
             z_spacing=tiled_image.z_spacing,
             time_spacing=tiled_image.t_spacing,
             levels=omezarr_options.num_levels,
+            channels_meta=channels_meta,
             overwrite=True,
             ngff_version=omezarr_options.ngff_version,
         )
