@@ -5,10 +5,6 @@ from ngio import DefaultNgffVersion, NgffVersions
 from ngio.hcs import create_empty_plate, open_ome_zarr_plate
 from ngio.hcs._plate import ImageInWellPath
 
-from ome_zarr_converters_tools.collection_setup._store_utils import (
-    ConverterStorageType,
-    concat_storage,
-)
 from ome_zarr_converters_tools.models._acquisition import OverwriteMode
 from ome_zarr_converters_tools.models._collection import (
     ImageInPlate,
@@ -17,13 +13,21 @@ from ome_zarr_converters_tools.models._tile_region import TiledImage
 
 
 def setup_plates(
-    store: ConverterStorageType,
+    zarr_dir: str,
     tiled_images: list[TiledImage],
     ngff_version: NgffVersions = DefaultNgffVersion,
     overwrite_mode: OverwriteMode = OverwriteMode.NO_OVERWRITE,
 ) -> None:
     """Set up an ImageInPlate collection in the Zarr group."""
     assert isinstance(tiled_images[0].collection, ImageInPlate)
+    zarr_format = 2 if ngff_version == "0.4" else 3
+    if overwrite_mode == OverwriteMode.NO_OVERWRITE:
+        mode = "w-"
+    elif overwrite_mode == OverwriteMode.OVERWRITE:
+        mode = "w"
+    else:  # extend
+        mode = "a"
+
     plates = {}
     for tile in tiled_images:
         plate_path = tile.collection.plate_path()
@@ -38,16 +42,9 @@ def setup_plates(
         )
         plates[plate_path]["images"].append(image_in_well)
     for plate_path, plate_info in plates.items():
-        zarr_format = 2 if ngff_version == "0.4" else 3
-        if overwrite_mode == OverwriteMode.NO_OVERWRITE:
-            mode = "w-"
-        elif overwrite_mode == OverwriteMode.OVERWRITE:
-            mode = "w"
-        else:  # extend
-            mode = "a"
-
-        store = concat_storage(store=store, path=plate_path)
-        group = zarr.open_group(store=store, mode=mode, zarr_format=zarr_format)
+        group = zarr.open_group(
+            store=zarr_dir, path=plate_path, mode=mode, zarr_format=zarr_format
+        )
         try:
             # This can only succeed in "extend" mode if the group already exists
             plate = open_ome_zarr_plate(group, cache=True)

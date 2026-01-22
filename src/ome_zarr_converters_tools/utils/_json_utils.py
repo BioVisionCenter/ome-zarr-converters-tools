@@ -5,103 +5,66 @@ import os
 import time
 from uuid import uuid4
 
-from zarr.storage import FsspecStore, LocalStore
-
-from ome_zarr_converters_tools.collection_setup import (
-    ConverterStorageType,
-    concat_storage,
-)
 from ome_zarr_converters_tools.models import (
     CollectionInterfaceType,
     ImageLoaderInterfaceType,
     TiledImage,
 )
+from ome_zarr_converters_tools.utils._url_utils import (
+    URLType,
+    find_url_type,
+    local_url_to_path,
+)
 
 logger = logging.getLogger(__name__)
 
 
-def retry_decorator(
-    func,
-    num_retries: int | None = None,
-    exceptions: tuple[type[Exception], ...] | None = None,
-    on_retry_msg: str | None = None,
-    on_fail_msg: str | None = None,
-):
-    """Decorator to retry a function on FileNotFoundError."""
-    if exceptions is None:
-        # Match any exception
-        exceptions = (Exception,)
-    if on_retry_msg is None:
-        on_retry_msg = "Function failed, retrying..."
-    if on_fail_msg is None:
-        on_fail_msg = "Function failed after retries."
-    if num_retries is None:
-        num_retries = int(os.getenv("CONVERTERS_TOOLS_NUM_RETRIES", 5))
-
-    def wrapper(*args, **kwargs):
-        for t in range(num_retries):  # Retry up to num_retries times
-            try:
-                return func(*args, **kwargs)
-            except exceptions as e:
-                if logger:
-                    logger.error(str(e))
-                    logger.info(on_retry_msg)
-                sleep_time = 2 ** (t + 1)
-                time.sleep(sleep_time)
-        else:
-            raise Exception(on_fail_msg)
-
-    return wrapper
-
-
-def _create_tmp_json_store(
-    store: ConverterStorageType, dir_path: str
-) -> ConverterStorageType:
-    """Create a directory in the given store."""
-    json_store = concat_storage(store=store, path=dir_path)
-    if isinstance(json_store, LocalStore):
-        json_store.root.mkdir(parents=True, exist_ok=True)
-        return json_store
-    elif isinstance(json_store, FsspecStore):
-        raise NotImplementedError(
-            "Directory creation for FsspecStore is not implemented yet."
-        )
-    raise ValueError(f"Unsupported store type {type(store)}")
-
-
-def _dump_json_to_store(json_store: ConverterStorageType, json_data: str) -> str:
-    """Dump the tiled image as a JSON file in the given store."""
-    unique_json_filename = f"{uuid4()}.json"
-    if isinstance(json_store, LocalStore):
-        json_path = json_store.root / unique_json_filename
-        with open(json_path, "w") as f:
-            f.write(json_data)
-        logger.info(f"JSON file created: {json_path}")
-        return unique_json_filename
-    elif isinstance(json_store, FsspecStore):
-        raise NotImplementedError(
-            "JSON dumping for FsspecStore is not implemented yet."
-        )
-    raise ValueError(f"Unsupported store type {type(json_store)}")
-
-
-def dump_to_json(
-    store: ConverterStorageType, tiled_image: TiledImage, tmp_path: str = "_tmp_json"
-) -> str:
+def _dump_to_json_local_fs(temp_json_url: str, json_data: str) -> str:
     """Create a pickle file for the tiled image."""
-    json_store = _create_tmp_json_store(store, tmp_path)
-    data_json = tiled_image.model_dump_json()
-    tile_json_name = _dump_json_to_store(json_store=json_store, json_data=data_json)
+    json_store = local_url_to_path(temp_json_url)
+    unique_json_filename = f"{uuid4()}.json"
+    json_path = json_store / unique_json_filename
+    with open(json_path, "w") as f:
+        f.write(json_data)
+    tile_json_name = str(json_path)
     logger.info(f"JSON file created: {tile_json_name}")
     return tile_json_name
 
 
-def tiled_image_from_json(
-    json_file_name: str,
-    store: ConverterStorageType,
+def dump_to_json(temp_json_url: str, tiled_image: TiledImage) -> str:
+    """Create a pickle file for the tiled image."""
+    json_data = tiled_image.model_dump_json()
+    url_type = find_url_type(temp_json_url)
+    if url_type == URLType.LOCAL:
+        tile_json_name = _dump_to_json_local_fs(
+            temp_json_url=temp_json_url, json_data=json_data
+        )
+        return tile_json_name
+    else:
+        raise NotImplementedError(
+            f"Dumping JSON to URL type {url_type} is not implemented yet."
+        )
+
+
+def _tiled_image_from_json_local_fs(
+    tiled_image_json_dump_url: str,
     collection_type: type[CollectionInterfaceType],
     image_loader_type: type[ImageLoaderInterfaceType],
-    tmp_path: str = "_tmp_json",
+) -> TiledImage[CollectionInterfaceType, ImageLoaderInterfaceType]:
+    """Load the JSON file from the local filesystem."""
+    json_path = local_url_to_path(tiled_image_json_dump_url)
+    with open(json_path) as f:
+        # Concretely specify the types to load the generic TiledImage
+        tiled_image = TiledImage[
+            collection_type, image_loader_type
+        ].model_validate_json(f.read())
+    return tiled_image
+
+
+def tiled_image_from_json(
+    tiled_image_json_dump_url: str,
+    collection_type: type[CollectionInterfaceType],
+    image_loader_type: type[ImageLoaderInterfaceType],
 ) -> TiledImage:
     """Load the json TiledImage object.
 
@@ -109,13 +72,11 @@ def tiled_image_from_json(
     when loading it from json otherwise pydantic cannot infer them.
 
     Args:
-        json_file_name (str): Name of the json file.
-        store (ConverterStorageType): The Zarr store where the json file is located.
+        tiled_image_json_dump_url (str): The URL to the json file.
         collection_type (type[CollectionInterfaceType]): The concrete collection type
             of the TiledImage.
         image_loader_type (type[ImageLoaderInterfaceType]): The concrete image loader
             type of the TiledImage.
-        tmp_path (str): The temporary directory where the json file is stored.
 
     Returns:
         TiledImage: The loaded TiledImage object.
@@ -125,88 +86,100 @@ def tiled_image_from_json(
     if num_retries < 1:
         raise ValueError("NUM_RETRIES must be greater than 0")
 
-    json_store = concat_storage(store=store, path=tmp_path)
-    if not isinstance(json_store, LocalStore):
-        raise NotImplementedError(
-            "JSON loading for non-LocalStore is not implemented yet."
-        )
-
-    json_path = json_store.root / json_file_name
     for t in range(num_retries):
         try:
-            with open(json_path) as f:
-                # Concretely specify the types to load the generic TiledImage
-                tiled_image = TiledImage[
-                    collection_type, image_loader_type
-                ].model_validate_json(f.read())
-                if not isinstance(tiled_image, TiledImage):
-                    raise ValueError(
-                        f"JSON object is not a TiledImage: {type(tiled_image)}"
-                    )
-            return tiled_image
+            url_type = find_url_type(tiled_image_json_dump_url)
+            if url_type == URLType.LOCAL:
+                tiled_image = _tiled_image_from_json_local_fs(
+                    tiled_image_json_dump_url,
+                    collection_type,
+                    image_loader_type,
+                )
+                return tiled_image
+            else:
+                raise NotImplementedError(
+                    f"Loading JSON from URL type {url_type} is not implemented yet."
+                )
         except FileNotFoundError:
-            logger.error(f"JSON file does not exist: {json_path}")
-            logger.info("Retrying to load the JSON file...")
+            logger.error(
+                f"JSON file does not exist: {tiled_image_json_dump_url}, retrying..."
+            )
             sleep_time = 2 ** (t + 1)
             time.sleep(sleep_time)
 
     raise FileNotFoundError(
-        f"JSON file does not exist after {num_retries} retries: {json_path}"
+        f"JSON file does not exist after {num_retries} "
+        f"retries: {tiled_image_json_dump_url}"
     )
 
 
-def remove_json(
-    json_file_name: str, store: ConverterStorageType, tmp_path: str = "_tmp_json"
+def _remove_json_local_fs(
+    tiled_image_json_dump_url: str,
 ):
     """Clean up the JSON file and the directory if it is empty.
 
     Args:
-        json_file_name (str): Name of the json file.
-        store (ConverterStorageType): The Zarr store where the json file is located.
-        tmp_path (str): The temporary directory where the json file is stored.
+        tiled_image_json_dump_url (str): The URL to the json file.
     """
-    json_store = concat_storage(store=store, path=tmp_path)
     try:
-        if not isinstance(json_store, LocalStore):
-            raise NotImplementedError(
-                "JSON removal for non-LocalStore is not implemented yet."
-            )
-        json_path = json_store.root / json_file_name
+        json_path = local_url_to_path(tiled_image_json_dump_url)
         json_path.unlink()
         if not list(json_path.parent.iterdir()):
             # Remove the parent directory if it is empty
             json_path.parent.rmdir()
     except Exception as e:
-        # This path is not tested
-        # But if multiple processes are trying to clean up the same file
-        # it might raise an exception.
         logger.error(
             f"An error occurred while cleaning up the JSON file: {e}. "
-            f"You can safely remove the store: {json_store}"
+            f"You can safely remove the store: {tiled_image_json_dump_url}"
         )
 
 
-def cleanup_if_exists(store: ConverterStorageType, tmp_path: str = "_tmp_json"):
+def remove_json(
+    tiled_image_json_dump_url: str,
+):
+    """Clean up the JSON file and the directory if it is empty.
+
+    Args:
+        tiled_image_json_dump_url (str): The URL to the json file.
+    """
+    url_type = find_url_type(tiled_image_json_dump_url)
+    if url_type == URLType.LOCAL:
+        _remove_json_local_fs(tiled_image_json_dump_url)
+    else:
+        logger.error(f"Cleanup for URL type {url_type} is not implemented yet.")
+
+
+def _cleanup_if_exists_local_fs(temp_json_url: str):
     """Clean up the temporary JSON directory if it exists.
 
     If cleaning up is not possible, log an error message, but do not raise.
 
     Args:
-        store (ConverterStorageType): The Zarr store where the json files are located.
-        tmp_path (str): The temporary directory where the json files are stored.
+        temp_json_url (str): The URL to the temporary JSON directory.
     """
-    json_store = concat_storage(store=store, path=tmp_path)
+    json_path = local_url_to_path(temp_json_url)
     try:
-        if not isinstance(json_store, LocalStore):
-            raise NotImplementedError(
-                "JSON removal for non-LocalStore is not implemented yet."
-            )
-        if json_store.root.exists():
-            for json_file in json_store.root.iterdir():
+        if json_path.exists():
+            for json_file in json_path.iterdir():
                 json_file.unlink()
-            json_store.root.rmdir()
+            json_path.rmdir()
     except Exception as e:
         logger.error(
             f"An error occurred while cleaning up the JSON store: {e}. "
-            f"You can safely remove the store: {json_store}"
+            f"You can safely remove the store: {json_path}"
         )
+
+
+def cleanup_if_exists(temp_json_url: str):
+    """Clean up the temporary JSON directory if it exists.
+
+    If cleaning up is not possible, log an error message, but do not raise.
+
+    Args:
+        temp_json_url (str): The URL to the temporary JSON directory.
+    """
+    url_type = find_url_type(temp_json_url)
+    if url_type == URLType.LOCAL:
+        _cleanup_if_exists_local_fs(temp_json_url)
+    else:
+        logger.error(f"Cleanup for URL type {url_type} is not implemented yet.")

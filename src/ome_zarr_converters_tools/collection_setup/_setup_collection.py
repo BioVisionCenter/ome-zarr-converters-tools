@@ -5,7 +5,6 @@ from typing import Protocol
 from ngio import DefaultNgffVersion, NgffVersions
 
 from ome_zarr_converters_tools.collection_setup._plate_setup import setup_plates
-from ome_zarr_converters_tools.collection_setup._store_utils import ConverterStorageType
 from ome_zarr_converters_tools.models._acquisition import OverwriteMode
 from ome_zarr_converters_tools.models._tile_region import (
     TiledImage,
@@ -23,7 +22,7 @@ class SetupCollectionFunction(Protocol):
 
     def __call__(
         self,
-        store: ConverterStorageType,
+        zarr_dir: str,
         tiled_images: list[TiledImage],
         ngff_version: NgffVersions = DefaultNgffVersion,
         overwrite_mode: OverwriteMode = OverwriteMode.NO_OVERWRITE,
@@ -69,7 +68,7 @@ def setup_ome_zarr_collection(
     *,
     tiled_images: list[TiledImage],
     collection_type: str,
-    store: ConverterStorageType,
+    zarr_dir: str,
     ngff_version: NgffVersions = DefaultNgffVersion,
     overwrite_mode: OverwriteMode = OverwriteMode.NO_OVERWRITE,
 ) -> None:
@@ -78,7 +77,7 @@ def setup_ome_zarr_collection(
     Args:
         tiled_images: List of TiledImage to set up the collection for.
         collection_type: Type of collection setup handler to use.
-        store: The Zarr store to set up the collection in.
+        zarr_dir: The base directory for the zarr data.
         ngff_version: NGFF version to use for the collection setup.
         overwrite_mode: Overwrite mode to use for the collection setup.
 
@@ -93,7 +92,7 @@ def setup_ome_zarr_collection(
         )
     return setup_function(
         tiled_images=tiled_images,
-        store=store,
+        zarr_dir=zarr_dir,
         ngff_version=ngff_version,
         overwrite_mode=overwrite_mode,
     )

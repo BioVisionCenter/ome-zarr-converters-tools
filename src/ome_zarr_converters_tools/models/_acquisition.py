@@ -113,6 +113,13 @@ class OmeZarrOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
+class TempJsonOptions(BaseModel):
+    temp_url: str = "{zarr_dir}/_tmp_json"
+
+    def format_temp_url(self, zarr_dir: str) -> str:
+        return self.temp_url.format(zarr_dir=zarr_dir)
+
+
 class ConverterOptions(BaseModel):
     tiling_mode: TilingMode = TilingMode.AUTO
     stage_correction: StageCorrections = Field(default_factory=StageCorrections)
@@ -120,6 +127,7 @@ class ConverterOptions(BaseModel):
         default_factory=AlignmentCorrections
     )
     omezarr_options: OmeZarrOptions = Field(default_factory=OmeZarrOptions)
+    temp_json_options: TempJsonOptions = Field(default_factory=TempJsonOptions)
     model_config = ConfigDict(extra="forbid")
 
 

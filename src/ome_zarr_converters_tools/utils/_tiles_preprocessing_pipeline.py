@@ -8,7 +8,7 @@ from ome_zarr_converters_tools.models import (
     Tile,
     TiledImage,
 )
-from ome_zarr_converters_tools.utils import tiled_image_from_tiles
+from ome_zarr_converters_tools.utils._tile_to_tiled_images import tiled_image_from_tiles
 from ome_zarr_converters_tools.validators import ValidatorStep, apply_validator_pipeline
 
 

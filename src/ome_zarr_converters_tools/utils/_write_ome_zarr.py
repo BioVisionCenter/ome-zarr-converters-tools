@@ -73,7 +73,7 @@ def _region_to_pixel_coordinates(
 
 def write_tiled_image_as_zarr(
     *,
-    base_store: NgioSupportedStore,
+    zarr_url: str,
     tiled_image: TiledImage,
     converter_options: ConverterOptions,
     overwrite_mode: OverwriteMode,
@@ -82,11 +82,12 @@ def write_tiled_image_as_zarr(
     """Write a TiledImage as a Zarr file.
 
     Args:
-        base_store: Base store to write the Zarr file to.
+        zarr_url: URL to write the Zarr file to.
         tiled_image: TiledImage model to write.
         converter_options: Options for the OME-Zarr conversion.
         overwrite_mode: Mode to handle existing data.
         resource: Optional resource to pass to the image loaders.
+
     Returns:
         OmeZarrContainer: The written OME-Zarr container.
     """
@@ -100,12 +101,12 @@ def write_tiled_image_as_zarr(
         mode = "w"
     else:  # extend
         mode = "a"
-    base_group = zarr.open_group(store=base_store, mode=mode, path=tiled_image.path)
+    base_group = zarr.open_group(store=zarr_url, mode=mode)
     omezarr_options = converter_options.omezarr_options
     try:
         # This can only succeed in "extend" mode if the group already exists
         ome_zarr = open_ome_zarr_container(base_group, cache=True)
-        return {}
+        return ome_zarr
 
     except Exception:
         ome_zarr = create_empty_ome_zarr(

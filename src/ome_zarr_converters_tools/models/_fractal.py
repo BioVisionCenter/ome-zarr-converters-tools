@@ -1,6 +1,6 @@
 """Models to be used with Fractal tasks API."""
 
-from typing import Literal, Self
+from typing import Self
 
 from pydantic import BaseModel, model_validator
 
@@ -16,9 +16,7 @@ from ome_zarr_converters_tools.models._acquisition import (
 class ConvertParallelInitArgs(BaseModel):
     """Arguments for the compute task."""
 
-    store_url: str
-    json_file_name: str
-    store_type: Literal["local", "fsspec"] = "local"
+    tiled_image_json_dump_url: str
     converter_options: ConverterOptions
     overwrite_mode: OverwriteMode = OverwriteMode.NO_OVERWRITE
 

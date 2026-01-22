@@ -20,11 +20,14 @@ from ome_zarr_converters_tools.utils._tiled_image_creation_pipeline import (
 from ome_zarr_converters_tools.utils._tiles_preprocessing_pipeline import (
     tiles_preprocessing_pipeline,
 )
+from ome_zarr_converters_tools.utils._url_utils import URLType, find_url_type
 from ome_zarr_converters_tools.utils._write_ome_zarr import write_tiled_image_as_zarr
 
 __all__ = [
+    "URLType",
     "cleanup_if_exists",
     "dump_to_json",
+    "find_url_type",
     "hcs_images_from_csv",
     "hcs_images_from_dataframe",
     "plot_tiled_images",

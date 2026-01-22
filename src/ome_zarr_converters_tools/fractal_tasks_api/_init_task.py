@@ -1,9 +1,6 @@
 """Utilities for converters init tasks in Fractal."""
 
-from zarr.storage import LocalStore
-
 from ome_zarr_converters_tools.collection_setup import (
-    ConverterStorageType,
     setup_ome_zarr_collection,
 )
 from ome_zarr_converters_tools.models import (
@@ -14,51 +11,50 @@ from ome_zarr_converters_tools.models import (
     OverwriteMode,
     TiledImage,
 )
-from ome_zarr_converters_tools.utils import cleanup_if_exists, dump_to_json
+from ome_zarr_converters_tools.utils import (
+    cleanup_if_exists,
+    dump_to_json,
+)
 
 
 def build_parallelization_list(
     tiled_images: list[TiledImage],
     *,
-    store: ConverterStorageType,
+    zarr_dir: str,
     converter_options: ConverterOptions,
     overwrite_mode: OverwriteMode = OverwriteMode.NO_OVERWRITE,
-    tmp_path: str = "_tmp_json",
 ) -> list[dict]:
     """Build a list of dictionaries to parallelize the conversion.
 
     Args:
-        store (ConverterStorageType): The base store for the zarr data.
         tiled_images (list[TiledImageWithContext]): A list of tiled images objects
             to convert.
+        zarr_dir (str): The base directory for the zarr data.
         converter_options (ConverterOptions): The converter options to use during
             conversion.
         overwrite_mode (OverwriteMode): The overwrite mode to use when writing the data.
         tmp_path (str): The name of the temporary directory to store the
             pickled tiled images.
     """
-    if isinstance(store, LocalStore):
-        zarr_base = str(store.root)
-    else:
-        raise NotImplementedError(
-            "Parallelization list building is only implemented for LocalStore."
-        )
-    cleanup_if_exists(store, tmp_path=tmp_path)
+    temp_json_url = converter_options.temp_json_options.format_temp_url(
+        zarr_dir=zarr_dir
+    )
+    cleanup_if_exists(temp_json_url=temp_json_url)
     parallelization_list = []
     for image in tiled_images:
-        json_name = dump_to_json(store, image, tmp_path=tmp_path)
+        tiled_image_json_dump_url = dump_to_json(
+            temp_json_url=temp_json_url, tiled_image=image
+        )
         # This is not used directly but kept for api consistency
-        zarr_url = f"{zarr_base}/{image.path}"
+        zarr_url = f"{zarr_dir}/{image.path}"
         parallelization_list.append(
             {
                 "zarr_url": zarr_url,
                 "init_args": ConvertParallelInitArgs(
-                    store_type="local",  # fsspec not yet supported
-                    store_url=store.root.absolute().as_uri(),
-                    json_file_name=json_name,
+                    tiled_image_json_dump_url=tiled_image_json_dump_url,
                     converter_options=converter_options,
                     overwrite_mode=overwrite_mode,
-                ).model_dump_json(exclude_none=True),
+                ).model_dump(exclude=None),
             }
         )
     return parallelization_list
@@ -67,7 +63,7 @@ def build_parallelization_list(
 def setup_images_for_conversion(
     tiled_images: list[TiledImage],
     *,
-    store: ConverterStorageType,
+    zarr_dir: str,
     collection_type: str,
     converter_options: ConverterOptions,
     overwrite_mode: OverwriteMode = OverwriteMode.NO_OVERWRITE,
@@ -81,7 +77,7 @@ def setup_images_for_conversion(
 
     Args:
         tiled_images: List of TiledImageWithContext models that have been converted.
-        store: The base store for the zarr data.
+        zarr_dir: The base directory for the zarr data.
         collection_type: The type of collection to set up.
         converter_options: The converter options to use during conversion.
         overwrite_mode: The overwrite mode to use when writing the data.
@@ -90,12 +86,12 @@ def setup_images_for_conversion(
     setup_ome_zarr_collection(
         tiled_images=tiled_images,
         collection_type=collection_type,
-        store=store,
+        zarr_dir=zarr_dir,
         ngff_version=ngff_version,
         overwrite_mode=overwrite_mode,
     )
     return build_parallelization_list(
-        store=store,
+        zarr_dir=zarr_dir,
         tiled_images=tiled_images,
         converter_options=converter_options,
         overwrite_mode=overwrite_mode,
