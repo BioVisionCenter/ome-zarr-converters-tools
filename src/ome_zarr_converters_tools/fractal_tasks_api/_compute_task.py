@@ -2,13 +2,16 @@
 
 import logging
 import time
-from typing import Any
+from typing import Any, TypedDict
 
+from ngio import OmeZarrContainer
 from zarr.storage import LocalStore
 
 from ome_zarr_converters_tools.models import (
+    CollectionInterface,
     CollectionInterfaceType,
     ConvertParallelInitArgs,
+    ImageInPlate,
     ImageLoaderInterfaceType,
 )
 from ome_zarr_converters_tools.registration import (
@@ -23,21 +26,57 @@ from ome_zarr_converters_tools.utils import (
 logger = logging.getLogger(__name__)
 
 
+class UpdateDict(TypedDict):
+    zarr_url: str
+    types: dict[str, Any]
+    attributes: dict[str, Any]
+
+
+class ImageListUpdateDict(TypedDict):
+    image_list_updates: list[UpdateDict]
+
+
+def _build_image_list_update(
+    zarr_url: str,
+    ome_zarr: OmeZarrContainer,
+    collection: CollectionInterface,
+    attributes: dict[str, Any],
+) -> ImageListUpdateDict:
+    _types = {"is_3D": ome_zarr.is_3d}
+    if ome_zarr.is_time_series:
+        _types["is_time_series"] = True
+
+    if isinstance(collection, ImageInPlate):
+        attributes["plate"] = collection.plate_name
+        attributes["well"] = collection.well_path()
+        attributes["acquisition"] = collection.acquisition
+
+    _update_dict = UpdateDict(
+        zarr_url=zarr_url,
+        types=_types,
+        attributes=attributes,
+    )
+    return ImageListUpdateDict(image_list_updates=[_update_dict])
+
+
 def generic_compute_task(
     *,
     # Fractal parameters
+    zarr_url: str,
     init_args: ConvertParallelInitArgs,
     collection_type: type[CollectionInterfaceType],
     image_loader_type: type[ImageLoaderInterfaceType],
     resource: Any = None,
-):
+) -> ImageListUpdateDict:
     """Initialize the task to convert a LIF plate to OME-Zarr.
 
     Args:
+        zarr_url (str): URL to the OME-Zarr file.
         init_args (ConvertParallelInitArgs): Arguments from the initialization task.
-        collection_type (Any): The collection type to use when loading the TiledImage.
-        image_loader_type (Any): The image loader type to use when loading the
-            TiledImage.
+        collection_type (type[CollectionInterfaceType]): The collection type to use
+            when loading the TiledImage.
+        image_loader_type (type[ImageLoaderInterfaceType]): The image loader type to
+            use when loading the TiledImage.
         resource (Any): The resource to associate with the context model.
     """
     # Build List of TiledImage models
@@ -70,7 +109,7 @@ def generic_compute_task(
         tiling_mode=init_args.converter_options.tiling_mode,
     )
 
-    tiled_image_creation_pipeline(
+    ome_zarr = tiled_image_creation_pipeline(
         base_store=store,
         tiled_image=tiled_image_loaded,
         registration_pipeline=registration_pipeline,
@@ -79,4 +118,9 @@ def generic_compute_task(
         resource=resource,
     )
     remove_json(init_args.json_file_name, store)
-    return {}
+    return _build_image_list_update(
+        zarr_url=zarr_url,
+        ome_zarr=ome_zarr,
+        collection=tiled_image_loaded.collection,
+        attributes=tiled_image_loaded.attributes,
+    )

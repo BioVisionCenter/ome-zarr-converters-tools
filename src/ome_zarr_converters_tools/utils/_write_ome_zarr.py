@@ -1,7 +1,13 @@
 from typing import Any
 
 import zarr
-from ngio import PixelSize, RoiSlice, create_empty_ome_zarr, open_ome_zarr_container
+from ngio import (
+    OmeZarrContainer,
+    PixelSize,
+    RoiSlice,
+    create_empty_ome_zarr,
+    open_ome_zarr_container,
+)
 from ngio.tables import RoiTable
 from ngio.utils._zarr_utils import NgioSupportedStore
 
@@ -72,7 +78,7 @@ def write_tiled_image_as_zarr(
     converter_options: ConverterOptions,
     overwrite_mode: OverwriteMode,
     resource: Any | None = None,
-) -> dict[str, Any]:
+) -> OmeZarrContainer:
     """Write a TiledImage as a Zarr file.
 
     Args:
@@ -81,6 +87,8 @@ def write_tiled_image_as_zarr(
         converter_options: Options for the OME-Zarr conversion.
         overwrite_mode: Mode to handle existing data.
         resource: Optional resource to pass to the image loaders.
+    Returns:
+        OmeZarrContainer: The written OME-Zarr container.
     """
     tiled_image.regions = _region_to_pixel_coordinates(
         tiled_image.regions,
@@ -131,4 +139,4 @@ def write_tiled_image_as_zarr(
 
     well_roi = ome_zarr.build_image_roi_table()
     ome_zarr.add_table("well_ROI_table", well_roi, backend="csv")
-    return {}
+    return ome_zarr

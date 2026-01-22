@@ -15,6 +15,7 @@ from ome_zarr_converters_tools.models._acquisition import (
     TilingMode,
 )
 from ome_zarr_converters_tools.models._collection import (
+    CollectionInterface,
     CollectionInterfaceType,
     ImageInPlate,
     SingleImage,
@@ -36,6 +37,7 @@ __all__ = [
     "AcquisitionDetails",
     "AlignmentCorrections",
     "BackendType",
+    "CollectionInterface",
     "CollectionInterfaceType",
     "ContextModel",
     "ConvertParallelInitArgs",

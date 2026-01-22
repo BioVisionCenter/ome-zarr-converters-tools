@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from ngio.utils._zarr_utils import NgioSupportedStore
+from ngio import NgioSupportedStore, OmeZarrContainer
 
 from ome_zarr_converters_tools.models import (
     ConverterOptions,
@@ -24,14 +24,14 @@ def tiled_image_creation_pipeline(
     converter_options: ConverterOptions,
     overwrite_mode: OverwriteMode,
     resource: Any | None = None,
-) -> dict[str, Any]:
+) -> OmeZarrContainer:
     """Write a TiledImage from a dictionary."""
     tiled_image = apply_registration_pipeline(tiled_image, registration_pipeline)
-    updates = write_tiled_image_as_zarr(
+    omezarr = write_tiled_image_as_zarr(
         base_store=base_store,
         tiled_image=tiled_image,
         converter_options=converter_options,
         overwrite_mode=overwrite_mode,
         resource=resource,
     )
-    return updates
+    return omezarr
