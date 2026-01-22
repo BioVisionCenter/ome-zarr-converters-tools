@@ -102,7 +102,8 @@ class TiledImage(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfac
     t_spacing: float = 1.0
     data_type: str
     channel_names: list[str] | None = None
-    wavelengths: list[float] | None = None
+    wavelength_ids: list[str] | None = None
+    colors: list[str] | None = None
     axes: list[CANONICAL_AXES_TYPE]
     collection: CollectionInterfaceType
     attributes: dict[str, Any] = Field(default_factory=dict)
@@ -145,8 +146,10 @@ class TiledImage(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfac
             raise ValueError(
                 "Tile channel names do not match TiledImage channel names."
             )
-        if self.wavelengths != tile.wavelengths:
-            raise ValueError("Tile wavelengths do not match TiledImage wavelengths.")
+        if self.wavelength_ids != tile.wavelength_ids:
+            raise ValueError(
+                "Tile wavelength IDs do not match TiledImage wavelength IDs."
+            )
         if self.axes != tile.axes:
             raise ValueError("Tile axes do not match TiledImage axes.")
         if self.pixelsize != tile.pixelsize:

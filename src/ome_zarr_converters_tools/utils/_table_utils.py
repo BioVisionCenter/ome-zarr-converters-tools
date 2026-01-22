@@ -6,18 +6,17 @@ from typing import Any
 import pandas as pd
 import toml
 
-from ome_zarr_converters_tools.api.tiles_preprocessing_pipeline import (
-    tiles_preprocessing_pipeline,
-)
 from ome_zarr_converters_tools.filters import FilterStep
 from ome_zarr_converters_tools.models import (
     AcquisitionDetails,
-    ContextModel,
     ConverterOptions,
     DefaultImageLoader,
     ImageInPlate,
     Tile,
     TiledImage,
+)
+from ome_zarr_converters_tools.utils._tiles_preprocessing_pipeline import (
+    tiles_preprocessing_pipeline,
 )
 from ome_zarr_converters_tools.validators import ValidatorStep
 
@@ -119,14 +118,17 @@ def hcs_images_from_dataframe(
             plate_name=plate_name,
             acquisition=acquisition_id,
         )
+        data = acquisition_details.model_dump()
+        data["attributes"] = {}
+        model_fields = Tile.model_fields.keys()
+        for key, value in row_dict.items():
+            if key in model_fields:
+                data[key] = value
+            else:
+                # Extra fields will be added as attributes later
+                data["attributes"][key] = value
 
-        tile = Tile[ImageInPlate, DefaultImageLoader].model_validate(
-            row_dict,
-            context=ContextModel(
-                acquisition_details=acquisition_details,
-                converter_options=converter_options,
-            ),
-        )
+        tile = Tile(**data)
         tiles.append(tile)
     tiled_images = tiles_preprocessing_pipeline(
         tiles=tiles,

@@ -49,6 +49,7 @@ class ImageInPlate(CollectionInterface):
     row: str
     column: int = Field(ge=1)
     acquisition: int = Field(default=0, ge=0)
+    # Auto-generated suffix for tiling (do not set manually)
     suffix: str = ""
 
     @property

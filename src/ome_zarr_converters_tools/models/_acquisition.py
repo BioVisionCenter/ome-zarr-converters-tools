@@ -17,7 +17,7 @@ ConverterStorageType = LocalStore | FsspecStore
 
 CANONICAL_AXES_TYPE = Literal["t", "c", "z", "y", "x"]
 canonical_axes: list[CANONICAL_AXES_TYPE] = ["t", "c", "z", "y", "x"]
-COO_TYPE = Literal["world", "pixel"]
+COO_SYSTEM_TYPE = Literal["world", "pixel"]
 ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 
@@ -45,18 +45,19 @@ class BackendType(StrEnum):
 class AcquisitionDetails(BaseModel):
     """Details about the acquisition.
 
-    These can be either provided by the user or inferred from the data.
+    These attributes are known and fixed prior to conversion.
+    (Either parsed from metadata or manually serialized by the user beforehand.)
     """
 
     # Determine the coordinate system for start and length values
-    start_x_coo: COO_TYPE = "world"
-    start_y_coo: COO_TYPE = "world"
-    start_z_coo: COO_TYPE = "world"
-    start_t_coo: COO_TYPE = "world"
-    length_x_coo: COO_TYPE = "pixel"
-    length_y_coo: COO_TYPE = "pixel"
-    length_z_coo: COO_TYPE = "pixel"
-    length_t_coo: COO_TYPE = "pixel"
+    start_x_coo: COO_SYSTEM_TYPE = "world"
+    start_y_coo: COO_SYSTEM_TYPE = "world"
+    start_z_coo: COO_SYSTEM_TYPE = "world"
+    start_t_coo: COO_SYSTEM_TYPE = "world"
+    length_x_coo: COO_SYSTEM_TYPE = "pixel"
+    length_y_coo: COO_SYSTEM_TYPE = "pixel"
+    length_z_coo: COO_SYSTEM_TYPE = "pixel"
+    length_t_coo: COO_SYSTEM_TYPE = "pixel"
     # Spacing information
     pixelsize: float = Field(default=1.0, gt=0.0)  # in micrometers
     z_spacing: float = Field(default=1.0, gt=0.0)  # in micrometers
@@ -64,7 +65,8 @@ class AcquisitionDetails(BaseModel):
 
     # Channel information
     channel_names: list[str] | None = None
-    wavelengths: list[float] | None = None
+    wavelength_ids: list[str] | None = None
+    colors: list[str] | None = None
 
     # Axes order to be used for the data (should be a subset of canonical axes)
     axes: list[CANONICAL_AXES_TYPE] = Field(

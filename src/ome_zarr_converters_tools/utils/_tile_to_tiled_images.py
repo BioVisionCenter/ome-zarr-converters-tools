@@ -36,20 +36,20 @@ def tiled_image_from_tiles(
         suffix = "" if not split_tiles else f"_{tile.fov_name}"
         tile.collection.suffix = suffix
         path = tile.collection.path()
-        attributes = tile.model_extra or {}
         if path not in tiled_images:
             tiled_images[path] = TiledImage(
                 path=path,
                 regions=[],
                 data_type=data_type,
                 channel_names=tile.channel_names,
-                wavelengths=tile.wavelengths,
+                wavelength_ids=tile.wavelength_ids,
+                colors=tile.colors,
                 pixelsize=tile.pixelsize,
                 z_spacing=tile.z_spacing,
                 t_spacing=tile.t_spacing,
                 axes=tile.axes,
                 collection=tile.collection,
-                attributes=attributes,
+                attributes=tile.attributes,
             )
         tiled_images[path].add_tile(tile)
 
