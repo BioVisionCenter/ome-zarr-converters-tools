@@ -1,5 +1,6 @@
 """Models for defining regions to be converted into OME-Zarr format."""
 
+import math
 from typing import Any, Generic, Self
 
 import numpy as np
@@ -15,6 +16,7 @@ from ome_zarr_converters_tools.models._loader import (
 )
 from ome_zarr_converters_tools.models._roi_utils import (
     bulk_roi_union,
+    move_roi_by,
     roi_to_point_distance,
     shape_from_rois,
 )
@@ -42,9 +44,19 @@ class TileSlice(BaseModel, Generic[ImageLoaderInterfaceType]):
             image_loader=tile.image_loader,
         )
 
-    def load_data(self, resource: Any) -> np.ndarray:
+    def load_data(
+        self, *, axes: list[CANONICAL_AXES_TYPE], resource: Any | None = None
+    ) -> np.ndarray:
         """Load the image data for this TileSlice using the image loader."""
-        return self.image_loader.load_data(resource=resource)
+        data = self.image_loader.load_data(resource=resource)
+        # Padding data to match the ROI shape if necessary
+        n_axes = len(axes)
+        data_axes = data.ndim
+        if data_axes > n_axes:
+            raise ValueError("Data has more axes than expected.")
+        if data_axes < n_axes:
+            data = data.reshape((1,) * (n_axes - data_axes) + data.shape)
+        return data
 
 
 class TileFOVGroup(BaseModel, Generic[ImageLoaderInterfaceType]):
@@ -85,6 +97,37 @@ class TileFOVGroup(BaseModel, Generic[ImageLoaderInterfaceType]):
                 ref_region = region
                 ref_distance = distance
         return ref_region
+
+    def load_data(self, resource: Any | None = None) -> np.ndarray:
+        """Load the full image data for this FOV group using the image loaders."""
+        shape = self.shape()
+        ref_slice = self.ref_slice()
+        ref_data = ref_slice.load_data(axes=self.axes, resource=resource)
+        full_image = np.zeros(shape, dtype=ref_data.dtype)
+
+        group_roi = self.roi()
+        # Find the offset between the group ROI and the origin ROI
+        offset = {}
+        for axis in self.axes:
+            group_slice = group_roi.get(axis)
+            assert group_slice is not None
+            ref_slice_axis = ref_slice.roi.get(axis)
+            assert ref_slice_axis is not None
+            start = ref_slice_axis.start
+            assert start is not None
+            offset[axis] = -start
+
+        for region in self.regions:
+            roi_zeroed = move_roi_by(region.roi, offset)
+            region_data = region.load_data(axes=self.axes, resource=resource)
+            roi_slice = roi_zeroed.to_slicing_dict(pixel_size=self.pixel_size)
+            slicing = []
+            for axis in self.axes:
+                _slice = roi_slice[axis]
+                slicing.append(slice(math.floor(_slice.start), math.ceil(_slice.stop)))
+            slicing = tuple(slicing)
+            full_image[slicing] = region_data
+        return full_image
 
 
 class TiledImage(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfaceType]):
@@ -174,3 +217,20 @@ class TiledImage(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfac
         union_roi = bulk_roi_union([region.roi for region in self.regions])
         union_roi.name = self.name or self.path
         return union_roi
+
+    def load_data(self, resource: Any | None = None) -> np.ndarray:
+        """Load the full image data for this TiledImage using the image loaders."""
+        shape = self.shape()
+        dtype = np.dtype(self.data_type)
+        full_image = np.zeros(shape, dtype=dtype)
+
+        for region in self.regions:
+            region_data = region.load_data(axes=self.axes, resource=resource)
+            roi_slice = region.roi.to_slicing_dict(pixel_size=self.pixel_size)
+            slicing = []
+            for axis in self.axes:
+                _slice = roi_slice[axis]
+                slicing.append(slice(math.floor(_slice.start), math.ceil(_slice.stop)))
+            slicing = tuple(slicing)
+            full_image[slicing] = region_data
+        return full_image

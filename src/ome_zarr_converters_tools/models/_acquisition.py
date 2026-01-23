@@ -120,6 +120,13 @@ class TempJsonOptions(BaseModel):
         return self.temp_url.format(zarr_dir=zarr_dir)
 
 
+class WriterMode(StrEnum):
+    BY_TILE = "By Tile"
+    BY_FOV = "By FOV"
+    BY_TILE_DASK = "By Tile (Using Dask)"
+    IN_MEMORY = "In Memory"
+
+
 class ConverterOptions(BaseModel):
     tiling_mode: TilingMode = TilingMode.AUTO
     stage_correction: StageCorrections = Field(default_factory=StageCorrections)
@@ -127,6 +134,7 @@ class ConverterOptions(BaseModel):
         default_factory=AlignmentCorrections
     )
     omezarr_options: OmeZarrOptions = Field(default_factory=OmeZarrOptions)
+    writer_mode: WriterMode = WriterMode.BY_FOV
     temp_json_options: TempJsonOptions = Field(default_factory=TempJsonOptions)
     model_config = ConfigDict(extra="forbid")
 

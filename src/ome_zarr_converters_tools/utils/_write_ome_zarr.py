@@ -15,8 +15,10 @@ from ome_zarr_converters_tools.models._acquisition import (
     ConverterOptions,
     OmeZarrOptions,
     OverwriteMode,
+    WriterMode,
 )
 from ome_zarr_converters_tools.models._tile_region import TiledImage, TileSlice
+from ome_zarr_converters_tools.utils._to_zarr import write_to_zarr
 
 
 def _compute_chunk_size(
@@ -106,6 +108,7 @@ def write_tiled_image_as_zarr(
     zarr_url: str,
     tiled_image: TiledImage,
     converter_options: ConverterOptions,
+    writer_mode: WriterMode,
     overwrite_mode: OverwriteMode,
     resource: Any | None = None,
 ) -> OmeZarrContainer:
@@ -115,6 +118,7 @@ def write_tiled_image_as_zarr(
         zarr_url: URL to write the Zarr file to.
         tiled_image: TiledImage model to write.
         converter_options: Options for the OME-Zarr conversion.
+        writer_mode: Mode for writing the data.
         overwrite_mode: Mode to handle existing data.
         resource: Optional resource to pass to the image loaders.
 
@@ -156,10 +160,12 @@ def write_tiled_image_as_zarr(
             ngff_version=omezarr_options.ngff_version,
         )
     image = ome_zarr.get_image()
-    for region in tiled_image.regions:
-        region_data = region.load_data(resource)
-        region_data = region_data[None, None, None, ...]
-        image.set_roi(roi=region.roi, patch=region_data)
+    write_to_zarr(
+        image=image,
+        tiled_image=tiled_image,
+        resource=resource,
+        writer_mode=writer_mode,
+    )
     image.consolidate()
 
     fov_tiles = tiled_image.group_by_fov()

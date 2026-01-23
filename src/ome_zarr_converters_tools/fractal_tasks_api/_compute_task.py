@@ -85,6 +85,9 @@ def generic_compute_task(
                 collection_type=collection_type,
                 image_loader_type=image_loader_type,
             )
+            logger.info(
+                f"Successfully loaded JSON file: {init_args.tiled_image_json_dump_url}"
+            )
             break  # Exit loop if successful
         except FileNotFoundError:
             logger.error(
@@ -102,16 +105,21 @@ def generic_compute_task(
         alignment_corrections=init_args.converter_options.alignment_correction,
         tiling_mode=init_args.converter_options.tiling_mode,
     )
-
+    logger.info(
+        f"Starting conversion for Zarr URL: {zarr_url} "
+        f"with TiledImage: {tiled_image_loaded.name}"
+    )
     ome_zarr = tiled_image_creation_pipeline(
         zarr_url=zarr_url,
         tiled_image=tiled_image_loaded,
         registration_pipeline=registration_pipeline,
         converter_options=init_args.converter_options,
+        writer_mode=init_args.converter_options.writer_mode,
         overwrite_mode=init_args.overwrite_mode,
         resource=resource,
     )
     remove_json(init_args.tiled_image_json_dump_url)
+    logger.info(f"Completed conversion for Zarr URL: {zarr_url} ")
     return _build_image_list_update(
         zarr_url=zarr_url,
         ome_zarr=ome_zarr,

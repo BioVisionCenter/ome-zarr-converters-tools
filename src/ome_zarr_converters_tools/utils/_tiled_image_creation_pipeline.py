@@ -9,6 +9,7 @@ from ome_zarr_converters_tools.models import (
     OverwriteMode,
     TiledImage,
 )
+from ome_zarr_converters_tools.models._acquisition import WriterMode
 from ome_zarr_converters_tools.registration import (
     RegistrationStep,
     apply_registration_pipeline,
@@ -22,6 +23,7 @@ def tiled_image_creation_pipeline(
     tiled_image: TiledImage,
     registration_pipeline: list[RegistrationStep],
     converter_options: ConverterOptions,
+    writer_mode: WriterMode,
     overwrite_mode: OverwriteMode,
     resource: Any | None = None,
 ) -> OmeZarrContainer:
@@ -31,6 +33,7 @@ def tiled_image_creation_pipeline(
         zarr_url=zarr_url,
         tiled_image=tiled_image,
         converter_options=converter_options,
+        writer_mode=writer_mode,
         overwrite_mode=overwrite_mode,
         resource=resource,
     )

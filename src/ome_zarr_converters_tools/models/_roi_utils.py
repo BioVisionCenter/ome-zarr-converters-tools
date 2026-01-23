@@ -204,7 +204,6 @@ def shape_from_rois(
     roi_union = bulk_roi_union(rois)
     roi_union = roi_union.to_pixel(pixel_size)
     for roi_slice in roi_union.slices:
-        assert roi_slice.axis_name in axes
         length = roi_slice.length
         assert length is not None
         axes_shape[roi_slice.axis_name] = math.ceil(length)  # TODO remove ceil?
