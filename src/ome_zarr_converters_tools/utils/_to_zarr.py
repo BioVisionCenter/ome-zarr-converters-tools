@@ -1,9 +1,12 @@
+from logging import getLogger
 from typing import Any
 
 from ngio import Image
 
 from ome_zarr_converters_tools.models import TiledImage
 from ome_zarr_converters_tools.models._acquisition import WriterMode
+
+logger = getLogger(__name__)
 
 
 def sequential_tile_writing(
@@ -14,6 +17,7 @@ def sequential_tile_writing(
     For each region in the TiledImage, load the data and write it to the
     corresponding ROI in the OME-Zarr image.
     """
+    logger.info("Starting sequential tile writing.")
     for region in tiled_image.regions:
         region_data = region.load_data(axes=tiled_image.axes, resource=resource)
         image.set_roi(roi=region.roi, patch=region_data)
@@ -38,6 +42,7 @@ def sequential_fov_writing(
     For each region in the TiledImage, load the data and write it to the
     corresponding ROI in the OME-Zarr image.
     """
+    logger.info("Starting sequential FOV writing.")
     for group in tiled_image.group_by_fov():
         roi = group.roi()
         group_data = group.load_data(resource=resource)
@@ -50,6 +55,7 @@ def in_memory_writing(tiled_image: TiledImage, image: Image, resource: Any) -> N
     For each region in the TiledImage, load the data and write it to the
     corresponding ROI in the OME-Zarr image.
     """
+    logger.info("Starting in-memory writing.")
     full_image = tiled_image.load_data(resource=resource)
     roi = tiled_image.roi()
     image.set_roi(roi=roi, patch=full_image)
