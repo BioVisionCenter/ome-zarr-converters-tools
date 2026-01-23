@@ -78,6 +78,7 @@ def generic_compute_task(
             use when loading the TiledImage.
         resource (Any): The resource to associate with the context model.
     """
+    logger.info(f"Starting conversion for Zarr URL: {zarr_url}")
     for t in range(3):  # Retry up to 3 times
         try:
             tiled_image_loaded = tiled_image_from_json(
@@ -105,10 +106,6 @@ def generic_compute_task(
         alignment_corrections=init_args.converter_options.alignment_correction,
         tiling_mode=init_args.converter_options.tiling_mode,
     )
-    logger.info(
-        f"Starting conversion for Zarr URL: {zarr_url} "
-        f"with TiledImage: {tiled_image_loaded.name}"
-    )
     ome_zarr = tiled_image_creation_pipeline(
         zarr_url=zarr_url,
         tiled_image=tiled_image_loaded,
@@ -119,7 +116,7 @@ def generic_compute_task(
         resource=resource,
     )
     remove_json(init_args.tiled_image_json_dump_url)
-    logger.info(f"Completed conversion for Zarr URL: {zarr_url} ")
+    logger.info("Conversion complete")
     return _build_image_list_update(
         zarr_url=zarr_url,
         ome_zarr=ome_zarr,

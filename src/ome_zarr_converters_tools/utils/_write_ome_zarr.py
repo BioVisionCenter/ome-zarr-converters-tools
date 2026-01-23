@@ -1,3 +1,4 @@
+from logging import getLogger
 from typing import Any
 
 import zarr
@@ -19,6 +20,8 @@ from ome_zarr_converters_tools.models._acquisition import (
 )
 from ome_zarr_converters_tools.models._tile_region import TiledImage, TileSlice
 from ome_zarr_converters_tools.utils._to_zarr import write_to_zarr
+
+logger = getLogger(__name__)
 
 
 def _compute_chunk_size(
@@ -132,7 +135,6 @@ def write_tiled_image_as_zarr(
     else:  # extend
         mode = "a"
     zarr_format = 2 if converter_options.omezarr_options.ngff_version == "0.4" else 3
-
     tiled_image.regions = _region_to_pixel_coordinates(
         tiled_image.regions,
         tiled_image.pixel_size,
@@ -167,6 +169,8 @@ def write_tiled_image_as_zarr(
         writer_mode=writer_mode,
     )
     image.consolidate()
+    ome_zarr.set_channel_percentiles()
+    logger.info("OME-Zarr image creation and data writing complete.")
 
     fov_tiles = tiled_image.group_by_fov()
     if len(fov_tiles) > 1:
@@ -184,4 +188,5 @@ def write_tiled_image_as_zarr(
     ome_zarr.add_table(
         "well_ROI_table", well_roi, backend=omezarr_options.table_backend
     )
+    logger.info("Finished writing OME-Zarr Tables and metadata.")
     return ome_zarr

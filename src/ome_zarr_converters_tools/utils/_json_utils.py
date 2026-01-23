@@ -28,7 +28,7 @@ def _dump_to_json_local_fs(temp_json_url: str, json_data: str) -> str:
     with open(json_path, "w") as f:
         f.write(json_data)
     tile_json_name = str(json_path)
-    logger.info(f"JSON file created: {tile_json_name}")
+    logger.debug(f"JSON file created: {tile_json_name}")
     return tile_json_name
 
 

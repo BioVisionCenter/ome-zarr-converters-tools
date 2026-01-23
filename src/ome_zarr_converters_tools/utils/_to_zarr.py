@@ -1,3 +1,4 @@
+import time
 from logging import getLogger
 from typing import Any
 
@@ -17,10 +18,19 @@ def sequential_tile_writing(
     For each region in the TiledImage, load the data and write it to the
     corresponding ROI in the OME-Zarr image.
     """
-    logger.info("Starting sequential tile writing.")
-    for region in tiled_image.regions:
+    regions = tiled_image.regions
+    num_regions = len(regions)
+    logger.info(f"Starting sequential tile writing - Number of tiles: {num_regions}.")
+    timer = time.time()
+    for idx, region in enumerate(regions):
         region_data = region.load_data(axes=tiled_image.axes, resource=resource)
         image.set_roi(roi=region.roi, patch=region_data)
+        if idx == 0:
+            elapsed = time.time() - timer
+            estimated_total = elapsed * num_regions
+            logger.info(
+                f"Estimated total time for tile writing: {estimated_total:.2f} seconds."
+            )
 
 
 def dask_map_block_tile_writing(
@@ -42,11 +52,20 @@ def sequential_fov_writing(
     For each region in the TiledImage, load the data and write it to the
     corresponding ROI in the OME-Zarr image.
     """
-    logger.info("Starting sequential FOV writing.")
-    for group in tiled_image.group_by_fov():
+    groups = tiled_image.group_by_fov()
+    num_groups = len(groups)
+    logger.info(f"Starting sequential FOV writing - Number of FOVs: {num_groups}.")
+    timer = time.time()
+    for idx, group in enumerate(groups):
         roi = group.roi()
         group_data = group.load_data(resource=resource)
         image.set_roi(roi=roi, patch=group_data)
+        if idx == 0:
+            elapsed = time.time() - timer
+            estimated_total = elapsed * num_groups
+            logger.info(
+                f"Estimated total time for FOV writing: {estimated_total:.2f} seconds."
+            )
 
 
 def in_memory_writing(tiled_image: TiledImage, image: Image, resource: Any) -> None:

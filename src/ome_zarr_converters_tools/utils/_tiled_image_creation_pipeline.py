@@ -1,5 +1,6 @@
 """Functions to write TiledImage models from Tile models."""
 
+import logging
 from typing import Any
 
 from ngio import OmeZarrContainer
@@ -16,6 +17,8 @@ from ome_zarr_converters_tools.registration import (
 )
 from ome_zarr_converters_tools.utils._write_ome_zarr import write_tiled_image_as_zarr
 
+logger = logging.getLogger(__name__)
+
 
 def tiled_image_creation_pipeline(
     *,
@@ -28,7 +31,9 @@ def tiled_image_creation_pipeline(
     resource: Any | None = None,
 ) -> OmeZarrContainer:
     """Write a TiledImage from a dictionary."""
+    logger.info("Applying registration pipeline to TiledImage.")
     tiled_image = apply_registration_pipeline(tiled_image, registration_pipeline)
+    logger.info("Starting to write TiledImage as OME-Zarr.")
     omezarr = write_tiled_image_as_zarr(
         zarr_url=zarr_url,
         tiled_image=tiled_image,
