@@ -4,7 +4,7 @@ from typing import Any
 
 from ngio import Image
 
-from ome_zarr_converters_tools.models import TiledImage
+from ome_zarr_converters_tools.core._tile_region import TiledImage
 from ome_zarr_converters_tools.models._acquisition import WriterMode
 
 logger = getLogger(__name__)

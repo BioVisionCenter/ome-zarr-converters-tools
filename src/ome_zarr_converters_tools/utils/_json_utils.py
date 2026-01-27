@@ -5,10 +5,10 @@ import os
 import time
 from uuid import uuid4
 
+from ome_zarr_converters_tools.core._tile_region import TiledImage
 from ome_zarr_converters_tools.models import (
     CollectionInterfaceType,
     ImageLoaderInterfaceType,
-    TiledImage,
 )
 from ome_zarr_converters_tools.utils._url_utils import (
     UrlType,

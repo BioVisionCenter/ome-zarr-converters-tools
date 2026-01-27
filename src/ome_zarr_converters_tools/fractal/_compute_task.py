@@ -6,6 +6,7 @@ from typing import Any, TypedDict
 
 from ngio import OmeZarrContainer
 
+from ome_zarr_converters_tools.core import tiled_image_creation_pipeline
 from ome_zarr_converters_tools.models import (
     CollectionInterface,
     CollectionInterfaceType,
@@ -20,7 +21,6 @@ from ome_zarr_converters_tools.registration import (
 )
 from ome_zarr_converters_tools.utils import (
     remove_json,
-    tiled_image_creation_pipeline,
     tiled_image_from_json,
 )
 

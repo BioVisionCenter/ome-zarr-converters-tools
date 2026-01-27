@@ -3,12 +3,14 @@
 from ome_zarr_converters_tools.collection_setup import (
     setup_ome_zarr_collection,
 )
+from ome_zarr_converters_tools.core._tile_region import (
+    TiledImage,
+)
 from ome_zarr_converters_tools.models import (
     ConverterOptions,
     DefaultNgffVersion,
     NgffVersions,
     OverwriteMode,
-    TiledImage,
 )
 from ome_zarr_converters_tools.models._fractal_models import (
     ConvertParallelInitArgs,
