@@ -29,20 +29,21 @@ def _compute_chunk_size(
 ) -> tuple[int, ...]:
     """Compute the chunk size for the tiled image."""
     axes = tiled_image.axes
+    chunks_strategy = ome_zarr_options.chunks
     fov_regions = tiled_image.group_by_fov()[0]
     fov_shape = fov_regions.shape()
     chunks = []
     for ax, fov_sh in zip(axes, fov_shape, strict=True):
         if ax == "x" or ax == "y":
-            _chunks_size = min(fov_sh, ome_zarr_options.max_xy_chunk)
-            chunks.append(_chunks_size)
+            chunks.append(chunks_strategy.get_xy_chunk(fov_sh))
         elif ax == "z":
-            chunks.append(ome_zarr_options.z_chunk)
+            chunks.append(chunks_strategy.z_chunk)
         elif ax == "c":
-            chunks.append(ome_zarr_options.c_chunk)
+            chunks.append(chunks_strategy.c_chunk)
         elif ax == "t":
-            chunks.append(ome_zarr_options.t_chunk)
+            chunks.append(chunks_strategy.t_chunk)
         else:
+            logger.warning(f"Unknown axis '{ax}' encountered. Setting chunk size to 1.")
             chunks.append(1)
     return tuple(chunks)
 

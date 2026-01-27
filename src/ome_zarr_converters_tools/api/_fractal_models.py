@@ -2,12 +2,16 @@
 
 from typing import Self
 
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, Field, model_validator
 
+from ome_zarr_converters_tools.filters._filter_pipeline import (
+    ImplementedFilters,
+)
 from ome_zarr_converters_tools.models._acquisition import (
     CANONICAL_AXES_TYPE,
     AcquisitionDetails,
     ConverterOptions,
+    DataTypeEnum,
     OverwriteMode,
     canonical_axes,
 )
@@ -61,12 +65,18 @@ class AcquisitionOptions(BaseModel):
     Attributes:
         channels: List of channel information.
         pixel_info: Pixel size information.
+        axes: Axes to use for the image data, e.g. "czyx".
+        data_type: Data type of the image data.
+        filters: List of filters to apply.
     """
 
     channels: list[ChannelInfo] | None = None
-    pixel_info: PixelSizeModel | None = None
+    pixel_info: PixelSizeModel | None = Field(
+        default=None, title="Pixel Size Information"
+    )
     axes: str | None = None
-    data_type: str | None = None
+    data_type: DataTypeEnum | None = None
+    filters: list[ImplementedFilters] = Field(default_factory=list)
 
     # Validate channels to ensure that either all wavelength_id and colors are provided
     @model_validator(mode="after")
@@ -143,3 +153,70 @@ class AcquisitionOptions(BaseModel):
         if self.data_type is not None:
             updated_details.data_type = self.data_type
         return updated_details
+
+
+def input_models_list(
+    base: str = "ome_zarr_converters_tools",
+) -> list[tuple[str, str, str]]:
+    """Get all input models for Fractal tasks API.
+
+    Returns:
+        List of input models.
+    """
+    return [
+        (
+            base,
+            "api/_fractal_models.py",
+            "AcquisitionOptions",
+        ),
+        (
+            base,
+            "filters/_filter_pipeline.py",
+            "WellFilter",
+        ),
+        (
+            base,
+            "filters/_filter_pipeline.py",
+            "RegexIncludeFilter",
+        ),
+        (
+            base,
+            "filters/_filter_pipeline.py",
+            "RegexExcludeFilter",
+        ),
+        (
+            base,
+            "models/_acquisition.py",
+            "ConverterOptions",
+        ),
+        (
+            base,
+            "models/_acquisition.py",
+            "StageCorrections",
+        ),
+        (
+            base,
+            "models/_acquisition.py",
+            "AlignmentCorrections",
+        ),
+        (
+            base,
+            "models/_acquisition.py",
+            "OmeZarrOptions",
+        ),
+        (
+            base,
+            "models/_acquisition.py",
+            "TempJsonOptions",
+        ),
+        (
+            base,
+            "models/_acquisition.py",
+            "FovBasedChunking",
+        ),
+        (
+            base,
+            "models/_acquisition.py",
+            "FixedSizeChunking",
+        ),
+    ]

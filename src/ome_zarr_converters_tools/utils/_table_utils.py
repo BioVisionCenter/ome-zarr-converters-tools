@@ -6,7 +6,7 @@ from typing import Any
 import pandas as pd
 import toml
 
-from ome_zarr_converters_tools.filters import FilterStep
+from ome_zarr_converters_tools.filters import FilterModel
 from ome_zarr_converters_tools.models import (
     AcquisitionDetails,
     ConverterOptions,
@@ -92,7 +92,7 @@ def hcs_images_from_dataframe(
     converter_options: ConverterOptions,
     plate_name: str | None = None,
     acquisition_id: int = 0,
-    filters: list[FilterStep] | None = None,
+    filters: list[FilterModel] | None = None,
     validators: list[ValidatorStep] | None = None,
     resource: Any | None = None,
 ) -> list[TiledImage]:
@@ -148,7 +148,7 @@ def hcs_images_from_csv(
     converter_options: ConverterOptions,
     table_name: str = "tiles.csv",
     acquisition_details_name: str = "acquisition_details.toml",
-    filters: list[FilterStep] | None = None,
+    filters: list[FilterModel] | None = None,
     validators: list[ValidatorStep] | None = None,
 ) -> list[TiledImage]:
     """Build tiles for HCS data from a table.

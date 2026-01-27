@@ -1,11 +1,13 @@
 """Utilities for converters init tasks in Fractal."""
 
+from ome_zarr_converters_tools.api._fractal_models import (
+    ConvertParallelInitArgs,
+)
 from ome_zarr_converters_tools.collection_setup import (
     setup_ome_zarr_collection,
 )
 from ome_zarr_converters_tools.models import (
     ConverterOptions,
-    ConvertParallelInitArgs,
     DefaultNgffVersion,
     NgffVersions,
     OverwriteMode,

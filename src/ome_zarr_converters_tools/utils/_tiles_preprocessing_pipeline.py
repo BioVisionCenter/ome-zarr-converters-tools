@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from ome_zarr_converters_tools.filters import FilterStep, apply_filter_pipeline
+from ome_zarr_converters_tools.filters import FilterModel, apply_filter_pipeline
 from ome_zarr_converters_tools.models import (
     ConverterOptions,
     Tile,
@@ -16,7 +16,7 @@ def tiles_preprocessing_pipeline(
     tiles: list[Tile],
     *,
     converter_options: ConverterOptions,
-    filters: list[FilterStep] | None = None,
+    filters: list[FilterModel] | None = None,
     validators: list[ValidatorStep] | None = None,
     resource: Any | None = None,
 ) -> list[TiledImage]:

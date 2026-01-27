@@ -18,30 +18,30 @@ class CollectionInterface(BaseModel):
 CollectionInterfaceType = TypeVar("CollectionInterfaceType", bound=CollectionInterface)
 
 
+def sanitize_path(path: str) -> str:
+    """Sanitize the plate name to be used as a Zarr group path."""
+    characters_to_replace = [" ", "/"]
+    for char in characters_to_replace:
+        if char in path:
+            warn(
+                f"Path '{path}' contains '{char}', "
+                "which will be replaced with underscores.",
+                UserWarning,
+                stacklevel=2,
+            )
+        path = path.replace(char, "_")
+    # Make sure it ends with .zarr
+    if not path.endswith(".zarr"):
+        path = f"{path}.zarr"
+    return path
+
+
 class SingleImage(CollectionInterface):
     image_path: str
     suffix: str = ""
 
     def path(self) -> str:
-        return f"{self.image_path}{self.suffix}"
-
-
-def sanitize_plate_name(plate_name: str) -> str:
-    """Sanitize the plate name to be used as a Zarr group path."""
-    characters_to_replace = [" ", "/"]
-    for char in characters_to_replace:
-        if char in plate_name:
-            warn(
-                f"Plate name '{plate_name}' contains '{char}', "
-                "which will be replaced with underscores.",
-                UserWarning,
-                stacklevel=2,
-            )
-        plate_name = plate_name.replace(char, "_")
-    # Make sure it ends with .zarr
-    if not plate_name.endswith(".zarr"):
-        plate_name = f"{plate_name}.zarr"
-    return plate_name
+        return sanitize_path(f"{self.image_path}{self.suffix}")
 
 
 class ImageInPlate(CollectionInterface):
@@ -57,7 +57,7 @@ class ImageInPlate(CollectionInterface):
         return f"{self.row}{self.column}"
 
     def plate_path(self) -> str:
-        return sanitize_plate_name(self.plate_name)
+        return sanitize_path(self.plate_name)
 
     def well_path(self) -> str:
         return f"{self.plate_path()}/{self.row}/{self.column}"
