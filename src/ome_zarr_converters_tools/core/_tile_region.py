@@ -7,20 +7,20 @@ import numpy as np
 from ngio import PixelSize, Roi
 from pydantic import BaseModel, ConfigDict, Field
 
+from ome_zarr_converters_tools.core._tile import Tile
+from ome_zarr_converters_tools.models import (
+    CollectionInterfaceType,
+    ImageLoaderInterfaceType,
+)
 from ome_zarr_converters_tools.models._acquisition import (
     CANONICAL_AXES_TYPE,
 )
-from ome_zarr_converters_tools.models._collection import CollectionInterfaceType
-from ome_zarr_converters_tools.models._loader import (
-    ImageLoaderInterfaceType,
-)
-from ome_zarr_converters_tools.models._roi_utils import (
+from ome_zarr_converters_tools.utils._roi_utils import (
     bulk_roi_union,
     move_roi_by,
     roi_to_point_distance,
     shape_from_rois,
 )
-from ome_zarr_converters_tools.models._tile import Tile
 
 
 class TileSlice(BaseModel, Generic[ImageLoaderInterfaceType]):

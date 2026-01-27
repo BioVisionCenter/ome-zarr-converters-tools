@@ -2,15 +2,6 @@
 
 from ome_zarr_converters_tools.models._acquisition import (
     AcquisitionDetails,
-    AlignmentCorrections,
-    BackendType,
-    ContextModel,
-    ConverterOptions,
-    DefaultNgffVersion,
-    NgffVersions,
-    OmeZarrOptions,
-    OverwriteMode,
-    TilingMode,
 )
 from ome_zarr_converters_tools.models._collection import (
     CollectionInterface,
@@ -18,19 +9,38 @@ from ome_zarr_converters_tools.models._collection import (
     ImageInPlate,
     SingleImage,
 )
+from ome_zarr_converters_tools.models._converter_options import (
+    AlignmentCorrections,
+    BackendType,
+    ConverterOptions,
+    DefaultNgffVersion,
+    NgffVersions,
+    OmeZarrOptions,
+    TilingMode,
+    WriterMode,
+)
+from ome_zarr_converters_tools.models._fractal_models import (
+    AcquisitionOptions,
+    ChannelInfo,
+    ConvertParallelInitArgs,
+    OverwriteMode,
+    PixelSizeModel,
+)
 from ome_zarr_converters_tools.models._loader import (
     DefaultImageLoader,
     ImageLoaderInterfaceType,
 )
-from ome_zarr_converters_tools.models._tile import Tile
 
 __all__ = [
     "AcquisitionDetails",
+    "AcquisitionOptions",
     "AlignmentCorrections",
     "BackendType",
+    "ChannelInfo",
     "CollectionInterface",
     "CollectionInterfaceType",
-    "ContextModel",
+    "ConvertParallelInitArgs",
+    "ConvertParallelInitArgs",
     "ConverterOptions",
     "ConverterOptions",
     "DefaultImageLoader",
@@ -42,8 +52,9 @@ __all__ = [
     "OmeZarrOptions",
     "OmeZarrOptions",
     "OverwriteMode",
+    "PixelSizeModel",
     "SingleImage",
     "SingleImage",
-    "Tile",
     "TilingMode",
+    "WriterMode",
 ]

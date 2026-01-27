@@ -5,7 +5,7 @@ from typing import NamedTuple
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
-from ome_zarr_converters_tools.models._tile import Tile
+from ome_zarr_converters_tools.core._tile import Tile
 
 
 def rasterize_text_with_boundary(shape_x, shape_y, text, font_scale=0.34):

@@ -1,5 +1,6 @@
 """Models to be used with Fractal tasks API."""
 
+from enum import StrEnum
 from typing import Self
 
 from pydantic import BaseModel, Field, model_validator
@@ -10,11 +11,18 @@ from ome_zarr_converters_tools.filters._filter_pipeline import (
 from ome_zarr_converters_tools.models._acquisition import (
     CANONICAL_AXES_TYPE,
     AcquisitionDetails,
-    ConverterOptions,
     DataTypeEnum,
-    OverwriteMode,
     canonical_axes,
 )
+from ome_zarr_converters_tools.models._converter_options import (
+    ConverterOptions,
+)
+
+
+class OverwriteMode(StrEnum):
+    NO_OVERWRITE = "No Overwrite"
+    OVERWRITE = "Overwrite"
+    EXTEND = "Extend"
 
 
 class ConvertParallelInitArgs(BaseModel):

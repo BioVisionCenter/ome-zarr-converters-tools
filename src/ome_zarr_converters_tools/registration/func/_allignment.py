@@ -4,12 +4,12 @@ from typing import Literal
 
 from ngio import RoiSlice
 
-from ome_zarr_converters_tools.core._tile_region import (
+from ome_zarr_converters_tools.core import (
     TiledImage,
     TileSlice,
 )
-from ome_zarr_converters_tools.models._acquisition import AlignmentCorrections
-from ome_zarr_converters_tools.models._roi_utils import move_roi_by, move_to
+from ome_zarr_converters_tools.models import AlignmentCorrections
+from ome_zarr_converters_tools.utils import move_roi_by, move_to
 
 
 def _align_xy_regions(regions: list[TileSlice]) -> list[TileSlice]:

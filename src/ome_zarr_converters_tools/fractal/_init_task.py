@@ -8,12 +8,10 @@ from ome_zarr_converters_tools.core._tile_region import (
 )
 from ome_zarr_converters_tools.models import (
     ConverterOptions,
+    ConvertParallelInitArgs,
     DefaultNgffVersion,
     NgffVersions,
     OverwriteMode,
-)
-from ome_zarr_converters_tools.models._fractal_models import (
-    ConvertParallelInitArgs,
 )
 from ome_zarr_converters_tools.utils import (
     cleanup_if_exists,

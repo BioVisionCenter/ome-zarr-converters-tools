@@ -5,7 +5,7 @@ from typing import NamedTuple
 
 import numpy as np
 
-from ome_zarr_converters_tools.core._tile_region import TileSlice
+from ome_zarr_converters_tools.core import TileSlice
 
 
 class NotAGridError(Exception):

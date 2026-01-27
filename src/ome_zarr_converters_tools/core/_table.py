@@ -6,6 +6,7 @@ from typing import Any
 import pandas as pd
 import toml
 
+from ome_zarr_converters_tools.core._tile import Tile
 from ome_zarr_converters_tools.core._tile_region import TiledImage
 from ome_zarr_converters_tools.core._tiles_preprocessing_pipeline import (
     tiles_preprocessing_pipeline,
@@ -16,7 +17,6 @@ from ome_zarr_converters_tools.models import (
     ConverterOptions,
     DefaultImageLoader,
     ImageInPlate,
-    Tile,
 )
 from ome_zarr_converters_tools.validators import ValidatorStep
 
