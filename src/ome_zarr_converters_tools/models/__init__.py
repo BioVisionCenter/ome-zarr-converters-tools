@@ -2,6 +2,10 @@
 
 from zarr.storage import FsspecStore, LocalStore
 
+from ome_zarr_converters_tools.core._tile_region import (
+    TiledImage,
+    TileSlice,
+)
 from ome_zarr_converters_tools.models._acquisition import (
     AcquisitionDetails,
     AlignmentCorrections,
@@ -25,10 +29,6 @@ from ome_zarr_converters_tools.models._loader import (
     ImageLoaderInterfaceType,
 )
 from ome_zarr_converters_tools.models._tile import Tile
-from ome_zarr_converters_tools.models._tile_region import (
-    TiledImage,
-    TileSlice,
-)
 
 ConverterStorageType = LocalStore | FsspecStore
 

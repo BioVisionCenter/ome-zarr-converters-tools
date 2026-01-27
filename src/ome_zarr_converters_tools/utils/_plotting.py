@@ -4,7 +4,7 @@ from typing import Any
 
 import numpy as np
 
-from ome_zarr_converters_tools.models._tile_region import TiledImage
+from ome_zarr_converters_tools.core._tile_region import TiledImage
 
 try:
     import plotly.graph_objects as go

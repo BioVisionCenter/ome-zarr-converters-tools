@@ -6,14 +6,14 @@ from typing import Any, TypedDict
 
 from ngio import OmeZarrContainer
 
-from ome_zarr_converters_tools.api._fractal_models import (
-    ConvertParallelInitArgs,
-)
 from ome_zarr_converters_tools.models import (
     CollectionInterface,
     CollectionInterfaceType,
     ImageInPlate,
     ImageLoaderInterfaceType,
+)
+from ome_zarr_converters_tools.models._fractal_models import (
+    ConvertParallelInitArgs,
 )
 from ome_zarr_converters_tools.registration import (
     build_default_registration_pipeline,

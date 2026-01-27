@@ -1,8 +1,5 @@
 """Utilities for converters init tasks in Fractal."""
 
-from ome_zarr_converters_tools.api._fractal_models import (
-    ConvertParallelInitArgs,
-)
 from ome_zarr_converters_tools.collection_setup import (
     setup_ome_zarr_collection,
 )
@@ -12,6 +9,9 @@ from ome_zarr_converters_tools.models import (
     NgffVersions,
     OverwriteMode,
     TiledImage,
+)
+from ome_zarr_converters_tools.models._fractal_models import (
+    ConvertParallelInitArgs,
 )
 from ome_zarr_converters_tools.utils import (
     cleanup_if_exists,

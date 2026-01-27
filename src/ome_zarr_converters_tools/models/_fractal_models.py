@@ -166,7 +166,7 @@ def input_models_list(
     return [
         (
             base,
-            "api/_fractal_models.py",
+            "models/_fractal_models.py",
             "AcquisitionOptions",
         ),
         (

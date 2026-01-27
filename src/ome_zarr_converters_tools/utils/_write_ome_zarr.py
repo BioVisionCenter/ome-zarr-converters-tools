@@ -12,13 +12,13 @@ from ngio import (
 from ngio.ome_zarr_meta import Channel, ChannelVisualisation
 from ngio.tables import RoiTable
 
+from ome_zarr_converters_tools.core._tile_region import TiledImage, TileSlice
 from ome_zarr_converters_tools.models._acquisition import (
     ConverterOptions,
     OmeZarrOptions,
     OverwriteMode,
     WriterMode,
 )
-from ome_zarr_converters_tools.models._tile_region import TiledImage, TileSlice
 from ome_zarr_converters_tools.utils._to_zarr import write_to_zarr
 
 logger = getLogger(__name__)

@@ -2,11 +2,9 @@
 
 from typing import Any
 
+from ome_zarr_converters_tools.core._tile_region import TiledImage
 from ome_zarr_converters_tools.models._acquisition import ConverterOptions, TilingMode
 from ome_zarr_converters_tools.models._tile import Tile
-from ome_zarr_converters_tools.models._tile_region import (
-    TiledImage,
-)
 
 
 def tiled_image_from_tiles(

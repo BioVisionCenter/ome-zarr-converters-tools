@@ -6,6 +6,10 @@ from typing import Any
 import pandas as pd
 import toml
 
+from ome_zarr_converters_tools.core._tile_region import TiledImage
+from ome_zarr_converters_tools.core._tiles_preprocessing_pipeline import (
+    tiles_preprocessing_pipeline,
+)
 from ome_zarr_converters_tools.filters import FilterModel
 from ome_zarr_converters_tools.models import (
     AcquisitionDetails,
@@ -13,10 +17,6 @@ from ome_zarr_converters_tools.models import (
     DefaultImageLoader,
     ImageInPlate,
     Tile,
-    TiledImage,
-)
-from ome_zarr_converters_tools.utils._tiles_preprocessing_pipeline import (
-    tiles_preprocessing_pipeline,
 )
 from ome_zarr_converters_tools.validators import ValidatorStep
 

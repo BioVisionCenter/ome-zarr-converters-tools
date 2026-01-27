@@ -1,7 +1,7 @@
 from collections.abc import Callable
 from typing import Any, ParamSpec, Protocol, TypedDict
 
-from ome_zarr_converters_tools.models._tile_region import TiledImage
+from ome_zarr_converters_tools.core._tile_region import TiledImage
 from ome_zarr_converters_tools.registration.func import (
     apply_align_to_pixel_grid,
     apply_fov_alignment_corrections,

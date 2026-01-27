@@ -2,13 +2,13 @@
 
 from typing import Any
 
+from ome_zarr_converters_tools.core._tile_region import TiledImage
+from ome_zarr_converters_tools.core._tile_to_tiled_images import tiled_image_from_tiles
 from ome_zarr_converters_tools.filters import FilterModel, apply_filter_pipeline
 from ome_zarr_converters_tools.models import (
     ConverterOptions,
     Tile,
-    TiledImage,
 )
-from ome_zarr_converters_tools.utils._tile_to_tiled_images import tiled_image_from_tiles
 from ome_zarr_converters_tools.validators import ValidatorStep, apply_validator_pipeline
 
 
