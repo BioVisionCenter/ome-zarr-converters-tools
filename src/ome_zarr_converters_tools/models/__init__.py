@@ -16,45 +16,34 @@ from ome_zarr_converters_tools.models._converter_options import (
     DefaultNgffVersion,
     NgffVersions,
     OmeZarrOptions,
+    StageCorrections,
     TilingMode,
     WriterMode,
-)
-from ome_zarr_converters_tools.models._fractal_models import (
-    AcquisitionOptions,
-    ChannelInfo,
-    ConvertParallelInitArgs,
-    OverwriteMode,
-    PixelSizeModel,
 )
 from ome_zarr_converters_tools.models._loader import (
     DefaultImageLoader,
     ImageLoaderInterfaceType,
 )
+from ome_zarr_converters_tools.models._shared import (
+    OverwriteMode,
+)
 
 __all__ = [
     "AcquisitionDetails",
-    "AcquisitionOptions",
     "AlignmentCorrections",
     "BackendType",
-    "ChannelInfo",
     "CollectionInterface",
     "CollectionInterfaceType",
-    "ConvertParallelInitArgs",
-    "ConvertParallelInitArgs",
-    "ConverterOptions",
     "ConverterOptions",
     "DefaultImageLoader",
     "DefaultNgffVersion",
     "ImageInPlate",
-    "ImageInPlate",
     "ImageLoaderInterfaceType",
     "NgffVersions",
     "OmeZarrOptions",
-    "OmeZarrOptions",
     "OverwriteMode",
-    "PixelSizeModel",
     "SingleImage",
-    "SingleImage",
+    "StageCorrections",
     "TilingMode",
     "WriterMode",
 ]

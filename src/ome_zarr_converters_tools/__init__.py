@@ -8,22 +8,23 @@ from ome_zarr_converters_tools.core import (
     tiles_preprocessing_pipeline,
 )
 from ome_zarr_converters_tools.fractal import (
+    AcquisitionOptions,
+    ConvertParallelInitArgs,
     ImageListUpdateDict,
+    OverwriteMode,
     generic_compute_task,
     setup_images_for_conversion,
 )
 from ome_zarr_converters_tools.models import (
     AcquisitionDetails,
-    AcquisitionOptions,
     CollectionInterface,
     CollectionInterfaceType,
     ConverterOptions,
-    ConvertParallelInitArgs,
     DefaultImageLoader,
     ImageInPlate,
     ImageLoaderInterfaceType,
-    OverwriteMode,
     SingleImage,
+    StageCorrections,
 )
 
 __version__ = version("ome-zarr-converters-tools")
@@ -43,6 +44,7 @@ __all__ = [
     "ImageLoaderInterfaceType",
     "OverwriteMode",
     "SingleImage",
+    "StageCorrections",
     "Tile",
     "TiledImage",
     "generic_compute_task",

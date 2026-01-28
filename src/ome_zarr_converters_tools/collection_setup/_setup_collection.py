@@ -6,7 +6,7 @@ from ngio import DefaultNgffVersion, NgffVersions
 
 from ome_zarr_converters_tools.collection_setup._plate_setup import setup_plates
 from ome_zarr_converters_tools.core._tile_region import TiledImage
-from ome_zarr_converters_tools.models._acquisition import OverwriteMode
+from ome_zarr_converters_tools.models import OverwriteMode
 
 
 class SetupCollectionFunction(Protocol):

@@ -8,8 +8,8 @@ from ome_zarr_converters_tools.core import (
     TiledImage,
     TileSlice,
 )
+from ome_zarr_converters_tools.core._roi_utils import move_roi_by, move_to
 from ome_zarr_converters_tools.models import AlignmentCorrections
-from ome_zarr_converters_tools.utils import move_roi_by, move_to
 
 
 def _align_xy_regions(regions: list[TileSlice]) -> list[TileSlice]:

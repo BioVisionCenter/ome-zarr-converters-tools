@@ -6,9 +6,11 @@ from ome_zarr_converters_tools.collection_setup import (
 from ome_zarr_converters_tools.core._tile_region import (
     TiledImage,
 )
+from ome_zarr_converters_tools.fractal._models import (
+    ConvertParallelInitArgs,
+)
 from ome_zarr_converters_tools.models import (
     ConverterOptions,
-    ConvertParallelInitArgs,
     DefaultNgffVersion,
     NgffVersions,
     OverwriteMode,

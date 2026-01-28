@@ -6,9 +6,9 @@ from ngio.hcs import create_empty_plate, open_ome_zarr_plate
 from ngio.hcs._plate import ImageInWellPath
 
 from ome_zarr_converters_tools.core._tile_region import TiledImage
-from ome_zarr_converters_tools.models._acquisition import OverwriteMode
-from ome_zarr_converters_tools.models._collection import (
+from ome_zarr_converters_tools.models import (
     ImageInPlate,
+    OverwriteMode,
 )
 
 

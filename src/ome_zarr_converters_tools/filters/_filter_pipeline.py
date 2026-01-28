@@ -3,8 +3,8 @@ from typing import Annotated, Any, Literal, ParamSpec, Protocol
 
 from pydantic import BaseModel, Field
 
-from ome_zarr_converters_tools.core import Tile
-from ome_zarr_converters_tools.models import ImageInPlate
+from ome_zarr_converters_tools.core._tile import Tile
+from ome_zarr_converters_tools.models._collection import ImageInPlate
 
 
 class FilterModel(BaseModel):
