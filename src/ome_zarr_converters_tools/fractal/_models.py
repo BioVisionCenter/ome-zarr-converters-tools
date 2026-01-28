@@ -157,7 +157,7 @@ class AcquisitionOptions(BaseModel):
         return updated_details
 
 
-def input_models_list(
+def converters_tools_models_list(
     base: str = "ome_zarr_converters_tools",
 ) -> list[tuple[str, str, str]]:
     """Get all input models for Fractal tasks API.
@@ -168,7 +168,7 @@ def input_models_list(
     return [
         (
             base,
-            "models/_fractal_models.py",
+            "fractal/_models.py",
             "AcquisitionOptions",
         ),
         (
@@ -188,37 +188,37 @@ def input_models_list(
         ),
         (
             base,
-            "models/_acquisition.py",
+            "models/_converter_options.py",
             "ConverterOptions",
         ),
         (
             base,
-            "models/_acquisition.py",
+            "models/_converter_options.py",
             "StageCorrections",
         ),
         (
             base,
-            "models/_acquisition.py",
+            "models/_converter_options.py",
             "AlignmentCorrections",
         ),
         (
             base,
-            "models/_acquisition.py",
+            "models/_converter_options.py",
             "OmeZarrOptions",
         ),
         (
             base,
-            "models/_acquisition.py",
+            "models/_converter_options.py",
             "TempJsonOptions",
         ),
         (
             base,
-            "models/_acquisition.py",
+            "models/_converter_options.py",
             "FovBasedChunking",
         ),
         (
             base,
-            "models/_acquisition.py",
+            "models/_converter_options.py",
             "FixedSizeChunking",
         ),
     ]

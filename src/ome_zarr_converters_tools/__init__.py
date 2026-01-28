@@ -11,7 +11,7 @@ from ome_zarr_converters_tools.fractal import (
     AcquisitionOptions,
     ConvertParallelInitArgs,
     ImageListUpdateDict,
-    OverwriteMode,
+    converters_tools_models_list,
     generic_compute_task,
     setup_images_for_conversion,
 )
@@ -23,6 +23,7 @@ from ome_zarr_converters_tools.models import (
     DefaultImageLoader,
     ImageInPlate,
     ImageLoaderInterfaceType,
+    OverwriteMode,
     SingleImage,
     StageCorrections,
 )
@@ -47,6 +48,7 @@ __all__ = [
     "StageCorrections",
     "Tile",
     "TiledImage",
+    "converters_tools_models_list",
     "generic_compute_task",
     "setup_images_for_conversion",
     "tiles_preprocessing_pipeline",

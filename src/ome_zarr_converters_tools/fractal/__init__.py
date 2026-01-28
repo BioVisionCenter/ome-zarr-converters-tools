@@ -12,18 +12,16 @@ from ome_zarr_converters_tools.fractal._models import (
     ChannelInfo,
     ConvertParallelInitArgs,
     PixelSizeModel,
+    converters_tools_models_list,
 )
-
-# Re-export OverwriteMode from models for backwards compatibility
-from ome_zarr_converters_tools.models import OverwriteMode
 
 __all__ = [
     "AcquisitionOptions",
     "ChannelInfo",
     "ConvertParallelInitArgs",
     "ImageListUpdateDict",
-    "OverwriteMode",
     "PixelSizeModel",
+    "converters_tools_models_list",
     "generic_compute_task",
     "setup_images_for_conversion",
 ]
