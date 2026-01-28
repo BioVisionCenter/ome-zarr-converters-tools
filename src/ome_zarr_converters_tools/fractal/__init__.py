@@ -12,7 +12,7 @@ from ome_zarr_converters_tools.fractal._models import (
     ChannelInfo,
     ConvertParallelInitArgs,
     PixelSizeModel,
-    converters_tools_models_list,
+    converters_tools_models,
 )
 
 __all__ = [
@@ -21,7 +21,7 @@ __all__ = [
     "ConvertParallelInitArgs",
     "ImageListUpdateDict",
     "PixelSizeModel",
-    "converters_tools_models_list",
+    "converters_tools_models",
     "generic_compute_task",
     "setup_images_for_conversion",
 ]

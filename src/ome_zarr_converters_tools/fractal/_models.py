@@ -157,7 +157,7 @@ class AcquisitionOptions(BaseModel):
         return updated_details
 
 
-def converters_tools_models_list(
+def converters_tools_models(
     base: str = "ome_zarr_converters_tools",
 ) -> list[tuple[str, str, str]]:
     """Get all input models for Fractal tasks API.

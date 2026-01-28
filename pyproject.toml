@@ -181,6 +181,10 @@ addopts = [
     "--cov-report=term-missing",
     "--cov-report=xml",
 ]
+markers = [
+    "slow: tests that take significant time to run",
+    "integration: integration tests requiring I/O or external resources",
+]
 
 # https://coverage.readthedocs.io/
 [tool.coverage.report]

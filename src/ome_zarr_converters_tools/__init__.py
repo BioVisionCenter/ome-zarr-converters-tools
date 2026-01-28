@@ -11,7 +11,7 @@ from ome_zarr_converters_tools.fractal import (
     AcquisitionOptions,
     ConvertParallelInitArgs,
     ImageListUpdateDict,
-    converters_tools_models_list,
+    converters_tools_models,
     generic_compute_task,
     setup_images_for_conversion,
 )
@@ -48,7 +48,7 @@ __all__ = [
     "StageCorrections",
     "Tile",
     "TiledImage",
-    "converters_tools_models_list",
+    "converters_tools_models",
     "generic_compute_task",
     "setup_images_for_conversion",
     "tiles_preprocessing_pipeline",
