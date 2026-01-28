@@ -1,4 +1,4 @@
-"""Utility functions for ome_zarr_converters_tools."""
+"""Registration pipeline for aligning and tiling image regions."""
 
 from ome_zarr_converters_tools.registration._registration_pipeline import (
     RegistrationStep,

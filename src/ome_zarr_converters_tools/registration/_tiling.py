@@ -53,10 +53,10 @@ def _find_tiling(
 
 
 def _tile_regions(
-    regions: list[TileSlice], vectror: dict[str, float]
+    regions: list[TileSlice], vector: dict[str, float]
 ) -> list[TileSlice]:
     for region in regions:
-        region.roi = move_roi_by(region.roi, vectror)
+        region.roi = move_roi_by(region.roi, vector)
     return regions
 
 
@@ -80,10 +80,10 @@ def apply_mosaic_tiling(
         reference_regions[fov_tile.fov_name] = fov_tile.ref_slice()
 
     tiling_instructions = _find_tiling(reference_regions, tiling_mode)
-    alligned_regions = []
+    aligned_regions = []
     for fov_tile in fov_tiles:
         instruction = tiling_instructions[fov_tile.fov_name]
         tiled = _tile_regions(fov_tile.regions, instruction)
-        alligned_regions.extend(tiled)
-    tiled_image.regions = alligned_regions
+        aligned_regions.extend(tiled)
+    tiled_image.regions = aligned_regions
     return tiled_image

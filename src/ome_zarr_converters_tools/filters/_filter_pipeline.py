@@ -85,13 +85,13 @@ P = ParamSpec("P")
 class FilterFunctionProtocol(Protocol[P]):
     __name__: str
 
-    def __call__(self, tile: Tile, *aergs: P.args, **kwargs: P.kwargs) -> bool: ...
+    def __call__(self, tile: Tile, *args: P.args, **kwargs: P.kwargs) -> bool: ...
 
 
 _filter_registry: dict[str, FilterFunctionProtocol] = {
-    "path_include_regex": apply_path_include_regex_filter,
-    "path_exclude_regex": apply_path_exclude_regex_filter,
-    "well_filter": apply_well_filter,
+    "Path Regex Include Filter": apply_path_include_regex_filter,
+    "Path Regex Exclude Filter": apply_path_exclude_regex_filter,
+    "Well Filter": apply_well_filter,
 }
 
 

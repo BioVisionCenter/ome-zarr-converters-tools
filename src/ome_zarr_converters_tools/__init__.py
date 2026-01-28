@@ -1,4 +1,4 @@
-"""This tooling will be removed before v07 release."""
+"""Tooling to build OME-Zarr HCS plate converters for the Fractal platform."""
 
 from importlib.metadata import version
 

@@ -74,11 +74,11 @@ def apply_fov_alignment_corrections(
 
     """
     fov_tiles = tiled_image.group_by_fov()
-    alligned_regions = []
+    aligned_regions = []
     for fov_tile in fov_tiles:
         aligned = _align_regions(fov_tile.regions, alignment_corrections)
-        alligned_regions.extend(aligned)
-    tiled_image.regions = alligned_regions
+        aligned_regions.extend(aligned)
+    tiled_image.regions = aligned_regions
     return tiled_image
 
 

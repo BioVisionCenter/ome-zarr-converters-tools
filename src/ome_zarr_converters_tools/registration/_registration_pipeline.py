@@ -2,7 +2,7 @@ from collections.abc import Callable
 from typing import Any, ParamSpec, Protocol, TypedDict
 
 from ome_zarr_converters_tools.core import TiledImage
-from ome_zarr_converters_tools.registration._allignment import (
+from ome_zarr_converters_tools.registration._alignment import (
     apply_align_to_pixel_grid,
     apply_fov_alignment_corrections,
     apply_remove_offsets,

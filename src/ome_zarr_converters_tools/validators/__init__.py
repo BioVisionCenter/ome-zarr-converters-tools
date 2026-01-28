@@ -1,4 +1,4 @@
-"""Utility functions for ome_zarr_converters_tools."""
+"""Validator pipeline for validating tiles during conversion."""
 
 from ome_zarr_converters_tools.validators._validator_pipeline import (
     ValidatorStep,

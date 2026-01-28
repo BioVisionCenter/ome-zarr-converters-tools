@@ -60,7 +60,6 @@ dependencies = [
     "pillow",
     "tifffile",
     "toml",
-    "check-manifest>=0.51,<0.52",
     # "anndata>=0.12.6",
 ]
 
@@ -71,6 +70,7 @@ dependencies = [
 test = ["pytest", "pytest-cov", "devtools"]
 # add anything else you like to have in your dev environment here
 dev = [
+    "check-manifest>=0.51,<0.52",
     "plotly",
     "notebook",
     "matplotlib",
