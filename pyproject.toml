@@ -54,13 +54,12 @@ classifiers = [
 ]
 # add your package dependencies here
 dependencies = [
-    # "ngio==0.5.0b1",
+    "ngio>=0.5.0,<0.6.0",
     "tqdm",
     "numpy",
     "pillow",
     "tifffile",
     "toml",
-    # "anndata>=0.12.6",
 ]
 
 # https://peps.python.org/pep-0621/#dependencies-optional-dependencies
@@ -76,9 +75,9 @@ dev = [
     "matplotlib",
     "ipython",
     "mypy",
-    "pdbpp",      # https://github.com/pdbpp/pdbpp
+    "pdbpp",                      # https://github.com/pdbpp/pdbpp
     "pre-commit",
-    "rich",       # https://github.com/Textualize/rich
+    "rich",                       # https://github.com/Textualize/rich
     "ruff",
 ]
 
@@ -214,7 +213,6 @@ platforms = ["osx-arm64", "linux-64"]
 
 [tool.pixi.pypi-dependencies]
 ome-zarr-converters-tools = { path = ".", editable = true }
-ngio = { path = "../ngio/", editable = true }
 
 [tool.pixi.environments]
 default = { solve-group = "default" }

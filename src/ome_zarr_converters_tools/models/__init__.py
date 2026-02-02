@@ -2,6 +2,7 @@
 
 from ome_zarr_converters_tools.models._acquisition import (
     AcquisitionDetails,
+    DataTypeEnum,
 )
 from ome_zarr_converters_tools.models._collection import (
     CollectionInterface,
@@ -12,8 +13,11 @@ from ome_zarr_converters_tools.models._collection import (
 from ome_zarr_converters_tools.models._converter_options import (
     AlignmentCorrections,
     BackendType,
+    ChunkingStrategy,
     ConverterOptions,
     DefaultNgffVersion,
+    FixedSizeChunking,
+    FovBasedChunking,
     NgffVersions,
     OmeZarrOptions,
     StageCorrections,
@@ -32,11 +36,15 @@ __all__ = [
     "AcquisitionDetails",
     "AlignmentCorrections",
     "BackendType",
+    "ChunkingStrategy",
     "CollectionInterface",
     "CollectionInterfaceType",
     "ConverterOptions",
+    "DataTypeEnum",
     "DefaultImageLoader",
     "DefaultNgffVersion",
+    "FixedSizeChunking",
+    "FovBasedChunking",
     "ImageInPlate",
     "ImageLoaderInterfaceType",
     "NgffVersions",
