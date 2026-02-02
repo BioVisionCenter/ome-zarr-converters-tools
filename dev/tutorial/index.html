@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../images/favicon.ico">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.0">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.618322db.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -754,7 +754,12 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
     if (!diagrams.length) {
       return;
     }
-    const mermaid = (await import("https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.7.0/mermaid.esm.min.mjs")).default;
+    const mermaid = (await import("https://cdnjs.cloudflare.com/ajax/libs/mermaid/11.10.0/mermaid.esm.min.mjs")).default;
+    const elkUrl = "https://cdnjs.cloudflare.com/ajax/libs/mermaid-layout-elk/0.1.9/mermaid-layout-elk.esm.min.mjs";
+    if(elkUrl) {
+      const elkLayouts = (await import(elkUrl)).default;
+      mermaid.registerLayoutLoaders(elkLayouts);
+    }
     const parser = new DOMParser();
 
     mermaid.initialize({
@@ -851,7 +856,8 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
      * Post-process to ensure mermaid diagrams contain only valid SVG and XHTML.
      */
     function cleanMermaidSvg(svg) {
-      return svg.replace(RE_VOID_ELEMENT, replaceVoidElement);
+      svg = svg.replace(RE_VOID_ELEMENT, replaceVoidElement);
+      return `${SVG_XML_HEADER}${svg}`;
     }
 
 
@@ -877,6 +883,285 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
       }
       return `<${tag} ${rest}>`;
     }
+
+
+  /**
+   * Named HTML entities with their decimal equivalent codes.
+   *
+   * @see https://www.w3.org/TR/WD-html40-970708/sgml/entities.html
+   * */
+  const HTML_ENTITIES = `<!ENTITY Aacute "&#193;">
+<!ENTITY aacute "&#225;">
+<!ENTITY Acirc "&#194;">
+<!ENTITY acirc "&#226;">
+<!ENTITY acute "&#180;">
+<!ENTITY AElig "&#198;">
+<!ENTITY aelig "&#230;">
+<!ENTITY Agrave "&#192;">
+<!ENTITY agrave "&#224;">
+<!ENTITY alefsym "&#8501;">
+<!ENTITY Alpha "&#913;">
+<!ENTITY alpha "&#945;">
+<!ENTITY amp "&#38;">
+<!ENTITY and "&#8869;">
+<!ENTITY ang "&#8736;">
+<!ENTITY Aring "&#197;">
+<!ENTITY aring "&#229;">
+<!ENTITY asymp "&#8776;">
+<!ENTITY Atilde "&#195;">
+<!ENTITY atilde "&#227;">
+<!ENTITY Auml "&#196;">
+<!ENTITY auml "&#228;">
+<!ENTITY bdquo "&#8222;">
+<!ENTITY Beta "&#914;">
+<!ENTITY beta "&#946;">
+<!ENTITY brvbar "&#166;">
+<!ENTITY bull "&#8226;">
+<!ENTITY cap "&#8745;">
+<!ENTITY Ccedil "&#199;">
+<!ENTITY ccedil "&#231;">
+<!ENTITY cedil "&#184;">
+<!ENTITY cent "&#162;">
+<!ENTITY Chi "&#935;">
+<!ENTITY chi "&#967;">
+<!ENTITY circ "&#710;">
+<!ENTITY clubs "&#9827;">
+<!ENTITY cong "&#8773;">
+<!ENTITY copy "&#169;">
+<!ENTITY crarr "&#8629;">
+<!ENTITY cup "&#8746;">
+<!ENTITY curren "&#164;">
+<!ENTITY dagger "&#8224;">
+<!ENTITY Dagger "&#8225;">
+<!ENTITY darr "&#8595;">
+<!ENTITY dArr "&#8659;">
+<!ENTITY deg "&#176;">
+<!ENTITY Delta "&#916;">
+<!ENTITY delta "&#948;">
+<!ENTITY diams "&#9830;">
+<!ENTITY divide "&#247;">
+<!ENTITY Eacute "&#201;">
+<!ENTITY eacute "&#233;">
+<!ENTITY Ecirc "&#202;">
+<!ENTITY ecirc "&#234;">
+<!ENTITY Egrave "&#200;">
+<!ENTITY egrave "&#232;">
+<!ENTITY empty "&#8709;">
+<!ENTITY emsp "&#8195;">
+<!ENTITY ensp "&#8194;">
+<!ENTITY epsilon "&#949;">
+<!ENTITY Epsilon "&#917;">
+<!ENTITY equiv "&#8801;">
+<!ENTITY Eta "&#919;">
+<!ENTITY eta "&#951;">
+<!ENTITY ETH "&#208;">
+<!ENTITY eth "&#240;">
+<!ENTITY Euml "&#203;">
+<!ENTITY euml "&#235;">
+<!ENTITY exist "&#8707;">
+<!ENTITY fnof "&#402;">
+<!ENTITY forall "&#8704;">
+<!ENTITY frac12 "&#189;">
+<!ENTITY frac14 "&#188;">
+<!ENTITY frac34 "&#190;">
+<!ENTITY frasl "&#8260;">
+<!ENTITY Gamma "&#915;">
+<!ENTITY gamma "&#947;">
+<!ENTITY ge "&#8805;">
+<!ENTITY gt "&#62;">
+<!ENTITY harr "&#8596;">
+<!ENTITY hArr "&#8660;">
+<!ENTITY hearts "&#9829;">
+<!ENTITY hellip "&#8230;">
+<!ENTITY Iacute "&#205;">
+<!ENTITY iacute "&#237;">
+<!ENTITY Icirc "&#206;">
+<!ENTITY icirc "&#238;">
+<!ENTITY iexcl "&#161;">
+<!ENTITY Igrave "&#204;">
+<!ENTITY igrave "&#236;">
+<!ENTITY image "&#8465;">
+<!ENTITY infin "&#8734;">
+<!ENTITY int "&#8747;">
+<!ENTITY Iota "&#921;">
+<!ENTITY iota "&#953;">
+<!ENTITY iquest "&#191;">
+<!ENTITY isin "&#8712;">
+<!ENTITY Iuml "&#207;">
+<!ENTITY iuml "&#239;">
+<!ENTITY Kappa "&#922;">
+<!ENTITY kappa "&#954;">
+<!ENTITY Lambda "&#923;">
+<!ENTITY lambda "&#955;">
+<!ENTITY lang "&#9001;">
+<!ENTITY laquo "&#171;">
+<!ENTITY larr "&#8592;">
+<!ENTITY lArr "&#8656;">
+<!ENTITY lceil "&#8968;">
+<!ENTITY ldquo "&#8220;">
+<!ENTITY le "&#8804;">
+<!ENTITY lfloor "&#8970;">
+<!ENTITY lowast "&#8727;">
+<!ENTITY loz "&#9674;">
+<!ENTITY lrm "&#8206;">
+<!ENTITY lsaquo "&#8249;">
+<!ENTITY lsquo "&#8216;">
+<!ENTITY lt "&#60;">
+<!ENTITY macr "&#175;">
+<!ENTITY mdash "&#8212;">
+<!ENTITY micro "&#181;">
+<!ENTITY middot "&#183;">
+<!ENTITY minus "&#8722;">
+<!ENTITY Mu "&#924;">
+<!ENTITY mu "&#956;">
+<!ENTITY nabla "&#8711;">
+<!ENTITY nbsp "&#160;">
+<!ENTITY ndash "&#8211;">
+<!ENTITY ne "&#8800;">
+<!ENTITY ni "&#8715;">
+<!ENTITY not "&#172;">
+<!ENTITY notin "&#8713;">
+<!ENTITY nsub "&#8836;">
+<!ENTITY Ntilde "&#209;">
+<!ENTITY ntilde "&#241;">
+<!ENTITY Nu "&#925;">
+<!ENTITY nu "&#957;">
+<!ENTITY Oacute "&#211;">
+<!ENTITY oacute "&#243;">
+<!ENTITY Ocirc "&#212;">
+<!ENTITY ocirc "&#244;">
+<!ENTITY OElig "&#338;">
+<!ENTITY oelig "&#339;">
+<!ENTITY Ograve "&#210;">
+<!ENTITY ograve "&#242;">
+<!ENTITY oline "&#8254;">
+<!ENTITY Omega "&#937;">
+<!ENTITY omega "&#969;">
+<!ENTITY Omicron "&#927;">
+<!ENTITY omicron "&#959;">
+<!ENTITY oplus "&#8853;">
+<!ENTITY or "&#8870;">
+<!ENTITY ordf "&#170;">
+<!ENTITY ordm "&#186;">
+<!ENTITY Oslash "&#216;">
+<!ENTITY oslash "&#248;">
+<!ENTITY Otilde "&#213;">
+<!ENTITY otilde "&#245;">
+<!ENTITY otimes "&#8855;">
+<!ENTITY Ouml "&#214;">
+<!ENTITY ouml "&#246;">
+<!ENTITY para "&#182;">
+<!ENTITY part "&#8706;">
+<!ENTITY permil "&#8240;">
+<!ENTITY perp "&#8869;">
+<!ENTITY Phi "&#934;">
+<!ENTITY phi "&#966;">
+<!ENTITY Pi "&#928;">
+<!ENTITY pi "&#960;">
+<!ENTITY piv "&#982;">
+<!ENTITY plusmn "&#177;">
+<!ENTITY pound "&#163;">
+<!ENTITY prime "&#8242;">
+<!ENTITY Prime "&#8243;">
+<!ENTITY prod "&#8719;">
+<!ENTITY prop "&#8733;">
+<!ENTITY Psi "&#936;">
+<!ENTITY psi "&#968;">
+<!ENTITY quot "&#34;">
+<!ENTITY radic "&#8730;">
+<!ENTITY rang "&#9002;">
+<!ENTITY raquo "&#187;">
+<!ENTITY rarr "&#8594;">
+<!ENTITY rArr "&#8658;">
+<!ENTITY rceil "&#8969;">
+<!ENTITY rdquo "&#8221;">
+<!ENTITY real "&#8476;">
+<!ENTITY reg "&#174;">
+<!ENTITY rfloor "&#8971;">
+<!ENTITY Rho "&#929;">
+<!ENTITY rho "&#961;">
+<!ENTITY rlm "&#8207;">
+<!ENTITY rsaquo "&#8250;">
+<!ENTITY rsquo "&#8217;">
+<!ENTITY sbquo "&#8218;">
+<!ENTITY Scaron "&#352;">
+<!ENTITY scaron "&#353;">
+<!ENTITY sdot "&#8901;">
+<!ENTITY sect "&#167;">
+<!ENTITY shy "&#173;">
+<!ENTITY Sigma "&#931;">
+<!ENTITY sigma "&#963;">
+<!ENTITY sigmaf "&#962;">
+<!ENTITY sim "&#8764;">
+<!ENTITY spades "&#9824;">
+<!ENTITY sub "&#8834;">
+<!ENTITY sube "&#8838;">
+<!ENTITY sum "&#8721;">
+<!ENTITY sup "&#8835;">
+<!ENTITY sup1 "&#185;">
+<!ENTITY sup2 "&#178;">
+<!ENTITY sup3 "&#179;">
+<!ENTITY supe "&#8839;">
+<!ENTITY szlig "&#223;">
+<!ENTITY Tau "&#932;">
+<!ENTITY tau "&#964;">
+<!ENTITY there4 "&#8756;">
+<!ENTITY Theta "&#920;">
+<!ENTITY theta "&#952;">
+<!ENTITY thetasym "&#977;">
+<!ENTITY thinsp "&#8201;">
+<!ENTITY THORN "&#222;">
+<!ENTITY thorn "&#254;">
+<!ENTITY tilde "&#732;">
+<!ENTITY times "&#215;">
+<!ENTITY trade "&#8482;">
+<!ENTITY Uacute "&#218;">
+<!ENTITY uacute "&#250;">
+<!ENTITY uarr "&#8593;">
+<!ENTITY uArr "&#8657;">
+<!ENTITY Ucirc "&#219;">
+<!ENTITY ucirc "&#251;">
+<!ENTITY Ugrave "&#217;">
+<!ENTITY ugrave "&#249;">
+<!ENTITY uml "&#168;">
+<!ENTITY upsih "&#978;">
+<!ENTITY Upsilon "&#933;">
+<!ENTITY upsilon "&#965;">
+<!ENTITY Uuml "&#220;">
+<!ENTITY uuml "&#252;">
+<!ENTITY weierp "&#8472;">
+<!ENTITY Xi "&#926;">
+<!ENTITY xi "&#958;">
+<!ENTITY Yacute "&#221;">
+<!ENTITY yacute "&#253;">
+<!ENTITY yen "&#165;">
+<!ENTITY Yuml "&#376;">
+<!ENTITY yuml "&#255;">
+<!ENTITY Zeta "&#918;">
+<!ENTITY zeta "&#950;">
+<!ENTITY zwj "&#8205;">
+<!ENTITY zwnj "&#8204;">`.replace(/\n/g, ' ');
+
+  /**
+   * A reasonably strict xml declaration.
+   */
+  const XML_DECL = '<?xml version="1.0" standalone="no"?>';
+
+  /**
+   * The beginning of the XML doctype declaration.
+   */
+  const DOCTYPE_START = `<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd" [`;
+
+  /**
+   * The end of the XML docype declaration.
+   */
+  const DOCTYPE_END = ']>';
+
+  /**
+   * A full header for an SVG XML document.
+   */
+  const SVG_XML_HEADER = `${XML_DECL}
+    ${DOCTYPE_START}${HTML_ENTITIES}${DOCTYPE_END}`;
 
     void Promise.all([...diagrams].map(renderOneMarmaid));
   });
@@ -938,7 +1223,10 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h1 id="tutorial">Tutorial<a class="anchor-link" href="#tutorial">¶</a></h1><p>In this tutorial, we will walk through the process of creating a simple OME-Zarr converter.
+<h1 id="tutorial">Tutorial<a class="anchor-link" href="#tutorial">¶</a></h1><p>!!! warning
+This tutorial is meant for converters tools version 0.6.
+A new tutorial for version 0.7+ is coming soon.</p>
+<p>In this tutorial, we will walk through the process of creating a simple OME-Zarr converter.
 For this example we will use this <a href="https://zenodo.org/records/8287221">hiPSC 3D Tiny</a>.</p>
 </div>
 </div>
@@ -998,105 +1286,72 @@ tiles_meta</div>
 <div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[1]:</div>
-<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
-<div>
-<style scoped="">
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">FileNotFoundError</span>                         Traceback (most recent call last)
+<span class="ansi-cyan-fg">Cell</span><span class="ansi-cyan-fg"> </span><span class="ansi-green-fg">In[1]</span><span class="ansi-green-fg">, line 3</span>
+<span class="ansi-green-fg">      1</span> <span class="ansi-bold" style="color: rgb(0,135,0)">import</span><span style="color: rgb(188,188,188)"> </span><span class="ansi-blue-intense-fg ansi-bold">pandas</span><span style="color: rgb(188,188,188)"> </span><span class="ansi-bold" style="color: rgb(0,135,0)">as</span><span style="color: rgb(188,188,188)"> </span><span class="ansi-blue-intense-fg ansi-bold">pd</span>
+<span class="ansi-green-fg">----&gt; </span><span class="ansi-green-fg">3</span> tiles_meta = <span class="ansi-yellow-bg">pd</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">read_csv</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-fg ansi-yellow-bg">"</span><span class="ansi-yellow-fg ansi-yellow-bg">../tests/hiPSC_Tiny/tiles.csv</span><span class="ansi-yellow-fg ansi-yellow-bg">"</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-fg">      4</span> tiles_meta
 
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
+<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.11/x64/lib/python3.13/site-packages/pandas/io/parsers/readers.py:1026</span>, in <span class="ansi-cyan-fg">read_csv</span><span class="ansi-blue-fg">(filepath_or_buffer, sep, delimiter, header, names, index_col, usecols, dtype, engine, converters, true_values, false_values, skipinitialspace, skiprows, skipfooter, nrows, na_values, keep_default_na, na_filter, verbose, skip_blank_lines, parse_dates, infer_datetime_format, keep_date_col, date_parser, date_format, dayfirst, cache_dates, iterator, chunksize, compression, thousands, decimal, lineterminator, quotechar, quoting, doublequote, escapechar, comment, encoding, encoding_errors, dialect, on_bad_lines, delim_whitespace, low_memory, memory_map, float_precision, storage_options, dtype_backend)</span>
+<span class="ansi-green-fg">   1013</span> kwds_defaults = _refine_defaults_read(
+<span class="ansi-green-fg">   1014</span>     dialect,
+<span class="ansi-green-fg">   1015</span>     delimiter,
+<span class="ansi-green-fg">   (...)</span><span class="ansi-green-fg">   1022</span>     dtype_backend=dtype_backend,
+<span class="ansi-green-fg">   1023</span> )
+<span class="ansi-green-fg">   1024</span> kwds.update(kwds_defaults)
+<span class="ansi-green-fg">-&gt; </span><span class="ansi-green-fg">1026</span> <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span class="ansi-yellow-bg">_read</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">filepath_or_buffer</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">kwds</span><span class="ansi-yellow-bg">)</span>
 
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-<thead>
-<tr style="text-align: right;">
-<th></th>
-<th>path</th>
-<th>row</th>
-<th>column</th>
-<th>acquisition_id</th>
-<th>fov</th>
-<th>channel</th>
-<th>z</th>
-<th>t</th>
-<th>pos_x</th>
-<th>pos_y</th>
-<th>shape_x</th>
-<th>shape_y</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<th>0</th>
-<td>20200812-CardiomyocyteDifferentiation14-Cycle1...</td>
-<td>B</td>
-<td>3</td>
-<td>0</td>
-<td>1</td>
-<td>0</td>
-<td>0</td>
-<td>0</td>
-<td>-1448.3</td>
-<td>1517.7</td>
-<td>2560</td>
-<td>2160</td>
-</tr>
-<tr>
-<th>1</th>
-<td>20200812-CardiomyocyteDifferentiation14-Cycle1...</td>
-<td>B</td>
-<td>3</td>
-<td>0</td>
-<td>1</td>
-<td>0</td>
-<td>1</td>
-<td>0</td>
-<td>-1448.3</td>
-<td>1517.7</td>
-<td>2560</td>
-<td>2160</td>
-</tr>
-<tr>
-<th>2</th>
-<td>20200812-CardiomyocyteDifferentiation14-Cycle1...</td>
-<td>B</td>
-<td>3</td>
-<td>0</td>
-<td>2</td>
-<td>0</td>
-<td>0</td>
-<td>0</td>
-<td>-1032.3</td>
-<td>1517.7</td>
-<td>2560</td>
-<td>2160</td>
-</tr>
-<tr>
-<th>3</th>
-<td>20200812-CardiomyocyteDifferentiation14-Cycle1...</td>
-<td>B</td>
-<td>3</td>
-<td>0</td>
-<td>2</td>
-<td>0</td>
-<td>1</td>
-<td>0</td>
-<td>-1032.3</td>
-<td>1517.7</td>
-<td>2560</td>
-<td>2160</td>
-</tr>
-</tbody>
-</table>
-</div>
+<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.11/x64/lib/python3.13/site-packages/pandas/io/parsers/readers.py:620</span>, in <span class="ansi-cyan-fg">_read</span><span class="ansi-blue-fg">(filepath_or_buffer, kwds)</span>
+<span class="ansi-green-fg">    617</span> _validate_names(kwds.get(<span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">names</span><span class="ansi-yellow-fg">"</span>, <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>))
+<span class="ansi-green-fg">    619</span> <span style="color: rgb(95,135,135)"># Create the parser.</span>
+<span class="ansi-green-fg">--&gt; </span><span class="ansi-green-fg">620</span> parser = <span class="ansi-yellow-bg">TextFileReader</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">filepath_or_buffer</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">*</span><span class="ansi-yellow-bg">*</span><span class="ansi-yellow-bg">kwds</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-fg">    622</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> chunksize <span class="ansi-bold" style="color: rgb(175,0,255)">or</span> iterator:
+<span class="ansi-green-fg">    623</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> parser
+
+<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.11/x64/lib/python3.13/site-packages/pandas/io/parsers/readers.py:1620</span>, in <span class="ansi-cyan-fg">TextFileReader.__init__</span><span class="ansi-blue-fg">(self, f, engine, **kwds)</span>
+<span class="ansi-green-fg">   1617</span>     <span style="color: rgb(0,135,0)">self</span>.options[<span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">has_index_names</span><span class="ansi-yellow-fg">"</span>] = kwds[<span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">has_index_names</span><span class="ansi-yellow-fg">"</span>]
+<span class="ansi-green-fg">   1619</span> <span style="color: rgb(0,135,0)">self</span>.handles: IOHandles | <span class="ansi-bold" style="color: rgb(0,135,0)">None</span> = <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>
+<span class="ansi-green-fg">-&gt; </span><span class="ansi-green-fg">1620</span> <span style="color: rgb(0,135,0)">self</span>._engine = <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">_make_engine</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">f</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">engine</span><span class="ansi-yellow-bg">)</span>
+
+<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.11/x64/lib/python3.13/site-packages/pandas/io/parsers/readers.py:1880</span>, in <span class="ansi-cyan-fg">TextFileReader._make_engine</span><span class="ansi-blue-fg">(self, f, engine)</span>
+<span class="ansi-green-fg">   1878</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">b</span><span class="ansi-yellow-fg">"</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> mode:
+<span class="ansi-green-fg">   1879</span>         mode += <span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">b</span><span class="ansi-yellow-fg">"</span>
+<span class="ansi-green-fg">-&gt; </span><span class="ansi-green-fg">1880</span> <span style="color: rgb(0,135,0)">self</span>.handles = <span class="ansi-yellow-bg">get_handle</span><span class="ansi-yellow-bg">(</span>
+<span class="ansi-green-fg">   1881</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">f</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg">   1882</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">mode</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg">   1883</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">encoding</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">options</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">get</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-fg ansi-yellow-bg">"</span><span class="ansi-yellow-fg ansi-yellow-bg">encoding</span><span class="ansi-yellow-fg ansi-yellow-bg">"</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg ansi-bold" style="color: rgb(0,135,0)">None</span><span class="ansi-yellow-bg">)</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg">   1884</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">compression</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">options</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">get</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-fg ansi-yellow-bg">"</span><span class="ansi-yellow-fg ansi-yellow-bg">compression</span><span class="ansi-yellow-fg ansi-yellow-bg">"</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg ansi-bold" style="color: rgb(0,135,0)">None</span><span class="ansi-yellow-bg">)</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg">   1885</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">memory_map</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">options</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">get</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-fg ansi-yellow-bg">"</span><span class="ansi-yellow-fg ansi-yellow-bg">memory_map</span><span class="ansi-yellow-fg ansi-yellow-bg">"</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg ansi-bold" style="color: rgb(0,135,0)">False</span><span class="ansi-yellow-bg">)</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg">   1886</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">is_text</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">is_text</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg">   1887</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">errors</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">options</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">get</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-fg ansi-yellow-bg">"</span><span class="ansi-yellow-fg ansi-yellow-bg">encoding_errors</span><span class="ansi-yellow-fg ansi-yellow-bg">"</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-fg ansi-yellow-bg">"</span><span class="ansi-yellow-fg ansi-yellow-bg">strict</span><span class="ansi-yellow-fg ansi-yellow-bg">"</span><span class="ansi-yellow-bg">)</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg">   1888</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">storage_options</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">options</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">get</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-fg ansi-yellow-bg">"</span><span class="ansi-yellow-fg ansi-yellow-bg">storage_options</span><span class="ansi-yellow-fg ansi-yellow-bg">"</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg ansi-bold" style="color: rgb(0,135,0)">None</span><span class="ansi-yellow-bg">)</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg">   1889</span> <span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-fg">   1890</span> <span class="ansi-bold" style="color: rgb(0,135,0)">assert</span> <span style="color: rgb(0,135,0)">self</span>.handles <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>
+<span class="ansi-green-fg">   1891</span> f = <span style="color: rgb(0,135,0)">self</span>.handles.handle
+
+<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.11/x64/lib/python3.13/site-packages/pandas/io/common.py:873</span>, in <span class="ansi-cyan-fg">get_handle</span><span class="ansi-blue-fg">(path_or_buf, mode, encoding, compression, memory_map, is_text, errors, storage_options)</span>
+<span class="ansi-green-fg">    868</span> <span class="ansi-bold" style="color: rgb(0,135,0)">elif</span> <span style="color: rgb(0,135,0)">isinstance</span>(handle, <span style="color: rgb(0,135,0)">str</span>):
+<span class="ansi-green-fg">    869</span>     <span style="color: rgb(95,135,135)"># Check whether the filename is to be opened in binary mode.</span>
+<span class="ansi-green-fg">    870</span>     <span style="color: rgb(95,135,135)"># Binary mode does not support 'encoding' and 'newline'.</span>
+<span class="ansi-green-fg">    871</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> ioargs.encoding <span class="ansi-bold" style="color: rgb(175,0,255)">and</span> <span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">b</span><span class="ansi-yellow-fg">"</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> ioargs.mode:
+<span class="ansi-green-fg">    872</span>         <span style="color: rgb(95,135,135)"># Encoding</span>
+<span class="ansi-green-fg">--&gt; </span><span class="ansi-green-fg">873</span>         handle = <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">open</span><span class="ansi-yellow-bg">(</span>
+<span class="ansi-green-fg">    874</span> <span class="ansi-yellow-bg">            </span><span class="ansi-yellow-bg">handle</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg">    875</span> <span class="ansi-yellow-bg">            </span><span class="ansi-yellow-bg">ioargs</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">mode</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg">    876</span> <span class="ansi-yellow-bg">            </span><span class="ansi-yellow-bg">encoding</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">ioargs</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">encoding</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg">    877</span> <span class="ansi-yellow-bg">            </span><span class="ansi-yellow-bg">errors</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">errors</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg">    878</span> <span class="ansi-yellow-bg">            </span><span class="ansi-yellow-bg">newline</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-fg ansi-yellow-bg">"</span><span class="ansi-yellow-fg ansi-yellow-bg">"</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg">    879</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-fg">    880</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">else</span>:
+<span class="ansi-green-fg">    881</span>         <span style="color: rgb(95,135,135)"># Binary mode</span>
+<span class="ansi-green-fg">    882</span>         handle = <span style="color: rgb(0,135,0)">open</span>(handle, ioargs.mode)
+
+<span class="ansi-red-fg">FileNotFoundError</span>: [Errno 2] No such file or directory: '../tests/hiPSC_Tiny/tiles.csv'</pre>
 </div>
 </div>
 </div>
@@ -1146,12 +1401,27 @@ pprint(metadata)</div>
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>{'channel_names': ['DAPI'],
- 'pixel_size': {'t': 1.0, 'x': 0.1625, 'y': 0.1625, 'z': 0.5},
- 'plate_name': 'hiPSC_Tiny',
- 'wavelength_ids': ['DAPI']}
-</pre>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">FileNotFoundError</span>                         Traceback (most recent call last)
+<span class="ansi-cyan-fg">Cell</span><span class="ansi-cyan-fg"> </span><span class="ansi-green-fg">In[2]</span><span class="ansi-green-fg">, line 4</span>
+<span class="ansi-green-fg">      1</span> <span class="ansi-bold" style="color: rgb(0,135,0)">import</span><span style="color: rgb(188,188,188)"> </span><span class="ansi-blue-intense-fg ansi-bold">json</span>
+<span class="ansi-green-fg">      2</span> <span class="ansi-bold" style="color: rgb(0,135,0)">from</span><span style="color: rgb(188,188,188)"> </span><span class="ansi-blue-intense-fg ansi-bold">pprint</span><span style="color: rgb(188,188,188)"> </span><span class="ansi-bold" style="color: rgb(0,135,0)">import</span> pprint
+<span class="ansi-green-fg">----&gt; </span><span class="ansi-green-fg">4</span> <span class="ansi-bold" style="color: rgb(0,135,0)">with</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">open</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-fg ansi-yellow-bg">"</span><span class="ansi-yellow-fg ansi-yellow-bg">../tests/hiPSC_Tiny/metadata.json</span><span class="ansi-yellow-fg ansi-yellow-bg">"</span><span class="ansi-yellow-bg">)</span> <span class="ansi-bold" style="color: rgb(0,135,0)">as</span> f:
+<span class="ansi-green-fg">      5</span>     metadata = json.load(f)
+<span class="ansi-green-fg">      7</span> pprint(metadata)
+
+<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.11/x64/lib/python3.13/site-packages/IPython/core/interactiveshell.py:344</span>, in <span class="ansi-cyan-fg">_modified_open</span><span class="ansi-blue-fg">(file, *args, **kwargs)</span>
+<span class="ansi-green-fg">    337</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> file <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> {<span class="ansi-green-fg">0</span>, <span class="ansi-green-fg">1</span>, <span class="ansi-green-fg">2</span>}:
+<span class="ansi-green-fg">    338</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">raise</span> <span class="ansi-bold" style="color: rgb(215,95,95)">ValueError</span>(
+<span class="ansi-green-fg">    339</span>         <span class="ansi-yellow-fg">f</span><span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">IPython won</span><span class="ansi-yellow-fg">'</span><span class="ansi-yellow-fg">t let you open fd=</span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span>file<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span class="ansi-yellow-fg"> by default </span><span class="ansi-yellow-fg">"</span>
+<span class="ansi-green-fg">    340</span>         <span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">as it is likely to crash IPython. If you know what you are doing, </span><span class="ansi-yellow-fg">"</span>
+<span class="ansi-green-fg">    341</span>         <span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">you can use builtins</span><span class="ansi-yellow-fg">'</span><span class="ansi-yellow-fg"> open.</span><span class="ansi-yellow-fg">"</span>
+<span class="ansi-green-fg">    342</span>     )
+<span class="ansi-green-fg">--&gt; </span><span class="ansi-green-fg">344</span> <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span class="ansi-yellow-bg">io_open</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">file</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">*</span><span class="ansi-yellow-bg">args</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">*</span><span class="ansi-yellow-bg">*</span><span class="ansi-yellow-bg">kwargs</span><span class="ansi-yellow-bg">)</span>
+
+<span class="ansi-red-fg">FileNotFoundError</span>: [Errno 2] No such file or directory: '../tests/hiPSC_Tiny/metadata.json'</pre>
 </div>
 </div>
 </div>
@@ -1227,10 +1497,30 @@ tiled_image</div>
 <div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[3]:</div>
-<div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
-<pre>TiledImage(name=hiPSC_Tiny_B3_0, path=hiPSC_Tiny.zarr/B/3/0)</pre>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>/opt/hostedtoolcache/Python/3.13.11/x64/lib/python3.13/site-packages/tqdm/auto.py:21: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
+  from .autonotebook import tqdm as notebook_tqdm
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">ImportError</span>                               Traceback (most recent call last)
+<span class="ansi-cyan-fg">Cell</span><span class="ansi-cyan-fg"> </span><span class="ansi-green-fg">In[3]</span><span class="ansi-green-fg">, line 1</span>
+<span class="ansi-green-fg">----&gt; </span><span class="ansi-green-fg">1</span> <span class="ansi-bold" style="color: rgb(0,135,0)">from</span><span style="color: rgb(188,188,188)"> </span><span class="ansi-blue-intense-fg ansi-bold">ome_zarr_converters_tools</span><span style="color: rgb(188,188,188)"> </span><span class="ansi-bold" style="color: rgb(0,135,0)">import</span> PlatePathBuilder, TiledImage
+<span class="ansi-green-fg">      3</span> tiled_image = TiledImage(
+<span class="ansi-green-fg">      4</span>     name=<span class="ansi-yellow-fg">f</span><span class="ansi-yellow-fg">"</span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span>metadata.get(<span class="ansi-yellow-fg">'</span><span class="ansi-yellow-fg">plate_name</span><span class="ansi-yellow-fg">'</span>)<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span class="ansi-yellow-fg">_B3_0</span><span class="ansi-yellow-fg">"</span>,
+<span class="ansi-green-fg">      5</span>     path_builder=PlatePathBuilder(
+<span class="ansi-green-fg">   (...)</span><span class="ansi-green-fg">     12</span>     wavelength_ids=metadata.get(<span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">wavelength_ids</span><span class="ansi-yellow-fg">"</span>, []),
+<span class="ansi-green-fg">     13</span> )
+<span class="ansi-green-fg">     14</span> tiled_image
+
+<span class="ansi-red-fg">ImportError</span>: cannot import name 'PlatePathBuilder' from 'ome_zarr_converters_tools' (/opt/hostedtoolcache/Python/3.13.11/x64/lib/python3.13/site-packages/ome_zarr_converters_tools/__init__.py)</pre>
 </div>
 </div>
 </div>
@@ -1398,90 +1688,27 @@ agg_tiles_meta</div>
 <div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[5]:</div>
-<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
-<div>
-<style scoped="">
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">NameError</span>                                 Traceback (most recent call last)
+<span class="ansi-cyan-fg">Cell</span><span class="ansi-cyan-fg"> </span><span class="ansi-green-fg">In[5]</span><span class="ansi-green-fg">, line 2</span>
+<span class="ansi-green-fg">      1</span> <span style="color: rgb(95,135,135)"># Aggregate together the tiles metadata</span>
+<span class="ansi-green-fg">----&gt; </span><span class="ansi-green-fg">2</span> agg_tiles_meta = <span class="ansi-yellow-bg">tiles_meta</span>.groupby([<span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">row</span><span class="ansi-yellow-fg">"</span>, <span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">column</span><span class="ansi-yellow-fg">"</span>, <span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">acquisition_id</span><span class="ansi-yellow-fg">"</span>, <span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">fov</span><span class="ansi-yellow-fg">"</span>]).agg(
+<span class="ansi-green-fg">      3</span>     <span style="color: rgb(0,135,0)">list</span>
+<span class="ansi-green-fg">      4</span> )
+<span class="ansi-green-fg">      5</span> agg_tiles_meta
 
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-<thead>
-<tr style="text-align: right;">
-<th></th>
-<th></th>
-<th></th>
-<th></th>
-<th>path</th>
-<th>channel</th>
-<th>z</th>
-<th>t</th>
-<th>pos_x</th>
-<th>pos_y</th>
-<th>shape_x</th>
-<th>shape_y</th>
-</tr>
-<tr>
-<th>row</th>
-<th>column</th>
-<th>acquisition_id</th>
-<th>fov</th>
-<th></th>
-<th></th>
-<th></th>
-<th></th>
-<th></th>
-<th></th>
-<th></th>
-<th></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<th rowspan="2" valign="top">B</th>
-<th rowspan="2" valign="top">3</th>
-<th rowspan="2" valign="top">0</th>
-<th>1</th>
-<td>[20200812-CardiomyocyteDifferentiation14-Cycle...</td>
-<td>[0, 0]</td>
-<td>[0, 1]</td>
-<td>[0, 0]</td>
-<td>[-1448.3, -1448.3]</td>
-<td>[1517.7, 1517.7]</td>
-<td>[2560, 2560]</td>
-<td>[2160, 2160]</td>
-</tr>
-<tr>
-<th>2</th>
-<td>[20200812-CardiomyocyteDifferentiation14-Cycle...</td>
-<td>[0, 0]</td>
-<td>[0, 1]</td>
-<td>[0, 0]</td>
-<td>[-1032.3, -1032.3]</td>
-<td>[1517.7, 1517.7]</td>
-<td>[2560, 2560]</td>
-<td>[2160, 2160]</td>
-</tr>
-</tbody>
-</table>
+<span class="ansi-red-fg">NameError</span>: name 'tiles_meta' is not defined</pre>
 </div>
 </div>
 </div>
 </div>
 </div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=10">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=10">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -1632,6 +1859,32 @@ for tile in agg_tiles_meta.itertuples():
 </div>
 </div>
 </div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">ImportError</span>                               Traceback (most recent call last)
+<span class="ansi-cyan-fg">Cell</span><span class="ansi-cyan-fg"> </span><span class="ansi-green-fg">In[6]</span><span class="ansi-green-fg">, line 3</span>
+<span class="ansi-green-fg">      1</span> <span class="ansi-bold" style="color: rgb(0,135,0)">from</span><span style="color: rgb(188,188,188)"> </span><span class="ansi-blue-intense-fg ansi-bold">ngio</span><span style="color: rgb(188,188,188)"> </span><span class="ansi-bold" style="color: rgb(0,135,0)">import</span> PixelSize
+<span class="ansi-green-fg">----&gt; </span><span class="ansi-green-fg">3</span> <span class="ansi-bold" style="color: rgb(0,135,0)">from</span><span style="color: rgb(188,188,188)"> </span><span class="ansi-blue-intense-fg ansi-bold">ome_zarr_converters_tools</span><span style="color: rgb(188,188,188)"> </span><span class="ansi-bold" style="color: rgb(0,135,0)">import</span> OriginDict, Point, Tile
+<span class="ansi-green-fg">      5</span> px_size_meta = metadata.get(<span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">pixel_size</span><span class="ansi-yellow-fg">"</span>, {})
+<span class="ansi-green-fg">      6</span> pixel_size = PixelSize(
+<span class="ansi-green-fg">      7</span>     x=px_size_meta.get(<span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">x</span><span class="ansi-yellow-fg">"</span>, <span class="ansi-green-fg">1</span>),
+<span class="ansi-green-fg">      8</span>     y=px_size_meta.get(<span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">y</span><span class="ansi-yellow-fg">"</span>, <span class="ansi-green-fg">1</span>),
+<span class="ansi-green-fg">      9</span>     z=px_size_meta.get(<span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">z</span><span class="ansi-yellow-fg">"</span>, <span class="ansi-green-fg">1</span>),  <span style="color: rgb(95,135,135)"># Assuming a constant pixel size in z</span>
+<span class="ansi-green-fg">     10</span>     t=px_size_meta.get(<span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">t</span><span class="ansi-yellow-fg">"</span>, <span class="ansi-green-fg">1</span>),  <span style="color: rgb(95,135,135)"># Assuming a constant pixel size in t</span>
+<span class="ansi-green-fg">     11</span> )
+
+<span class="ansi-red-fg">ImportError</span>: cannot import name 'OriginDict' from 'ome_zarr_converters_tools' (/opt/hostedtoolcache/Python/3.13.11/x64/lib/python3.13/site-packages/ome_zarr_converters_tools/__init__.py)</pre>
+</div>
+</div>
+</div>
+</div>
 </div>
 </div>
 <div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=11">
@@ -1646,8 +1899,8 @@ for tile in agg_tiles_meta.itertuples():
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=12">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=12">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -1706,6 +1959,35 @@ initiate_ome_zarr_plates(
     tiled_images=[tiled_image],
     overwrite=True,
 )</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">ImportError</span>                               Traceback (most recent call last)
+<span class="ansi-cyan-fg">Cell</span><span class="ansi-cyan-fg"> </span><span class="ansi-green-fg">In[7]</span><span class="ansi-green-fg">, line 1</span>
+<span class="ansi-green-fg">----&gt; </span><span class="ansi-green-fg">1</span> <span class="ansi-bold" style="color: rgb(0,135,0)">from</span><span style="color: rgb(188,188,188)"> </span><span class="ansi-blue-intense-fg ansi-bold">ome_zarr_converters_tools</span><span style="color: rgb(188,188,188)"> </span><span class="ansi-bold" style="color: rgb(0,135,0)">import</span> (
+<span class="ansi-green-fg">      2</span>     AdvancedComputeOptions,
+<span class="ansi-green-fg">      3</span>     build_parallelization_list,
+<span class="ansi-green-fg">      4</span>     initiate_ome_zarr_plates,
+<span class="ansi-green-fg">      5</span> )
+<span class="ansi-green-fg">      7</span> <span style="color: rgb(95,135,135)"># Build parallelization list for the compute phase</span>
+<span class="ansi-green-fg">      8</span> parallelization_list = build_parallelization_list(
+<span class="ansi-green-fg">      9</span>     zarr_dir=<span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">./test_zarr</span><span class="ansi-yellow-fg">"</span>,
+<span class="ansi-green-fg">     10</span>     tiled_images=[tiled_image],
+<span class="ansi-green-fg">     11</span>     overwrite=<span class="ansi-bold" style="color: rgb(0,135,0)">True</span>,
+<span class="ansi-green-fg">     12</span>     advanced_compute_options=AdvancedComputeOptions(),
+<span class="ansi-green-fg">     13</span> )
+
+<span class="ansi-red-fg">ImportError</span>: cannot import name 'AdvancedComputeOptions' from 'ome_zarr_converters_tools' (/opt/hostedtoolcache/Python/3.13.11/x64/lib/python3.13/site-packages/ome_zarr_converters_tools/__init__.py)</pre>
 </div>
 </div>
 </div>
@@ -1770,9 +2052,20 @@ for task in parallelization_list:
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Running task: {'zarr_url': 'test_zarr/hiPSC_Tiny.zarr/B/3/0', 'init_args': {'tiled_image_pickled_path': 'test_zarr/_tmp_converter_dir/1c3c20ec-010d-40a3-958e-2b2001eddb05.pkl', 'overwrite': True, 'advanced_compute_options': {'num_levels': 5, 'tiling_mode': 'auto', 'swap_xy': False, 'invert_x': False, 'invert_y': False, 'max_xy_chunk': 4096, 'z_chunk': 10, 'c_chunk': 1, 't_chunk': 1}}}
-</pre>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">NameError</span>                                 Traceback (most recent call last)
+<span class="ansi-cyan-fg">Cell</span><span class="ansi-cyan-fg"> </span><span class="ansi-green-fg">In[8]</span><span class="ansi-green-fg">, line 3</span>
+<span class="ansi-green-fg">      1</span> <span class="ansi-bold" style="color: rgb(0,135,0)">from</span><span style="color: rgb(188,188,188)"> </span><span class="ansi-blue-intense-fg ansi-bold">ome_zarr_converters_tools</span><span style="color: rgb(188,188,188)"> </span><span class="ansi-bold" style="color: rgb(0,135,0)">import</span> ConvertParallelInitArgs, generic_compute_task
+<span class="ansi-green-fg">----&gt; </span><span class="ansi-green-fg">3</span> <span class="ansi-bold" style="color: rgb(0,135,0)">for</span> task <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> <span class="ansi-yellow-bg">parallelization_list</span>:
+<span class="ansi-green-fg">      4</span>     <span style="color: rgb(0,135,0)">print</span>(<span class="ansi-yellow-fg">f</span><span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">Running task: </span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span>task<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span class="ansi-yellow-fg">"</span>)
+<span class="ansi-green-fg">      5</span>     generic_compute_task(
+<span class="ansi-green-fg">      6</span>         zarr_url=task[<span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">zarr_url</span><span class="ansi-yellow-fg">"</span>],
+<span class="ansi-green-fg">      7</span>         init_args=ConvertParallelInitArgs(**task[<span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">init_args</span><span class="ansi-yellow-fg">"</span>]),
+<span class="ansi-green-fg">      8</span>     )
+
+<span class="ansi-red-fg">NameError</span>: name 'parallelization_list' is not defined</pre>
 </div>
 </div>
 </div>
@@ -1825,10 +2118,128 @@ plate</div>
 <div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[9]:</div>
-<div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
-<pre>Plate([rows x columns] (1 x 1))</pre>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">FileNotFoundError</span>                         Traceback (most recent call last)
+<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.11/x64/lib/python3.13/site-packages/ngio/utils/_zarr_utils.py:85</span>, in <span class="ansi-cyan-fg">open_group_wrapper</span><span class="ansi-blue-fg">(store, mode, zarr_format)</span>
+<span class="ansi-green-fg">     84</span>     mode = mode <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> mode <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span> <span class="ansi-bold" style="color: rgb(0,135,0)">else</span> <span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">a</span><span class="ansi-yellow-fg">"</span>
+<span class="ansi-green-fg">---&gt; </span><span class="ansi-green-fg">85</span>     group = <span class="ansi-yellow-bg">zarr</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">open_group</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">store</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">store</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">mode</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">mode</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">zarr_format</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">zarr_format</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-fg">     87</span> <span class="ansi-bold" style="color: rgb(0,135,0)">except</span> <span class="ansi-bold" style="color: rgb(215,95,95)">FileExistsError</span> <span class="ansi-bold" style="color: rgb(0,135,0)">as</span> e:
+
+<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.11/x64/lib/python3.13/site-packages/zarr/api/synchronous.py:549</span>, in <span class="ansi-cyan-fg">open_group</span><span class="ansi-blue-fg">(store, mode, cache_attrs, synchronizer, path, chunk_store, storage_options, zarr_version, zarr_format, meta_array, attributes, use_consolidated)</span>
+<span class="ansi-green-fg">    493</span> <span class="ansi-yellow-fg">"""Open a group using file-mode-like semantics.</span>
+<span class="ansi-green-fg">    494</span> 
+<span class="ansi-green-fg">    495</span> <span class="ansi-yellow-fg">Parameters</span>
+<span class="ansi-green-fg">   (...)</span><span class="ansi-green-fg">    546</span> <span class="ansi-yellow-fg">    The new group.</span>
+<span class="ansi-green-fg">    547</span> <span class="ansi-yellow-fg">"""</span>
+<span class="ansi-green-fg">    548</span> <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> Group(
+<span class="ansi-green-fg">--&gt; </span><span class="ansi-green-fg">549</span>     <span class="ansi-yellow-bg">sync</span><span class="ansi-yellow-bg">(</span>
+<span class="ansi-green-fg">    550</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">async_api</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">open_group</span><span class="ansi-yellow-bg">(</span>
+<span class="ansi-green-fg">    551</span> <span class="ansi-yellow-bg">            </span><span class="ansi-yellow-bg">store</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">store</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg">    552</span> <span class="ansi-yellow-bg">            </span><span class="ansi-yellow-bg">mode</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">mode</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg">    553</span> <span class="ansi-yellow-bg">            </span><span class="ansi-yellow-bg">cache_attrs</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">cache_attrs</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg">    554</span> <span class="ansi-yellow-bg">            </span><span class="ansi-yellow-bg">synchronizer</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">synchronizer</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg">    555</span> <span class="ansi-yellow-bg">            </span><span class="ansi-yellow-bg">path</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">path</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg">    556</span> <span class="ansi-yellow-bg">            </span><span class="ansi-yellow-bg">chunk_store</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">chunk_store</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg">    557</span> <span class="ansi-yellow-bg">            </span><span class="ansi-yellow-bg">storage_options</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">storage_options</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg">    558</span> <span class="ansi-yellow-bg">            </span><span class="ansi-yellow-bg">zarr_version</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">zarr_version</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg">    559</span> <span class="ansi-yellow-bg">            </span><span class="ansi-yellow-bg">zarr_format</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">zarr_format</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg">    560</span> <span class="ansi-yellow-bg">            </span><span class="ansi-yellow-bg">meta_array</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">meta_array</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg">    561</span> <span class="ansi-yellow-bg">            </span><span class="ansi-yellow-bg">attributes</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">attributes</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg">    562</span> <span class="ansi-yellow-bg">            </span><span class="ansi-yellow-bg">use_consolidated</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">use_consolidated</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg">    563</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-fg">    564</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-fg">    565</span> )
+
+<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.11/x64/lib/python3.13/site-packages/zarr/core/sync.py:159</span>, in <span class="ansi-cyan-fg">sync</span><span class="ansi-blue-fg">(coro, loop, timeout)</span>
+<span class="ansi-green-fg">    158</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span style="color: rgb(0,135,0)">isinstance</span>(return_result, <span class="ansi-bold" style="color: rgb(215,95,95)">BaseException</span>):
+<span class="ansi-green-fg">--&gt; </span><span class="ansi-green-fg">159</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">raise</span> return_result
+<span class="ansi-green-fg">    160</span> <span class="ansi-bold" style="color: rgb(0,135,0)">else</span>:
+
+<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.11/x64/lib/python3.13/site-packages/zarr/core/sync.py:119</span>, in <span class="ansi-cyan-fg">_runner</span><span class="ansi-blue-fg">(coro)</span>
+<span class="ansi-green-fg">    118</span> <span class="ansi-bold" style="color: rgb(0,135,0)">try</span>:
+<span class="ansi-green-fg">--&gt; </span><span class="ansi-green-fg">119</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span class="ansi-bold" style="color: rgb(0,135,0)">await</span> coro
+<span class="ansi-green-fg">    120</span> <span class="ansi-bold" style="color: rgb(0,135,0)">except</span> <span class="ansi-bold" style="color: rgb(215,95,95)">Exception</span> <span class="ansi-bold" style="color: rgb(0,135,0)">as</span> ex:
+
+<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.11/x64/lib/python3.13/site-packages/zarr/api/asynchronous.py:860</span>, in <span class="ansi-cyan-fg">open_group</span><span class="ansi-blue-fg">(store, mode, cache_attrs, synchronizer, path, chunk_store, storage_options, zarr_version, zarr_format, meta_array, attributes, use_consolidated)</span>
+<span class="ansi-green-fg">    858</span>     warnings.warn(<span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">chunk_store is not yet implemented</span><span class="ansi-yellow-fg">"</span>, ZarrRuntimeWarning, stacklevel=<span class="ansi-green-fg">2</span>)
+<span class="ansi-green-fg">--&gt; </span><span class="ansi-green-fg">860</span> store_path = <span class="ansi-bold" style="color: rgb(0,135,0)">await</span> make_store_path(store, mode=mode, storage_options=storage_options, path=path)
+<span class="ansi-green-fg">    861</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> attributes <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>:
+
+<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.11/x64/lib/python3.13/site-packages/zarr/storage/_common.py:422</span>, in <span class="ansi-cyan-fg">make_store_path</span><span class="ansi-blue-fg">(store_like, path, mode, storage_options)</span>
+<span class="ansi-green-fg">    421</span> <span class="ansi-bold" style="color: rgb(0,135,0)">else</span>:
+<span class="ansi-green-fg">--&gt; </span><span class="ansi-green-fg">422</span>     store = <span class="ansi-bold" style="color: rgb(0,135,0)">await</span> make_store(store_like, mode=mode, storage_options=storage_options)
+<span class="ansi-green-fg">    423</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span class="ansi-bold" style="color: rgb(0,135,0)">await</span> StorePath.open(store, path=path_normalized, mode=mode)
+
+<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.11/x64/lib/python3.13/site-packages/zarr/storage/_common.py:351</span>, in <span class="ansi-cyan-fg">make_store</span><span class="ansi-blue-fg">(store_like, mode, storage_options)</span>
+<span class="ansi-green-fg">    349</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">else</span>:
+<span class="ansi-green-fg">    350</span>         <span style="color: rgb(95,135,135)"># Assume a filesystem path</span>
+<span class="ansi-green-fg">--&gt; </span><span class="ansi-green-fg">351</span>         <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span class="ansi-bold" style="color: rgb(0,135,0)">await</span> make_store(Path(store_like), mode=mode, storage_options=storage_options)
+<span class="ansi-green-fg">    353</span> <span class="ansi-bold" style="color: rgb(0,135,0)">elif</span> _has_fsspec <span class="ansi-bold" style="color: rgb(175,0,255)">and</span> <span style="color: rgb(0,135,0)">isinstance</span>(store_like, FSMap):
+
+<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.11/x64/lib/python3.13/site-packages/zarr/storage/_common.py:341</span>, in <span class="ansi-cyan-fg">make_store</span><span class="ansi-blue-fg">(store_like, mode, storage_options)</span>
+<span class="ansi-green-fg">    339</span> <span class="ansi-bold" style="color: rgb(0,135,0)">elif</span> <span style="color: rgb(0,135,0)">isinstance</span>(store_like, Path):
+<span class="ansi-green-fg">    340</span>     <span style="color: rgb(95,135,135)"># Create a new LocalStore</span>
+<span class="ansi-green-fg">--&gt; </span><span class="ansi-green-fg">341</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span class="ansi-bold" style="color: rgb(0,135,0)">await</span> LocalStore.open(root=store_like, mode=mode, read_only=_read_only)
+<span class="ansi-green-fg">    343</span> <span class="ansi-bold" style="color: rgb(0,135,0)">elif</span> <span style="color: rgb(0,135,0)">isinstance</span>(store_like, <span style="color: rgb(0,135,0)">str</span>):
+<span class="ansi-green-fg">    344</span>     <span style="color: rgb(95,135,135)"># Either a FSSpec URI or a local filesystem path</span>
+
+<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.11/x64/lib/python3.13/site-packages/zarr/storage/_local.py:160</span>, in <span class="ansi-cyan-fg">LocalStore.open</span><span class="ansi-blue-fg">(cls, root, read_only, mode)</span>
+<span class="ansi-green-fg">    159</span> store = <span style="color: rgb(0,135,0)">cls</span>(root, read_only=read_only_creation)
+<span class="ansi-green-fg">--&gt; </span><span class="ansi-green-fg">160</span> <span class="ansi-bold" style="color: rgb(0,135,0)">await</span> store._open()
+<span class="ansi-green-fg">    162</span> <span style="color: rgb(95,135,135)"># Set read_only state</span>
+
+<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.11/x64/lib/python3.13/site-packages/zarr/storage/_local.py:172</span>, in <span class="ansi-cyan-fg">LocalStore._open</span><span class="ansi-blue-fg">(self, mode)</span>
+<span class="ansi-green-fg">    171</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span style="color: rgb(0,135,0)">self</span>.root.exists():
+<span class="ansi-green-fg">--&gt; </span><span class="ansi-green-fg">172</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">raise</span> <span class="ansi-bold" style="color: rgb(215,95,95)">FileNotFoundError</span>(<span class="ansi-yellow-fg">f</span><span class="ansi-yellow-fg">"</span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span><span style="color: rgb(0,135,0)">self</span>.root<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span class="ansi-yellow-fg"> does not exist</span><span class="ansi-yellow-fg">"</span>)
+<span class="ansi-green-fg">    173</span> <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span class="ansi-bold" style="color: rgb(0,135,0)">await</span> <span style="color: rgb(0,135,0)">super</span>()._open()
+
+<span class="ansi-red-fg">FileNotFoundError</span>: test_zarr/hiPSC_Tiny.zarr does not exist
+
+The above exception was the direct cause of the following exception:
+
+<span class="ansi-red-fg">NgioFileNotFoundError</span>                     Traceback (most recent call last)
+<span class="ansi-cyan-fg">Cell</span><span class="ansi-cyan-fg"> </span><span class="ansi-green-fg">In[9]</span><span class="ansi-green-fg">, line 3</span>
+<span class="ansi-green-fg">      1</span> <span class="ansi-bold" style="color: rgb(0,135,0)">from</span><span style="color: rgb(188,188,188)"> </span><span class="ansi-blue-intense-fg ansi-bold">ngio</span><span style="color: rgb(188,188,188)"> </span><span class="ansi-bold" style="color: rgb(0,135,0)">import</span> open_ome_zarr_plate
+<span class="ansi-green-fg">----&gt; </span><span class="ansi-green-fg">3</span> plate = <span class="ansi-yellow-bg">open_ome_zarr_plate</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-fg ansi-yellow-bg">"</span><span class="ansi-yellow-fg ansi-yellow-bg">./test_zarr/hiPSC_Tiny.zarr</span><span class="ansi-yellow-fg ansi-yellow-bg">"</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-fg">      4</span> plate
+
+<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.11/x64/lib/python3.13/site-packages/ngio/hcs/_plate.py:1176</span>, in <span class="ansi-cyan-fg">open_ome_zarr_plate</span><span class="ansi-blue-fg">(store, cache, mode)</span>
+<span class="ansi-green-fg">   1163</span> <span class="ansi-bold" style="color: rgb(0,135,0)">def</span><span style="color: rgb(188,188,188)"> </span><span class="ansi-blue-fg">open_ome_zarr_plate</span>(
+<span class="ansi-green-fg">   1164</span>     store: StoreOrGroup,
+<span class="ansi-green-fg">   1165</span>     cache: <span style="color: rgb(0,135,0)">bool</span> = <span class="ansi-bold" style="color: rgb(0,135,0)">False</span>,
+<span class="ansi-green-fg">   1166</span>     mode: AccessModeLiteral = <span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">r+</span><span class="ansi-yellow-fg">"</span>,
+<span class="ansi-green-fg">   1167</span> ) -&gt; OmeZarrPlate:
+<span class="ansi-green-fg">   1168</span> <span style="color: rgb(188,188,188)">    </span><span class="ansi-yellow-fg">"""Open an OME-Zarr plate.</span>
+<span class="ansi-green-fg">   1169</span> 
+<span class="ansi-green-fg">   1170</span> <span class="ansi-yellow-fg">    Args:</span>
+<span class="ansi-green-fg">   (...)</span><span class="ansi-green-fg">   1174</span> <span class="ansi-yellow-fg">            access mode for the image. Defaults to "r+".</span>
+<span class="ansi-green-fg">   1175</span> <span class="ansi-yellow-fg">    """</span>
+<span class="ansi-green-fg">-&gt; </span><span class="ansi-green-fg">1176</span>     group_handler = <span class="ansi-yellow-bg">ZarrGroupHandler</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">store</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">store</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">cache</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">cache</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">mode</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">mode</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-fg">   1177</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> OmeZarrPlate(group_handler)
+
+<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.11/x64/lib/python3.13/site-packages/ngio/utils/_zarr_utils.py:124</span>, in <span class="ansi-cyan-fg">ZarrGroupHandler.__init__</span><span class="ansi-blue-fg">(self, store, zarr_format, cache, mode)</span>
+<span class="ansi-green-fg">    121</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> mode <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> [<span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">r</span><span class="ansi-yellow-fg">"</span>, <span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">r+</span><span class="ansi-yellow-fg">"</span>, <span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">w</span><span class="ansi-yellow-fg">"</span>, <span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">w-</span><span class="ansi-yellow-fg">"</span>, <span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">a</span><span class="ansi-yellow-fg">"</span>, <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>]:
+<span class="ansi-green-fg">    122</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">raise</span> NgioValueError(<span class="ansi-yellow-fg">f</span><span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">Mode </span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span>mode<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span class="ansi-yellow-fg"> is not supported.</span><span class="ansi-yellow-fg">"</span>)
+<span class="ansi-green-fg">--&gt; </span><span class="ansi-green-fg">124</span> group = <span class="ansi-yellow-bg">open_group_wrapper</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">store</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">store</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">mode</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">mode</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">zarr_format</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">zarr_format</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-fg">    125</span> <span style="color: rgb(0,135,0)">self</span>._group = group
+<span class="ansi-green-fg">    126</span> <span style="color: rgb(0,135,0)">self</span>.use_cache = cache
+
+<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.11/x64/lib/python3.13/site-packages/ngio/utils/_zarr_utils.py:93</span>, in <span class="ansi-cyan-fg">open_group_wrapper</span><span class="ansi-blue-fg">(store, mode, zarr_format)</span>
+<span class="ansi-green-fg">     88</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">raise</span> NgioFileExistsError(
+<span class="ansi-green-fg">     89</span>         <span class="ansi-yellow-fg">f</span><span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">A Zarr group already exists at </span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span>store<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span class="ansi-yellow-fg">, consider setting overwrite=True.</span><span class="ansi-yellow-fg">"</span>
+<span class="ansi-green-fg">     90</span>     ) <span class="ansi-bold" style="color: rgb(0,135,0)">from</span><span style="color: rgb(188,188,188)"> </span><span class="ansi-blue-intense-fg ansi-bold">e</span>
+<span class="ansi-green-fg">     92</span> <span class="ansi-bold" style="color: rgb(0,135,0)">except</span> <span class="ansi-bold" style="color: rgb(215,95,95)">FileNotFoundError</span> <span class="ansi-bold" style="color: rgb(0,135,0)">as</span> e:
+<span class="ansi-green-fg">---&gt; </span><span class="ansi-green-fg">93</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">raise</span> NgioFileNotFoundError(<span class="ansi-yellow-fg">f</span><span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">No Zarr group found at </span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span>store<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span class="ansi-yellow-fg">"</span>) <span class="ansi-bold" style="color: rgb(0,135,0)">from</span><span style="color: rgb(188,188,188)"> </span><span class="ansi-blue-intense-fg ansi-bold">e</span>
+<span class="ansi-green-fg">     95</span> <span class="ansi-bold" style="color: rgb(0,135,0)">except</span> ContainsGroupError <span class="ansi-bold" style="color: rgb(0,135,0)">as</span> e:
+<span class="ansi-green-fg">     96</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">raise</span> NgioFileExistsError(
+<span class="ansi-green-fg">     97</span>         <span class="ansi-yellow-fg">f</span><span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">A Zarr group already exists at </span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span>store<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span class="ansi-yellow-fg">, consider setting overwrite=True.</span><span class="ansi-yellow-fg">"</span>
+<span class="ansi-green-fg">     98</span>     ) <span class="ansi-bold" style="color: rgb(0,135,0)">from</span><span style="color: rgb(188,188,188)"> </span><span class="ansi-blue-intense-fg ansi-bold">e</span>
+
+<span class="ansi-red-fg">NgioFileNotFoundError</span>: No Zarr group found at ./test_zarr/hiPSC_Tiny.zarr</pre>
 </div>
 </div>
 </div>
@@ -1866,10 +2277,17 @@ container</div>
 <div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[10]:</div>
-<div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
-<pre>OmeZarrContainer(levels=5, tables=['well_ROI_table', 'FOV_ROI_table'])</pre>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">NameError</span>                                 Traceback (most recent call last)
+<span class="ansi-cyan-fg">Cell</span><span class="ansi-cyan-fg"> </span><span class="ansi-green-fg">In[10]</span><span class="ansi-green-fg">, line 1</span>
+<span class="ansi-green-fg">----&gt; </span><span class="ansi-green-fg">1</span> container = <span class="ansi-yellow-bg">plate</span>.get_image(row=<span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">B</span><span class="ansi-yellow-fg">"</span>, column=<span class="ansi-green-fg">3</span>, image_path=<span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">0</span><span class="ansi-yellow-fg">"</span>)
+<span class="ansi-green-fg">      2</span> container
+
+<span class="ansi-red-fg">NameError</span>: name 'plate' is not defined</pre>
 </div>
 </div>
 </div>
@@ -1932,7 +2350,7 @@ container</div>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 30, 2025 08:25:54 UTC">June 30, 2025</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="December 18, 2025 15:01:19 UTC">December 18, 2025</span>
   </span>
 
     
@@ -2075,10 +2493,10 @@ container</div>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["content.tooltips", "content.tabs.link", "content.code.annotate", "navigation.instant", "navigation.instant.progress", "navigation.sections", "navigation.path", "navigation.indexes", "navigation.footer", "toc.follow", "search.suggest", "search.share"], "search": "../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["content.tooltips", "content.tabs.link", "content.code.annotate", "navigation.instant", "navigation.instant.progress", "navigation.sections", "navigation.path", "navigation.indexes", "navigation.footer", "toc.follow", "search.suggest", "search.share"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.e71a0d61.min.js"></script>
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
       
         <script src="../assets/_markdown_exec_pyodide.js"></script>
       
