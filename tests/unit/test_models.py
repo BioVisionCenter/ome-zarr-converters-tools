@@ -2,6 +2,8 @@
 
 import pytest
 
+from ome_zarr_converters_tools.models._collection import validate_zarr_name
+
 
 class TestAcquisitionDetails:
     """Tests for the AcquisitionDetails model."""
@@ -71,3 +73,39 @@ class TestCollectionModels:
     @pytest.mark.skip(reason="Not implemented yet")
     def test_collection_path_generation(self):
         """Test path generation for collections."""
+
+    def test_validate_zarr_name(self):
+        """Test path sanitization."""
+        # Should match
+        for string in [
+            "hello",
+            "hello.world",
+            "my-file_name.txt",
+            "_single_underscore",
+            "a.",
+            ".a",
+            "123",
+            "hello world",
+        ]:
+            validate_zarr_name(string)  # Should not raise
+
+    for string in [
+        "path/to/file",  # contains /
+        ".",  # only periods
+        "..",  # only periods
+        "...",  # only periods
+        "path#",  # contains invalid character #
+        "file$name",  # contains invalid character $
+        "file%name",  # contains invalid character %
+        "file&name",  # contains invalid character &
+        "file(name)",  # contains invalid character ()
+        "file😊name",  # contains emoji
+        "__dunder",  # starts with __
+        "__",  # starts with __
+        "",  # empty string
+        "café",  # non-ASCII
+        " hello world",  # Leading space
+        "hello world ",  # Trailing space
+    ]:
+        with pytest.raises(ValueError):
+            validate_zarr_name(string)

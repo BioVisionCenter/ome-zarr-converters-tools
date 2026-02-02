@@ -32,7 +32,7 @@ def tiled_image_from_tiles(
     data_type = tiles[0].find_data_type(resource=resource)
     for tile in tiles:
         suffix = "" if not split_tiles else f"_{tile.fov_name}"
-        tile.collection.suffix = suffix
+        tile.collection._suffix = suffix
         path = tile.collection.path()
         if path not in tiled_images:
             tiled_images[path] = TiledImage(
