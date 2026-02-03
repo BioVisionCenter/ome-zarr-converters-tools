@@ -31,6 +31,7 @@ from ome_zarr_converters_tools.models import (
     OverwriteMode,
     SingleImage,
     StageCorrections,
+    join_url_paths,
 )
 
 __version__ = version("ome-zarr-converters-tools")
@@ -60,6 +61,7 @@ __all__ = [
     "TiledImage",
     "converters_tools_models",
     "generic_compute_task",
+    "join_url_paths",
     "setup_images_for_conversion",
     "tiles_preprocessing_pipeline",
 ]

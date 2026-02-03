@@ -10,6 +10,7 @@ from ome_zarr_converters_tools.models import (
     ImageInPlate,
     OverwriteMode,
 )
+from ome_zarr_converters_tools.models._url_utils import join_url_paths
 
 
 def setup_plates(
@@ -42,7 +43,7 @@ def setup_plates(
         )
         plates[plate_path]["images"].append(image_in_well)
     for plate_path, plate_info in plates.items():
-        plante_url = f"{zarr_dir}/{plate_path}"
+        plante_url = join_url_paths(zarr_dir, plate_path)
         group = zarr.open_group(store=plante_url, mode=mode, zarr_format=zarr_format)
         try:
             # This can only succeed in "extend" mode if the group already exists
@@ -57,7 +58,7 @@ def setup_plates(
             )
         existing_image = plate.images_paths()
         for image in plate_info["images"]:
-            image_path = f"{image.row}/{image.column}/{image.path}"
+            image_path = join_url_paths(image.row, image.column, image.path)
             if image_path in existing_image:
                 # Image already exists in the plate, skip adding
                 # This can only happen in 'extend' mode

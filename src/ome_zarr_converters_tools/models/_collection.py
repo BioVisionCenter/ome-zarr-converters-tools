@@ -5,6 +5,8 @@ from typing import Any, TypeVar
 
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, field_validator
 
+from ome_zarr_converters_tools.models._url_utils import join_url_paths
+
 ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 VALID_ZARR_NAME_PATTERN = r"^(?!__)(?! )((?!^\.+$)[a-zA-Z0-9_. -]+)(?<! )$"
@@ -64,13 +66,13 @@ class ImageInPlate(CollectionInterface):
         return sanitize_path(self.plate_name)
 
     def well_path(self) -> str:
-        return f"{self.plate_path()}/{self.row}/{self.column}"
+        return join_url_paths(self.plate_path(), self.row, str(self.column))
 
     def path_in_well(self) -> str:
         return f"{self.acquisition}{self._suffix}"
 
     def path(self) -> str:
-        return f"{self.well_path()}/{self.path_in_well()}"
+        return join_url_paths(self.well_path(), self.path_in_well())
 
     @classmethod
     @field_validator("row", mode="before")

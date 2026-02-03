@@ -15,6 +15,7 @@ from ome_zarr_converters_tools.models import (
     NgffVersions,
     OverwriteMode,
 )
+from ome_zarr_converters_tools.models._url_utils import join_url_paths
 from ome_zarr_converters_tools.utils import (
     cleanup_if_exists,
     dump_to_json,
@@ -50,7 +51,7 @@ def build_parallelization_list(
             temp_json_url=temp_json_url, tiled_image=image
         )
         # This is not used directly but kept for api consistency
-        zarr_url = f"{zarr_dir}/{image.path}"
+        zarr_url = join_url_paths(zarr_dir, image.path)
         parallelization_list.append(
             {
                 "zarr_url": zarr_url,

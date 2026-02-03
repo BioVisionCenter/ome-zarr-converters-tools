@@ -31,6 +31,11 @@ from ome_zarr_converters_tools.models._loader import (
 from ome_zarr_converters_tools.models._shared import (
     OverwriteMode,
 )
+from ome_zarr_converters_tools.models._url_utils import (
+    find_url_type,
+    join_url_paths,
+    local_url_to_path,
+)
 
 __all__ = [
     "AcquisitionDetails",
@@ -54,4 +59,7 @@ __all__ = [
     "StageCorrections",
     "TilingMode",
     "WriterMode",
+    "find_url_type",
+    "join_url_paths",
+    "local_url_to_path",
 ]

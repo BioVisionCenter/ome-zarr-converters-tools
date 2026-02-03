@@ -1,6 +1,5 @@
 """Functions to build TiledImage models from Tile models."""
 
-from pathlib import Path
 from typing import Any
 
 import pandas as pd
@@ -56,7 +55,7 @@ def _build_plate_collection(
 
 def _open_hcs_dir(
     *,
-    acquisition_path: Path,
+    acquisition_path: str,
     table_name: str = "tiles.csv",
     acquisition_details_name: str = "acquisition_details.toml",
 ) -> tuple[pd.DataFrame, AcquisitionDetails]:
@@ -71,10 +70,13 @@ def _open_hcs_dir(
         A tuple of the tiles DataFrame and AcquisitionDetails model.
 
     """
-    table_path = acquisition_path / table_name
+    from ome_zarr_converters_tools.models._url_utils import join_url_paths
+
+    table_path = join_url_paths(acquisition_path, table_name)
     df = pd.read_csv(table_path)
 
-    with open(acquisition_path / acquisition_details_name) as f:
+    acq_details_path = join_url_paths(acquisition_path, acquisition_details_name)
+    with open(acq_details_path) as f:
         acquisition_details_dict = toml.load(f)
         acquisition_details = AcquisitionDetails.model_validate(
             acquisition_details_dict
@@ -140,7 +142,7 @@ def hcs_images_from_dataframe(
 
 def hcs_images_from_csv(
     *,
-    acquisition_path: Path,
+    acquisition_path: str,
     plate_name: str,
     acquisition: int,
     converter_options: ConverterOptions,

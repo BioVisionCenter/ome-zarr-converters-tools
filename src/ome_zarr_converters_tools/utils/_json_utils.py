@@ -10,7 +10,7 @@ from ome_zarr_converters_tools.models import (
     CollectionInterfaceType,
     ImageLoaderInterfaceType,
 )
-from ome_zarr_converters_tools.utils._url_utils import (
+from ome_zarr_converters_tools.models._url_utils import (
     UrlType,
     find_url_type,
     local_url_to_path,
