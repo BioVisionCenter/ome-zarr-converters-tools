@@ -42,6 +42,6 @@ def join_url_paths(base_url: str, *paths: str) -> str:
     # Iterate for all but the last path to avoid adding a trailing slash
     for path in paths:
         # Strip leading slashes from path components
-        path = path.lstrip("/")
+        path = str(path).lstrip("/")
         base_url = f"{base_url}/{path}"
     return base_url
