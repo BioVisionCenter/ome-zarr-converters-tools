@@ -5,7 +5,7 @@ from importlib.metadata import version
 from ome_zarr_converters_tools.core import (
     Tile,
     TiledImage,
-    tiles_preprocessing_pipeline,
+    tiles_aggregation_pipeline,
 )
 from ome_zarr_converters_tools.fractal import (
     AcquisitionOptions,
@@ -65,5 +65,5 @@ __all__ = [
     "generic_compute_task",
     "join_url_paths",
     "setup_images_for_conversion",
-    "tiles_preprocessing_pipeline",
+    "tiles_aggregation_pipeline",
 ]

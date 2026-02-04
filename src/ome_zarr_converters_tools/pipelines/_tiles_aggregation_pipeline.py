@@ -1,5 +1,6 @@
 """Tile Preprocessing Pipeline API."""
 
+from collections.abc import Sequence
 from typing import Any
 
 from ome_zarr_converters_tools.core._tile import Tile
@@ -10,15 +11,15 @@ from ome_zarr_converters_tools.models import ConverterOptions
 from ome_zarr_converters_tools.validators import ValidatorStep, apply_validator_pipeline
 
 
-def tiles_preprocessing_pipeline(
+def tiles_aggregation_pipeline(
     tiles: list[Tile],
     *,
     converter_options: ConverterOptions,
-    filters: list[FilterModel] | None = None,
-    validators: list[ValidatorStep] | None = None,
+    filters: Sequence[FilterModel] | None = None,
+    validators: Sequence[ValidatorStep] | None = None,
     resource: Any | None = None,
 ) -> list[TiledImage]:
-    """Process tiles through the preprocessing pipeline to create TiledImages.
+    """Process tiles and aggregates them into TiledImages.
 
     This function applies optional filters to the input tiles and then
     constructs TiledImage models from the processed tiles.
@@ -26,8 +27,8 @@ def tiles_preprocessing_pipeline(
     Args:
         tiles: List of Tile models to process.
         converter_options: ConverterOptions model for the conversion.
-        filters: Optional list of filter steps to apply to the tiles.
-        validators: Optional list of validator steps to apply to the tiles.
+        filters: Optional sequence of filter steps to apply to the tiles.
+        validators: Optional sequence of validator steps to apply to the tiles.
         resource: Optional resource to assist in processing.
 
     Returns:

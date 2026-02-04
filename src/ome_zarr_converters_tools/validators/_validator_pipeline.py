@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from typing import Any, ParamSpec, Protocol, TypedDict
 
 from ome_zarr_converters_tools.core import TiledImage
@@ -40,7 +41,7 @@ def add_validator(
 
 
 def apply_validator_pipeline(
-    tiles: list[TiledImage], validators_config: list[ValidatorStep]
+    tiles: list[TiledImage], validators_config: Sequence[ValidatorStep]
 ) -> list[TiledImage]:
     for step in validators_config:
         step_name = step.get("name")

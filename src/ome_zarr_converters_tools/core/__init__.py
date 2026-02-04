@@ -16,7 +16,7 @@ from ome_zarr_converters_tools.models._url_utils import (
 # Re-export from pipelines for backwards compatibility
 from ome_zarr_converters_tools.pipelines import (
     tiled_image_creation_pipeline,
-    tiles_preprocessing_pipeline,
+    tiles_aggregation_pipeline,
 )
 
 __all__ = [
@@ -29,5 +29,5 @@ __all__ = [
     "local_url_to_path",
     "tiled_image_creation_pipeline",
     "tiled_image_from_tiles",
-    "tiles_preprocessing_pipeline",
+    "tiles_aggregation_pipeline",
 ]

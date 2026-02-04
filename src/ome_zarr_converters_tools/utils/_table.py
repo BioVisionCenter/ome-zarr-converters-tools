@@ -14,7 +14,7 @@ from ome_zarr_converters_tools.models import (
     DefaultImageLoader,
     ImageInPlate,
 )
-from ome_zarr_converters_tools.pipelines import tiles_preprocessing_pipeline
+from ome_zarr_converters_tools.pipelines import tiles_aggregation_pipeline
 from ome_zarr_converters_tools.validators import ValidatorStep
 
 
@@ -130,7 +130,7 @@ def hcs_images_from_dataframe(
 
         tile = Tile(**data)
         tiles.append(tile)
-    tiled_images = tiles_preprocessing_pipeline(
+    tiled_images = tiles_aggregation_pipeline(
         tiles=tiles,
         converter_options=converter_options,
         validators=validators,

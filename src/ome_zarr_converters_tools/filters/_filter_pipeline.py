@@ -1,4 +1,5 @@
 import re
+from collections.abc import Sequence
 from typing import Annotated, Any, Literal, ParamSpec, Protocol
 
 from pydantic import BaseModel, Field
@@ -117,7 +118,7 @@ def add_filter(
 
 
 def apply_filter_pipeline(
-    tiles: list[Tile], *, filters_config: list[FilterModel]
+    tiles: list[Tile], *, filters_config: Sequence[FilterModel]
 ) -> list[Tile]:
     for step in filters_config:
         step_name = step.name
