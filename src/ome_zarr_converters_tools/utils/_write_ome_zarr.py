@@ -170,7 +170,7 @@ def write_tiled_image_as_zarr(
         writer_mode=writer_mode,
     )
     image.consolidate()
-    ome_zarr.set_channel_percentiles()
+    ome_zarr.set_channel_windows_with_percentiles()
     logger.info("OME-Zarr image creation and data writing complete.")
 
     fov_tiles = tiled_image.group_by_fov()
