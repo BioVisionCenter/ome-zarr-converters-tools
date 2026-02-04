@@ -24,6 +24,14 @@ class DataTypeEnum(StrEnum):
     UINT32 = "uint32"
 
 
+def default_axes_builder(is_time_series: bool) -> list[CANONICAL_AXES_TYPE]:
+    """Build default axes list."""
+    if is_time_series:
+        return ["t", "c", "z", "y", "x"]
+    else:
+        return ["c", "z", "y", "x"]
+
+
 class AcquisitionDetails(BaseModel):
     """Details about the acquisition.
 

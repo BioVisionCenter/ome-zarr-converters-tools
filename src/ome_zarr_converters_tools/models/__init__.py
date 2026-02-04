@@ -3,6 +3,7 @@
 from ome_zarr_converters_tools.models._acquisition import (
     AcquisitionDetails,
     DataTypeEnum,
+    default_axes_builder,
 )
 from ome_zarr_converters_tools.models._collection import (
     CollectionInterface,
@@ -59,6 +60,7 @@ __all__ = [
     "StageCorrections",
     "TilingMode",
     "WriterMode",
+    "default_axes_builder",
     "find_url_type",
     "join_url_paths",
     "local_url_to_path",

@@ -60,7 +60,7 @@ class ImageInPlate(CollectionInterface):
 
     @property
     def well(self) -> str:
-        return f"{self.row}{self.column}"
+        return f"{self.row}{self.column:02d}"
 
     def plate_path(self) -> str:
         return sanitize_path(self.plate_name)

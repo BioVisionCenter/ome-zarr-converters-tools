@@ -31,6 +31,7 @@ from ome_zarr_converters_tools.models import (
     OverwriteMode,
     SingleImage,
     StageCorrections,
+    default_axes_builder,
     join_url_paths,
 )
 
@@ -60,6 +61,7 @@ __all__ = [
     "Tile",
     "TiledImage",
     "converters_tools_models",
+    "default_axes_builder",
     "generic_compute_task",
     "join_url_paths",
     "setup_images_for_conversion",

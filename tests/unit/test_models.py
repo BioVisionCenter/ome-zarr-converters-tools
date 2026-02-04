@@ -68,7 +68,7 @@ class TestCollectionModels:
 
     def test_image_in_plate_well_property(self, sample_image_in_plate):
         """Test well property combines row and column."""
-        assert sample_image_in_plate.well == "A1"
+        assert sample_image_in_plate.well == "A01"
 
     @pytest.mark.skip(reason="Not implemented yet")
     def test_collection_path_generation(self):

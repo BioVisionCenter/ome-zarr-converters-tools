@@ -48,7 +48,7 @@ def _build_image_list_update(
         _types["is_time_series"] = True
 
     if isinstance(collection, ImageInPlate):
-        attributes["plate"] = collection.plate_name
+        attributes["plate"] = collection.plate_path()
         attributes["well"] = collection.well
         attributes["acquisition"] = collection.acquisition
 
