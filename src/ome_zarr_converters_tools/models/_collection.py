@@ -66,7 +66,7 @@ class ImageInPlate(CollectionInterface):
         return sanitize_path(self.plate_name)
 
     def well_path(self) -> str:
-        return join_url_paths(self.plate_path(), self.row, str(self.column))
+        return join_url_paths(self.plate_path(), self.row, f"{self.column:02d}")
 
     def path_in_well(self) -> str:
         return f"{self.acquisition}{self._suffix}"
