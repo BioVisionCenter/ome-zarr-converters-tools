@@ -54,7 +54,7 @@ classifiers = [
 ]
 # add your package dependencies here
 dependencies = [
-    "ngio>=0.5.0,<0.6.0",
+    "ngio>=0.5.3,<0.6.0",
     "tqdm",
     "numpy",
     "pillow",
