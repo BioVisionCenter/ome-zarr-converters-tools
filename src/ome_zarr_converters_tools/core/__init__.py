@@ -1,6 +1,6 @@
 """Core utility module for OME-Zarr converters tools."""
 
-from ome_zarr_converters_tools.core._tile import Tile
+from ome_zarr_converters_tools.core._tile import AttributeType, Tile
 from ome_zarr_converters_tools.core._tile_region import (
     TiledImage,
     TileFOVGroup,
@@ -20,6 +20,7 @@ from ome_zarr_converters_tools.pipelines import (
 )
 
 __all__ = [
+    "AttributeType",
     "Tile",
     "TileFOVGroup",
     "TileSlice",

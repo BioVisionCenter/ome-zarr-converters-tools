@@ -3,6 +3,7 @@
 from importlib.metadata import version
 
 from ome_zarr_converters_tools.core import (
+    AttributeType,
     Tile,
     TiledImage,
     tiles_aggregation_pipeline,
@@ -43,6 +44,7 @@ __email__ = "lorenzo.cerrone@uzh.ch"
 __all__ = [
     "AcquisitionDetails",
     "AcquisitionOptions",
+    "AttributeType",
     "ChannelInfo",
     "ChunkingStrategy",
     "CollectionInterface",

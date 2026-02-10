@@ -13,7 +13,7 @@ from ome_zarr_converters_tools.core._roi_utils import (
     roi_to_point_distance,
     shape_from_rois,
 )
-from ome_zarr_converters_tools.core._tile import Tile
+from ome_zarr_converters_tools.core._tile import AttributeType, Tile
 from ome_zarr_converters_tools.models._acquisition import (
     CANONICAL_AXES_TYPE,
     ChannelInfo,
@@ -150,7 +150,7 @@ class TiledImage(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfac
     axes: list[CANONICAL_AXES_TYPE]
     collection: CollectionInterfaceType
     channels: list[ChannelInfo] | None = None
-    attributes: dict[str, Any] = Field(default_factory=dict)
+    attributes: dict[str, AttributeType] = Field(default_factory=dict)
 
     model_config = ConfigDict(extra="forbid")
 

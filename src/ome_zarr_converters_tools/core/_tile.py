@@ -1,6 +1,6 @@
 """Models for defining regions to be converted into OME-Zarr format."""
 
-from typing import Any, Generic
+from typing import Any, Generic, TypeAlias
 
 from ngio.common._roi import Roi, RoiSlice, pixel_to_world, world_to_pixel
 from pydantic import BaseModel, ConfigDict, Field
@@ -42,6 +42,11 @@ def safe_to_world(
             f"cannot be accurately represented in world coordinates."
         )
     return world_coord
+
+
+AttributeType: TypeAlias = (
+    list[str | None] | list[int | None] | list[float | None] | list[bool | None]
+)
 
 
 class Tile(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfaceType]):
@@ -88,7 +93,7 @@ class Tile(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfaceType]
     length_t: float = Field(default=1.0, gt=0)
 
     # Additional attribute for the tile
-    attributes: dict[str, str | int | float] = Field(default_factory=dict)
+    attributes: dict[str, AttributeType] = Field(default_factory=dict)
     # Collection model defining how to build the path to the image(s)
     collection: CollectionInterfaceType
     # Image loader model defining how to load the image data
