@@ -122,7 +122,7 @@ class Tile(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfaceType]
 
             start_field = f"start_{ax}"
             start = getattr(self, start_field)
-            start_coo_system = getattr(acquisition_details, f"{start_field}_coo")
+            start_coo_system = getattr(acquisition_details, f"{start_field}_coo", None)
             if start_coo_system is not None:
                 start = safe_to_world(
                     start=start, spacing=spacing[ax], coo_system=start_coo_system
@@ -135,7 +135,9 @@ class Tile(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfaceType]
 
             length_field = f"length_{ax}"
             length = getattr(self, length_field)
-            length_coo_system = getattr(acquisition_details, f"{length_field}_coo")
+            length_coo_system = getattr(
+                acquisition_details, f"{length_field}_coo", None
+            )
             if length_coo_system is not None:
                 length = safe_to_world(
                     start=length, spacing=spacing[ax], coo_system=length_coo_system
