@@ -5,12 +5,11 @@ import pytest
 
 from ome_zarr_converters_tools.models import (
     AcquisitionDetails,
+    AlignmentCorrections,
+    ChannelInfo,
     ConverterOptions,
     ImageInPlate,
     SingleImage,
-)
-from ome_zarr_converters_tools.models._converter_options import (
-    AlignmentCorrections,
     StageCorrections,
 )
 
@@ -21,7 +20,7 @@ class DummyLoader:
     def __init__(
         self,
         shape: tuple[int, ...] = (1, 1, 1, 100, 100),
-        dtype: np.dtype = np.dtype("uint16"),
+        dtype: str = "uint16",
     ):
         self.shape = shape
         self.dtype = dtype
@@ -41,7 +40,10 @@ def dummy_loader() -> DummyLoader:
 def sample_acquisition_details() -> AcquisitionDetails:
     """Provide sample acquisition details for testing."""
     return AcquisitionDetails(
-        channel_names=["DAPI", "GFP"],
+        channels=[
+            ChannelInfo(channel_label="Channel 1"),
+            ChannelInfo(channel_label="Channel 2"),
+        ],
         pixelsize=0.65,
         z_spacing=1.0,
         t_spacing=1.0,

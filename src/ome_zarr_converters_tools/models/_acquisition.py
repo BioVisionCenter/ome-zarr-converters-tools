@@ -1,6 +1,5 @@
 """Models for defining regions to be converted into OME-Zarr format."""
 
-from collections.abc import Sequence
 from enum import StrEnum
 from typing import Literal
 
@@ -33,6 +32,85 @@ def default_axes_builder(is_time_series: bool) -> list[CANONICAL_AXES_TYPE]:
         return ["c", "z", "y", "x"]
 
 
+class DefaultColors(StrEnum):
+    """Default colors for the channels."""
+
+    blue = "Blue (0000FF)"
+    red = "Red (FF0000)"
+    yellow = "Yellow (FFFF00)"
+    magenta = "Magenta (FF00FF)"
+    cyan = "Cyan (00FFFF)"
+    gray = "Gray (808080)"
+    green = "Green (00FF00)"
+    orange = "Orange (FF8000)"
+    purple = "Purple (8000FF)"
+    teal = "Teal (008080)"
+    lime = "Lime (00FF80)"
+    amber = "Amber (FFBF00)"
+    pink = "Pink (FF0080)"
+    navy = "Navy (000080)"
+    maroon = "Maroon (800000)"
+    olive = "Olive (808000)"
+    coral = "Coral (FF7F50)"
+    violet = "Violet (8000FF)"
+
+    def to_hex(self) -> str:
+        """Convert the color to hex format."""
+        _color_mapping = {
+            DefaultColors.blue: "#0000FF",
+            DefaultColors.red: "#FF0000",
+            DefaultColors.yellow: "#FFFF00",
+            DefaultColors.magenta: "#FF00FF",
+            DefaultColors.cyan: "#00FFFF",
+            DefaultColors.gray: "#808080",
+            DefaultColors.green: "#00FF00",
+            DefaultColors.orange: "#FF8000",
+            DefaultColors.purple: "#8000FF",
+            DefaultColors.teal: "#008080",
+            DefaultColors.lime: "#00FF80",
+            DefaultColors.amber: "#FFBF00",
+            DefaultColors.pink: "#FF0080",
+            DefaultColors.navy: "#000080",
+            DefaultColors.maroon: "#800000",
+            DefaultColors.olive: "#808000",
+            DefaultColors.coral: "#FF7F50",
+            DefaultColors.violet: "#8000FF",
+        }
+        return _color_mapping[self]
+
+
+class ChannelInfo(BaseModel):
+    """Channel information.
+
+    Attributes:
+        channel_label: Label of the channel.
+        wavelength_id: The wavelength ID of the channel.
+            This field can be used in some tasks as alternative to channel_label,
+            e.g. for multiplexed acquisitions it can be used for applying illumination
+            correction based on wavelength ID instead of channel name.
+        colors: The color associated with the channel, e.g. for visualization purposes.
+    """
+
+    channel_label: str
+    wavelength_id: str | None = None
+    colors: DefaultColors = DefaultColors.blue
+
+
+class StageCorrections(BaseModel):
+    """Stage orientation corrections.
+
+    Attributes:
+        flip_x: Whether to flip the position along the X axis.
+        flip_y: Whether to flip the position along the Y axis.
+        swap_xy: Whether to swap the positions along the X and Y axes.
+    """
+
+    flip_x: bool = Field(default=False, title="Flip X")
+    flip_y: bool = Field(default=False, title="Flip Y")
+    swap_xy: bool = Field(default=False, title="Swap XY")
+    model_config = ConfigDict(extra="forbid")
+
+
 class AcquisitionDetails(BaseModel):
     """Details about the acquisition.
 
@@ -55,9 +133,7 @@ class AcquisitionDetails(BaseModel):
     t_spacing: float = Field(default=1.0, gt=0.0)  # in micrometers
 
     # Channel information
-    channel_names: list[str] | None = None
-    wavelength_ids: Sequence[str | None] | None = None
-    colors: Sequence[str | None] | None = None
+    channels: list[ChannelInfo] | None = None
 
     # Axes order to be used for the data (should be a subset of canonical axes)
     axes: list[CANONICAL_AXES_TYPE] = Field(
@@ -66,6 +142,12 @@ class AcquisitionDetails(BaseModel):
 
     # Data type of the image data (if known)
     data_type: DataTypeEnum | None = None
+
+    # Condition table path (if applicable)
+    condition_table_path: str | None = None
+
+    # Stage orientation corrections
+    stage_corrections: StageCorrections = Field(default_factory=StageCorrections)
 
     model_config = ConfigDict(extra="forbid")
 

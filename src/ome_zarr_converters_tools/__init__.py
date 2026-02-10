@@ -17,6 +17,7 @@ from ome_zarr_converters_tools.fractal import (
 )
 from ome_zarr_converters_tools.models import (
     AcquisitionDetails,
+    ChannelInfo,
     ChunkingStrategy,
     CollectionInterface,
     CollectionInterfaceType,
@@ -42,6 +43,7 @@ __email__ = "lorenzo.cerrone@uzh.ch"
 __all__ = [
     "AcquisitionDetails",
     "AcquisitionOptions",
+    "ChannelInfo",
     "ChunkingStrategy",
     "CollectionInterface",
     "CollectionInterfaceType",

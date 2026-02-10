@@ -2,7 +2,9 @@
 
 from ome_zarr_converters_tools.models._acquisition import (
     AcquisitionDetails,
+    ChannelInfo,
     DataTypeEnum,
+    StageCorrections,
     default_axes_builder,
 )
 from ome_zarr_converters_tools.models._collection import (
@@ -21,7 +23,6 @@ from ome_zarr_converters_tools.models._converter_options import (
     FovBasedChunking,
     NgffVersions,
     OmeZarrOptions,
-    StageCorrections,
     TilingMode,
     WriterMode,
 )
@@ -42,6 +43,7 @@ __all__ = [
     "AcquisitionDetails",
     "AlignmentCorrections",
     "BackendType",
+    "ChannelInfo",
     "ChunkingStrategy",
     "CollectionInterface",
     "CollectionInterfaceType",

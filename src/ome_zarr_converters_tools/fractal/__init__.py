@@ -9,7 +9,6 @@ from ome_zarr_converters_tools.fractal._init_task import (
 )
 from ome_zarr_converters_tools.fractal._models import (
     AcquisitionOptions,
-    ChannelInfo,
     ConvertParallelInitArgs,
     PixelSizeModel,
     converters_tools_models,
@@ -17,7 +16,6 @@ from ome_zarr_converters_tools.fractal._models import (
 
 __all__ = [
     "AcquisitionOptions",
-    "ChannelInfo",
     "ConvertParallelInitArgs",
     "ImageListUpdateDict",
     "PixelSizeModel",

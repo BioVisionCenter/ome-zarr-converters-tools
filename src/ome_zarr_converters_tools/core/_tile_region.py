@@ -16,6 +16,7 @@ from ome_zarr_converters_tools.core._roi_utils import (
 from ome_zarr_converters_tools.core._tile import Tile
 from ome_zarr_converters_tools.models._acquisition import (
     CANONICAL_AXES_TYPE,
+    ChannelInfo,
 )
 from ome_zarr_converters_tools.models._collection import (
     CollectionInterfaceType,
@@ -146,11 +147,9 @@ class TiledImage(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfac
     z_spacing: float = 1.0
     t_spacing: float = 1.0
     data_type: str
-    channel_names: list[str] | None = None
-    wavelength_ids: list[str | None] | None = None
-    colors: list[str | None] | None = None
     axes: list[CANONICAL_AXES_TYPE]
     collection: CollectionInterfaceType
+    channels: list[ChannelInfo] | None = None
     attributes: dict[str, Any] = Field(default_factory=dict)
 
     model_config = ConfigDict(extra="forbid")
@@ -187,21 +186,15 @@ class TiledImage(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfac
 
     def add_tile(self, tile: Tile) -> None:
         """Add a Tile to the TiledImage as a TileRegion."""
-        if self.channel_names != tile.channel_names:
-            raise ValueError(
-                "Tile channel names do not match TiledImage channel names."
-            )
-        if self.wavelength_ids != tile.wavelength_ids:
-            raise ValueError(
-                "Tile wavelength IDs do not match TiledImage wavelength IDs."
-            )
-        if self.axes != tile.axes:
+        if self.channels != tile.acquisition_details.channels:
+            raise ValueError("Tile channels do not match TiledImage channels.")
+        if self.axes != tile.acquisition_details.axes:
             raise ValueError("Tile axes do not match TiledImage axes.")
-        if self.pixelsize != tile.pixelsize:
+        if self.pixelsize != tile.acquisition_details.pixelsize:
             raise ValueError("Tile pixelsize does not match TiledImage pixelsize.")
-        if self.z_spacing != tile.z_spacing:
+        if self.z_spacing != tile.acquisition_details.z_spacing:
             raise ValueError("Tile z_spacing does not match TiledImage z_spacing.")
-        if self.t_spacing != tile.t_spacing:
+        if self.t_spacing != tile.acquisition_details.t_spacing:
             raise ValueError("Tile t_spacing does not match TiledImage t_spacing.")
         tile_region = TileSlice.from_tile(tile)
         self.regions.append(tile_region)

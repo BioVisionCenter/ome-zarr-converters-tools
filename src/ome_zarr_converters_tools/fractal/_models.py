@@ -1,15 +1,14 @@
 """Models to be used with Fractal tasks API."""
 
-from enum import StrEnum
-from typing import Self
-
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field
 
 from ome_zarr_converters_tools.filters._filter_pipeline import ImplementedFilters
 from ome_zarr_converters_tools.models._acquisition import (
     CANONICAL_AXES_TYPE,
     AcquisitionDetails,
+    ChannelInfo,
     DataTypeEnum,
+    StageCorrections,
     canonical_axes,
 )
 from ome_zarr_converters_tools.models._converter_options import (
@@ -26,70 +25,6 @@ class ConvertParallelInitArgs(BaseModel):
     tiled_image_json_dump_url: str
     converter_options: ConverterOptions
     overwrite_mode: OverwriteMode = OverwriteMode.NO_OVERWRITE
-
-
-class DefaultColors(StrEnum):
-    """Default colors for the channels."""
-
-    blue = "Blue (0000FF)"
-    red = "Red (FF0000)"
-    yellow = "Yellow (FFFF00)"
-    magenta = "Magenta (FF00FF)"
-    cyan = "Cyan (00FFFF)"
-    gray = "Gray (808080)"
-    green = "Green (00FF00)"
-    orange = "Orange (FF8000)"
-    purple = "Purple (8000FF)"
-    teal = "Teal (008080)"
-    lime = "Lime (00FF80)"
-    amber = "Amber (FFBF00)"
-    pink = "Pink (FF0080)"
-    navy = "Navy (000080)"
-    maroon = "Maroon (800000)"
-    olive = "Olive (808000)"
-    coral = "Coral (FF7F50)"
-    violet = "Violet (8000FF)"
-
-    def to_hex(self) -> str:
-        """Convert the color to hex format."""
-        _color_mapping = {
-            DefaultColors.blue: "#0000FF",
-            DefaultColors.red: "#FF0000",
-            DefaultColors.yellow: "#FFFF00",
-            DefaultColors.magenta: "#FF00FF",
-            DefaultColors.cyan: "#00FFFF",
-            DefaultColors.gray: "#808080",
-            DefaultColors.green: "#00FF00",
-            DefaultColors.orange: "#FF8000",
-            DefaultColors.purple: "#8000FF",
-            DefaultColors.teal: "#008080",
-            DefaultColors.lime: "#00FF80",
-            DefaultColors.amber: "#FFBF00",
-            DefaultColors.pink: "#FF0080",
-            DefaultColors.navy: "#000080",
-            DefaultColors.maroon: "#800000",
-            DefaultColors.olive: "#808000",
-            DefaultColors.coral: "#FF7F50",
-            DefaultColors.violet: "#8000FF",
-        }
-        return _color_mapping[self]
-
-
-class ChannelInfo(BaseModel):
-    """Channel information.
-
-    Attributes:
-        channel_label: Label of the channel.
-        wavelength_id: The wavelength ID of the channel.
-            This field can be used in some tasks as alternative to channel_label,
-            e.g. for multiplexed acquisitions it can be used for applying illumination
-            correction based on wavelength ID instead of channel name.
-        colors: The color associated with the channel, e.g. for visualization purposes.
-    """
-
-    channel_label: str
-    wavelength_id: str | None = None
-    colors: DefaultColors = DefaultColors.blue
 
 
 class PixelSizeModel(BaseModel):
@@ -118,8 +53,10 @@ class AcquisitionOptions(BaseModel):
     Attributes:
         channels: List of channel information.
         pixel_info: Pixel size information.
+        condition_table_path: Optional path to a condition table CSV file.
         axes: Axes to use for the image data, e.g. "czyx".
         data_type: Data type of the image data.
+        stage_corrections: Stage orientation corrections.
         filters: List of filters to apply.
     """
 
@@ -127,43 +64,13 @@ class AcquisitionOptions(BaseModel):
     pixel_info: PixelSizeModel | None = Field(
         default=None, title="Pixel Size Information"
     )
+    condition_table_path: str | None = None
     axes: str | None = None
-    data_type: DataTypeEnum | None = None
+    data_type: DataTypeEnum | None = Field(default=None, title="Data Type")
+    stage_corrections: StageCorrections = Field(
+        default_factory=StageCorrections, title="Stage Corrections"
+    )
     filters: list[ImplementedFilters] = Field(default_factory=list)
-
-    # Validate channels to ensure that either all wavelength_id and colors are provided
-    @model_validator(mode="after")
-    def check_channels(self) -> Self:
-        """Check that channels have consistent wavelength_id and colors."""
-        if self.channels is None:
-            return self
-        wavelength_ids = [ch.wavelength_id for ch in self.channels]
-        colors = [ch.colors for ch in self.channels]
-        if any(wavelength_ids) and not all(wavelength_ids):
-            raise ValueError(
-                "Either all or none of the channels must have wavelength_id."
-            )
-        if any(colors) and not all(colors):
-            raise ValueError("Either all or none of the channels must have colors.")
-        return self
-
-    def channel_names_list(self) -> list[str] | None:
-        """Convert channels to list of channel names."""
-        if self.channels is None:
-            return None
-        return [ch.channel_label for ch in self.channels]
-
-    def wavelength_ids_list(self) -> list[str | None] | None:
-        """Convert channels to list of wavelength IDs."""
-        if self.channels is None:
-            return None
-        return [ch.wavelength_id for ch in self.channels]
-
-    def colors_list(self) -> list[str] | None:
-        """Convert channels to list of colors."""
-        if self.channels is None:
-            return None
-        return [ch.colors.to_hex() for ch in self.channels]
 
     def to_axes_list(self) -> list[CANONICAL_AXES_TYPE] | None:
         """Convert axes string to list of axes."""
@@ -191,9 +98,7 @@ class AcquisitionOptions(BaseModel):
         """
         updated_details = acquisition_details.model_copy()
         if self.channels is not None:
-            updated_details.channel_names = self.channel_names_list()
-            updated_details.wavelength_ids = self.wavelength_ids_list()
-            updated_details.colors = self.colors_list()
+            updated_details.channels = self.channels
         if self.pixel_info is not None:
             updated_details.pixelsize = self.pixel_info.pixelsize
             updated_details.z_spacing = self.pixel_info.z_spacing
@@ -203,6 +108,8 @@ class AcquisitionOptions(BaseModel):
             updated_details.axes = axes
         if self.data_type is not None:
             updated_details.data_type = self.data_type
+        if self.condition_table_path is not None:
+            updated_details.condition_table_path = self.condition_table_path
         return updated_details
 
 
@@ -242,7 +149,7 @@ def converters_tools_models(
         ),
         (
             base,
-            "models/_converter_options.py",
+            "models/_acquisition.py",
             "StageCorrections",
         ),
         (
@@ -272,7 +179,7 @@ def converters_tools_models(
         ),
         (
             base,
-            "fractal/_models.py",
+            "models/_acquisition.py",
             "ChannelInfo",
         ),
     ]

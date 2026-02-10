@@ -1,13 +1,13 @@
 """Models for defining regions to be converted into OME-Zarr format."""
 
-from typing import Any, Generic, Self
+from typing import Any, Generic
 
 from ngio.common._roi import Roi, RoiSlice, pixel_to_world, world_to_pixel
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field
 
 from ome_zarr_converters_tools.models._acquisition import (
-    CANONICAL_AXES_TYPE,
     COO_SYSTEM_TYPE,
+    AcquisitionDetails,
 )
 from ome_zarr_converters_tools.models._collection import (
     CollectionInterfaceType,
@@ -65,25 +65,8 @@ class Tile(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfaceType]
         length_t: Length of the tile in the T (time) dimension.
         collection: Collection model defining how to build the path to the image(s).
         image_loader: Image loader model defining how to load the image data.
-        start_x_coo: Coordinate system for the start_x value.
-        start_y_coo: Coordinate system for the start_y value.
-        start_z_coo: Coordinate system for the start_z value.
-        start_t_coo: Coordinate system for the start_t value.
-        length_x_coo: Coordinate system for the length_x value.
-        length_y_coo: Coordinate system for the length_y value.
-        length_z_coo: Coordinate system for the length_z value.
-        length_t_coo: Coordinate system for the length_t value.
-        pixelsize: Pixel size in micrometers.
-        z_spacing: Z spacing in micrometers.
-        t_spacing: T spacing in seconds.
-        channel_names: List of channel names.
-        wavelength_ids: List of wavelength IDs.
-        colors: List of color information.
-        axes: Axes order to be used for the data.
-        data_type: Data type of the image data.
-        flip_x: Whether to flip the tile in the X dimension.
-        flip_y: Whether to flip the tile in the Y dimension.
-        swap_xy: Whether to swap the X and Y dimensions.
+        acquisition_details: Acquisition specific details that will be used to validate
+            and convert the tile.
         attributes: Additional attributes for the these will be passed to
             the fractal image list as key-value pairs.
 
@@ -104,101 +87,55 @@ class Tile(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfaceType]
     length_c: int = Field(default=1, gt=0)
     length_t: float = Field(default=1.0, gt=0)
 
+    # Additional attribute for the tile
+    attributes: dict[str, str | int | float] = Field(default_factory=dict)
     # Collection model defining how to build the path to the image(s)
     collection: CollectionInterfaceType
     # Image loader model defining how to load the image data
     # This model will need to wrap all the necessary context
     # to load the image data for this tile
     image_loader: ImageLoaderInterfaceType
+    # Acquisition specific details that will be used to validate and convert
+    # the tile
+    acquisition_details: AcquisitionDetails
 
-    # Additional acquisition details
-    # Coordinate system for start and length values
-    start_x_coo: COO_SYSTEM_TYPE
-    start_y_coo: COO_SYSTEM_TYPE
-    start_z_coo: COO_SYSTEM_TYPE
-    start_t_coo: COO_SYSTEM_TYPE
-    length_x_coo: COO_SYSTEM_TYPE
-    length_y_coo: COO_SYSTEM_TYPE
-    length_z_coo: COO_SYSTEM_TYPE
-    length_t_coo: COO_SYSTEM_TYPE
-
-    # Global image properties
-    # (these need to be the same for all tiles in the same image)
-    # Spacing information
-    pixelsize: float
-    z_spacing: float
-    t_spacing: float
-    # Channel information
-    channel_names: list[str] | None
-    wavelength_ids: list[str | None] | None
-    colors: list[str | None] | None
-
-    # Axes order to be used for the data
-    axes: list[CANONICAL_AXES_TYPE]
-
-    # Data type of the image data
-    data_type: str | None
-
-    # Context from the converter options or from metadata
-    flip_x: bool
-    flip_y: bool
-    swap_xy: bool
-
-    attributes: dict[str, Any]
+    # Pydantic configuration
     model_config = ConfigDict(extra="forbid")
-
-    @model_validator(mode="after")
-    def _model_validator(self) -> Self:
-        """Validate that the axes are consistent with the provided dimensions."""
-        # Checj that the channel_names, wavelength_ids, and colors are consistent in
-        # length bewteen themselves (length_c does not need to match)
-        if self.channel_names is not None:
-            if self.wavelength_ids is not None and len(self.channel_names) != len(
-                self.wavelength_ids
-            ):
-                raise ValueError(
-                    "Length of channel_names and wavelength_ids must match."
-                )
-            if self.colors is not None and len(self.channel_names) != len(self.colors):
-                raise ValueError("Length of channel_names and colors must match.")
-        elif self.wavelength_ids is not None:
-            if self.colors is not None and len(self.wavelength_ids) != len(self.colors):
-                raise ValueError("Length of wavelength_ids and colors must match.")
-
-        return self
 
     def to_roi(self) -> Roi:
         """Convert the Tile to a Roi."""
+        acquisition_details = self.acquisition_details
+        stage_corrections = acquisition_details.stage_corrections
         spacing = {
-            "x": self.pixelsize,
-            "y": self.pixelsize,
-            "z": self.z_spacing,
-            "t": self.t_spacing,
+            "x": acquisition_details.pixelsize,
+            "y": acquisition_details.pixelsize,
+            "z": acquisition_details.z_spacing,
+            "t": acquisition_details.t_spacing,
         }
         origins = {}
         roi_slices = {}
-        for ax in self.axes:
-            if ax == "x" and self.swap_xy:
+        for ax in acquisition_details.axes:
+            if ax == "x" and stage_corrections.swap_xy:
                 ax = "y"
-            elif ax == "y" and self.swap_xy:
+            elif ax == "y" and stage_corrections.swap_xy:
                 ax = "x"
 
             start_field = f"start_{ax}"
             start = getattr(self, start_field)
-            start_coo_system = getattr(self, f"{start_field}_coo", None)
+            start_coo_system = getattr(acquisition_details, f"{start_field}_coo")
             if start_coo_system is not None:
                 start = safe_to_world(
                     start=start, spacing=spacing[ax], coo_system=start_coo_system
                 )
 
-            if ax == "x" and self.flip_x:
+            if ax == "x" and stage_corrections.flip_x:
                 start = -start
-            if ax == "y" and self.flip_y:
+            if ax == "y" and stage_corrections.flip_y:
                 start = -start
 
             length_field = f"length_{ax}"
             length = getattr(self, length_field)
-            length_coo_system = getattr(self, f"{length_field}_coo", None)
+            length_coo_system = getattr(acquisition_details, f"{length_field}_coo")
             if length_coo_system is not None:
                 length = safe_to_world(
                     start=length, spacing=spacing[ax], coo_system=length_coo_system
@@ -216,6 +153,6 @@ class Tile(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfaceType]
 
     def find_data_type(self, resource: Any | None = None) -> str:
         """Find the data type of the image data."""
-        if self.data_type is not None:
-            return self.data_type
+        if self.acquisition_details.data_type is not None:
+            return self.acquisition_details.data_type
         return self.image_loader.find_data_type(resource)

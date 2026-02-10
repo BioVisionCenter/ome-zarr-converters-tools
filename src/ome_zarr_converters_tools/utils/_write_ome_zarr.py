@@ -86,22 +86,14 @@ def build_channels_meta(tiled_image: TiledImage) -> list[Channel] | None:
     Returns:
         List of Channel metadata or None if no channel names are provided.
     """
-    if tiled_image.channel_names is None:
+    if tiled_image.channels is None:
         return None
     channels = []
-    for idx, name in enumerate(tiled_image.channel_names):
-        if tiled_image.wavelength_ids is not None:
-            wavelength_id = tiled_image.wavelength_ids[idx]
-        else:
-            wavelength_id = None
-        if tiled_image.colors is not None:
-            color = tiled_image.colors[idx]
-        else:
-            color = None
+    for channel in tiled_image.channels:
         channel = Channel(
-            label=name,
-            wavelength_id=wavelength_id,
-            channel_visualisation=ChannelVisualisation(color=color),
+            label=channel.channel_label,
+            wavelength_id=channel.wavelength_id,
+            channel_visualisation=ChannelVisualisation(color=channel.colors.to_hex()),
         )
         channels.append(channel)
     return channels

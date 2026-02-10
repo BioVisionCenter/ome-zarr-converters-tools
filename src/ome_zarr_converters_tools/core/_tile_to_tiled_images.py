@@ -35,17 +35,16 @@ def tiled_image_from_tiles(
         tile.collection._suffix = suffix
         path = tile.collection.path()
         if path not in tiled_images:
+            acquisition_details = tile.acquisition_details
             tiled_images[path] = TiledImage(
                 path=path,
                 regions=[],
                 data_type=data_type,
-                channel_names=tile.channel_names,
-                wavelength_ids=tile.wavelength_ids,
-                colors=tile.colors,
-                pixelsize=tile.pixelsize,
-                z_spacing=tile.z_spacing,
-                t_spacing=tile.t_spacing,
-                axes=tile.axes,
+                channels=acquisition_details.channels,
+                pixelsize=acquisition_details.pixelsize,
+                z_spacing=acquisition_details.z_spacing,
+                t_spacing=acquisition_details.t_spacing,
+                axes=acquisition_details.axes,
                 collection=tile.collection,
                 attributes=tile.attributes,
             )

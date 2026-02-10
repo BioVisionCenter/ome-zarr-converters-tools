@@ -42,21 +42,6 @@ class WriterMode(StrEnum):
     IN_MEMORY = "In Memory"
 
 
-class StageCorrections(BaseModel):
-    """Stage orientation corrections.
-
-    Attributes:
-        flip_x: Whether to flip the position along the X axis.
-        flip_y: Whether to flip the position along the Y axis.
-        swap_xy: Whether to swap the positions along the X and Y axes.
-    """
-
-    flip_x: bool = Field(default=False, title="Flip X")
-    flip_y: bool = Field(default=False, title="Flip Y")
-    swap_xy: bool = Field(default=False, title="Swap XY")
-    model_config = ConfigDict(extra="forbid")
-
-
 class AlignmentCorrections(BaseModel):
     """Alignment correction for stage positions.
 
@@ -186,7 +171,6 @@ class ConverterOptions(BaseModel):
             - By Tile (Using Dask): Write tiles in parallel using Dask. This requires
             a larger memory.
             - In Memory: Load all data into memory before writing.
-        stage_correction: Stage correction options.
         alignment_correction: Alignment correction options.
         omezarr_options: Options specific to OME-Zarr writing.
         temp_json_options: Options for temporary JSON storage.
@@ -195,9 +179,6 @@ class ConverterOptions(BaseModel):
 
     tiling_mode: TilingMode = Field(default=TilingMode.AUTO, title="Tiling Mode")
     writer_mode: WriterMode = Field(default=WriterMode.BY_FOV, title="Writer Mode")
-    stage_correction: StageCorrections = Field(
-        default_factory=StageCorrections, title="Stage Corrections"
-    )
     alignment_correction: AlignmentCorrections = Field(
         default_factory=AlignmentCorrections,
         title="Alignment Corrections",

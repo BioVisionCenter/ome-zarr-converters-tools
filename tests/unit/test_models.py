@@ -2,17 +2,23 @@
 
 import pytest
 
+from ome_zarr_converters_tools import AcquisitionDetails, ChannelInfo
 from ome_zarr_converters_tools.models._collection import validate_zarr_name
 
 
 class TestAcquisitionDetails:
     """Tests for the AcquisitionDetails model."""
 
-    def test_acquisition_details_creation(self, sample_acquisition_details):
+    def test_acquisition_details_creation(
+        self, sample_acquisition_details: AcquisitionDetails
+    ):
         """Test basic acquisition details creation."""
         assert sample_acquisition_details is not None
         assert sample_acquisition_details.pixelsize == 0.65
-        assert sample_acquisition_details.channel_names == ["DAPI", "GFP"]
+        assert sample_acquisition_details.channels == [
+            ChannelInfo(channel_label="Channel 1"),
+            ChannelInfo(channel_label="Channel 2"),
+        ]
 
     @pytest.mark.skip(reason="Not implemented yet")
     def test_acquisition_details_validation(self):
