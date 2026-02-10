@@ -23,6 +23,7 @@ def _setup_condition_table(
         "row": [],
         "column": [],
         "acquisition": [],
+        "path_in_well": [],
     }
     for tile in tiled_images:
         row = tile.collection.row
@@ -42,12 +43,15 @@ def _setup_condition_table(
             # No additional attributes, no need to create a condition table entry
             continue
         _num_rows = next(iter(_num_rows_dict.values()))
+        assert isinstance(tile.collection, ImageInPlate)
         row = tile.collection.row
         col = tile.collection.column
         acq = tile.collection.acquisition
+        path_in_well = tile.collection.image_in_well_path()
         condition_table["row"].extend([row] * _num_rows)
         condition_table["column"].extend([col] * _num_rows)
         condition_table["acquisition"].extend([acq] * _num_rows)
+        condition_table["path_in_well"].extend([path_in_well] * _num_rows)
 
     print(condition_table)
     if set(condition_table.keys()) == {"row", "column", "acquisition"}:

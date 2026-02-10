@@ -1,6 +1,7 @@
 from logging import getLogger
 from typing import Any
 
+import polars as pl
 import zarr
 from ngio import (
     OmeZarrContainer,
@@ -10,9 +11,13 @@ from ngio import (
     open_ome_zarr_container,
 )
 from ngio.ome_zarr_meta import Channel, ChannelVisualisation
-from ngio.tables import RoiTable
+from ngio.tables import ConditionTable, RoiTable
 
-from ome_zarr_converters_tools.core._tile_region import TiledImage, TileSlice
+from ome_zarr_converters_tools.core._tile_region import (
+    AttributeType,
+    TiledImage,
+    TileSlice,
+)
 from ome_zarr_converters_tools.models import (
     ConverterOptions,
     OmeZarrOptions,
@@ -75,6 +80,35 @@ def _region_to_pixel_coordinates(
             rounded_slices.append(rounded_slice)
         region.roi = roi.model_copy(update={"slices": rounded_slices})
     return regions
+
+
+def _attribute_to_condition_table(
+    attributes: dict[str, AttributeType],
+) -> ConditionTable | None:
+    """Convert attributes to a condition table.
+
+    Args:
+        attributes: Dictionary of attribute names to lists of attribute values.
+
+    Returns:
+        ConditionTable | None: Condition table as a ConditionTable or None
+            if no attributes are provided.
+    """
+    condition_table = {}
+    num_rows_dict = {}
+    for attr_name, attr_values in attributes.items():
+        condition_table[attr_name] = attr_values
+        num_rows_dict[attr_name] = len(attr_values)
+
+    if len(set(num_rows_dict.values())) > 1:
+        raise ValueError(
+            "All attributes must have the same number of values. "
+            f"Got attributes {attributes}."
+        )
+    if len(num_rows_dict) == 0:
+        # No attributes, no need to create a condition table
+        return None
+    return ConditionTable(table_data=pl.DataFrame(condition_table))
 
 
 def build_channels_meta(tiled_image: TiledImage) -> list[Channel] | None:
@@ -181,5 +215,10 @@ def write_tiled_image_as_zarr(
     ome_zarr.add_table(
         "well_ROI_table", well_roi, backend=omezarr_options.table_backend
     )
+    condition_table = _attribute_to_condition_table(tiled_image.attributes)
+    if condition_table is not None:
+        ome_zarr.add_table(
+            "condition_table", condition_table, backend="csv"
+        )
     logger.info("Finished writing OME-Zarr Tables and metadata.")
     return ome_zarr
