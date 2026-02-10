@@ -147,8 +147,8 @@ class TiledImage(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfac
     t_spacing: float = 1.0
     data_type: str
     channel_names: list[str] | None = None
-    wavelength_ids: list[str] | None = None
-    colors: list[str] | None = None
+    wavelength_ids: list[str | None] | None = None
+    colors: list[str | None] | None = None
     axes: list[CANONICAL_AXES_TYPE]
     collection: CollectionInterfaceType
     attributes: dict[str, Any] = Field(default_factory=dict)

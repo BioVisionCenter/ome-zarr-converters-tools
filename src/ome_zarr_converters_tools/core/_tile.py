@@ -1,9 +1,9 @@
 """Models for defining regions to be converted into OME-Zarr format."""
 
-from typing import Any, Generic
+from typing import Any, Generic, Self
 
 from ngio.common._roi import Roi, RoiSlice, pixel_to_world, world_to_pixel
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from ome_zarr_converters_tools.models._acquisition import (
     CANONICAL_AXES_TYPE,
@@ -122,14 +122,16 @@ class Tile(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfaceType]
     length_z_coo: COO_SYSTEM_TYPE
     length_t_coo: COO_SYSTEM_TYPE
 
+    # Global image properties
+    # (these need to be the same for all tiles in the same image)
     # Spacing information
     pixelsize: float
     z_spacing: float
     t_spacing: float
     # Channel information
     channel_names: list[str] | None
-    wavelength_ids: list[str] | None
-    colors: list[str] | None
+    wavelength_ids: list[str | None] | None
+    colors: list[str | None] | None
 
     # Axes order to be used for the data
     axes: list[CANONICAL_AXES_TYPE]
@@ -144,6 +146,26 @@ class Tile(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfaceType]
 
     attributes: dict[str, Any]
     model_config = ConfigDict(extra="forbid")
+
+    @model_validator(mode="after")
+    def _model_validator(self) -> Self:
+        """Validate that the axes are consistent with the provided dimensions."""
+        # Checj that the channel_names, wavelength_ids, and colors are consistent in
+        # length bewteen themselves (length_c does not need to match)
+        if self.channel_names is not None:
+            if self.wavelength_ids is not None and len(self.channel_names) != len(
+                self.wavelength_ids
+            ):
+                raise ValueError(
+                    "Length of channel_names and wavelength_ids must match."
+                )
+            if self.colors is not None and len(self.channel_names) != len(self.colors):
+                raise ValueError("Length of channel_names and colors must match.")
+        elif self.wavelength_ids is not None:
+            if self.colors is not None and len(self.wavelength_ids) != len(self.colors):
+                raise ValueError("Length of wavelength_ids and colors must match.")
+
+        return self
 
     def to_roi(self) -> Roi:
         """Convert the Tile to a Roi."""

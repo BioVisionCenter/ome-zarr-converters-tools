@@ -1,5 +1,6 @@
 """Models for defining regions to be converted into OME-Zarr format."""
 
+from collections.abc import Sequence
 from enum import StrEnum
 from typing import Literal
 
@@ -55,8 +56,8 @@ class AcquisitionDetails(BaseModel):
 
     # Channel information
     channel_names: list[str] | None = None
-    wavelength_ids: list[str] | None = None
-    colors: list[str] | None = None
+    wavelength_ids: Sequence[str | None] | None = None
+    colors: Sequence[str | None] | None = None
 
     # Axes order to be used for the data (should be a subset of canonical axes)
     axes: list[CANONICAL_AXES_TYPE] = Field(

@@ -1,5 +1,6 @@
 """Models to be used with Fractal tasks API."""
 
+from enum import StrEnum
 from typing import Self
 
 from pydantic import BaseModel, Field, model_validator
@@ -27,18 +28,68 @@ class ConvertParallelInitArgs(BaseModel):
     overwrite_mode: OverwriteMode = OverwriteMode.NO_OVERWRITE
 
 
+class DefaultColors(StrEnum):
+    """Default colors for the channels."""
+
+    blue = "Blue (0000FF)"
+    red = "Red (FF0000)"
+    yellow = "Yellow (FFFF00)"
+    magenta = "Magenta (FF00FF)"
+    cyan = "Cyan (00FFFF)"
+    gray = "Gray (808080)"
+    green = "Green (00FF00)"
+    orange = "Orange (FF8000)"
+    purple = "Purple (8000FF)"
+    teal = "Teal (008080)"
+    lime = "Lime (00FF80)"
+    amber = "Amber (FFBF00)"
+    pink = "Pink (FF0080)"
+    navy = "Navy (000080)"
+    maroon = "Maroon (800000)"
+    olive = "Olive (808000)"
+    coral = "Coral (FF7F50)"
+    violet = "Violet (8000FF)"
+
+    def to_hex(self) -> str:
+        """Convert the color to hex format."""
+        _color_mapping = {
+            DefaultColors.blue: "#0000FF",
+            DefaultColors.red: "#FF0000",
+            DefaultColors.yellow: "#FFFF00",
+            DefaultColors.magenta: "#FF00FF",
+            DefaultColors.cyan: "#00FFFF",
+            DefaultColors.gray: "#808080",
+            DefaultColors.green: "#00FF00",
+            DefaultColors.orange: "#FF8000",
+            DefaultColors.purple: "#8000FF",
+            DefaultColors.teal: "#008080",
+            DefaultColors.lime: "#00FF80",
+            DefaultColors.amber: "#FFBF00",
+            DefaultColors.pink: "#FF0080",
+            DefaultColors.navy: "#000080",
+            DefaultColors.maroon: "#800000",
+            DefaultColors.olive: "#808000",
+            DefaultColors.coral: "#FF7F50",
+            DefaultColors.violet: "#8000FF",
+        }
+        return _color_mapping[self]
+
+
 class ChannelInfo(BaseModel):
     """Channel information.
 
     Attributes:
-        name: Name of the channel.
-        wavelength_id: Wavelength ID of the channel.
-        colors: Color information of the channel.
+        channel_label: Label of the channel.
+        wavelength_id: The wavelength ID of the channel.
+            This field can be used in some tasks as alternative to channel_label,
+            e.g. for multiplexed acquisitions it can be used for applying illumination
+            correction based on wavelength ID instead of channel name.
+        colors: The color associated with the channel, e.g. for visualization purposes.
     """
 
-    name: str
+    channel_label: str
     wavelength_id: str | None = None
-    colors: str | None = None
+    colors: DefaultColors = DefaultColors.blue
 
 
 class PixelSizeModel(BaseModel):
@@ -100,21 +151,19 @@ class AcquisitionOptions(BaseModel):
         """Convert channels to list of channel names."""
         if self.channels is None:
             return None
-        return [ch.name for ch in self.channels]
+        return [ch.channel_label for ch in self.channels]
 
-    def wavelength_ids_list(self) -> list[str] | None:
+    def wavelength_ids_list(self) -> list[str | None] | None:
         """Convert channels to list of wavelength IDs."""
         if self.channels is None:
             return None
-        return [
-            ch.wavelength_id for ch in self.channels if ch.wavelength_id is not None
-        ]
+        return [ch.wavelength_id for ch in self.channels]
 
     def colors_list(self) -> list[str] | None:
         """Convert channels to list of colors."""
         if self.channels is None:
             return None
-        return [ch.colors for ch in self.channels if ch.colors is not None]
+        return [ch.colors.to_hex() for ch in self.channels]
 
     def to_axes_list(self) -> list[CANONICAL_AXES_TYPE] | None:
         """Convert axes string to list of axes."""
@@ -220,5 +269,10 @@ def converters_tools_models(
             base,
             "models/_converter_options.py",
             "FixedSizeChunking",
+        ),
+        (
+            base,
+            "fractal/_models.py",
+            "ChannelInfo",
         ),
     ]
