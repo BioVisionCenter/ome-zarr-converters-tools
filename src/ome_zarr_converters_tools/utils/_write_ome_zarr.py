@@ -217,8 +217,6 @@ def write_tiled_image_as_zarr(
     )
     condition_table = _attribute_to_condition_table(tiled_image.attributes)
     if condition_table is not None:
-        ome_zarr.add_table(
-            "condition_table", condition_table, backend="csv"
-        )
+        ome_zarr.add_table("condition_table", condition_table, backend="csv")
     logger.info("Finished writing OME-Zarr Tables and metadata.")
     return ome_zarr
