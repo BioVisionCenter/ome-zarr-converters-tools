@@ -47,7 +47,7 @@ def _setup_condition_table(
         row = tile.collection.row
         col = tile.collection.column
         acq = tile.collection.acquisition
-        path_in_well = tile.collection.image_in_well_path()
+        path_in_well = tile.collection.path_in_well()
         condition_table["row"].extend([row] * _num_rows)
         condition_table["column"].extend([col] * _num_rows)
         condition_table["acquisition"].extend([acq] * _num_rows)
