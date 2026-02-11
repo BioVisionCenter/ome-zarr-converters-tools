@@ -70,6 +70,7 @@ dependencies = [
 test = ["pytest", "pytest-cov", "devtools"]
 # add anything else you like to have in your dev environment here
 dev = [
+    "ipycytoscape",               #
     "check-manifest>=0.51,<0.52",
     "plotly",
     "notebook",
