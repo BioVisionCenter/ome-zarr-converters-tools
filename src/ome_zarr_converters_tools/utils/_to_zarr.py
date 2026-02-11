@@ -33,15 +33,21 @@ def sequential_tile_writing(
             )
 
 
-def dask_map_block_tile_writing(
+def dask_parallel_tile_writing(
     tiled_image: TiledImage, image: Image, resource: Any
 ) -> None:
-    """Write tiles in parallel to the OME-Zarr image.
+    """Write tiles in memory to the OME-Zarr image using Dask.
 
     For each region in the TiledImage, load the data and write it to the
     corresponding ROI in the OME-Zarr image.
     """
-    raise NotImplementedError("Parallel tile writing is not implemented yet.")
+    logger.info("Starting Dask in-memory writing.")
+    timer = time.time()
+    full_image = tiled_image.load_data_dask(resource=resource)
+    roi = tiled_image.roi()
+    image.set_roi(roi=roi, patch=full_image)
+    elapsed = time.time() - timer
+    logger.info(f"Elapsed time for Dask in-memory writing: {elapsed:.2f} seconds.")
 
 
 def sequential_fov_writing(
@@ -68,6 +74,31 @@ def sequential_fov_writing(
             )
 
 
+def dask_parallel_fov_writing(
+    tiled_image: TiledImage, image: Image, resource: Any
+) -> None:
+    """Write tiles in parallel to the OME-Zarr image using Dask.
+
+    For each region in the TiledImage, load the data and write it to the
+    corresponding ROI in the OME-Zarr image.
+    """
+    groups = tiled_image.group_by_fov()
+    num_groups = len(groups)
+    logger.info(f"Starting Dask parallel FOV writing - Number of FOVs: {num_groups}.")
+    timer = time.time()
+    for idx, group in enumerate(groups):
+        roi = group.roi()
+        group_data = group.load_data_dask(resource=resource)
+        image.set_roi(roi=roi, patch=group_data)
+        if idx == 0:
+            elapsed = time.time() - timer
+            estimated_total = elapsed * num_groups
+            logger.info(
+                "Estimated total time for Dask parallel "
+                f"FOV writing: {estimated_total:.2f} seconds."
+            )
+
+
 def in_memory_writing(tiled_image: TiledImage, image: Image, resource: Any) -> None:
     """Write tiles in memory to the OME-Zarr image.
 
@@ -75,9 +106,12 @@ def in_memory_writing(tiled_image: TiledImage, image: Image, resource: Any) -> N
     corresponding ROI in the OME-Zarr image.
     """
     logger.info("Starting in-memory writing.")
+    timer = time.time()
     full_image = tiled_image.load_data(resource=resource)
     roi = tiled_image.roi()
     image.set_roi(roi=roi, patch=full_image)
+    elapsed = time.time() - timer
+    logger.info(f"Elapsed time for in-memory writing: {elapsed:.2f} seconds.")
 
 
 def write_to_zarr(
@@ -90,11 +124,15 @@ def write_to_zarr(
     if writer_mode == WriterMode.BY_TILE:
         sequential_tile_writing(tiled_image=tiled_image, image=image, resource=resource)
     elif writer_mode == WriterMode.BY_TILE_DASK:
-        dask_map_block_tile_writing(
+        dask_parallel_tile_writing(
             tiled_image=tiled_image, image=image, resource=resource
         )
     elif writer_mode == WriterMode.BY_FOV:
         sequential_fov_writing(tiled_image=tiled_image, image=image, resource=resource)
+    elif writer_mode == WriterMode.BY_FOV_DASK:
+        dask_parallel_fov_writing(
+            tiled_image=tiled_image, image=image, resource=resource
+        )
     elif writer_mode == WriterMode.IN_MEMORY:
         in_memory_writing(tiled_image=tiled_image, image=image, resource=resource)
     else:

@@ -38,6 +38,7 @@ class Scalings(StrEnum):
 class WriterMode(StrEnum):
     BY_TILE = "By Tile"
     BY_FOV = "By FOV"
+    BY_FOV_DASK = "By FOV (Using Dask)"
     BY_TILE_DASK = "By Tile (Using Dask)"
     IN_MEMORY = "In Memory"
 
@@ -166,10 +167,14 @@ class ConverterOptions(BaseModel):
         writer_mode: Mode for writing data during conversion.
             - By Tile: Write data one tile at a time. This consumes less memory,
             but may be slower.
+            - By Tile (Using Dask): Write tiles in parallel using Dask. This is
+            usually faster than writing by tile sequentially, but may consume more
+            memory.
             - By FOV: Write data one field of view at a time. This may the best
             compromise between speed and memory usage in most cases.
-            - By Tile (Using Dask): Write tiles in parallel using Dask. This requires
-            a larger memory.
+            - By FOV (Using Dask): Write fields of view in parallel using Dask.
+            This is usually faster than writing by FOV sequentially,
+            but may consume more memory.
             - In Memory: Load all data into memory before writing.
         alignment_correction: Alignment correction options.
         omezarr_options: Options specific to OME-Zarr writing.

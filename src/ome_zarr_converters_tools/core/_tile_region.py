@@ -1,12 +1,15 @@
 """Models for defining regions to be converted into OME-Zarr format."""
 
 import math
+from collections.abc import Callable
 from typing import Any, Generic, Self
 
+import dask.array as da
 import numpy as np
 from ngio import PixelSize, Roi
 from pydantic import BaseModel, ConfigDict, Field
 
+from ome_zarr_converters_tools.core._dask_lazy_loader import lazy_array_from_regions
 from ome_zarr_converters_tools.core._roi_utils import (
     bulk_roi_union,
     move_roi_by,
@@ -101,36 +104,63 @@ class TileFOVGroup(BaseModel, Generic[ImageLoaderInterfaceType]):
                 ref_distance = distance
         return ref_region
 
-    def load_data(self, resource: Any | None = None) -> np.ndarray:
-        """Load the full image data for this FOV group using the image loaders."""
-        shape = self.shape()
-        ref_slice = self.ref_slice()
-        ref_data = ref_slice.load_data(axes=self.axes, resource=resource)
-        full_image = np.zeros(shape, dtype=ref_data.dtype)
-
+    def _prepare_slice_loading(
+        self, resource: Any | None = None
+    ) -> list[tuple[tuple[slice, ...], Callable[[], np.ndarray]]]:
+        """Prepare the TileSlices and their corresponding slicing tuples for loading."""
+        slices = []
         group_roi = self.roi()
         # Find the offset between the group ROI and the origin ROI
         offset = {}
         for axis in self.axes:
             group_slice = group_roi.get(axis)
             assert group_slice is not None
-            ref_slice_axis = ref_slice.roi.get(axis)
+            ref_slice_axis = self.ref_slice().roi.get(axis)
             assert ref_slice_axis is not None
             start = ref_slice_axis.start
             assert start is not None
             offset[axis] = -start
 
+        def make_loader(
+            region: TileSlice, resource: Any | None
+        ) -> Callable[[], np.ndarray]:
+            return lambda: region.load_data(axes=self.axes, resource=resource)
+
         for region in self.regions:
             roi_zeroed = move_roi_by(region.roi, offset)
-            region_data = region.load_data(axes=self.axes, resource=resource)
             roi_slice = roi_zeroed.to_slicing_dict(pixel_size=self.pixel_size)
             slicing = []
             for axis in self.axes:
                 _slice = roi_slice[axis]
                 slicing.append(slice(math.floor(_slice.start), math.ceil(_slice.stop)))
-            slicing = tuple(slicing)
-            full_image[slicing] = region_data
+            slices.append((tuple(slicing), make_loader(region, resource)))
+        return slices
+
+    def load_data(self, resource: Any | None = None) -> np.ndarray:
+        """Load the full image data for this FOV group using."""
+        shape = self.shape()
+        ref_slice = self.ref_slice()
+        ref_data = ref_slice.load_data(axes=self.axes, resource=resource)
+        full_image = np.zeros(shape, dtype=ref_data.dtype)
+        slices = self._prepare_slice_loading(resource=resource)
+        for slicing, loader in slices:
+            full_image[slicing] = loader()
         return full_image
+
+    def load_data_dask(
+        self, resource: Any | None = None, chunks: tuple[int, ...] | None = None
+    ) -> da.Array:
+        """Load the full image data for this FOV group using Dask."""
+        shape = self.shape()
+        ref_slice = self.ref_slice()
+        ref_data = ref_slice.load_data(axes=self.axes, resource=resource)
+        dtype = str(ref_data.dtype)
+        slices = self._prepare_slice_loading(resource=resource)
+        if chunks is None:
+            chunks = ref_data.shape
+        return lazy_array_from_regions(
+            slices, shape=shape, chunks=chunks, dtype=dtype, fill_value=0.0
+        )
 
 
 class TiledImage(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfaceType]):
@@ -213,19 +243,46 @@ class TiledImage(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfac
         union_roi.name = self.name or self.path
         return union_roi
 
-    def load_data(self, resource: Any | None = None) -> np.ndarray:
-        """Load the full image data for this TiledImage using the image loaders."""
-        shape = self.shape()
-        dtype = np.dtype(self.data_type)
-        full_image = np.zeros(shape, dtype=dtype)
+    def _prepare_slice_loading(
+        self, resource: Any | None = None
+    ) -> list[tuple[tuple[slice, ...], Callable[[], np.ndarray]]]:
+        """Prepare the TileSlices and their corresponding slicing tuples for loading."""
 
+        def make_loader(
+            region: TileSlice, resource: Any | None
+        ) -> Callable[[], np.ndarray]:
+            return lambda: region.load_data(axes=self.axes, resource=resource)
+
+        slices = []
         for region in self.regions:
-            region_data = region.load_data(axes=self.axes, resource=resource)
             roi_slice = region.roi.to_slicing_dict(pixel_size=self.pixel_size)
             slicing = []
             for axis in self.axes:
                 _slice = roi_slice[axis]
                 slicing.append(slice(math.floor(_slice.start), math.ceil(_slice.stop)))
             slicing = tuple(slicing)
-            full_image[slicing] = region_data
+            slices.append((slicing, make_loader(region, resource)))
+        return slices
+
+    def load_data(self, resource: Any | None = None) -> np.ndarray:
+        """Load the full image data for this TiledImage using the image loaders."""
+        shape = self.shape()
+        dtype = np.dtype(self.data_type)
+        full_image = np.zeros(shape, dtype=dtype)
+        slices = self._prepare_slice_loading(resource=resource)
+        for slicing, loader in slices:
+            full_image[slicing] = loader()
         return full_image
+
+    def load_data_dask(
+        self, resource: Any | None = None, chunks: tuple[int, ...] | None = None
+    ) -> da.Array:
+        """Load the full image data for this TiledImage using Dask."""
+        shape = self.shape()
+        dtype = self.data_type
+        slices = self._prepare_slice_loading(resource=resource)
+        if chunks is None:
+            chunks = shape
+        return lazy_array_from_regions(
+            slices, shape=shape, chunks=chunks, dtype=dtype, fill_value=0.0
+        )
