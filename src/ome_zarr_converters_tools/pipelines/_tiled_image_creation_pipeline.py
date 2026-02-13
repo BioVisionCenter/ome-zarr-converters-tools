@@ -11,11 +11,13 @@ from ome_zarr_converters_tools.models import (
     OverwriteMode,
     WriterMode,
 )
-from ome_zarr_converters_tools.registration import (
+from ome_zarr_converters_tools.pipelines._registration_pipeline import (
     RegistrationStep,
     apply_registration_pipeline,
 )
-from ome_zarr_converters_tools.utils._write_ome_zarr import write_tiled_image_as_zarr
+from ome_zarr_converters_tools.pipelines._write_ome_zarr import (
+    write_tiled_image_as_zarr,
+)
 
 logger = logging.getLogger(__name__)
 

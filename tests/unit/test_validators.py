@@ -2,7 +2,7 @@
 
 import pytest
 
-from ome_zarr_converters_tools.validators import (
+from ome_zarr_converters_tools.pipelines import (
     ValidatorStep,
     add_validator,
     apply_validator_pipeline,

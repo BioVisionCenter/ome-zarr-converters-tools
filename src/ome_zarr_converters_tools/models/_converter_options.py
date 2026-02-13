@@ -9,6 +9,12 @@ from pydantic import (
 )
 
 
+class OverwriteMode(StrEnum):
+    NO_OVERWRITE = "No Overwrite"
+    OVERWRITE = "Overwrite"
+    EXTEND = "Extend"
+
+
 class TilingMode(StrEnum):
     AUTO = "Auto"
     SNAP_TO_GRID = "Snap to Grid"

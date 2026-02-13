@@ -7,7 +7,6 @@ import toml
 
 from ome_zarr_converters_tools.core._tile import Tile
 from ome_zarr_converters_tools.core._tile_region import TiledImage
-from ome_zarr_converters_tools.filters import FilterModel
 from ome_zarr_converters_tools.models import (
     AcquisitionDetails,
     ConverterOptions,
@@ -15,7 +14,8 @@ from ome_zarr_converters_tools.models import (
     ImageInPlate,
 )
 from ome_zarr_converters_tools.pipelines import tiles_aggregation_pipeline
-from ome_zarr_converters_tools.validators import ValidatorStep
+from ome_zarr_converters_tools.pipelines._filters import FilterModel
+from ome_zarr_converters_tools.pipelines._validators import ValidatorStep
 
 
 def _build_default_image_loader(

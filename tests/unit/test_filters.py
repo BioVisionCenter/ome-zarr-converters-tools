@@ -2,13 +2,13 @@
 
 import pytest
 
-from ome_zarr_converters_tools.filters import (
+from ome_zarr_converters_tools.pipelines import (
     FilterModel,
     ImplementedFilters,
     add_filter,
     apply_filter_pipeline,
 )
-from ome_zarr_converters_tools.filters._filter_pipeline import (
+from ome_zarr_converters_tools.pipelines._filters import (
     RegexExcludeFilter,
     RegexIncludeFilter,
     WellFilter,

@@ -1,7 +1,7 @@
 from ome_zarr_converters_tools.core._roi_utils import move_roi_by
 from ome_zarr_converters_tools.core._tile_region import TiledImage, TileSlice
 from ome_zarr_converters_tools.models import TilingMode
-from ome_zarr_converters_tools.registration._snap_utils import (
+from ome_zarr_converters_tools.pipelines._snap_utils import (
     NotAGridError,
     calculate_snap_to_corner_offset,
     calculate_snap_to_grid_offset,

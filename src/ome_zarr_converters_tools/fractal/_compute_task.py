@@ -7,6 +7,10 @@ from typing import Any, TypedDict
 from ngio import OmeZarrContainer
 
 from ome_zarr_converters_tools.core import AttributeType
+from ome_zarr_converters_tools.fractal._json_utils import (
+    remove_json,
+    tiled_image_from_json,
+)
 from ome_zarr_converters_tools.fractal._models import (
     ConvertParallelInitArgs,
 )
@@ -16,13 +20,9 @@ from ome_zarr_converters_tools.models import (
     ImageInPlate,
     ImageLoaderInterfaceType,
 )
-from ome_zarr_converters_tools.pipelines import tiled_image_creation_pipeline
-from ome_zarr_converters_tools.registration import (
+from ome_zarr_converters_tools.pipelines import (
     build_default_registration_pipeline,
-)
-from ome_zarr_converters_tools.utils import (
-    remove_json,
-    tiled_image_from_json,
+    tiled_image_creation_pipeline,
 )
 
 logger = logging.getLogger(__name__)

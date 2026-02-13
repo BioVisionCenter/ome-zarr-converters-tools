@@ -23,15 +23,13 @@ from ome_zarr_converters_tools.models._converter_options import (
     FovBasedChunking,
     NgffVersions,
     OmeZarrOptions,
+    OverwriteMode,
     TilingMode,
     WriterMode,
 )
 from ome_zarr_converters_tools.models._loader import (
     DefaultImageLoader,
     ImageLoaderInterfaceType,
-)
-from ome_zarr_converters_tools.models._shared import (
-    OverwriteMode,
 )
 from ome_zarr_converters_tools.models._url_utils import (
     find_url_type,

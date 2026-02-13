@@ -7,6 +7,12 @@ from ome_zarr_converters_tools.fractal._compute_task import (
 from ome_zarr_converters_tools.fractal._init_task import (
     setup_images_for_conversion,
 )
+from ome_zarr_converters_tools.fractal._json_utils import (
+    cleanup_if_exists,
+    dump_to_json,
+    remove_json,
+    tiled_image_from_json,
+)
 from ome_zarr_converters_tools.fractal._models import (
     AcquisitionOptions,
     ConvertParallelInitArgs,
@@ -19,7 +25,11 @@ __all__ = [
     "ConvertParallelInitArgs",
     "ImageListUpdateDict",
     "PixelSizeModel",
+    "cleanup_if_exists",
     "converters_tools_models",
+    "dump_to_json",
     "generic_compute_task",
+    "remove_json",
     "setup_images_for_conversion",
+    "tiled_image_from_json",
 ]

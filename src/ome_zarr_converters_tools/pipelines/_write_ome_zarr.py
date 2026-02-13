@@ -24,7 +24,7 @@ from ome_zarr_converters_tools.models import (
     OverwriteMode,
     WriterMode,
 )
-from ome_zarr_converters_tools.utils._to_zarr import write_to_zarr
+from ome_zarr_converters_tools.pipelines._to_zarr import write_to_zarr
 
 logger = getLogger(__name__)
 

@@ -2,7 +2,6 @@
 
 from pydantic import BaseModel, Field
 
-from ome_zarr_converters_tools.filters._filter_pipeline import ImplementedFilters
 from ome_zarr_converters_tools.models._acquisition import (
     CANONICAL_AXES_TYPE,
     AcquisitionDetails,
@@ -13,10 +12,9 @@ from ome_zarr_converters_tools.models._acquisition import (
 )
 from ome_zarr_converters_tools.models._converter_options import (
     ConverterOptions,
-)
-from ome_zarr_converters_tools.models._shared import (
     OverwriteMode,
 )
+from ome_zarr_converters_tools.pipelines._filters import ImplementedFilters
 
 
 class ConvertParallelInitArgs(BaseModel):
@@ -129,17 +127,17 @@ def converters_tools_models(
         ),
         (
             base,
-            "filters/_filter_pipeline.py",
+            "pipelines/_filters.py",
             "WellFilter",
         ),
         (
             base,
-            "filters/_filter_pipeline.py",
+            "pipelines/_filters.py",
             "RegexIncludeFilter",
         ),
         (
             base,
-            "filters/_filter_pipeline.py",
+            "pipelines/_filters.py",
             "RegexExcludeFilter",
         ),
         (
