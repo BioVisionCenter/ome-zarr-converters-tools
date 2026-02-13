@@ -1,79 +1,299 @@
 """Unit tests for registration module (alignment, tiling, snap utils)."""
 
+import warnings
+
+import numpy as np
 import pytest
+from ngio import Roi, RoiSlice
+
+from ome_zarr_converters_tools.core._dummy_tiles import (
+    DummyLoader,
+    StartPosition,
+    TileShape,
+    build_dummy_tile,
+)
+from ome_zarr_converters_tools.core._tile_region import TiledImage, TileSlice
+from ome_zarr_converters_tools.core._tile_to_tiled_images import tiled_image_from_tiles
+from ome_zarr_converters_tools.models import (
+    AcquisitionDetails,
+    AlignmentCorrections,
+    ChannelInfo,
+    ConverterOptions,
+    SingleImage,
+    TilingMode,
+)
+from ome_zarr_converters_tools.pipelines._alignment import (
+    _align_t_regions,
+    _align_xy_regions,
+    _align_z_regions,
+    apply_align_to_pixel_grid,
+    apply_fov_alignment_corrections,
+    apply_remove_offsets,
+)
+from ome_zarr_converters_tools.pipelines._snap_utils import (
+    BBox,
+    NotAGridError,
+    check_if_regular_grid,
+    tiles_to_boxes,
+)
+from ome_zarr_converters_tools.pipelines._tiling import (
+    _find_tiling,
+    apply_mosaic_tiling,
+)
+
+
+def _make_pixel_tile_slice(
+    x_start: float, y_start: float, x_len: float, y_len: float, name: str = "FOV"
+) -> TileSlice:
+    """Helper: TileSlice with pixel-space ROI."""
+    roi = Roi(
+        name=name,
+        slices=[
+            RoiSlice(axis_name="x", start=x_start, length=x_len),
+            RoiSlice(axis_name="y", start=y_start, length=y_len),
+        ],
+        space="pixel",
+    )
+    loader = DummyLoader(shape=TileShape(x=int(x_len), y=int(y_len)), text=name)
+    return TileSlice(roi=roi, image_loader=loader)
+
+
+def _make_world_tile_slice(
+    x_start: float, y_start: float, x_len: float, y_len: float, name: str = "FOV"
+) -> TileSlice:
+    """Helper: TileSlice with world-space ROI."""
+    roi = Roi(
+        name=name,
+        slices=[
+            RoiSlice(axis_name="x", start=x_start, length=x_len),
+            RoiSlice(axis_name="y", start=y_start, length=y_len),
+        ],
+        space="world",
+    )
+    loader = DummyLoader(shape=TileShape(x=int(x_len), y=int(y_len)), text=name)
+    return TileSlice(roi=roi, image_loader=loader)
+
+
+def _make_tiled_image(regions: list[TileSlice], pixelsize: float = 1.0) -> TiledImage:
+    """Helper: build a TiledImage from TileSlices."""
+    collection = SingleImage(image_path="test_image")
+    return TiledImage(
+        regions=regions,
+        path="test_image",
+        data_type="uint8",
+        axes=["x", "y"],
+        collection=collection,
+        pixelsize=pixelsize,
+    )
+
+
+# --- Alignment tests ---
 
 
 class TestAlignment:
-    """Tests for alignment functions."""
+    def test_align_xy_regions(self) -> None:
+        regions = [
+            _make_world_tile_slice(10.0, 20.0, 100.0, 100.0, "FOV_0"),
+            _make_world_tile_slice(15.0, 25.0, 100.0, 100.0, "FOV_0"),
+            _make_world_tile_slice(12.0, 22.0, 100.0, 100.0, "FOV_0"),
+        ]
+        aligned = _align_xy_regions(regions)
+        for region in aligned:
+            assert region.roi.get("x").start == 10.0
+            assert region.roi.get("y").start == 20.0
 
-    @pytest.mark.skip(reason="Not implemented yet")
-    def test_align_xy_regions(self):
-        """Test XY region alignment."""
+    def test_align_z_warns(self) -> None:
+        regions = [_make_world_tile_slice(0.0, 0.0, 10.0, 10.0)]
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            result = _align_z_regions(regions)
+            assert len(w) == 1
+            assert "not implemented" in str(w[0].message).lower()
+        assert result == regions
 
-    @pytest.mark.skip(reason="Not implemented yet")
-    def test_apply_fov_alignment_corrections(self):
-        """Test FOV alignment corrections."""
+    def test_align_t_warns(self) -> None:
+        regions = [_make_world_tile_slice(0.0, 0.0, 10.0, 10.0)]
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            result = _align_t_regions(regions)
+            assert len(w) == 1
+            assert "not implemented" in str(w[0].message).lower()
+        assert result == regions
 
-    @pytest.mark.skip(reason="Not implemented yet")
-    def test_apply_align_to_pixel_grid(self):
-        """Test alignment to pixel grid."""
+    def test_apply_fov_alignment_corrections(self) -> None:
+        acq = AcquisitionDetails(
+            channels=[ChannelInfo(channel_label="DAPI")],
+            pixelsize=1.0,
+            z_spacing=1.0,
+            t_spacing=1.0,
+        )
+        coll = SingleImage(image_path="test_image")
+        tiles = [
+            build_dummy_tile(
+                fov_name="FOV_0",
+                start=StartPosition(x=10, y=20),
+                shape=TileShape(x=64, y=64, z=1, c=1, t=1),
+                collection=coll,
+                acquisition_details=acq,
+            ),
+            build_dummy_tile(
+                fov_name="FOV_0",
+                start=StartPosition(x=15, y=25),
+                shape=TileShape(x=64, y=64, z=1, c=1, t=1),
+                collection=coll,
+                acquisition_details=acq,
+            ),
+        ]
+        images = tiled_image_from_tiles(
+            tiles=tiles, converter_options=ConverterOptions()
+        )
+        corrections = AlignmentCorrections(align_xy=True)
+        result = apply_fov_alignment_corrections(images[0], corrections)
+        first_x = result.regions[0].roi.get("x").start
+        for region in result.regions:
+            assert region.roi.get("x").start == first_x
 
-    @pytest.mark.skip(reason="Not implemented yet")
-    def test_apply_remove_offsets(self):
-        """Test offset removal."""
+    def test_apply_align_to_pixel_grid_floor(self) -> None:
+        regions = [_make_world_tile_slice(10.7, 20.3, 100.0, 100.0, "FOV")]
+        img = _make_tiled_image(regions, pixelsize=1.0)
+        result = apply_align_to_pixel_grid(img, mode="floor")
+        roi = result.regions[0].roi
+        assert roi.get("x").start == 10.0
+        assert roi.get("y").start == 20.0
+
+    def test_apply_align_to_pixel_grid_ceil(self) -> None:
+        regions = [_make_world_tile_slice(10.1, 20.1, 100.0, 100.0, "FOV")]
+        img = _make_tiled_image(regions, pixelsize=1.0)
+        result = apply_align_to_pixel_grid(img, mode="ceil")
+        roi = result.regions[0].roi
+        assert roi.get("x").start == 11.0
+        assert roi.get("y").start == 21.0
+
+    def test_apply_remove_offsets(self) -> None:
+        regions = [
+            _make_world_tile_slice(100.0, 200.0, 64.0, 64.0, "FOV_0"),
+            _make_world_tile_slice(164.0, 200.0, 64.0, 64.0, "FOV_1"),
+        ]
+        img = _make_tiled_image(regions)
+        result = apply_remove_offsets(img)
+        assert result.regions[0].roi.get("x").start == 0.0
+        assert result.regions[0].roi.get("y").start == 0.0
+        assert result.regions[1].roi.get("x").start == 64.0
+        assert result.regions[1].roi.get("y").start == 0.0
 
 
-class TestTiling:
-    """Tests for tiling functions."""
-
-    @pytest.mark.skip(reason="Not implemented yet")
-    def test_no_tiling(self):
-        """Test no tiling mode."""
-
-    @pytest.mark.skip(reason="Not implemented yet")
-    def test_snap_to_corners_tiling(self):
-        """Test snap to corners tiling."""
-
-    @pytest.mark.skip(reason="Not implemented yet")
-    def test_snap_to_grid_tiling(self):
-        """Test snap to grid tiling."""
-
-    @pytest.mark.skip(reason="Not implemented yet")
-    def test_auto_tiling(self):
-        """Test auto tiling mode selection."""
-
-    @pytest.mark.skip(reason="Not implemented yet")
-    def test_apply_mosaic_tiling(self):
-        """Test mosaic tiling application."""
+# --- Snap utils tests ---
 
 
 class TestSnapUtils:
-    """Tests for snap utility functions."""
+    def test_tiles_to_boxes(self) -> None:
+        tiles = [
+            _make_pixel_tile_slice(0.0, 0.0, 256.0, 256.0, "A"),
+            _make_pixel_tile_slice(256.0, 0.0, 256.0, 256.0, "B"),
+        ]
+        boxes = tiles_to_boxes(tiles)
+        assert len(boxes) == 2
+        assert boxes[0] == BBox(x=0.0, y=0.0, x_len=256.0, y_len=256.0)
+        assert boxes[1] == BBox(x=256.0, y=0.0, x_len=256.0, y_len=256.0)
 
-    @pytest.mark.skip(reason="Not implemented yet")
-    def test_calculate_snap_to_corner_offset(self):
-        """Test corner snap offset calculation."""
+    def test_tiles_to_boxes_empty_error(self) -> None:
+        with pytest.raises(ValueError, match="empty"):
+            tiles_to_boxes([])
 
-    @pytest.mark.skip(reason="Not implemented yet")
-    def test_calculate_snap_to_grid_offset(self):
-        """Test grid snap offset calculation."""
+    def test_check_if_regular_grid(self) -> None:
+        tiles = [
+            _make_pixel_tile_slice(0.0, 0.0, 100.0, 100.0, "A"),
+            _make_pixel_tile_slice(100.0, 0.0, 100.0, 100.0, "B"),
+            _make_pixel_tile_slice(0.0, 100.0, 100.0, 100.0, "C"),
+            _make_pixel_tile_slice(100.0, 100.0, 100.0, 100.0, "D"),
+        ]
+        grid = check_if_regular_grid(tiles)
+        assert grid.length_x == 100.0
+        assert grid.length_y == 100.0
+        assert np.isclose(grid.offset_x, 100.0)
+        assert np.isclose(grid.offset_y, 100.0)
 
-    @pytest.mark.skip(reason="Not implemented yet")
-    def test_not_a_grid_error(self):
-        """Test NotAGridError is raised for non-grid layouts."""
+    def test_check_if_regular_grid_single_tile(self) -> None:
+        tiles = [_make_pixel_tile_slice(0.0, 0.0, 200.0, 200.0, "A")]
+        grid = check_if_regular_grid(tiles)
+        assert grid.length_x == 200.0
+        assert grid.length_y == 200.0
+
+    def test_check_if_irregular_grid_raises(self) -> None:
+        tiles = [
+            _make_pixel_tile_slice(0.0, 0.0, 100.0, 100.0, "A"),
+            _make_pixel_tile_slice(100.0, 0.0, 100.0, 100.0, "B"),
+            _make_pixel_tile_slice(0.0, 100.0, 100.0, 100.0, "C"),
+            _make_pixel_tile_slice(150.0, 100.0, 100.0, 100.0, "D"),
+        ]
+        with pytest.raises(NotAGridError):
+            check_if_regular_grid(tiles)
 
 
-class TestRegistrationPipeline:
-    """Tests for registration pipeline."""
+# --- Tiling tests ---
 
-    @pytest.mark.skip(reason="Not implemented yet")
-    def test_add_registration_func(self):
-        """Test adding custom registration function."""
 
-    @pytest.mark.skip(reason="Not implemented yet")
-    def test_apply_registration_pipeline(self):
-        """Test applying registration pipeline."""
+class TestTiling:
+    def test_no_tiling_returns_zero_offsets(self) -> None:
+        tiles = {
+            "A": _make_pixel_tile_slice(10.0, 20.0, 100.0, 100.0, "A"),
+            "B": _make_pixel_tile_slice(200.0, 300.0, 100.0, 100.0, "B"),
+        }
+        offsets = _find_tiling(tiles, TilingMode.NO_TILING)
+        for offset in offsets.values():
+            assert offset == {"x": 0.0, "y": 0.0}
 
-    @pytest.mark.skip(reason="Not implemented yet")
-    def test_build_default_registration_pipeline(self):
-        """Test building default registration pipeline."""
+    def test_snap_to_grid_regular(self) -> None:
+        tiles = {
+            "A": _make_pixel_tile_slice(0.0, 0.0, 100.0, 100.0, "A"),
+            "B": _make_pixel_tile_slice(95.0, 0.0, 100.0, 100.0, "B"),
+            "C": _make_pixel_tile_slice(0.0, 95.0, 100.0, 100.0, "C"),
+            "D": _make_pixel_tile_slice(95.0, 95.0, 100.0, 100.0, "D"),
+        }
+        offsets = _find_tiling(tiles, TilingMode.SNAP_TO_GRID)
+        assert np.isclose(offsets["A"]["x"], 0.0)
+        assert np.isclose(offsets["A"]["y"], 0.0)
+
+    def test_snap_to_grid_not_a_grid_error(self) -> None:
+        tiles = {
+            "A": _make_pixel_tile_slice(0.0, 0.0, 100.0, 100.0, "A"),
+            "B": _make_pixel_tile_slice(100.0, 0.0, 100.0, 100.0, "B"),
+            "C": _make_pixel_tile_slice(0.0, 100.0, 100.0, 100.0, "C"),
+            "D": _make_pixel_tile_slice(150.0, 100.0, 100.0, 100.0, "D"),
+        }
+        with pytest.raises(NotAGridError):
+            _find_tiling(tiles, TilingMode.SNAP_TO_GRID)
+
+    def test_auto_tiling_falls_back_to_corners(self) -> None:
+        tiles = {
+            "A": _make_pixel_tile_slice(0.0, 0.0, 100.0, 100.0, "A"),
+            "B": _make_pixel_tile_slice(100.0, 0.0, 100.0, 100.0, "B"),
+            "C": _make_pixel_tile_slice(0.0, 100.0, 100.0, 100.0, "C"),
+            "D": _make_pixel_tile_slice(150.0, 100.0, 100.0, 100.0, "D"),
+        }
+        offsets = _find_tiling(tiles, TilingMode.AUTO)
+        assert len(offsets) == 4
+
+    def test_apply_mosaic_tiling(self) -> None:
+        acq = AcquisitionDetails(
+            channels=[ChannelInfo(channel_label="DAPI")],
+            pixelsize=1.0,
+            z_spacing=1.0,
+            t_spacing=1.0,
+        )
+        coll = SingleImage(image_path="test_image")
+        tiles = [
+            build_dummy_tile(
+                fov_name=f"FOV_{i}",
+                start=StartPosition(x=x, y=y),
+                shape=TileShape(x=100, y=100, z=1, c=1, t=1),
+                collection=coll,
+                acquisition_details=acq,
+            )
+            for i, (x, y) in enumerate([(0, 0), (100, 0), (0, 100), (100, 100)])
+        ]
+        images = tiled_image_from_tiles(
+            tiles=tiles, converter_options=ConverterOptions()
+        )
+        result = apply_mosaic_tiling(images[0], TilingMode.INPLACE)
+        assert len(result.regions) == 4

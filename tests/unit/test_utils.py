@@ -1,51 +1,86 @@
 """Unit tests for utility functions."""
 
-import pytest
+import numpy as np
 
-
-class TestJsonUtils:
-    """Tests for JSON serialization utilities."""
-
-    @pytest.mark.skip(reason="Not implemented yet")
-    def test_json_serialization(self):
-        """Test JSON serialization of models."""
-
-    @pytest.mark.skip(reason="Not implemented yet")
-    def test_json_deserialization(self):
-        """Test JSON deserialization to models."""
-
-
-class TestTableUtils:
-    """Tests for table utilities."""
-
-    @pytest.mark.skip(reason="Not implemented yet")
-    def test_build_roi_table(self):
-        """Test ROI table building."""
-
-    @pytest.mark.skip(reason="Not implemented yet")
-    def test_roi_table_structure(self):
-        """Test ROI table structure and columns."""
+from ome_zarr_converters_tools.core._dask_lazy_loader import lazy_array_from_regions
+from ome_zarr_converters_tools.models._url_utils import (
+    UrlType,
+    find_url_type,
+    join_url_paths,
+)
 
 
 class TestUrlUtils:
-    """Tests for URL utilities."""
+    def test_find_url_type_local(self) -> None:
+        assert find_url_type("/some/path") == UrlType.LOCAL
 
-    @pytest.mark.skip(reason="Not implemented yet")
-    def test_url_to_path(self):
-        """Test URL to path conversion."""
+    def test_find_url_type_s3(self) -> None:
+        assert find_url_type("s3://my-bucket/key") == UrlType.S3
 
-    @pytest.mark.skip(reason="Not implemented yet")
-    def test_path_to_url(self):
-        """Test path to URL conversion."""
+    def test_find_url_type_unsupported(self) -> None:
+        assert find_url_type("http://example.com") == UrlType.NOT_SUPPORTED
+
+    def test_join_url_paths(self) -> None:
+        result = join_url_paths("/base", "sub", "file.txt")
+        assert result == "/base/sub/file.txt"
+
+    def test_join_url_paths_strips_leading_slashes(self) -> None:
+        result = join_url_paths("/base", "/sub", "/file.txt")
+        assert result == "/base/sub/file.txt"
+
+    def test_join_url_paths_s3(self) -> None:
+        result = join_url_paths("s3://bucket", "prefix", "key")
+        assert result == "s3://bucket/prefix/key"
 
 
-class TestZarrWriteUtils:
-    """Tests for zarr write utilities."""
+class TestDaskLazyLoader:
+    def test_lazy_array_single_region(self) -> None:
+        data = np.ones((10, 10), dtype="uint8") * 42
+        regions = [
+            (
+                (slice(0, 10), slice(0, 10)),
+                lambda: data,
+            )
+        ]
+        arr = lazy_array_from_regions(
+            regions,
+            shape=(10, 10),
+            chunks=(10, 10),
+            dtype="uint8",  # type: ignore[arg-type]
+        )
+        result = arr.compute()  # type: ignore[no-untyped-call]
+        np.testing.assert_array_equal(result, data)
 
-    @pytest.mark.skip(reason="Not implemented yet")
-    def test_write_tile_to_zarr(self):
-        """Test writing tile to zarr."""
+    def test_lazy_array_multiple_regions(self) -> None:
+        data_a = np.ones((5, 10), dtype="uint8") * 1
+        data_b = np.ones((5, 10), dtype="uint8") * 2
+        regions = [
+            ((slice(0, 5), slice(0, 10)), lambda: data_a),
+            ((slice(5, 10), slice(0, 10)), lambda: data_b),
+        ]
+        arr = lazy_array_from_regions(
+            regions,
+            shape=(10, 10),
+            chunks=(5, 10),
+            dtype="uint8",  # type: ignore[arg-type]
+        )
+        result = arr.compute()  # type: ignore[no-untyped-call]
+        np.testing.assert_array_equal(result[:5], 1)
+        np.testing.assert_array_equal(result[5:], 2)
 
-    @pytest.mark.skip(reason="Not implemented yet")
-    def test_setup_zarr_image(self):
-        """Test zarr image setup."""
+    def test_lazy_array_fill_value(self) -> None:
+        data = np.ones((5, 5), dtype="float32") * 99
+        regions = [
+            ((slice(0, 5), slice(0, 5)), lambda: data),
+        ]
+        arr = lazy_array_from_regions(
+            regions,
+            shape=(10, 10),
+            chunks=(5, 5),
+            dtype="float32",
+            fill_value=-1.0,  # type: ignore[arg-type]
+        )
+        result = arr.compute()  # type: ignore[no-untyped-call]
+        np.testing.assert_array_equal(result[:5, :5], 99)
+        np.testing.assert_array_equal(result[5:, :], -1.0)
+        np.testing.assert_array_equal(result[:5, 5:], -1.0)
