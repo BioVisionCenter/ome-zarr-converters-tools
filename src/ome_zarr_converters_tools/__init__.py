@@ -6,7 +6,6 @@ from ome_zarr_converters_tools.core import (
     AttributeType,
     Tile,
     TiledImage,
-    tiles_aggregation_pipeline,
 )
 from ome_zarr_converters_tools.fractal import (
     AcquisitionOptions,
@@ -35,6 +34,9 @@ from ome_zarr_converters_tools.models import (
     StageCorrections,
     default_axes_builder,
     join_url_paths,
+)
+from ome_zarr_converters_tools.pipelines import (
+    tiles_aggregation_pipeline,
 )
 
 __version__ = version("ome-zarr-converters-tools")
