@@ -77,14 +77,14 @@ class ImageInPlate(CollectionInterface):
     def path(self) -> str:
         return join_url_paths(self.plate_path(), self.well_path(), self.path_in_well())
 
-    @classmethod
     @field_validator("row", mode="before")
+    @classmethod
     def row_to_str(cls, v: Any) -> Any:
-        if isinstance(v, int):
-            if v < 1 or v >= len(ALPHABET):
-                raise ValueError(
-                    f"Row index {v} out of range. "
-                    f"Must be between 1 and {len(ALPHABET) - 1}"
-                )
-            return ALPHABET[v - 1]
-        return v
+        if isinstance(v, str):
+            return v
+        v = int(v)
+        if v < 1 or v >= len(ALPHABET):
+            raise ValueError(
+                f"Row index {v} out of range. Must be between 1 and {len(ALPHABET) - 1}"
+            )
+        return ALPHABET[v - 1]

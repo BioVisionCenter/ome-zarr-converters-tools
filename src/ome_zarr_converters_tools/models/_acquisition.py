@@ -151,8 +151,8 @@ class AcquisitionDetails(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    @classmethod
     @field_validator("axes")
+    @classmethod
     def validate_axes(cls, v: list[CANONICAL_AXES_TYPE]) -> list[CANONICAL_AXES_TYPE]:
         """Validate that axes are in canonical order."""
         for i in range(1, len(v)):
