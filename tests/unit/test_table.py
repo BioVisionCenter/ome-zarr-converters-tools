@@ -1,4 +1,4 @@
-"""Unit tests for core._table: hcs_images_from_dataframe and single_images_from_dataframe."""
+"""Unit tests for core._table"""
 
 from pathlib import Path
 
