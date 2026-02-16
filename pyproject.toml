@@ -167,14 +167,9 @@ pretty = true
 [tool.pytest.ini_options]
 minversion = "7.0"
 testpaths = ["tests"]
-# The filterwarnings option 
-# caused some unexpected behavior in the tests
-# so it was commented out
-#filterwarnings = [
-#    "error",
-#    "ignore::FutureWarning",
-#    "ignore::DeprecationWarning",
-#]
+filterwarnings = [
+    "ignore:Writing zarr v2 data will no longer be the default:UserWarning",
+]
 addopts = [
     "-vv",
     "--color=yes",
