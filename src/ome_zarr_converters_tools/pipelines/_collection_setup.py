@@ -33,7 +33,9 @@ def _setup_condition_table(
         acq = tile.collection.acquisition
         _num_rows_dict = {}
         for attr_name, attr_value in tile.attributes.items():
-            condition_table[attr_name] = attr_value
+            if attr_name not in condition_table:
+                condition_table[attr_name] = []
+            condition_table[attr_name].extend(attr_value)
             _num_rows_dict[attr_name] = len(attr_value)
 
         if len(set(_num_rows_dict.values())) > 1:
@@ -55,8 +57,7 @@ def _setup_condition_table(
         condition_table["acquisition"].extend([acq] * _num_rows)
         condition_table["path_in_well"].extend([path_in_well] * _num_rows)
 
-    print(condition_table)
-    if set(condition_table.keys()) == {"row", "column", "acquisition"}:
+    if set(condition_table.keys()) == {"row", "column", "acquisition", "path_in_well"}:
         # No additional attributes, no need to create a condition table
         return None
     return pl.DataFrame(condition_table)

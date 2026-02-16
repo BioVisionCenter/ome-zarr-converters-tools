@@ -11,6 +11,11 @@ from ome_zarr_converters_tools.models import (
     StageCorrections,
 )
 from ome_zarr_converters_tools.models._collection import validate_zarr_name
+from ome_zarr_converters_tools.models._converter_options import (
+    FovBasedChunking,
+    TilingMode,
+    WriterMode,
+)
 
 
 class TestAcquisitionDetails:
@@ -27,13 +32,73 @@ class TestAcquisitionDetails:
             ChannelInfo(channel_label="Channel 2"),
         ]
 
-    @pytest.mark.skip(reason="Not implemented yet")
     def test_acquisition_details_validation(self) -> None:
         """Test acquisition details validation."""
+        with pytest.raises(ValueError):
+            AcquisitionDetails(
+                channels=[ChannelInfo(channel_label="DAPI")],
+                pixelsize=-1.0,
+                z_spacing=1.0,
+                t_spacing=1.0,
+            )
+        with pytest.raises(ValueError):
+            AcquisitionDetails(
+                channels=[ChannelInfo(channel_label="DAPI")],
+                pixelsize=1.0,
+                z_spacing=0.0,
+                t_spacing=1.0,
+            )
+        # Extra fields should be forbidden
+        with pytest.raises(ValueError):
+            AcquisitionDetails(
+                channels=[ChannelInfo(channel_label="DAPI")],
+                pixelsize=1.0,
+                z_spacing=1.0,
+                t_spacing=1.0,
+                unknown_field="value",
+            )
 
-    @pytest.mark.skip(reason="Not implemented yet")
     def test_acquisition_details_axes_order(self) -> None:
         """Test axes order validation."""
+        # Valid order: subset of t, c, z, y, x in canonical order
+        acq = AcquisitionDetails(
+            channels=[ChannelInfo(channel_label="DAPI")],
+            pixelsize=1.0,
+            z_spacing=1.0,
+            t_spacing=1.0,
+            axes=["c", "z", "y", "x"],
+        )
+        assert acq.axes == ["c", "z", "y", "x"]
+
+        # Invalid order: x before y
+        with pytest.raises(ValueError, match="canonical order"):
+            AcquisitionDetails(
+                channels=[ChannelInfo(channel_label="DAPI")],
+                pixelsize=1.0,
+                z_spacing=1.0,
+                t_spacing=1.0,
+                axes=["x", "y"],
+            )
+
+        # Invalid: duplicate axis
+        with pytest.raises(ValueError, match="canonical order"):
+            AcquisitionDetails(
+                channels=[ChannelInfo(channel_label="DAPI")],
+                pixelsize=1.0,
+                z_spacing=1.0,
+                t_spacing=1.0,
+                axes=["y", "y", "x"],
+            )
+
+        # Too few axes
+        with pytest.raises(ValueError):
+            AcquisitionDetails(
+                channels=[ChannelInfo(channel_label="DAPI")],
+                pixelsize=1.0,
+                z_spacing=1.0,
+                t_spacing=1.0,
+                axes=["x"],
+            )
 
 
 class TestConverterOptions:
@@ -45,9 +110,17 @@ class TestConverterOptions:
         """Test basic converter options creation."""
         assert sample_converter_options is not None
 
-    @pytest.mark.skip(reason="Not implemented yet")
     def test_converter_options_defaults(self) -> None:
         """Test default values."""
+        opts = ConverterOptions()
+        assert opts.tiling_mode == TilingMode.AUTO
+        assert opts.writer_mode == WriterMode.BY_FOV
+        assert opts.alignment_correction.align_xy is False
+        assert opts.alignment_correction.align_z is False
+        assert opts.alignment_correction.align_t is False
+        assert opts.omezarr_options.num_levels == 5
+        assert isinstance(opts.omezarr_options.chunks, FovBasedChunking)
+        assert opts.temp_json_options.temp_url == "{zarr_dir}/_tmp_json"
 
 
 class TestStageCorrections:
@@ -91,13 +164,21 @@ class TestCollectionModels:
         """Test well property combines row and column."""
         assert sample_image_in_plate.well == "A01"
 
-    @pytest.mark.skip(reason="Not implemented yet")
     def test_collection_path_generation(self) -> None:
         """Test path generation for collections."""
+        single = SingleImage(image_path="my_image")
+        assert single.path() == "my_image.zarr"
 
-    def test_validate_zarr_name(self) -> None:
-        """Test path sanitization."""
-        # Should match
+        plate = ImageInPlate(
+            plate_name="MyPlate", row="B", column=3, acquisition=0
+        )
+        assert plate.plate_path() == "MyPlate.zarr"
+        assert plate.well_path() == "B/03"
+        assert plate.path_in_well() == "0"
+        assert plate.path() == "MyPlate.zarr/B/03/0"
+
+    def test_validate_zarr_name_valid(self) -> None:
+        """Test valid Zarr names are accepted."""
         for string in [
             "hello",
             "hello.world",
@@ -110,23 +191,25 @@ class TestCollectionModels:
         ]:
             validate_zarr_name(string)  # Should not raise
 
-    for string in [
-        "path/to/file",  # contains /
-        ".",  # only periods
-        "..",  # only periods
-        "...",  # only periods
-        "path#",  # contains invalid character #
-        "file$name",  # contains invalid character $
-        "file%name",  # contains invalid character %
-        "file&name",  # contains invalid character &
-        "file(name)",  # contains invalid character ()
-        "file\U0001f60aname",  # contains emoji
-        "__dunder",  # starts with __
-        "__",  # starts with __
-        "",  # empty string
-        "caf\u00e9",  # non-ASCII
-        " hello world",  # Leading space
-        "hello world ",  # Trailing space
-    ]:
-        with pytest.raises(ValueError):
-            validate_zarr_name(string)
+    def test_validate_zarr_name_invalid(self) -> None:
+        """Test invalid Zarr names are rejected."""
+        for string in [
+            "path/to/file",  # contains /
+            ".",  # only periods
+            "..",  # only periods
+            "...",  # only periods
+            "path#",  # contains invalid character #
+            "file$name",  # contains invalid character $
+            "file%name",  # contains invalid character %
+            "file&name",  # contains invalid character &
+            "file(name)",  # contains invalid character ()
+            "file\U0001f60aname",  # contains emoji
+            "__dunder",  # starts with __
+            "__",  # starts with __
+            "",  # empty string
+            "caf\u00e9",  # non-ASCII
+            " hello world",  # Leading space
+            "hello world ",  # Trailing space
+        ]:
+            with pytest.raises(ValueError):
+                validate_zarr_name(string)
