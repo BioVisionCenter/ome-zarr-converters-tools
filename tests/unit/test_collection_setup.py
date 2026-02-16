@@ -209,9 +209,7 @@ class TestSetupPlates:
             z_spacing=1.0,
             t_spacing=1.0,
         )
-        coll = ImageInPlate(
-            plate_name="TestPlate", row="B", column=1, acquisition=0
-        )
+        coll = ImageInPlate(plate_name="TestPlate", row="B", column=1, acquisition=0)
         tile = build_dummy_tile(
             fov_name="FOV_ext",
             start=StartPosition(x=0, y=0),
@@ -230,9 +228,7 @@ class TestSetupPlates:
         plate = open_ome_zarr_plate(tmp_path / "TestPlate.zarr")
         assert len(plate.images_paths()) == 2
 
-    def test_extend_mode_skips_existing_image(
-        self, tmp_path: Path
-    ) -> None:
+    def test_extend_mode_skips_existing_image(self, tmp_path: Path) -> None:
         images = _make_plate_tiled_images()
         zarr_dir = str(tmp_path)
         setup_plates(
@@ -284,9 +280,7 @@ class TestSetupPlates:
         assert (tmp_path / "PlateB.zarr").exists()
 
     def test_writes_condition_table(self, tmp_path: Path) -> None:
-        images = _make_plate_tiled_images(
-            attributes={"drug": ["DMSO"]}
-        )
+        images = _make_plate_tiled_images(attributes={"drug": ["DMSO"]})
         zarr_dir = str(tmp_path)
         setup_plates(
             zarr_dir=zarr_dir,
@@ -308,9 +302,7 @@ class TestSetupOmeZarrCollection:
                 zarr_dir="/tmp/test",
             )
 
-    def test_dispatches_to_registered_handler(
-        self, tmp_path: Path
-    ) -> None:
+    def test_dispatches_to_registered_handler(self, tmp_path: Path) -> None:
         images = _make_plate_tiled_images()
         setup_ome_zarr_collection(
             tiled_images=images,

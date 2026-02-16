@@ -150,9 +150,7 @@ class TestRemoveJson:
         remove_json("s3://bucket/test.json")
         assert "not implemented" in caplog.text.lower()
 
-    def test_unknown_url_logs_error(
-        self, caplog: pytest.LogCaptureFixture
-    ) -> None:
+    def test_unknown_url_logs_error(self, caplog: pytest.LogCaptureFixture) -> None:
         remove_json("gcs://bucket/test.json")
         assert "not implemented" in caplog.text.lower()
 
@@ -189,14 +187,10 @@ class TestCleanupIfExists:
         cleanup_if_exists(json_url)
         assert "error" in caplog.text.lower()
 
-    def test_s3_url_logs_error(
-        self, caplog: pytest.LogCaptureFixture
-    ) -> None:
+    def test_s3_url_logs_error(self, caplog: pytest.LogCaptureFixture) -> None:
         cleanup_if_exists("s3://bucket/store")
         assert "not implemented" in caplog.text.lower()
 
-    def test_unknown_url_logs_error(
-        self, caplog: pytest.LogCaptureFixture
-    ) -> None:
+    def test_unknown_url_logs_error(self, caplog: pytest.LogCaptureFixture) -> None:
         cleanup_if_exists("gcs://bucket/store")
         assert "not implemented" in caplog.text.lower()
