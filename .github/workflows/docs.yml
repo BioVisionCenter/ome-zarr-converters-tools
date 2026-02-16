@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - dev
     tags:
       - "v*"
 
@@ -35,7 +34,7 @@ jobs:
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-        
+
       - name: Deploy docs
         run: |
           VERSION=$(echo $GITHUB_REF | sed 's/refs\/tags\///' | sed 's/refs\/heads\///')
