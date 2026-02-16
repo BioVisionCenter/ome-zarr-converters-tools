@@ -13,7 +13,7 @@ A Python library that provides shared utilities for building OME-Zarr image conv
 1. **Abstraction layer** for building OME-Zarr images and HCS plates from microscope metadata and image data
 2. **Customizable pipeline** for filtering, validating, registering, and tiling images
 3. **Python API** for building custom converters, with optional [Fractal](https://fractal-analytics-platform.github.io/fractal-server/) integration for parallel processing
-4. **Flexible input**: parse tiles from CSV/DataFrame tables or construct them programmatically
+4. **Flexible input**: parse tiles from DataFrames or construct them programmatically
 
 ### Architecture Diagram
 
@@ -33,6 +33,9 @@ For detailed documentation, tutorials, and API reference, visit the [official do
 
 The documentation includes:
 
-- A step-by-step [tutorial](https://BioVisionCenter.github.io/ome-zarr-converters-tools/stable/tutorial/) covering both table-based and manual tile construction
-- [Pipeline configuration](https://BioVisionCenter.github.io/ome-zarr-converters-tools/stable/pipeline/) guide for filters, registration, tiling, and writer modes
-- Full [API reference](https://BioVisionCenter.github.io/ome-zarr-converters-tools/stable/api/)
+- [HCS Plate Tutorial](https://BioVisionCenter.github.io/ome-zarr-converters-tools/stable/hcs_tutorial/) -- converting plate-based microscopy data
+- [Single Images Tutorial](https://BioVisionCenter.github.io/ome-zarr-converters-tools/stable/images_tutorial/) -- converting standalone images
+- [Advanced Tutorial](https://BioVisionCenter.github.io/ome-zarr-converters-tools/stable/advanced_tutorial/) -- programmatic tile construction with custom loaders
+- [Fractal Tasks Guide](https://BioVisionCenter.github.io/ome-zarr-converters-tools/stable/converters_as_fractal_tasks/) -- building parallel converters with the Fractal platform
+- [Pipeline Configuration](https://BioVisionCenter.github.io/ome-zarr-converters-tools/stable/pipeline/) -- filters, registration, tiling, and writer modes
+- [API Reference](https://BioVisionCenter.github.io/ome-zarr-converters-tools/stable/api/)
