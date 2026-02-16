@@ -58,13 +58,6 @@ flowchart LR
     C --> D["4. Register<br>align positions"]
     D --> E["5. Setup<br>collection"]
     E --> F["6. Write<br>OME-Zarr"]
-
-    style A fill:#e0f2f1,stroke:#009688
-    style B fill:#e0f2f1,stroke:#009688
-    style C fill:#e0f2f1,stroke:#009688
-    style D fill:#fff3e0,stroke:#ff9800
-    style E fill:#fff3e0,stroke:#ff9800
-    style F fill:#fff3e0,stroke:#ff9800
 ```
 
 1. **Parse metadata** into `Tile` objects -- map raw images (e.g., TIFF files) to tiles with position, channel, and timepoint metadata
