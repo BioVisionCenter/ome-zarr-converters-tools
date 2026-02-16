@@ -1,52 +1,76 @@
 # Welcome to OME-Zarr Converters Tools
 
-OME-Zarr Converters Tools is a Python package that provides tooling for building OME-Zarr converters for the Fractal platform.
+OME-Zarr Converters Tools is a Python library that provides shared utilities for building OME-Zarr image converters. It handles tile management, image registration, filtering, validation, and writing OME-Zarr datasets, with optional [Fractal](https://fractal-analytics-platform.github.io/fractal-server/) integration for parallel processing.
 
 ## Features
 
-1. Abstraction layer for building OME-Zarr Image/HCS plates from the microscope metadata and image data 
-2. A fully customizable pipeline for filtering, validanting, and tiling images
-3. Python API for building custom converters, and fractal utilities for building converters tasks in fractal.
+1. **Abstraction layer** for building OME-Zarr images and HCS plates from microscope metadata and image data
+2. **Customizable pipeline** for filtering, validating, registering, and tiling images
+3. **Python API** for building custom converters, with optional Fractal integration for parallel processing
+4. **Flexible input**: parse tiles from CSV/DataFrame tables or construct them programmatically
 
-### Converters Tools Diagram
+### Architecture Diagram
 
-![alt text](docs/ome-zarr-converter-tools.png)
+![OME-Zarr Converters Tools Architecture](ome-zarr-converter-tools.png)
 
 ## Main Concepts
 
-In general a single microscopy image is not acquired in a single big array in a single file, but rather in multiple smaller tiles. How atomic these tiles are depends on the specific microscope and the acquisition settings.
+In general a single microscopy image is not acquired as a single big array in a single file, but rather as multiple smaller tiles. How atomic these tiles are depends on the specific microscope and the acquisition settings.
 
-To make building converters easier, OME-Zarr Converters Tools provides an abstraction layer that allows you to map these on-disk raw data to an Image object which we call `Tile`.
+To make building converters easier, OME-Zarr Converters Tools provides an abstraction layer that allows you to map these on-disk raw data to an image object which we call a `Tile`.
 
-Moreover, usually a single microscopy image is not composed of a single tile, but rather multiple tiles that are stitched together to form a complete image. We call these objects `TiledImage`.
+Usually a single microscopy image is not composed of a single tile, but rather multiple tiles that are stitched together to form a complete image. We call these composite objects `TiledImage`.
 
 ```mermaid
 flowchart LR
-    subgraph A[Metadata Parsing]
-    A100[img_B3_fov1_c0_z0.tif] --> B1[Tile1]
-    A101[img_B3_fov1_c0_z1.tif] --> B1
-    A200[img_B3_fov2_c0_z0.tif] --> B2[Tile2]
-    A201[img_B3_fov2_c0_z1.tif] --> B2
-    A20x[img_...] --> B3[Tile...]
-
-    B1 --> C1[TiledImage1]
-    B2 --> C1
-
-    B3 --> C2[TiledImage2]
+    subgraph Input
+    A1[CSV / DataFrame] --> B[Parse Tiles]
+    A2[Manual Construction] --> B
     end
 
-    C1 --> D[Init - Task]
-    C2 -->|"Many..."| D
-    D --> E[Compute Tile1]
-    D --> E1[Compute Tile2]
-    D -->|Many...| E2[Compute ...]
+    subgraph Pipeline
+    B --> C[Filter]
+    C --> D[Aggregate into TiledImages]
+    D --> E[Registration & Tiling]
+    E --> F[Write OME-Zarr]
+    end
 ```
 
-Additional OME-Zarr Converters Tools supports high-content screening HCS applications. In the context of HCS it is common to have multiple images that are related to each other in a single plate collection. Plates are standardized in OME-Zarr and OME-Zarr Converters Tools provides the necessary tools to correctly place the images in a plate collection.
+## Two Workflows
+
+OME-Zarr Converters Tools supports two main workflows, distinguished by the **collection type**:
+
+### HCS Plates (`ImageInPlate`)
+For high-content screening applications where multiple images are organized in a multi-well plate layout. Each image is placed in a specific well (row/column) of the plate, following the OME-Zarr HCS specification. Use `hcs_images_from_dataframe()` to parse tiles from a CSV table, or set `collection=ImageInPlate(plate_name=..., row=..., column=...)` when building tiles manually.
+
+### Single Images (`SingleImage`)
+For standalone image conversions without plate structure. Each `TiledImage` produces an independent OME-Zarr dataset. Use `single_images_from_dataframe()` to parse tiles from a CSV table, or set `collection=SingleImage(image_path=...)` when building tiles manually.
+
+See the [Tutorial](tutorial.ipynb) for a hands-on walkthrough of each workflow, and the `examples/` directory in the repository for sample input data.
+
+## Pipeline Overview
+
+The typical conversion pipeline follows these steps:
+
+1. **Parse metadata** into `Tile` objects (from CSV/DataFrame or programmatically)
+2. **Filter** tiles to include/exclude specific images or wells
+3. **Aggregate** tiles into `TiledImage` objects using `tiles_aggregation_pipeline()`
+4. **Register** tile positions using `build_default_registration_pipeline()`
+5. **Write** OME-Zarr datasets using `tiled_image_creation_pipeline()`
+
+See the [Pipeline Configuration](pipeline.md) page for details on filters, registration steps, tiling modes, and writer modes.
+
+## Extensibility
+
+The library is designed to be extended:
+
+- **Custom image loaders**: implement `ImageLoaderInterface` to load any image format (see [Tutorial](tutorial.ipynb#step-2-manual-tile-construction-advanced))
+- **Custom pipeline steps**: add [registration](pipeline.md#custom-registration-steps), [filtering](pipeline.md#custom-filters), or validation steps
+- **Custom collection types**: register new collection handlers via `add_collection_handler()`
 
 ## Installation
 
-To get started with OME-Zarr Converters Tools, you can install it via pip:
+Install via pip:
 
 ```bash
 pip install ome-zarr-converters-tools

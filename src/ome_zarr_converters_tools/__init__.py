@@ -1,4 +1,4 @@
-"""Tooling to build OME-Zarr HCS plate converters for the Fractal platform."""
+"""Shared utilities for building OME-Zarr image converters."""
 
 from importlib.metadata import version
 

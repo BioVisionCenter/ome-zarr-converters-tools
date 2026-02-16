@@ -88,6 +88,7 @@ markdown_extensions:
           format: !!python/name:pymdownx.superfences.fence_code_format
 
 nav:
-  - "OME-Zarr Converters Tools": index.md
-  - "Tutorials": tutorial.ipynb
+  - "Home": index.md
+  - "Tutorial": tutorial.ipynb
+  - "Pipeline Configuration": pipeline.md
   - "API Reference": api.md
