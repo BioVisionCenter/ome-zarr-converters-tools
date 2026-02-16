@@ -1,6 +1,6 @@
 # Welcome to OME-Zarr Converters Tools
 
-OME-Zarr Converters Tools is a Python library that provides shared utilities for building OME-Zarr image converters. It handles tile management, image registration, filtering, validation, and writing OME-Zarr datasets, with optional [Fractal](https://fractal-analytics-platform.github.io/fractal-server/) integration for parallel processing.
+OME-Zarr Converters Tools is a Python library that provides shared utilities for building OME-Zarr image converters. It handles tile management, image registration, filtering, validation, and writing OME-Zarr datasets. Moreover, it offers [Fractal](https://fractal-analytics-platform.github.io/) specific utilities to facilitate building converters as Fractal tasks.
 
 ## Features
 
@@ -8,10 +8,6 @@ OME-Zarr Converters Tools is a Python library that provides shared utilities for
 2. **Customizable pipeline** for filtering, validating, registering, and tiling images
 3. **Python API** for building custom converters, with optional Fractal integration for parallel processing
 4. **Flexible input**: parse tiles from DataFrame tables or construct them programmatically
-
-### Architecture Diagram
-
-![OME-Zarr Converters Tools Architecture](ome-zarr-converter-tools.png)
 
 ## Main Concepts
 
@@ -30,7 +26,7 @@ OME-Zarr Converters Tools is particularly designed to convter complex microscopy
 - **HCS Plates**: for high-content screening applications where multiple images are organized in a multi-well plate layout. Each image is placed in a specific well (row/column) of the plate, following the OME-Zarr HCS specification.
 - **Single Images**: for standalone OME-Zarr images conversions without plate structure.
 
-See the [Tutorial](tutorial.ipynb) for a hands-on walkthrough on how to use the library to build a converter for both collection types. 
+See the [HCS Plate Tutorial](hcs_tutorial.ipynb) or the [Single Images Tutorial](images_tutorial.ipynb) for hands-on walkthroughs on how to use the library to build a converter for both collection types.
 
 ## Pipeline Overview
 
@@ -49,7 +45,7 @@ To know more about the different [Pipeline Configuration](pipeline.md) options, 
 
 The library is designed to be extended:
 
-- **Custom image loaders**: implement `ImageLoaderInterface` to load any image format (see [Tutorial](tutorial.ipynb#step-2-manual-tile-construction-advanced))
+- **Custom image loaders**: implement `ImageLoaderInterface` to load any image format (see [Advanced Tutorial](advanced_tutorial.ipynb))
 - **Custom pipeline steps**: add [registration](pipeline.md#custom-registration-steps), [filtering](pipeline.md#custom-filters), or validation steps
 - **Custom collection types**: register new collection handlers via `add_collection_handler()`
 

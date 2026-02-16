@@ -89,6 +89,10 @@ markdown_extensions:
 
 nav:
   - "Home": index.md
-  - "Tutorial": tutorial.ipynb
+  - "Tutorials":
+    - "HCS Plate": hcs_tutorial.ipynb
+    - "Single Images": images_tutorial.ipynb
+    - "Advanced: Programmatic Tiles": advanced_tutorial.ipynb
+  - "Fractal Tasks": converters_as_fractal_tasks.md
   - "Pipeline Configuration": pipeline.md
   - "API Reference": api.md
