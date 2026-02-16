@@ -1,14 +1,10 @@
 """Unit tests for fractal._compute_task."""
 
-from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-from ome_zarr_converters_tools.core import AttributeType
 from ome_zarr_converters_tools.fractal._compute_task import (
-    ImageListUpdateDict,
-    UpdateDict,
     _build_image_list_update,
     _format_attribute_value,
     generic_compute_task,
@@ -17,7 +13,6 @@ from ome_zarr_converters_tools.fractal._models import ConvertParallelInitArgs
 from ome_zarr_converters_tools.models import (
     ConverterOptions,
     ImageInPlate,
-    OverwriteMode,
     SingleImage,
 )
 
