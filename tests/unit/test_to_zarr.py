@@ -1,6 +1,5 @@
 """Unit tests for pipelines._to_zarr writing functions."""
 
-from typing import Any
 from unittest.mock import MagicMock
 
 import numpy as np

@@ -119,5 +119,5 @@ class TestDefaultImageLoader:
 
     def test_extra_fields_ignored(self) -> None:
         # ImageLoaderInterface has extra="ignore"
-        loader = DefaultImageLoader(file_path="test.npy", unknown_field="value")
+        loader = DefaultImageLoader(file_path="test.npy", unknown_field="value")  # type: ignore
         assert loader.file_path == "test.npy"

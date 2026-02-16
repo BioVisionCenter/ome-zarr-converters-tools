@@ -1,8 +1,5 @@
 """Unit tests for pipelines._collection_setup."""
 
-from typing import Any
-from unittest.mock import MagicMock
-
 import polars as pl
 import pytest
 
@@ -18,7 +15,6 @@ from ome_zarr_converters_tools.models import (
     ConverterOptions,
     ImageInPlate,
     OverwriteMode,
-    SingleImage,
 )
 from ome_zarr_converters_tools.pipelines._collection_setup import (
     _collection_setup_registry,
@@ -41,7 +37,9 @@ def _make_plate_tiled_images(
     )
     all_tiles = []
     for i in range(num_images):
-        coll = ImageInPlate(plate_name="TestPlate", row="A", column=i + 1, acquisition=0)
+        coll = ImageInPlate(
+            plate_name="TestPlate", row="A", column=i + 1, acquisition=0
+        )
         tile = build_dummy_tile(
             fov_name=f"FOV_{i}",
             start=StartPosition(x=0, y=0),
@@ -66,9 +64,7 @@ class TestSetupConditionTable:
         assert result is None
 
     def test_with_attributes(self) -> None:
-        images = _make_plate_tiled_images(
-            attributes={"drug": ["DMSO"], "dose": [1.0]}
-        )
+        images = _make_plate_tiled_images(attributes={"drug": ["DMSO"], "dose": [1.0]})
         result = _setup_condition_table(images)
         assert result is not None
         assert isinstance(result, pl.DataFrame)

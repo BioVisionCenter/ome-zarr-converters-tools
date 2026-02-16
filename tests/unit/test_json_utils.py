@@ -23,7 +23,6 @@ from ome_zarr_converters_tools.models import (
     AcquisitionDetails,
     ChannelInfo,
     ConverterOptions,
-    DefaultImageLoader,
     SingleImage,
 )
 
@@ -80,9 +79,7 @@ class TestDumpToJson:
 
 
 class TestTiledImageFromJson:
-    def test_roundtrip(
-        self, sample_tiled_image: TiledImage, tmp_path: Path
-    ) -> None:
+    def test_roundtrip(self, sample_tiled_image: TiledImage, tmp_path: Path) -> None:
         json_url = str(tmp_path / "json_store")
         json_path = dump_to_json(json_url, sample_tiled_image)
         loaded = tiled_image_from_json(
@@ -104,9 +101,7 @@ class TestTiledImageFromJson:
 
 
 class TestRemoveJson:
-    def test_removes_file(
-        self, sample_tiled_image: TiledImage, tmp_path: Path
-    ) -> None:
+    def test_removes_file(self, sample_tiled_image: TiledImage, tmp_path: Path) -> None:
         json_url = str(tmp_path / "json_store")
         json_path = dump_to_json(json_url, sample_tiled_image)
         assert Path(json_path).exists()

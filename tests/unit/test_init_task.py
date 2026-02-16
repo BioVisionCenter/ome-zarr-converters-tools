@@ -3,10 +3,7 @@
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from ome_zarr_converters_tools.core._dummy_tiles import (
-    DummyLoader,
     StartPosition,
     TileShape,
     build_dummy_tile,
@@ -146,9 +143,7 @@ class TestBuildParallelizationList:
 
 
 class TestSetupImagesForConversion:
-    @patch(
-        "ome_zarr_converters_tools.fractal._init_task.setup_ome_zarr_collection"
-    )
+    @patch("ome_zarr_converters_tools.fractal._init_task.setup_ome_zarr_collection")
     def test_calls_setup_collection(
         self, mock_setup: MagicMock, tmp_path: Path
     ) -> None:
@@ -167,9 +162,7 @@ class TestSetupImagesForConversion:
         assert call_kwargs["collection_type"] == "SingleImage"
         assert call_kwargs["zarr_dir"] == zarr_dir
 
-    @patch(
-        "ome_zarr_converters_tools.fractal._init_task.setup_ome_zarr_collection"
-    )
+    @patch("ome_zarr_converters_tools.fractal._init_task.setup_ome_zarr_collection")
     def test_returns_parallelization_list(
         self, mock_setup: MagicMock, tmp_path: Path
     ) -> None:
@@ -188,9 +181,7 @@ class TestSetupImagesForConversion:
             assert "zarr_url" in entry
             assert "init_args" in entry
 
-    @patch(
-        "ome_zarr_converters_tools.fractal._init_task.setup_ome_zarr_collection"
-    )
+    @patch("ome_zarr_converters_tools.fractal._init_task.setup_ome_zarr_collection")
     def test_overwrite_mode_forwarded(
         self, mock_setup: MagicMock, tmp_path: Path
     ) -> None:

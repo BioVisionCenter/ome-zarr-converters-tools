@@ -55,7 +55,7 @@ class TestAcquisitionDetails:
                 pixelsize=1.0,
                 z_spacing=1.0,
                 t_spacing=1.0,
-                unknown_field="value",
+                unknown_field="value",  # type: ignore
             )
 
     def test_acquisition_details_axes_order(self) -> None:
@@ -169,9 +169,7 @@ class TestCollectionModels:
         single = SingleImage(image_path="my_image")
         assert single.path() == "my_image.zarr"
 
-        plate = ImageInPlate(
-            plate_name="MyPlate", row="B", column=3, acquisition=0
-        )
+        plate = ImageInPlate(plate_name="MyPlate", row="B", column=3, acquisition=0)
         assert plate.plate_path() == "MyPlate.zarr"
         assert plate.well_path() == "B/03"
         assert plate.path_in_well() == "0"

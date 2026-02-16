@@ -1,7 +1,5 @@
 """Unit tests for pipelines._write_ome_zarr helper functions."""
 
-from typing import Any
-
 import polars as pl
 import pytest
 from ngio import PixelSize, Roi, RoiSlice
@@ -138,6 +136,8 @@ class TestRegionToPixelCoordinates:
         assert len(result) == 1
         x_slice = result[0].roi.get("x")
         y_slice = result[0].roi.get("y")
+        assert x_slice is not None
+        assert y_slice is not None
         # 10.0 / 0.5 = 20, 100.0 / 0.5 = 200
         assert x_slice.start == 20
         assert x_slice.length == 200
@@ -159,6 +159,7 @@ class TestRegionToPixelCoordinates:
         pixel_size = PixelSize(x=1.0, y=1.0, z=1.0, t=1.0)
         result = _region_to_pixel_coordinates(regions, pixel_size)
         x_slice = result[0].roi.get("x")
+        assert x_slice is not None
         assert x_slice.start == round(0.65)
         assert x_slice.length == round(1.95)
 
@@ -189,6 +190,7 @@ class TestAttributeToConditionTable:
         # table_data may be LazyFrame or DataFrame depending on ngio version
         if isinstance(df, pl.LazyFrame):
             df = df.collect()
+        assert isinstance(df, pl.DataFrame)
         assert df.shape == (2, 2)
         assert "drug" in df.columns
         assert "dose" in df.columns
@@ -204,7 +206,7 @@ class TestAttributeToConditionTable:
 
     def test_single_attribute(self) -> None:
         attrs = {"tissue": ["brain"]}
-        table = _attribute_to_condition_table(attrs)
+        table = _attribute_to_condition_table(attrs)  # type: ignore
         assert table is not None
         df = table.table_data
         if isinstance(df, pl.LazyFrame):
@@ -248,4 +250,4 @@ class TestBuildChannelsMeta:
         result = build_channels_meta(img)
         assert result is not None
         # Default color is blue -> 0000FF (with or without # prefix)
-        assert "0000FF" in result[0].channel_visualisation.color
+        assert "0000FF" in result[0].channel_visualisation.color  # type: ignore

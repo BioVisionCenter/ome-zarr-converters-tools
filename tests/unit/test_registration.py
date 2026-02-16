@@ -99,8 +99,12 @@ class TestAlignment:
         ]
         aligned = _align_xy_regions(regions)
         for region in aligned:
-            assert region.roi.get("x").start == 10.0
-            assert region.roi.get("y").start == 20.0
+            x_slice = region.roi.get("x")
+            assert x_slice is not None
+            assert x_slice.start == 10.0
+            y_slice = region.roi.get("y")
+            assert y_slice is not None
+            assert y_slice.start == 20.0
 
     def test_align_z_warns(self) -> None:
         regions = [_make_world_tile_slice(0.0, 0.0, 10.0, 10.0)]
@@ -149,25 +153,37 @@ class TestAlignment:
         )
         corrections = AlignmentCorrections(align_xy=True)
         result = apply_fov_alignment_corrections(images[0], corrections)
-        first_x = result.regions[0].roi.get("x").start
+        x_slice = result.regions[0].roi.get("x")
+        assert x_slice is not None
+        first_x = x_slice.start
         for region in result.regions:
-            assert region.roi.get("x").start == first_x
+            x_slice = region.roi.get("x")
+            assert x_slice is not None
+            assert x_slice.start == first_x
 
     def test_apply_align_to_pixel_grid_floor(self) -> None:
         regions = [_make_world_tile_slice(10.7, 20.3, 100.0, 100.0, "FOV")]
         img = _make_tiled_image(regions, pixelsize=1.0)
         result = apply_align_to_pixel_grid(img, mode="floor")
         roi = result.regions[0].roi
-        assert roi.get("x").start == 10.0
-        assert roi.get("y").start == 20.0
+        x_slice = roi.get("x")
+        assert x_slice is not None
+        y_slice = roi.get("y")
+        assert y_slice is not None
+        assert x_slice.start == 10.0
+        assert y_slice.start == 20.0
 
     def test_apply_align_to_pixel_grid_ceil(self) -> None:
         regions = [_make_world_tile_slice(10.1, 20.1, 100.0, 100.0, "FOV")]
         img = _make_tiled_image(regions, pixelsize=1.0)
         result = apply_align_to_pixel_grid(img, mode="ceil")
         roi = result.regions[0].roi
-        assert roi.get("x").start == 11.0
-        assert roi.get("y").start == 21.0
+        x_slice = roi.get("x")
+        assert x_slice is not None
+        y_slice = roi.get("y")
+        assert y_slice is not None
+        assert x_slice.start == 11.0
+        assert y_slice.start == 21.0
 
     def test_apply_remove_offsets(self) -> None:
         regions = [
@@ -176,10 +192,18 @@ class TestAlignment:
         ]
         img = _make_tiled_image(regions)
         result = apply_remove_offsets(img)
-        assert result.regions[0].roi.get("x").start == 0.0
-        assert result.regions[0].roi.get("y").start == 0.0
-        assert result.regions[1].roi.get("x").start == 64.0
-        assert result.regions[1].roi.get("y").start == 0.0
+        x_slice = result.regions[0].roi.get("x")
+        assert x_slice is not None
+        y_slice = result.regions[0].roi.get("y")
+        assert y_slice is not None
+        assert x_slice.start == 0.0
+        assert y_slice.start == 0.0
+        x_slice = result.regions[1].roi.get("x")
+        assert x_slice is not None
+        y_slice = result.regions[1].roi.get("y")
+        assert y_slice is not None
+        assert x_slice.start == 64.0
+        assert y_slice.start == 0.0
 
 
 # --- Snap utils tests ---

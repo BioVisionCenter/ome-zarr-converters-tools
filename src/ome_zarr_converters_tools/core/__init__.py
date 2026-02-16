@@ -1,6 +1,5 @@
 """Core utility module for OME-Zarr converters tools."""
 
-from ome_zarr_converters_tools.core._plotting import plot_tiled_images
 from ome_zarr_converters_tools.core._table import (
     hcs_images_from_dataframe,
     single_images_from_dataframe,
@@ -28,7 +27,6 @@ __all__ = [
     "hcs_images_from_dataframe",
     "join_url_paths",
     "local_url_to_path",
-    "plot_tiled_images",
     "single_images_from_dataframe",
     "tiled_image_from_tiles",
 ]

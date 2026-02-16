@@ -97,8 +97,10 @@ class TestAcquisitionOptions:
         ]
         opts = AcquisitionOptions(channels=new_channels)
         updated = opts.update_acquisition_details(acq)
-        assert len(updated.channels) == 2
-        assert updated.channels[0].channel_label == "GFP"
+        channels = updated.channels
+        assert channels is not None
+        assert len(channels) == 2
+        assert channels[0].channel_label == "GFP"
 
     def test_update_acquisition_details_pixel_info(self) -> None:
         acq = AcquisitionDetails(
