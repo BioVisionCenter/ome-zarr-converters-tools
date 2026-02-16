@@ -77,6 +77,12 @@ class TestDumpToJson:
         assert Path(result1).exists()
         assert Path(result2).exists()
 
+    def test_s3_url_raises_not_implemented(
+        self, sample_tiled_image: TiledImage
+    ) -> None:
+        with pytest.raises(NotImplementedError, match="S3"):
+            dump_to_json("s3://bucket/store", sample_tiled_image)
+
 
 class TestTiledImageFromJson:
     def test_roundtrip(self, sample_tiled_image: TiledImage, tmp_path: Path) -> None:
@@ -95,6 +101,25 @@ class TestTiledImageFromJson:
         with pytest.raises(FileNotFoundError):
             tiled_image_from_json(
                 str(tmp_path / "nonexistent.json"),
+                collection_type=SingleImage,
+                image_loader_type=DummyLoader,
+            )
+
+    def test_invalid_num_retries_raises(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("CONVERTERS_TOOLS_NUM_RETRIES", "0")
+        with pytest.raises(ValueError, match="NUM_RETRIES"):
+            tiled_image_from_json(
+                str(tmp_path / "test.json"),
+                collection_type=SingleImage,
+                image_loader_type=DummyLoader,
+            )
+
+    def test_s3_url_raises_not_implemented(self) -> None:
+        with pytest.raises(NotImplementedError, match="S3"):
+            tiled_image_from_json(
+                "s3://bucket/test.json",
                 collection_type=SingleImage,
                 image_loader_type=DummyLoader,
             )
@@ -121,6 +146,16 @@ class TestRemoveJson:
         # Should log an error but not raise
         remove_json(str(tmp_path / "nonexistent.json"))
 
+    def test_s3_url_logs_error(self, caplog: pytest.LogCaptureFixture) -> None:
+        remove_json("s3://bucket/test.json")
+        assert "not implemented" in caplog.text.lower()
+
+    def test_unknown_url_logs_error(
+        self, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        remove_json("gcs://bucket/test.json")
+        assert "not implemented" in caplog.text.lower()
+
 
 class TestCleanupIfExists:
     def test_cleans_directory(
@@ -136,3 +171,32 @@ class TestCleanupIfExists:
 
     def test_nonexistent_directory_does_not_raise(self, tmp_path: Path) -> None:
         cleanup_if_exists(str(tmp_path / "nonexistent_store"))
+
+    def test_cleanup_with_permission_error_logs(
+        self,
+        sample_tiled_image: TiledImage,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
+        json_url = str(tmp_path / "json_store")
+        dump_to_json(json_url, sample_tiled_image)
+
+        def _failing_iterdir(self):
+            raise PermissionError("no access")
+
+        monkeypatch.setattr(Path, "iterdir", _failing_iterdir)
+        cleanup_if_exists(json_url)
+        assert "error" in caplog.text.lower()
+
+    def test_s3_url_logs_error(
+        self, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        cleanup_if_exists("s3://bucket/store")
+        assert "not implemented" in caplog.text.lower()
+
+    def test_unknown_url_logs_error(
+        self, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        cleanup_if_exists("gcs://bucket/store")
+        assert "not implemented" in caplog.text.lower()
