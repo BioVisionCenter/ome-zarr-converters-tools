@@ -18,7 +18,7 @@ def validate_zarr_name(name: str) -> str:
         raise ValueError(
             f"Invalid Zarr name '{name}'. "
             "Names must only contain A-Z, a-z, 0-9, -, _, space, and . characters. "
-            "Addionally, names cannot have leading or trailing spaces, "
+            "Additionally, names cannot have leading or trailing spaces, "
             "start with '__', or consist only of dots."
         )
     return name

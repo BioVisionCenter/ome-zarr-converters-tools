@@ -1,3 +1,10 @@
+[default.extend-identifiers]
+# Don't correct these identifiers (matched as whole tokens)
+FOV = "FOV"
+FOVs = "FOVs"
+PNGs = "PNGs"
+
 [default.extend-words]
 # Don't correct the spelling of these words
 OME = "OME"
+caf = "caf"

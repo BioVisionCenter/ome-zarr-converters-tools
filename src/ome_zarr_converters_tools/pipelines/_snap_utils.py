@@ -182,7 +182,7 @@ def calculate_snap_to_corner_offset(
 ) -> dict[str, dict[str, float]]:
     """Remove overlap from a list of tiles by snapping them to a regular grid."""
     boxes = tiles_to_boxes(list(tiles.values()))
-    len_x, len_y = boxes[0].x_len, boxes[0].y_len  # Lenght consistency already checked
+    len_x, len_y = boxes[0].x_len, boxes[0].y_len  # Length consistency already checked
     num_x, num_y = len(tiles), len(tiles)  # Upper buound to the number of tiles
     perfect_grid = _build_perfect_grid_points(len_x, len_y, num_x, num_y)
     offsets = {}

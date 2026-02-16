@@ -54,13 +54,13 @@ class AlignmentCorrections(BaseModel):
 
     Attributes:
         align_xy: Whether to align the positions in the XY plane by FOV.
-            This addresses minor imprecision that offten occurs during
+            This addresses minor imprecision that often occurs during
             image acquisition.
         align_z: Whether to align the positions in the Z axis by FOV.
-            This addresses minor imprecision that offten occurs during
+            This addresses minor imprecision that often occurs during
             image acquisition.
         align_t: Whether to align the positions in the T axis by FOV.
-            This addresses minor imprecision that offten occurs during
+            This addresses minor imprecision that often occurs during
             image acquisition.
     """
 
