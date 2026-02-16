@@ -1,6 +1,6 @@
 # Pipeline Configuration
 
-The conversion pipeline processes tiles through several stages before writing the final OME-Zarr dataset. This page documents the configurable components: **filters**, **registration steps**, **tiling modes**, **writer modes**, and **overwrite modes**.
+The conversion pipeline processes tiles through several stages before writing the final OME-Zarr dataset. This page documents the configurable components: **acquisition details**, **converter options**, **filters**, **registration steps**, **tiling modes**, **writer modes**, and **overwrite modes**.
 
 ## ConverterOptions
 
@@ -18,6 +18,101 @@ opts = ConverterOptions(
 ```
 
 When passed to `tiles_aggregation_pipeline()` and `tiled_image_creation_pipeline()`, its fields are used as defaults. You can also override specific settings (like `writer_mode` or `tiling_mode`) by passing them directly to the pipeline functions.
+
+## AcquisitionDetails
+
+`AcquisitionDetails` describes the physical properties of the acquisition: pixel sizes, coordinate systems, channel metadata, and stage corrections. It is passed when building `Tile` objects (via `hcs_images_from_dataframe()` or `single_images_from_dataframe()`) and is shared by all tiles in the same acquisition.
+
+```python
+from ome_zarr_converters_tools import AcquisitionDetails, ChannelInfo
+
+acq = AcquisitionDetails(
+    pixelsize=0.65,          # XY pixel size in micrometers
+    z_spacing=5.0,           # Z-step size in micrometers
+    t_spacing=1.0,           # Time interval in seconds
+    channels=[
+        ChannelInfo(channel_label="DAPI", wavelength_id="405"),
+        ChannelInfo(channel_label="GFP", wavelength_id="488"),
+    ],
+    axes=["c", "z", "y", "x"],  # Subset of t, c, z, y, x in canonical order
+    start_x_coo="world",    # How to interpret start_x values
+    start_y_coo="world",
+    start_z_coo="pixel",
+    start_t_coo="pixel",
+)
+```
+
+### Coordinate Systems
+
+Each `start_*` and `length_*` dimension has a coordinate system setting (`"world"` or `"pixel"`):
+
+| Parameter | Default | Meaning |
+|-----------|---------|---------|
+| `start_x_coo`, `start_y_coo` | `"world"` | Interpret start positions as physical units (micrometers). The library divides by `pixelsize` to convert to pixels. |
+| `start_z_coo` | `"world"` | Interpret Z start as physical units. Divided by `z_spacing` to convert to pixels. |
+| `start_t_coo` | `"world"` | Interpret T start as physical units (seconds). Divided by `t_spacing`. |
+| `length_x_coo`, `length_y_coo` | `"pixel"` | Interpret lengths as pixel counts (no conversion). |
+| `length_z_coo` | `"pixel"` | Interpret Z length as number of slices. |
+| `length_t_coo` | `"pixel"` | Interpret T length as number of time points. |
+
+!!! tip
+    Most microscopes report stage positions in physical units (micrometers) and image dimensions in pixels. The defaults (`start_*_coo="world"`, `length_*_coo="pixel"`) match this convention. If your metadata already provides pixel coordinates for positions, set `start_x_coo="pixel"` etc.
+
+### Channels
+
+Channel metadata is defined with `ChannelInfo`:
+
+```python
+from ome_zarr_converters_tools import ChannelInfo
+
+channels = [
+    ChannelInfo(channel_label="DAPI", wavelength_id="405", colors="Blue (0000FF)"),
+    ChannelInfo(channel_label="GFP", wavelength_id="488", colors="Green (00FF00)"),
+]
+```
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `channel_label` | Yes | Display name for the channel |
+| `wavelength_id` | No | Alternative identifier, useful for illumination correction in multiplexed acquisitions |
+| `colors` | No | Visualization color (default: `Blue`). Available: `Blue`, `Red`, `Yellow`, `Magenta`, `Cyan`, `Gray`, `Green`, `Orange`, `Purple`, `Teal`, `Lime`, `Amber`, `Pink`, `Navy`, `Maroon`, `Olive`, `Coral`, `Violet` |
+
+### Axes
+
+The `axes` parameter defines which dimensions the output image will have. It must be a subset of `["t", "c", "z", "y", "x"]` in canonical order:
+
+```python
+axes=["t", "c", "z", "y", "x"]  # 5D time-series (default)
+axes=["c", "z", "y", "x"]       # 4D stack (no time)
+axes=["z", "y", "x"]            # 3D single-channel
+axes=["y", "x"]                 # 2D (minimum)
+```
+
+### Stage Corrections
+
+Some microscopes have inverted or swapped stage axes. Use `StageCorrections` to fix this:
+
+```python
+from ome_zarr_converters_tools import AcquisitionDetails, StageCorrections
+
+acq = AcquisitionDetails(
+    pixelsize=0.65,
+    stage_corrections=StageCorrections(
+        flip_x=True,    # Invert X positions
+        flip_y=False,   # Keep Y as-is
+        swap_xy=False,  # Don't swap X and Y
+    ),
+)
+```
+
+These corrections are applied when converting `Tile` positions to ROIs during the registration pipeline.
+
+### Other Fields
+
+| Field | Default | Description |
+|-------|---------|-------------|
+| `data_type` | `None` | Force the output data type (`"uint8"`, `"uint16"`, or `"uint32"`). If `None`, inferred from the first tile's image data. |
+| `condition_table_path` | `None` | Path to an external condition table CSV. When set, this is stored in the plate metadata. |
 
 ## Filters
 

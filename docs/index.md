@@ -4,42 +4,77 @@ OME-Zarr Converters Tools is a Python library that provides shared utilities for
 
 ## Features
 
-1. **Abstraction layer** for building OME-Zarr images and HCS plates from microscope metadata and image data
-2. **Customizable pipeline** for filtering, validating, registering, and tiling images
-3. **Python API** for building custom converters, with optional Fractal integration for parallel processing
-4. **Flexible input**: parse tiles from DataFrame tables or construct them programmatically
+- **Abstraction layer** for building OME-Zarr images and HCS plates from microscope metadata and image data
+- **Customizable pipeline** for filtering, validating, registering, and tiling images
+- **Python API** for building custom converters, with optional Fractal integration for parallel processing
+- **Flexible input**: parse tiles from DataFrames or construct them programmatically
 
 ## Main Concepts
 
-In general a single microscopy image is not acquired as a single big array in a single file, but rather as multiple smaller tiles. How atomic these tiles are depends on the specific microscope and the acquisition settings.
+A microscopy image is typically not acquired as a single file, but as multiple smaller **tiles**.
+How atomic these tiles are depends on the microscope and the acquisition settings.
 
-To make building converters easier, OME-Zarr Converters Tools provides an abstraction layer that allows you to map these on-disk raw data to an image object which we call a `Tile`.
+OME-Zarr Converters Tools provides an abstraction layer that maps on-disk raw data to `Tile` objects.
+Multiple tiles are then aggregated into a `TiledImage` -- the composite object that represents one complete image in the output OME-Zarr dataset.
 
-Usually a single microscopy image is not composed of a single tile, but rather multiple tiles that are stitched together to form a complete image. We call these composite objects `TiledImage`.
-
-![OME-Zarr Converters Tools Architecture](ome-zarr-converter-tools.png)
+```mermaid
+flowchart LR
+    subgraph Input
+        F1["Image file 1"]
+        F2["Image file 2"]
+        F3["Image file N"]
+    end
+    subgraph Tiles
+        T1["Tile 1<br>FOV_1, Z=0"]
+        T2["Tile 2<br>FOV_1, Z=1"]
+        T3["Tile N<br>FOV_2, Z=0"]
+    end
+    subgraph Output
+        TI["TiledImage<br>All FOVs stitched"]
+    end
+    F1 --> T1
+    F2 --> T2
+    F3 --> T3
+    T1 --> TI
+    T2 --> TI
+    T3 --> TI
+```
 
 ## Collection Types
 
-OME-Zarr Converters Tools is particularly designed to convter complex microscopy acquisitions. The library provides two main collection types to handle different acquisition structures:
+The library supports two collection types for different acquisition structures:
 
-- **HCS Plates**: for high-content screening applications where multiple images are organized in a multi-well plate layout. Each image is placed in a specific well (row/column) of the plate, following the OME-Zarr HCS specification.
-- **Single Images**: for standalone OME-Zarr images conversions without plate structure.
-
-See the [HCS Plate Tutorial](hcs_tutorial.ipynb) or the [Single Images Tutorial](images_tutorial.ipynb) for hands-on walkthroughs on how to use the library to build a converter for both collection types.
+- **HCS Plates**: for high-content screening applications where images are organized in a multi-well plate layout, following the OME-Zarr HCS specification.
+- **Single Images**: for standalone OME-Zarr image conversions without plate structure.
 
 ## Pipeline Overview
 
-The typical conversion pipeline follows these steps:
+The conversion pipeline follows these steps:
 
-1. **Parse metadata** into `Tile` objects, this step maps the raw images (e.g. TIFF files) to `Tile` objects with associated metadata (e.g. position, channel, timepoint)
-2. **Filter** tiles can be processed using custom filters to exclude unwanted tiles (e.g. exclude failed acquisitions, filter certain channels, etc.)
-3. **Aggregate** tiles `Tiles` into `TiledImage` objects. `Tiles` define partial slices of the final image, so we need to aggregate them into `TiledImage` objects that represent the complete image. This step also defines the final layout of the OME-Zarr dataset (e.g. how channels, timepoints, and z-slices are organized)
-4. **Register** `TiledImage` objects to correct for any misalignment between tiles (e.g. due to inacurate stage positions, inhomogeneous z-step, etc.). In this ste we can also tile fields of view into a single mosaic image if needed.
-5. **Setup Collection**: define the collection type (HCS plate or single image) and set up the OME-Zarr metadata accordingly
-6. **Write** OME-Zarr images to disk.
+```mermaid
+flowchart LR
+    A["1. Parse<br>metadata"] --> B["2. Filter<br>tiles"]
+    B --> C["3. Aggregate<br>into TiledImages"]
+    C --> D["4. Register<br>align positions"]
+    D --> E["5. Setup<br>collection"]
+    E --> F["6. Write<br>OME-Zarr"]
 
-To know more about the different [Pipeline Configuration](pipeline.md) options, see the page for details on filters, registration steps, tiling modes, and writer modes.
+    style A fill:#e0f2f1,stroke:#009688
+    style B fill:#e0f2f1,stroke:#009688
+    style C fill:#e0f2f1,stroke:#009688
+    style D fill:#fff3e0,stroke:#ff9800
+    style E fill:#fff3e0,stroke:#ff9800
+    style F fill:#e8f5e9,stroke:#4caf50
+```
+
+1. **Parse metadata** into `Tile` objects -- map raw images (e.g., TIFF files) to tiles with position, channel, and timepoint metadata
+2. **Filter** tiles using custom filters to exclude unwanted data (e.g., failed acquisitions, specific channels)
+3. **Aggregate** tiles into `TiledImage` objects that represent complete images with their final axis layout
+4. **Register** tile positions to correct for stage inaccuracies and tile overlapping FOVs into mosaics
+5. **Setup collection** -- create the HCS plate or single image structure with OME-Zarr metadata
+6. **Write** OME-Zarr images to disk
+
+See [Pipeline Configuration](pipeline.md) for details on filters, registration steps, tiling modes, and writer modes.
 
 ## Extensibility
 
@@ -50,8 +85,6 @@ The library is designed to be extended:
 - **Custom collection types**: register new collection handlers via `add_collection_handler()`
 
 ## Installation
-
-Install via pip:
 
 ```bash
 pip install ome-zarr-converters-tools
