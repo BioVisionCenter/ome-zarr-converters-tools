@@ -22,6 +22,14 @@ graph LR
     B --> E[OME-Zarr Image 1]
     C --> F[OME-Zarr Image 2]
     D --> G[OME-Zarr Image N]
+
+    style A fill:#e0f2f1,stroke:#009688
+    style B fill:#fff3e0,stroke:#ff9800
+    style C fill:#fff3e0,stroke:#ff9800
+    style D fill:#fff3e0,stroke:#ff9800
+    style E fill:#e8f5e9,stroke:#4caf50
+    style F fill:#e8f5e9,stroke:#4caf50
+    style G fill:#e8f5e9,stroke:#4caf50
 ```
 
 ## Init Task

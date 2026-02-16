@@ -64,7 +64,7 @@ flowchart LR
     style C fill:#e0f2f1,stroke:#009688
     style D fill:#fff3e0,stroke:#ff9800
     style E fill:#fff3e0,stroke:#ff9800
-    style F fill:#e8f5e9,stroke:#4caf50
+    style F fill:#fff3e0,stroke:#ff9800
 ```
 
 1. **Parse metadata** into `Tile` objects -- map raw images (e.g., TIFF files) to tiles with position, channel, and timepoint metadata
