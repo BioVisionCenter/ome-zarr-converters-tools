@@ -328,6 +328,45 @@ class TestSnapUtils:
         with pytest.raises(ValueError, match="missing the 'y' axis slice"):
             tiles_to_boxes([bad_tile])
 
+    def test_snap_to_grid_with_tolerance_accepts_varying_step(self) -> None:
+        # 3-tile row where column spacing alternates: 95 px then 96 px.
+        # The two steps differ by 1 px (mean = 95.5); tolerance=2 must accept.
+        tiles = {
+            "A": _make_pixel_tile_slice(0.0, 0.0, 100.0, 100.0, "A"),
+            "B": _make_pixel_tile_slice(95.0, 0.0, 100.0, 100.0, "B"),
+            "C": _make_pixel_tile_slice(191.0, 0.0, 100.0, 100.0, "C"),
+        }
+        offsets = calculate_snap_to_grid_offset(tiles, tolerance=2.0)
+        assert np.isclose(offsets["A"]["x"], 0.0)
+        assert np.isclose(offsets["A"]["y"], 0.0)
+        # C is exactly 2 mean-steps from A (191 / 95.5 == 2.0), so it snaps to 200
+        assert np.isclose(offsets["C"]["x"], 9.0)  # 191 -> 200
+        assert np.isclose(offsets["C"]["y"], 0.0)
+
+    def test_snap_to_grid_without_tolerance_rejects_varying_step(self) -> None:
+        # Same non-uniform spacing must raise with the default tolerance=0.
+        tiles = {
+            "A": _make_pixel_tile_slice(0.0, 0.0, 100.0, 100.0, "A"),
+            "B": _make_pixel_tile_slice(95.0, 0.0, 100.0, 100.0, "B"),
+            "C": _make_pixel_tile_slice(191.0, 0.0, 100.0, 100.0, "C"),
+        }
+        with pytest.raises(NotAGridError):
+            calculate_snap_to_grid_offset(tiles)
+
+    def test_check_if_regular_grid_tolerance_parameter(self) -> None:
+        # 3-tile row where inter-tile spacing varies by 1 px (95, 96).
+        # tolerance=0 rejects; tolerance=2 accepts.
+        tiles = [
+            _make_pixel_tile_slice(0.0, 0.0, 100.0, 100.0, "A"),
+            _make_pixel_tile_slice(95.0, 0.0, 100.0, 100.0, "B"),
+            _make_pixel_tile_slice(191.0, 0.0, 100.0, 100.0, "C"),
+        ]
+        with pytest.raises(NotAGridError):
+            check_if_regular_grid(tiles, tolerance=0.0)
+        grid = check_if_regular_grid(tiles, tolerance=2.0)
+        assert grid.length_x == 100.0
+        assert np.isclose(grid.offset_x, 95.5)  # mean of 95 and 96
+
 
 # --- Tiling tests ---
 

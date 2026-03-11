@@ -84,8 +84,16 @@ def tiles_to_boxes(tiles: list[TileSlice]) -> list[BBox]:
     return boxes
 
 
-def check_if_regular_grid(tiles: list[TileSlice], eps: float = 1e-6) -> GridSetup:
-    """Find the grid size of a list of tiles."""
+def check_if_regular_grid(tiles: list[TileSlice], tolerance: float = 0.0) -> GridSetup:
+    """Find the grid size of a list of tiles.
+
+    Args:
+        tiles: List of TileSlice objects to check.
+        tolerance: Maximum allowed deviation from the mean step size, in the same
+            units as the tile coordinates (e.g. pixels). Use this when stage
+            positioning introduces small jitter so that inter-tile spacing is not
+            perfectly uniform. Default 0.0 requires near-exact uniformity.
+    """
     bboxes = tiles_to_boxes(tiles)
     if len(tiles) == 1:
         # Trivial case of a single tile
@@ -98,43 +106,49 @@ def check_if_regular_grid(tiles: list[TileSlice], eps: float = 1e-6) -> GridSetu
     # Test 1: Check if all offsets are the same
     sorted_x = np.sort([box.x for box in bboxes])
     offsets_x = np.diff(sorted_x)
-    offsets_x = offsets_x[offsets_x > eps].tolist()
+    offsets_x = offsets_x[offsets_x > 1e-6].tolist()
 
     if len(offsets_x) == 0:
         offset_x = 1.0
-    elif np.allclose(offsets_x, offsets_x[0]):
-        offset_x = offsets_x[0]
+    elif np.allclose(offsets_x, np.mean(offsets_x), atol=tolerance, rtol=0):
+        offset_x = float(np.mean(offsets_x))
     else:
-        # Not all offsets are the same
+        # Not all offsets are within tolerance of each other
         unique_offsets = np.unique(offsets_x)
         raise NotAGridError(
             "Cannot tile to a regular grid: not all x offsets are "
-            f"the same: {unique_offsets}"
+            f"the same (tolerance={tolerance}): {unique_offsets}"
         )
     sorted_y = np.sort([box.y for box in bboxes])
     offsets_y = np.diff(sorted_y)
-    offsets_y = offsets_y[offsets_y > eps].tolist()
+    offsets_y = offsets_y[offsets_y > 1e-6].tolist()
     if len(offsets_y) == 0:
         offset_y = 1.0
-    elif np.allclose(offsets_y, offsets_y[0]):
-        offset_y = offsets_y[0]
+    elif np.allclose(offsets_y, np.mean(offsets_y), atol=tolerance, rtol=0):
+        offset_y = float(np.mean(offsets_y))
     else:
-        # Not all offsets are the same
+        # Not all offsets are within tolerance of each other
         unique_offsets = np.unique(offsets_y)
         raise NotAGridError(
             "Cannot tile to a regular grid: not all y offsets are "
-            f"the same: {unique_offsets}"
+            f"the same (tolerance={tolerance}): {unique_offsets}"
         )
     # Test 2: Verify that tile positions form the full Cartesian product of unique
-    # x and y coordinates (catches slanted, incomplete, or duplicated grids).
-    actual_positions = {(round(b.x, 6), round(b.y, 6)) for b in bboxes}
-    unique_x = sorted({round(b.x, 6) for b in bboxes})
-    unique_y = sorted({round(b.y, 6) for b in bboxes})
-    for xi in unique_x:
-        for yj in unique_y:
-            if (xi, yj) not in actual_positions:
+    # grid cells (catches slanted, incomplete, or duplicated grids). Grid-index
+    # clustering (round-to-nearest cell) is robust to small jitter when tolerance > 0.
+    min_x = min(b.x for b in bboxes)
+    min_y = min(b.y for b in bboxes)
+    actual_indices = {
+        (round((b.x - min_x) / offset_x), round((b.y - min_y) / offset_y))
+        for b in bboxes
+    }
+    unique_xi = sorted({round((b.x - min_x) / offset_x) for b in bboxes})
+    unique_yj = sorted({round((b.y - min_y) / offset_y) for b in bboxes})
+    for xi in unique_xi:
+        for yj in unique_yj:
+            if (xi, yj) not in actual_indices:
                 raise NotAGridError(
-                    f"Cannot tile to a regular grid: missing tile at position "
+                    f"Cannot tile to a regular grid: missing tile at grid index "
                     f"({xi}, {yj}). The grid may be incomplete or slanted."
                 )
     return GridSetup(
@@ -145,22 +159,24 @@ def check_if_regular_grid(tiles: list[TileSlice], eps: float = 1e-6) -> GridSetu
     )
 
 
+def _get_start(tile: TileSlice, axis: str) -> float:
+    s = tile.roi.get(axis)
+    if s is None:
+        raise ValueError(f"Tile ROI is missing the '{axis}' axis slice.")
+    if s.start is None:
+        raise ValueError(f"Tile ROI '{axis}' axis slice is missing start.")
+    return float(s.start)
+
+
 def calculate_snap_to_grid_offset(
     tiles: dict[str, TileSlice],
+    tolerance: float = 0.0,
 ) -> dict[str, dict[str, float]]:
     """Remove overlap from a list of tiles by snapping them to a regular grid."""
     if len(tiles) == 1:
         name = next(iter(tiles))
         return {name: {"x": 0.0, "y": 0.0}}
-    grid_setup = check_if_regular_grid(list(tiles.values()))
-
-    def _get_start(tile: TileSlice, axis: str) -> float:
-        s = tile.roi.get(axis)
-        if s is None:
-            raise ValueError(f"Tile ROI is missing the '{axis}' axis slice.")
-        if s.start is None:
-            raise ValueError(f"Tile ROI '{axis}' axis slice is missing start.")
-        return float(s.start)
+    grid_setup = check_if_regular_grid(list(tiles.values()), tolerance=tolerance)
 
     starts_x = [_get_start(t, "x") for t in tiles.values()]
     starts_y = [_get_start(t, "y") for t in tiles.values()]
