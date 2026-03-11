@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.5">
     
     
       
@@ -2960,7 +2960,24 @@ or it can directly contain a single TileFOVGroup.</p>
 <span class="normal"><a href="#__codelineno-0-285">285</a></span>
 <span class="normal"><a href="#__codelineno-0-286">286</a></span>
 <span class="normal"><a href="#__codelineno-0-287">287</a></span>
-<span class="normal"><a href="#__codelineno-0-288">288</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-166" name="__codelineno-0-166"></a><span class="k">class</span><span class="w"> </span><span class="nc">TiledImage</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">,</span> <span class="n">Generic</span><span class="p">[</span><span class="n">CollectionInterfaceType</span><span class="p">,</span> <span class="n">ImageLoaderInterfaceType</span><span class="p">]):</span>
+<span class="normal"><a href="#__codelineno-0-288">288</a></span>
+<span class="normal"><a href="#__codelineno-0-289">289</a></span>
+<span class="normal"><a href="#__codelineno-0-290">290</a></span>
+<span class="normal"><a href="#__codelineno-0-291">291</a></span>
+<span class="normal"><a href="#__codelineno-0-292">292</a></span>
+<span class="normal"><a href="#__codelineno-0-293">293</a></span>
+<span class="normal"><a href="#__codelineno-0-294">294</a></span>
+<span class="normal"><a href="#__codelineno-0-295">295</a></span>
+<span class="normal"><a href="#__codelineno-0-296">296</a></span>
+<span class="normal"><a href="#__codelineno-0-297">297</a></span>
+<span class="normal"><a href="#__codelineno-0-298">298</a></span>
+<span class="normal"><a href="#__codelineno-0-299">299</a></span>
+<span class="normal"><a href="#__codelineno-0-300">300</a></span>
+<span class="normal"><a href="#__codelineno-0-301">301</a></span>
+<span class="normal"><a href="#__codelineno-0-302">302</a></span>
+<span class="normal"><a href="#__codelineno-0-303">303</a></span>
+<span class="normal"><a href="#__codelineno-0-304">304</a></span>
+<span class="normal"><a href="#__codelineno-0-305">305</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-166" name="__codelineno-0-166"></a><span class="k">class</span><span class="w"> </span><span class="nc">TiledImage</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">,</span> <span class="n">Generic</span><span class="p">[</span><span class="n">CollectionInterfaceType</span><span class="p">,</span> <span class="n">ImageLoaderInterfaceType</span><span class="p">]):</span>
 <a id="__codelineno-0-167" name="__codelineno-0-167"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;A TiledImage is the unit that will be converted into an OME-Zarr image.</span>
 <a id="__codelineno-0-168" name="__codelineno-0-168"></a>
 <a id="__codelineno-0-169" name="__codelineno-0-169"></a><span class="sd">    Can contain multiple TileFOVGroups, each containing multiple TileSlices</span>
@@ -2977,112 +2994,129 @@ or it can directly contain a single TileFOVGroup.</p>
 <a id="__codelineno-0-180" name="__codelineno-0-180"></a>    <span class="n">axes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">CANONICAL_AXES_TYPE</span><span class="p">]</span>
 <a id="__codelineno-0-181" name="__codelineno-0-181"></a>    <span class="n">collection</span><span class="p">:</span> <span class="n">CollectionInterfaceType</span>
 <a id="__codelineno-0-182" name="__codelineno-0-182"></a>    <span class="n">channels</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ChannelInfo</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-<a id="__codelineno-0-183" name="__codelineno-0-183"></a>    <span class="n">attributes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">AttributeType</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
-<a id="__codelineno-0-184" name="__codelineno-0-184"></a>
-<a id="__codelineno-0-185" name="__codelineno-0-185"></a>    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">&quot;forbid&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-186" name="__codelineno-0-186"></a>
-<a id="__codelineno-0-187" name="__codelineno-0-187"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">group_by_fov</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">TileFOVGroup</span><span class="p">[</span><span class="n">ImageLoaderInterfaceType</span><span class="p">]]:</span>
-<a id="__codelineno-0-188" name="__codelineno-0-188"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Group TileSlices by field of view name.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-189" name="__codelineno-0-189"></a>        <span class="n">fov_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">TileSlice</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
-<a id="__codelineno-0-190" name="__codelineno-0-190"></a>        <span class="k">for</span> <span class="n">region</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">regions</span><span class="p">:</span>
-<a id="__codelineno-0-191" name="__codelineno-0-191"></a>            <span class="n">fov_name</span> <span class="o">=</span> <span class="n">region</span><span class="o">.</span><span class="n">roi</span><span class="o">.</span><span class="n">name</span>
-<a id="__codelineno-0-192" name="__codelineno-0-192"></a>            <span class="k">if</span> <span class="n">fov_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-193" name="__codelineno-0-193"></a>                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;TileSlice ROI must have a name to group by FOV.&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-194" name="__codelineno-0-194"></a>            <span class="k">if</span> <span class="n">fov_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fov_dict</span><span class="p">:</span>
-<a id="__codelineno-0-195" name="__codelineno-0-195"></a>                <span class="n">fov_dict</span><span class="p">[</span><span class="n">fov_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-<a id="__codelineno-0-196" name="__codelineno-0-196"></a>            <span class="n">fov_dict</span><span class="p">[</span><span class="n">fov_name</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">region</span><span class="p">)</span>
-<a id="__codelineno-0-197" name="__codelineno-0-197"></a>        <span class="k">return</span> <span class="p">[</span>
-<a id="__codelineno-0-198" name="__codelineno-0-198"></a>            <span class="n">TileFOVGroup</span><span class="p">(</span>
-<a id="__codelineno-0-199" name="__codelineno-0-199"></a>                <span class="n">fov_name</span><span class="o">=</span><span class="n">fov_name</span><span class="p">,</span>
-<a id="__codelineno-0-200" name="__codelineno-0-200"></a>                <span class="n">regions</span><span class="o">=</span><span class="n">regions</span><span class="p">,</span>
-<a id="__codelineno-0-201" name="__codelineno-0-201"></a>                <span class="n">axes</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">axes</span><span class="p">,</span>
-<a id="__codelineno-0-202" name="__codelineno-0-202"></a>                <span class="n">pixel_size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pixel_size</span><span class="p">,</span>
-<a id="__codelineno-0-203" name="__codelineno-0-203"></a>            <span class="p">)</span>
-<a id="__codelineno-0-204" name="__codelineno-0-204"></a>            <span class="k">for</span> <span class="n">fov_name</span><span class="p">,</span> <span class="n">regions</span> <span class="ow">in</span> <span class="n">fov_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-<a id="__codelineno-0-205" name="__codelineno-0-205"></a>        <span class="p">]</span>
-<a id="__codelineno-0-206" name="__codelineno-0-206"></a>
-<a id="__codelineno-0-207" name="__codelineno-0-207"></a>    <span class="nd">@property</span>
-<a id="__codelineno-0-208" name="__codelineno-0-208"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">pixel_size</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PixelSize</span><span class="p">:</span>
-<a id="__codelineno-0-209" name="__codelineno-0-209"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the PixelSize of the TiledImage.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-210" name="__codelineno-0-210"></a>        <span class="k">return</span> <span class="n">PixelSize</span><span class="p">(</span>
-<a id="__codelineno-0-211" name="__codelineno-0-211"></a>            <span class="n">x</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pixelsize</span><span class="p">,</span>
-<a id="__codelineno-0-212" name="__codelineno-0-212"></a>            <span class="n">y</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pixelsize</span><span class="p">,</span>
-<a id="__codelineno-0-213" name="__codelineno-0-213"></a>            <span class="n">z</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">z_spacing</span><span class="p">,</span>
-<a id="__codelineno-0-214" name="__codelineno-0-214"></a>            <span class="n">t</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">t_spacing</span><span class="p">,</span>
-<a id="__codelineno-0-215" name="__codelineno-0-215"></a>        <span class="p">)</span>
-<a id="__codelineno-0-216" name="__codelineno-0-216"></a>
-<a id="__codelineno-0-217" name="__codelineno-0-217"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">add_tile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tile</span><span class="p">:</span> <span class="n">Tile</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-218" name="__codelineno-0-218"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a Tile to the TiledImage as a TileRegion.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-219" name="__codelineno-0-219"></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">channels</span> <span class="o">!=</span> <span class="n">tile</span><span class="o">.</span><span class="n">acquisition_details</span><span class="o">.</span><span class="n">channels</span><span class="p">:</span>
-<a id="__codelineno-0-220" name="__codelineno-0-220"></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Tile channels do not match TiledImage channels.&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-221" name="__codelineno-0-221"></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">axes</span> <span class="o">!=</span> <span class="n">tile</span><span class="o">.</span><span class="n">acquisition_details</span><span class="o">.</span><span class="n">axes</span><span class="p">:</span>
-<a id="__codelineno-0-222" name="__codelineno-0-222"></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Tile axes do not match TiledImage axes.&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-223" name="__codelineno-0-223"></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pixelsize</span> <span class="o">!=</span> <span class="n">tile</span><span class="o">.</span><span class="n">acquisition_details</span><span class="o">.</span><span class="n">pixelsize</span><span class="p">:</span>
-<a id="__codelineno-0-224" name="__codelineno-0-224"></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Tile pixelsize does not match TiledImage pixelsize.&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-225" name="__codelineno-0-225"></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">z_spacing</span> <span class="o">!=</span> <span class="n">tile</span><span class="o">.</span><span class="n">acquisition_details</span><span class="o">.</span><span class="n">z_spacing</span><span class="p">:</span>
-<a id="__codelineno-0-226" name="__codelineno-0-226"></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Tile z_spacing does not match TiledImage z_spacing.&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-227" name="__codelineno-0-227"></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">t_spacing</span> <span class="o">!=</span> <span class="n">tile</span><span class="o">.</span><span class="n">acquisition_details</span><span class="o">.</span><span class="n">t_spacing</span><span class="p">:</span>
-<a id="__codelineno-0-228" name="__codelineno-0-228"></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Tile t_spacing does not match TiledImage t_spacing.&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-229" name="__codelineno-0-229"></a>        <span class="n">tile_region</span> <span class="o">=</span> <span class="n">TileSlice</span><span class="o">.</span><span class="n">from_tile</span><span class="p">(</span><span class="n">tile</span><span class="p">)</span>
-<a id="__codelineno-0-230" name="__codelineno-0-230"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">regions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tile_region</span><span class="p">)</span>
+<a id="__codelineno-0-183" name="__codelineno-0-183"></a>    <span class="n">translation</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span> <span class="o">|</span> <span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-0-184" name="__codelineno-0-184"></a>    <span class="n">attributes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">AttributeType</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+<a id="__codelineno-0-185" name="__codelineno-0-185"></a>
+<a id="__codelineno-0-186" name="__codelineno-0-186"></a>    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">&quot;forbid&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-187" name="__codelineno-0-187"></a>
+<a id="__codelineno-0-188" name="__codelineno-0-188"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">group_by_fov</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">TileFOVGroup</span><span class="p">[</span><span class="n">ImageLoaderInterfaceType</span><span class="p">]]:</span>
+<a id="__codelineno-0-189" name="__codelineno-0-189"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Group TileSlices by field of view name.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-190" name="__codelineno-0-190"></a>        <span class="n">fov_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">TileSlice</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+<a id="__codelineno-0-191" name="__codelineno-0-191"></a>        <span class="k">for</span> <span class="n">region</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">regions</span><span class="p">:</span>
+<a id="__codelineno-0-192" name="__codelineno-0-192"></a>            <span class="n">fov_name</span> <span class="o">=</span> <span class="n">region</span><span class="o">.</span><span class="n">roi</span><span class="o">.</span><span class="n">name</span>
+<a id="__codelineno-0-193" name="__codelineno-0-193"></a>            <span class="k">if</span> <span class="n">fov_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-194" name="__codelineno-0-194"></a>                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;TileSlice ROI must have a name to group by FOV.&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-195" name="__codelineno-0-195"></a>            <span class="k">if</span> <span class="n">fov_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fov_dict</span><span class="p">:</span>
+<a id="__codelineno-0-196" name="__codelineno-0-196"></a>                <span class="n">fov_dict</span><span class="p">[</span><span class="n">fov_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<a id="__codelineno-0-197" name="__codelineno-0-197"></a>            <span class="n">fov_dict</span><span class="p">[</span><span class="n">fov_name</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">region</span><span class="p">)</span>
+<a id="__codelineno-0-198" name="__codelineno-0-198"></a>        <span class="k">return</span> <span class="p">[</span>
+<a id="__codelineno-0-199" name="__codelineno-0-199"></a>            <span class="n">TileFOVGroup</span><span class="p">(</span>
+<a id="__codelineno-0-200" name="__codelineno-0-200"></a>                <span class="n">fov_name</span><span class="o">=</span><span class="n">fov_name</span><span class="p">,</span>
+<a id="__codelineno-0-201" name="__codelineno-0-201"></a>                <span class="n">regions</span><span class="o">=</span><span class="n">regions</span><span class="p">,</span>
+<a id="__codelineno-0-202" name="__codelineno-0-202"></a>                <span class="n">axes</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">axes</span><span class="p">,</span>
+<a id="__codelineno-0-203" name="__codelineno-0-203"></a>                <span class="n">pixel_size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pixel_size</span><span class="p">,</span>
+<a id="__codelineno-0-204" name="__codelineno-0-204"></a>            <span class="p">)</span>
+<a id="__codelineno-0-205" name="__codelineno-0-205"></a>            <span class="k">for</span> <span class="n">fov_name</span><span class="p">,</span> <span class="n">regions</span> <span class="ow">in</span> <span class="n">fov_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+<a id="__codelineno-0-206" name="__codelineno-0-206"></a>        <span class="p">]</span>
+<a id="__codelineno-0-207" name="__codelineno-0-207"></a>
+<a id="__codelineno-0-208" name="__codelineno-0-208"></a>    <span class="nd">@property</span>
+<a id="__codelineno-0-209" name="__codelineno-0-209"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">pixel_size</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PixelSize</span><span class="p">:</span>
+<a id="__codelineno-0-210" name="__codelineno-0-210"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the PixelSize of the TiledImage.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-211" name="__codelineno-0-211"></a>        <span class="k">return</span> <span class="n">PixelSize</span><span class="p">(</span>
+<a id="__codelineno-0-212" name="__codelineno-0-212"></a>            <span class="n">x</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pixelsize</span><span class="p">,</span>
+<a id="__codelineno-0-213" name="__codelineno-0-213"></a>            <span class="n">y</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pixelsize</span><span class="p">,</span>
+<a id="__codelineno-0-214" name="__codelineno-0-214"></a>            <span class="n">z</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">z_spacing</span><span class="p">,</span>
+<a id="__codelineno-0-215" name="__codelineno-0-215"></a>            <span class="n">t</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">t_spacing</span><span class="p">,</span>
+<a id="__codelineno-0-216" name="__codelineno-0-216"></a>        <span class="p">)</span>
+<a id="__codelineno-0-217" name="__codelineno-0-217"></a>
+<a id="__codelineno-0-218" name="__codelineno-0-218"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">add_tile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tile</span><span class="p">:</span> <span class="n">Tile</span><span class="p">,</span> <span class="n">add_translation</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-219" name="__codelineno-0-219"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a Tile to the TiledImage as a TileRegion.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-220" name="__codelineno-0-220"></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">channels</span> <span class="o">!=</span> <span class="n">tile</span><span class="o">.</span><span class="n">acquisition_details</span><span class="o">.</span><span class="n">channels</span><span class="p">:</span>
+<a id="__codelineno-0-221" name="__codelineno-0-221"></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Tile channels do not match TiledImage channels.&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-222" name="__codelineno-0-222"></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">axes</span> <span class="o">!=</span> <span class="n">tile</span><span class="o">.</span><span class="n">acquisition_details</span><span class="o">.</span><span class="n">axes</span><span class="p">:</span>
+<a id="__codelineno-0-223" name="__codelineno-0-223"></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Tile axes do not match TiledImage axes.&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-224" name="__codelineno-0-224"></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pixelsize</span> <span class="o">!=</span> <span class="n">tile</span><span class="o">.</span><span class="n">acquisition_details</span><span class="o">.</span><span class="n">pixelsize</span><span class="p">:</span>
+<a id="__codelineno-0-225" name="__codelineno-0-225"></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Tile pixelsize does not match TiledImage pixelsize.&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-226" name="__codelineno-0-226"></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">z_spacing</span> <span class="o">!=</span> <span class="n">tile</span><span class="o">.</span><span class="n">acquisition_details</span><span class="o">.</span><span class="n">z_spacing</span><span class="p">:</span>
+<a id="__codelineno-0-227" name="__codelineno-0-227"></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Tile z_spacing does not match TiledImage z_spacing.&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-228" name="__codelineno-0-228"></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">t_spacing</span> <span class="o">!=</span> <span class="n">tile</span><span class="o">.</span><span class="n">acquisition_details</span><span class="o">.</span><span class="n">t_spacing</span><span class="p">:</span>
+<a id="__codelineno-0-229" name="__codelineno-0-229"></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Tile t_spacing does not match TiledImage t_spacing.&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-230" name="__codelineno-0-230"></a>        <span class="n">tile_region</span> <span class="o">=</span> <span class="n">TileSlice</span><span class="o">.</span><span class="n">from_tile</span><span class="p">(</span><span class="n">tile</span><span class="p">)</span>
 <a id="__codelineno-0-231" name="__codelineno-0-231"></a>
-<a id="__codelineno-0-232" name="__codelineno-0-232"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">shape</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
-<a id="__codelineno-0-233" name="__codelineno-0-233"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the shape of the TiledImage by computing the union of all regions.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-234" name="__codelineno-0-234"></a>        <span class="k">return</span> <span class="n">shape_from_rois</span><span class="p">(</span>
-<a id="__codelineno-0-235" name="__codelineno-0-235"></a>            <span class="p">[</span><span class="n">region</span><span class="o">.</span><span class="n">roi</span> <span class="k">for</span> <span class="n">region</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">regions</span><span class="p">],</span>
-<a id="__codelineno-0-236" name="__codelineno-0-236"></a>            <span class="bp">self</span><span class="o">.</span><span class="n">axes</span><span class="p">,</span>
-<a id="__codelineno-0-237" name="__codelineno-0-237"></a>            <span class="bp">self</span><span class="o">.</span><span class="n">pixel_size</span><span class="p">,</span>
-<a id="__codelineno-0-238" name="__codelineno-0-238"></a>        <span class="p">)</span>
+<a id="__codelineno-0-232" name="__codelineno-0-232"></a>        <span class="k">if</span> <span class="n">add_translation</span><span class="p">:</span>
+<a id="__codelineno-0-233" name="__codelineno-0-233"></a>            <span class="c1"># This logic is a bit hacky to be improved</span>
+<a id="__codelineno-0-234" name="__codelineno-0-234"></a>            <span class="n">roi_extra</span> <span class="o">=</span> <span class="n">tile_region</span><span class="o">.</span><span class="n">roi</span><span class="o">.</span><span class="n">model_extra</span> <span class="ow">or</span> <span class="p">{}</span>
+<a id="__codelineno-0-235" name="__codelineno-0-235"></a>            <span class="n">translation</span> <span class="o">=</span> <span class="p">[]</span>
+<a id="__codelineno-0-236" name="__codelineno-0-236"></a>            <span class="k">for</span> <span class="n">ax</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">axes</span><span class="p">:</span>
+<a id="__codelineno-0-237" name="__codelineno-0-237"></a>                <span class="n">o_ax</span> <span class="o">=</span> <span class="n">roi_extra</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">ax</span><span class="si">}</span><span class="s2">_micrometer_original&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-238" name="__codelineno-0-238"></a>                <span class="n">translation</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">o_ax</span> <span class="k">if</span> <span class="n">o_ax</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mf">0.0</span><span class="p">)</span>
 <a id="__codelineno-0-239" name="__codelineno-0-239"></a>
-<a id="__codelineno-0-240" name="__codelineno-0-240"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">roi</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Roi</span><span class="p">:</span>
-<a id="__codelineno-0-241" name="__codelineno-0-241"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the global ROI covering all TileSlices in the TiledImage.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-242" name="__codelineno-0-242"></a>        <span class="n">union_roi</span> <span class="o">=</span> <span class="n">bulk_roi_union</span><span class="p">([</span><span class="n">region</span><span class="o">.</span><span class="n">roi</span> <span class="k">for</span> <span class="n">region</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">regions</span><span class="p">])</span>
-<a id="__codelineno-0-243" name="__codelineno-0-243"></a>        <span class="n">union_roi</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span>
-<a id="__codelineno-0-244" name="__codelineno-0-244"></a>        <span class="k">return</span> <span class="n">union_roi</span>
-<a id="__codelineno-0-245" name="__codelineno-0-245"></a>
-<a id="__codelineno-0-246" name="__codelineno-0-246"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">_prepare_slice_loading</span><span class="p">(</span>
-<a id="__codelineno-0-247" name="__codelineno-0-247"></a>        <span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">:</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-<a id="__codelineno-0-248" name="__codelineno-0-248"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">slice</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]]:</span>
-<a id="__codelineno-0-249" name="__codelineno-0-249"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Prepare the TileSlices and their corresponding slicing tuples for loading.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-250" name="__codelineno-0-250"></a>
-<a id="__codelineno-0-251" name="__codelineno-0-251"></a>        <span class="k">def</span><span class="w"> </span><span class="nf">make_loader</span><span class="p">(</span>
-<a id="__codelineno-0-252" name="__codelineno-0-252"></a>            <span class="n">region</span><span class="p">:</span> <span class="n">TileSlice</span><span class="p">,</span> <span class="n">resource</span><span class="p">:</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span>
-<a id="__codelineno-0-253" name="__codelineno-0-253"></a>        <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
-<a id="__codelineno-0-254" name="__codelineno-0-254"></a>            <span class="k">return</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">region</span><span class="o">.</span><span class="n">load_data</span><span class="p">(</span><span class="n">axes</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">axes</span><span class="p">,</span> <span class="n">resource</span><span class="o">=</span><span class="n">resource</span><span class="p">)</span>
-<a id="__codelineno-0-255" name="__codelineno-0-255"></a>
-<a id="__codelineno-0-256" name="__codelineno-0-256"></a>        <span class="n">slices</span> <span class="o">=</span> <span class="p">[]</span>
-<a id="__codelineno-0-257" name="__codelineno-0-257"></a>        <span class="k">for</span> <span class="n">region</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">regions</span><span class="p">:</span>
-<a id="__codelineno-0-258" name="__codelineno-0-258"></a>            <span class="n">roi_slice</span> <span class="o">=</span> <span class="n">region</span><span class="o">.</span><span class="n">roi</span><span class="o">.</span><span class="n">to_slicing_dict</span><span class="p">(</span><span class="n">pixel_size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pixel_size</span><span class="p">)</span>
-<a id="__codelineno-0-259" name="__codelineno-0-259"></a>            <span class="n">slicing</span> <span class="o">=</span> <span class="p">[]</span>
-<a id="__codelineno-0-260" name="__codelineno-0-260"></a>            <span class="k">for</span> <span class="n">axis</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">axes</span><span class="p">:</span>
-<a id="__codelineno-0-261" name="__codelineno-0-261"></a>                <span class="n">_slice</span> <span class="o">=</span> <span class="n">roi_slice</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span>
-<a id="__codelineno-0-262" name="__codelineno-0-262"></a>                <span class="n">slicing</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">slice</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">_slice</span><span class="o">.</span><span class="n">start</span><span class="p">),</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">_slice</span><span class="o">.</span><span class="n">stop</span><span class="p">)))</span>
-<a id="__codelineno-0-263" name="__codelineno-0-263"></a>            <span class="n">slicing</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">slicing</span><span class="p">)</span>
-<a id="__codelineno-0-264" name="__codelineno-0-264"></a>            <span class="n">slices</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">slicing</span><span class="p">,</span> <span class="n">make_loader</span><span class="p">(</span><span class="n">region</span><span class="p">,</span> <span class="n">resource</span><span class="p">)))</span>
-<a id="__codelineno-0-265" name="__codelineno-0-265"></a>        <span class="k">return</span> <span class="n">slices</span>
-<a id="__codelineno-0-266" name="__codelineno-0-266"></a>
-<a id="__codelineno-0-267" name="__codelineno-0-267"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">load_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">:</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<a id="__codelineno-0-268" name="__codelineno-0-268"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Load the full image data for this TiledImage using the image loaders.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-269" name="__codelineno-0-269"></a>        <span class="n">shape</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">()</span>
-<a id="__codelineno-0-270" name="__codelineno-0-270"></a>        <span class="n">dtype</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data_type</span><span class="p">)</span>
-<a id="__codelineno-0-271" name="__codelineno-0-271"></a>        <span class="n">full_image</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
-<a id="__codelineno-0-272" name="__codelineno-0-272"></a>        <span class="n">slices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_slice_loading</span><span class="p">(</span><span class="n">resource</span><span class="o">=</span><span class="n">resource</span><span class="p">)</span>
-<a id="__codelineno-0-273" name="__codelineno-0-273"></a>        <span class="k">for</span> <span class="n">slicing</span><span class="p">,</span> <span class="n">loader</span> <span class="ow">in</span> <span class="n">slices</span><span class="p">:</span>
-<a id="__codelineno-0-274" name="__codelineno-0-274"></a>            <span class="n">full_image</span><span class="p">[</span><span class="n">slicing</span><span class="p">]</span> <span class="o">=</span> <span class="n">loader</span><span class="p">()</span>
-<a id="__codelineno-0-275" name="__codelineno-0-275"></a>        <span class="k">return</span> <span class="n">full_image</span>
-<a id="__codelineno-0-276" name="__codelineno-0-276"></a>
-<a id="__codelineno-0-277" name="__codelineno-0-277"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">load_data_dask</span><span class="p">(</span>
-<a id="__codelineno-0-278" name="__codelineno-0-278"></a>        <span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">:</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">chunks</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-<a id="__codelineno-0-279" name="__codelineno-0-279"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">da</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<a id="__codelineno-0-280" name="__codelineno-0-280"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Load the full image data for this TiledImage using Dask.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-281" name="__codelineno-0-281"></a>        <span class="n">shape</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">()</span>
-<a id="__codelineno-0-282" name="__codelineno-0-282"></a>        <span class="n">dtype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_type</span>
-<a id="__codelineno-0-283" name="__codelineno-0-283"></a>        <span class="n">slices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_slice_loading</span><span class="p">(</span><span class="n">resource</span><span class="o">=</span><span class="n">resource</span><span class="p">)</span>
-<a id="__codelineno-0-284" name="__codelineno-0-284"></a>        <span class="k">if</span> <span class="n">chunks</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-285" name="__codelineno-0-285"></a>            <span class="n">chunks</span> <span class="o">=</span> <span class="n">shape</span>
-<a id="__codelineno-0-286" name="__codelineno-0-286"></a>        <span class="k">return</span> <span class="n">lazy_array_from_regions</span><span class="p">(</span>
-<a id="__codelineno-0-287" name="__codelineno-0-287"></a>            <span class="n">slices</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">shape</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="n">chunks</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">fill_value</span><span class="o">=</span><span class="mf">0.0</span>
-<a id="__codelineno-0-288" name="__codelineno-0-288"></a>        <span class="p">)</span>
+<a id="__codelineno-0-240" name="__codelineno-0-240"></a>            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">translation</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-241" name="__codelineno-0-241"></a>                <span class="bp">self</span><span class="o">.</span><span class="n">translation</span> <span class="o">=</span> <span class="n">translation</span>
+<a id="__codelineno-0-242" name="__codelineno-0-242"></a>            <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-0-243" name="__codelineno-0-243"></a>                <span class="bp">self</span><span class="o">.</span><span class="n">translation</span> <span class="o">=</span> <span class="p">[</span>
+<a id="__codelineno-0-244" name="__codelineno-0-244"></a>                    <span class="nb">min</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">tr</span><span class="p">)</span>
+<a id="__codelineno-0-245" name="__codelineno-0-245"></a>                    <span class="k">for</span> <span class="n">t</span><span class="p">,</span> <span class="n">tr</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">translation</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">translation</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-0-246" name="__codelineno-0-246"></a>                <span class="p">]</span>
+<a id="__codelineno-0-247" name="__codelineno-0-247"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">regions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tile_region</span><span class="p">)</span>
+<a id="__codelineno-0-248" name="__codelineno-0-248"></a>
+<a id="__codelineno-0-249" name="__codelineno-0-249"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">shape</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+<a id="__codelineno-0-250" name="__codelineno-0-250"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the shape of the TiledImage by computing the union of all regions.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-251" name="__codelineno-0-251"></a>        <span class="k">return</span> <span class="n">shape_from_rois</span><span class="p">(</span>
+<a id="__codelineno-0-252" name="__codelineno-0-252"></a>            <span class="p">[</span><span class="n">region</span><span class="o">.</span><span class="n">roi</span> <span class="k">for</span> <span class="n">region</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">regions</span><span class="p">],</span>
+<a id="__codelineno-0-253" name="__codelineno-0-253"></a>            <span class="bp">self</span><span class="o">.</span><span class="n">axes</span><span class="p">,</span>
+<a id="__codelineno-0-254" name="__codelineno-0-254"></a>            <span class="bp">self</span><span class="o">.</span><span class="n">pixel_size</span><span class="p">,</span>
+<a id="__codelineno-0-255" name="__codelineno-0-255"></a>        <span class="p">)</span>
+<a id="__codelineno-0-256" name="__codelineno-0-256"></a>
+<a id="__codelineno-0-257" name="__codelineno-0-257"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">roi</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Roi</span><span class="p">:</span>
+<a id="__codelineno-0-258" name="__codelineno-0-258"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the global ROI covering all TileSlices in the TiledImage.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-259" name="__codelineno-0-259"></a>        <span class="n">union_roi</span> <span class="o">=</span> <span class="n">bulk_roi_union</span><span class="p">([</span><span class="n">region</span><span class="o">.</span><span class="n">roi</span> <span class="k">for</span> <span class="n">region</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">regions</span><span class="p">])</span>
+<a id="__codelineno-0-260" name="__codelineno-0-260"></a>        <span class="n">union_roi</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span>
+<a id="__codelineno-0-261" name="__codelineno-0-261"></a>        <span class="k">return</span> <span class="n">union_roi</span>
+<a id="__codelineno-0-262" name="__codelineno-0-262"></a>
+<a id="__codelineno-0-263" name="__codelineno-0-263"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">_prepare_slice_loading</span><span class="p">(</span>
+<a id="__codelineno-0-264" name="__codelineno-0-264"></a>        <span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">:</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-0-265" name="__codelineno-0-265"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">slice</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]]:</span>
+<a id="__codelineno-0-266" name="__codelineno-0-266"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Prepare the TileSlices and their corresponding slicing tuples for loading.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-267" name="__codelineno-0-267"></a>
+<a id="__codelineno-0-268" name="__codelineno-0-268"></a>        <span class="k">def</span><span class="w"> </span><span class="nf">make_loader</span><span class="p">(</span>
+<a id="__codelineno-0-269" name="__codelineno-0-269"></a>            <span class="n">region</span><span class="p">:</span> <span class="n">TileSlice</span><span class="p">,</span> <span class="n">resource</span><span class="p">:</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span>
+<a id="__codelineno-0-270" name="__codelineno-0-270"></a>        <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<a id="__codelineno-0-271" name="__codelineno-0-271"></a>            <span class="k">return</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">region</span><span class="o">.</span><span class="n">load_data</span><span class="p">(</span><span class="n">axes</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">axes</span><span class="p">,</span> <span class="n">resource</span><span class="o">=</span><span class="n">resource</span><span class="p">)</span>
+<a id="__codelineno-0-272" name="__codelineno-0-272"></a>
+<a id="__codelineno-0-273" name="__codelineno-0-273"></a>        <span class="n">slices</span> <span class="o">=</span> <span class="p">[]</span>
+<a id="__codelineno-0-274" name="__codelineno-0-274"></a>        <span class="k">for</span> <span class="n">region</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">regions</span><span class="p">:</span>
+<a id="__codelineno-0-275" name="__codelineno-0-275"></a>            <span class="n">roi_slice</span> <span class="o">=</span> <span class="n">region</span><span class="o">.</span><span class="n">roi</span><span class="o">.</span><span class="n">to_slicing_dict</span><span class="p">(</span><span class="n">pixel_size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pixel_size</span><span class="p">)</span>
+<a id="__codelineno-0-276" name="__codelineno-0-276"></a>            <span class="n">slicing</span> <span class="o">=</span> <span class="p">[]</span>
+<a id="__codelineno-0-277" name="__codelineno-0-277"></a>            <span class="k">for</span> <span class="n">axis</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">axes</span><span class="p">:</span>
+<a id="__codelineno-0-278" name="__codelineno-0-278"></a>                <span class="n">_slice</span> <span class="o">=</span> <span class="n">roi_slice</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span>
+<a id="__codelineno-0-279" name="__codelineno-0-279"></a>                <span class="n">slicing</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">slice</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">_slice</span><span class="o">.</span><span class="n">start</span><span class="p">),</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">_slice</span><span class="o">.</span><span class="n">stop</span><span class="p">)))</span>
+<a id="__codelineno-0-280" name="__codelineno-0-280"></a>            <span class="n">slicing</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">slicing</span><span class="p">)</span>
+<a id="__codelineno-0-281" name="__codelineno-0-281"></a>            <span class="n">slices</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">slicing</span><span class="p">,</span> <span class="n">make_loader</span><span class="p">(</span><span class="n">region</span><span class="p">,</span> <span class="n">resource</span><span class="p">)))</span>
+<a id="__codelineno-0-282" name="__codelineno-0-282"></a>        <span class="k">return</span> <span class="n">slices</span>
+<a id="__codelineno-0-283" name="__codelineno-0-283"></a>
+<a id="__codelineno-0-284" name="__codelineno-0-284"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">load_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">:</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<a id="__codelineno-0-285" name="__codelineno-0-285"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Load the full image data for this TiledImage using the image loaders.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-286" name="__codelineno-0-286"></a>        <span class="n">shape</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">()</span>
+<a id="__codelineno-0-287" name="__codelineno-0-287"></a>        <span class="n">dtype</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data_type</span><span class="p">)</span>
+<a id="__codelineno-0-288" name="__codelineno-0-288"></a>        <span class="n">full_image</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
+<a id="__codelineno-0-289" name="__codelineno-0-289"></a>        <span class="n">slices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_slice_loading</span><span class="p">(</span><span class="n">resource</span><span class="o">=</span><span class="n">resource</span><span class="p">)</span>
+<a id="__codelineno-0-290" name="__codelineno-0-290"></a>        <span class="k">for</span> <span class="n">slicing</span><span class="p">,</span> <span class="n">loader</span> <span class="ow">in</span> <span class="n">slices</span><span class="p">:</span>
+<a id="__codelineno-0-291" name="__codelineno-0-291"></a>            <span class="n">full_image</span><span class="p">[</span><span class="n">slicing</span><span class="p">]</span> <span class="o">=</span> <span class="n">loader</span><span class="p">()</span>
+<a id="__codelineno-0-292" name="__codelineno-0-292"></a>        <span class="k">return</span> <span class="n">full_image</span>
+<a id="__codelineno-0-293" name="__codelineno-0-293"></a>
+<a id="__codelineno-0-294" name="__codelineno-0-294"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">load_data_dask</span><span class="p">(</span>
+<a id="__codelineno-0-295" name="__codelineno-0-295"></a>        <span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">:</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">chunks</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-0-296" name="__codelineno-0-296"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">da</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<a id="__codelineno-0-297" name="__codelineno-0-297"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Load the full image data for this TiledImage using Dask.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-298" name="__codelineno-0-298"></a>        <span class="n">shape</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">()</span>
+<a id="__codelineno-0-299" name="__codelineno-0-299"></a>        <span class="n">dtype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_type</span>
+<a id="__codelineno-0-300" name="__codelineno-0-300"></a>        <span class="n">slices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_slice_loading</span><span class="p">(</span><span class="n">resource</span><span class="o">=</span><span class="n">resource</span><span class="p">)</span>
+<a id="__codelineno-0-301" name="__codelineno-0-301"></a>        <span class="k">if</span> <span class="n">chunks</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-302" name="__codelineno-0-302"></a>            <span class="n">chunks</span> <span class="o">=</span> <span class="n">shape</span>
+<a id="__codelineno-0-303" name="__codelineno-0-303"></a>        <span class="k">return</span> <span class="n">lazy_array_from_regions</span><span class="p">(</span>
+<a id="__codelineno-0-304" name="__codelineno-0-304"></a>            <span class="n">slices</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">shape</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="n">chunks</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">fill_value</span><span class="o">=</span><span class="mf">0.0</span>
+<a id="__codelineno-0-305" name="__codelineno-0-305"></a>        <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -3125,7 +3159,7 @@ or it can directly contain a single TileFOVGroup.</p>
 
 
 <h5 id="ome_zarr_converters_tools.core.TiledImage.add_tile" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">add_tile</span><span class="p">(</span><span class="n">tile</span><span class="p">:</span> <span class="n">Tile</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span></code>
+            <code class="highlight language-python"><span class="n">add_tile</span><span class="p">(</span><span class="n">tile</span><span class="p">:</span> <span class="n">Tile</span><span class="p">,</span> <span class="n">add_translation</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span></code>
 
 </h5>
 
@@ -3137,8 +3171,7 @@ or it can directly contain a single TileFOVGroup.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>ome_zarr_converters_tools/core/_tile_region.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-217">217</a></span>
-<span class="normal"><a href="#__codelineno-0-218">218</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-218">218</a></span>
 <span class="normal"><a href="#__codelineno-0-219">219</a></span>
 <span class="normal"><a href="#__codelineno-0-220">220</a></span>
 <span class="normal"><a href="#__codelineno-0-221">221</a></span>
@@ -3150,20 +3183,53 @@ or it can directly contain a single TileFOVGroup.</p>
 <span class="normal"><a href="#__codelineno-0-227">227</a></span>
 <span class="normal"><a href="#__codelineno-0-228">228</a></span>
 <span class="normal"><a href="#__codelineno-0-229">229</a></span>
-<span class="normal"><a href="#__codelineno-0-230">230</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-217" name="__codelineno-0-217"></a><span class="k">def</span><span class="w"> </span><span class="nf">add_tile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tile</span><span class="p">:</span> <span class="n">Tile</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-218" name="__codelineno-0-218"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Add a Tile to the TiledImage as a TileRegion.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-219" name="__codelineno-0-219"></a>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">channels</span> <span class="o">!=</span> <span class="n">tile</span><span class="o">.</span><span class="n">acquisition_details</span><span class="o">.</span><span class="n">channels</span><span class="p">:</span>
-<a id="__codelineno-0-220" name="__codelineno-0-220"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Tile channels do not match TiledImage channels.&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-221" name="__codelineno-0-221"></a>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">axes</span> <span class="o">!=</span> <span class="n">tile</span><span class="o">.</span><span class="n">acquisition_details</span><span class="o">.</span><span class="n">axes</span><span class="p">:</span>
-<a id="__codelineno-0-222" name="__codelineno-0-222"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Tile axes do not match TiledImage axes.&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-223" name="__codelineno-0-223"></a>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pixelsize</span> <span class="o">!=</span> <span class="n">tile</span><span class="o">.</span><span class="n">acquisition_details</span><span class="o">.</span><span class="n">pixelsize</span><span class="p">:</span>
-<a id="__codelineno-0-224" name="__codelineno-0-224"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Tile pixelsize does not match TiledImage pixelsize.&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-225" name="__codelineno-0-225"></a>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">z_spacing</span> <span class="o">!=</span> <span class="n">tile</span><span class="o">.</span><span class="n">acquisition_details</span><span class="o">.</span><span class="n">z_spacing</span><span class="p">:</span>
-<a id="__codelineno-0-226" name="__codelineno-0-226"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Tile z_spacing does not match TiledImage z_spacing.&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-227" name="__codelineno-0-227"></a>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">t_spacing</span> <span class="o">!=</span> <span class="n">tile</span><span class="o">.</span><span class="n">acquisition_details</span><span class="o">.</span><span class="n">t_spacing</span><span class="p">:</span>
-<a id="__codelineno-0-228" name="__codelineno-0-228"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Tile t_spacing does not match TiledImage t_spacing.&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-229" name="__codelineno-0-229"></a>    <span class="n">tile_region</span> <span class="o">=</span> <span class="n">TileSlice</span><span class="o">.</span><span class="n">from_tile</span><span class="p">(</span><span class="n">tile</span><span class="p">)</span>
-<a id="__codelineno-0-230" name="__codelineno-0-230"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">regions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tile_region</span><span class="p">)</span>
+<span class="normal"><a href="#__codelineno-0-230">230</a></span>
+<span class="normal"><a href="#__codelineno-0-231">231</a></span>
+<span class="normal"><a href="#__codelineno-0-232">232</a></span>
+<span class="normal"><a href="#__codelineno-0-233">233</a></span>
+<span class="normal"><a href="#__codelineno-0-234">234</a></span>
+<span class="normal"><a href="#__codelineno-0-235">235</a></span>
+<span class="normal"><a href="#__codelineno-0-236">236</a></span>
+<span class="normal"><a href="#__codelineno-0-237">237</a></span>
+<span class="normal"><a href="#__codelineno-0-238">238</a></span>
+<span class="normal"><a href="#__codelineno-0-239">239</a></span>
+<span class="normal"><a href="#__codelineno-0-240">240</a></span>
+<span class="normal"><a href="#__codelineno-0-241">241</a></span>
+<span class="normal"><a href="#__codelineno-0-242">242</a></span>
+<span class="normal"><a href="#__codelineno-0-243">243</a></span>
+<span class="normal"><a href="#__codelineno-0-244">244</a></span>
+<span class="normal"><a href="#__codelineno-0-245">245</a></span>
+<span class="normal"><a href="#__codelineno-0-246">246</a></span>
+<span class="normal"><a href="#__codelineno-0-247">247</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-218" name="__codelineno-0-218"></a><span class="k">def</span><span class="w"> </span><span class="nf">add_tile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tile</span><span class="p">:</span> <span class="n">Tile</span><span class="p">,</span> <span class="n">add_translation</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-219" name="__codelineno-0-219"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Add a Tile to the TiledImage as a TileRegion.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-220" name="__codelineno-0-220"></a>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">channels</span> <span class="o">!=</span> <span class="n">tile</span><span class="o">.</span><span class="n">acquisition_details</span><span class="o">.</span><span class="n">channels</span><span class="p">:</span>
+<a id="__codelineno-0-221" name="__codelineno-0-221"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Tile channels do not match TiledImage channels.&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-222" name="__codelineno-0-222"></a>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">axes</span> <span class="o">!=</span> <span class="n">tile</span><span class="o">.</span><span class="n">acquisition_details</span><span class="o">.</span><span class="n">axes</span><span class="p">:</span>
+<a id="__codelineno-0-223" name="__codelineno-0-223"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Tile axes do not match TiledImage axes.&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-224" name="__codelineno-0-224"></a>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pixelsize</span> <span class="o">!=</span> <span class="n">tile</span><span class="o">.</span><span class="n">acquisition_details</span><span class="o">.</span><span class="n">pixelsize</span><span class="p">:</span>
+<a id="__codelineno-0-225" name="__codelineno-0-225"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Tile pixelsize does not match TiledImage pixelsize.&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-226" name="__codelineno-0-226"></a>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">z_spacing</span> <span class="o">!=</span> <span class="n">tile</span><span class="o">.</span><span class="n">acquisition_details</span><span class="o">.</span><span class="n">z_spacing</span><span class="p">:</span>
+<a id="__codelineno-0-227" name="__codelineno-0-227"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Tile z_spacing does not match TiledImage z_spacing.&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-228" name="__codelineno-0-228"></a>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">t_spacing</span> <span class="o">!=</span> <span class="n">tile</span><span class="o">.</span><span class="n">acquisition_details</span><span class="o">.</span><span class="n">t_spacing</span><span class="p">:</span>
+<a id="__codelineno-0-229" name="__codelineno-0-229"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Tile t_spacing does not match TiledImage t_spacing.&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-230" name="__codelineno-0-230"></a>    <span class="n">tile_region</span> <span class="o">=</span> <span class="n">TileSlice</span><span class="o">.</span><span class="n">from_tile</span><span class="p">(</span><span class="n">tile</span><span class="p">)</span>
+<a id="__codelineno-0-231" name="__codelineno-0-231"></a>
+<a id="__codelineno-0-232" name="__codelineno-0-232"></a>    <span class="k">if</span> <span class="n">add_translation</span><span class="p">:</span>
+<a id="__codelineno-0-233" name="__codelineno-0-233"></a>        <span class="c1"># This logic is a bit hacky to be improved</span>
+<a id="__codelineno-0-234" name="__codelineno-0-234"></a>        <span class="n">roi_extra</span> <span class="o">=</span> <span class="n">tile_region</span><span class="o">.</span><span class="n">roi</span><span class="o">.</span><span class="n">model_extra</span> <span class="ow">or</span> <span class="p">{}</span>
+<a id="__codelineno-0-235" name="__codelineno-0-235"></a>        <span class="n">translation</span> <span class="o">=</span> <span class="p">[]</span>
+<a id="__codelineno-0-236" name="__codelineno-0-236"></a>        <span class="k">for</span> <span class="n">ax</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">axes</span><span class="p">:</span>
+<a id="__codelineno-0-237" name="__codelineno-0-237"></a>            <span class="n">o_ax</span> <span class="o">=</span> <span class="n">roi_extra</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">ax</span><span class="si">}</span><span class="s2">_micrometer_original&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-238" name="__codelineno-0-238"></a>            <span class="n">translation</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">o_ax</span> <span class="k">if</span> <span class="n">o_ax</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mf">0.0</span><span class="p">)</span>
+<a id="__codelineno-0-239" name="__codelineno-0-239"></a>
+<a id="__codelineno-0-240" name="__codelineno-0-240"></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">translation</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-241" name="__codelineno-0-241"></a>            <span class="bp">self</span><span class="o">.</span><span class="n">translation</span> <span class="o">=</span> <span class="n">translation</span>
+<a id="__codelineno-0-242" name="__codelineno-0-242"></a>        <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-0-243" name="__codelineno-0-243"></a>            <span class="bp">self</span><span class="o">.</span><span class="n">translation</span> <span class="o">=</span> <span class="p">[</span>
+<a id="__codelineno-0-244" name="__codelineno-0-244"></a>                <span class="nb">min</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">tr</span><span class="p">)</span>
+<a id="__codelineno-0-245" name="__codelineno-0-245"></a>                <span class="k">for</span> <span class="n">t</span><span class="p">,</span> <span class="n">tr</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">translation</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">translation</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-0-246" name="__codelineno-0-246"></a>            <span class="p">]</span>
+<a id="__codelineno-0-247" name="__codelineno-0-247"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">regions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tile_region</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -3186,8 +3252,7 @@ or it can directly contain a single TileFOVGroup.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>ome_zarr_converters_tools/core/_tile_region.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-187">187</a></span>
-<span class="normal"><a href="#__codelineno-0-188">188</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-188">188</a></span>
 <span class="normal"><a href="#__codelineno-0-189">189</a></span>
 <span class="normal"><a href="#__codelineno-0-190">190</a></span>
 <span class="normal"><a href="#__codelineno-0-191">191</a></span>
@@ -3204,25 +3269,26 @@ or it can directly contain a single TileFOVGroup.</p>
 <span class="normal"><a href="#__codelineno-0-202">202</a></span>
 <span class="normal"><a href="#__codelineno-0-203">203</a></span>
 <span class="normal"><a href="#__codelineno-0-204">204</a></span>
-<span class="normal"><a href="#__codelineno-0-205">205</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-187" name="__codelineno-0-187"></a><span class="k">def</span><span class="w"> </span><span class="nf">group_by_fov</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">TileFOVGroup</span><span class="p">[</span><span class="n">ImageLoaderInterfaceType</span><span class="p">]]:</span>
-<a id="__codelineno-0-188" name="__codelineno-0-188"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Group TileSlices by field of view name.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-189" name="__codelineno-0-189"></a>    <span class="n">fov_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">TileSlice</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
-<a id="__codelineno-0-190" name="__codelineno-0-190"></a>    <span class="k">for</span> <span class="n">region</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">regions</span><span class="p">:</span>
-<a id="__codelineno-0-191" name="__codelineno-0-191"></a>        <span class="n">fov_name</span> <span class="o">=</span> <span class="n">region</span><span class="o">.</span><span class="n">roi</span><span class="o">.</span><span class="n">name</span>
-<a id="__codelineno-0-192" name="__codelineno-0-192"></a>        <span class="k">if</span> <span class="n">fov_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-193" name="__codelineno-0-193"></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;TileSlice ROI must have a name to group by FOV.&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-194" name="__codelineno-0-194"></a>        <span class="k">if</span> <span class="n">fov_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fov_dict</span><span class="p">:</span>
-<a id="__codelineno-0-195" name="__codelineno-0-195"></a>            <span class="n">fov_dict</span><span class="p">[</span><span class="n">fov_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-<a id="__codelineno-0-196" name="__codelineno-0-196"></a>        <span class="n">fov_dict</span><span class="p">[</span><span class="n">fov_name</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">region</span><span class="p">)</span>
-<a id="__codelineno-0-197" name="__codelineno-0-197"></a>    <span class="k">return</span> <span class="p">[</span>
-<a id="__codelineno-0-198" name="__codelineno-0-198"></a>        <span class="n">TileFOVGroup</span><span class="p">(</span>
-<a id="__codelineno-0-199" name="__codelineno-0-199"></a>            <span class="n">fov_name</span><span class="o">=</span><span class="n">fov_name</span><span class="p">,</span>
-<a id="__codelineno-0-200" name="__codelineno-0-200"></a>            <span class="n">regions</span><span class="o">=</span><span class="n">regions</span><span class="p">,</span>
-<a id="__codelineno-0-201" name="__codelineno-0-201"></a>            <span class="n">axes</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">axes</span><span class="p">,</span>
-<a id="__codelineno-0-202" name="__codelineno-0-202"></a>            <span class="n">pixel_size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pixel_size</span><span class="p">,</span>
-<a id="__codelineno-0-203" name="__codelineno-0-203"></a>        <span class="p">)</span>
-<a id="__codelineno-0-204" name="__codelineno-0-204"></a>        <span class="k">for</span> <span class="n">fov_name</span><span class="p">,</span> <span class="n">regions</span> <span class="ow">in</span> <span class="n">fov_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-<a id="__codelineno-0-205" name="__codelineno-0-205"></a>    <span class="p">]</span>
+<span class="normal"><a href="#__codelineno-0-205">205</a></span>
+<span class="normal"><a href="#__codelineno-0-206">206</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-188" name="__codelineno-0-188"></a><span class="k">def</span><span class="w"> </span><span class="nf">group_by_fov</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">TileFOVGroup</span><span class="p">[</span><span class="n">ImageLoaderInterfaceType</span><span class="p">]]:</span>
+<a id="__codelineno-0-189" name="__codelineno-0-189"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Group TileSlices by field of view name.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-190" name="__codelineno-0-190"></a>    <span class="n">fov_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">TileSlice</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+<a id="__codelineno-0-191" name="__codelineno-0-191"></a>    <span class="k">for</span> <span class="n">region</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">regions</span><span class="p">:</span>
+<a id="__codelineno-0-192" name="__codelineno-0-192"></a>        <span class="n">fov_name</span> <span class="o">=</span> <span class="n">region</span><span class="o">.</span><span class="n">roi</span><span class="o">.</span><span class="n">name</span>
+<a id="__codelineno-0-193" name="__codelineno-0-193"></a>        <span class="k">if</span> <span class="n">fov_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-194" name="__codelineno-0-194"></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;TileSlice ROI must have a name to group by FOV.&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-195" name="__codelineno-0-195"></a>        <span class="k">if</span> <span class="n">fov_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fov_dict</span><span class="p">:</span>
+<a id="__codelineno-0-196" name="__codelineno-0-196"></a>            <span class="n">fov_dict</span><span class="p">[</span><span class="n">fov_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<a id="__codelineno-0-197" name="__codelineno-0-197"></a>        <span class="n">fov_dict</span><span class="p">[</span><span class="n">fov_name</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">region</span><span class="p">)</span>
+<a id="__codelineno-0-198" name="__codelineno-0-198"></a>    <span class="k">return</span> <span class="p">[</span>
+<a id="__codelineno-0-199" name="__codelineno-0-199"></a>        <span class="n">TileFOVGroup</span><span class="p">(</span>
+<a id="__codelineno-0-200" name="__codelineno-0-200"></a>            <span class="n">fov_name</span><span class="o">=</span><span class="n">fov_name</span><span class="p">,</span>
+<a id="__codelineno-0-201" name="__codelineno-0-201"></a>            <span class="n">regions</span><span class="o">=</span><span class="n">regions</span><span class="p">,</span>
+<a id="__codelineno-0-202" name="__codelineno-0-202"></a>            <span class="n">axes</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">axes</span><span class="p">,</span>
+<a id="__codelineno-0-203" name="__codelineno-0-203"></a>            <span class="n">pixel_size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pixel_size</span><span class="p">,</span>
+<a id="__codelineno-0-204" name="__codelineno-0-204"></a>        <span class="p">)</span>
+<a id="__codelineno-0-205" name="__codelineno-0-205"></a>        <span class="k">for</span> <span class="n">fov_name</span><span class="p">,</span> <span class="n">regions</span> <span class="ow">in</span> <span class="n">fov_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+<a id="__codelineno-0-206" name="__codelineno-0-206"></a>    <span class="p">]</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -3245,23 +3311,23 @@ or it can directly contain a single TileFOVGroup.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>ome_zarr_converters_tools/core/_tile_region.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-267">267</a></span>
-<span class="normal"><a href="#__codelineno-0-268">268</a></span>
-<span class="normal"><a href="#__codelineno-0-269">269</a></span>
-<span class="normal"><a href="#__codelineno-0-270">270</a></span>
-<span class="normal"><a href="#__codelineno-0-271">271</a></span>
-<span class="normal"><a href="#__codelineno-0-272">272</a></span>
-<span class="normal"><a href="#__codelineno-0-273">273</a></span>
-<span class="normal"><a href="#__codelineno-0-274">274</a></span>
-<span class="normal"><a href="#__codelineno-0-275">275</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-267" name="__codelineno-0-267"></a><span class="k">def</span><span class="w"> </span><span class="nf">load_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">:</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<a id="__codelineno-0-268" name="__codelineno-0-268"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Load the full image data for this TiledImage using the image loaders.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-269" name="__codelineno-0-269"></a>    <span class="n">shape</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">()</span>
-<a id="__codelineno-0-270" name="__codelineno-0-270"></a>    <span class="n">dtype</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data_type</span><span class="p">)</span>
-<a id="__codelineno-0-271" name="__codelineno-0-271"></a>    <span class="n">full_image</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
-<a id="__codelineno-0-272" name="__codelineno-0-272"></a>    <span class="n">slices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_slice_loading</span><span class="p">(</span><span class="n">resource</span><span class="o">=</span><span class="n">resource</span><span class="p">)</span>
-<a id="__codelineno-0-273" name="__codelineno-0-273"></a>    <span class="k">for</span> <span class="n">slicing</span><span class="p">,</span> <span class="n">loader</span> <span class="ow">in</span> <span class="n">slices</span><span class="p">:</span>
-<a id="__codelineno-0-274" name="__codelineno-0-274"></a>        <span class="n">full_image</span><span class="p">[</span><span class="n">slicing</span><span class="p">]</span> <span class="o">=</span> <span class="n">loader</span><span class="p">()</span>
-<a id="__codelineno-0-275" name="__codelineno-0-275"></a>    <span class="k">return</span> <span class="n">full_image</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-284">284</a></span>
+<span class="normal"><a href="#__codelineno-0-285">285</a></span>
+<span class="normal"><a href="#__codelineno-0-286">286</a></span>
+<span class="normal"><a href="#__codelineno-0-287">287</a></span>
+<span class="normal"><a href="#__codelineno-0-288">288</a></span>
+<span class="normal"><a href="#__codelineno-0-289">289</a></span>
+<span class="normal"><a href="#__codelineno-0-290">290</a></span>
+<span class="normal"><a href="#__codelineno-0-291">291</a></span>
+<span class="normal"><a href="#__codelineno-0-292">292</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-284" name="__codelineno-0-284"></a><span class="k">def</span><span class="w"> </span><span class="nf">load_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">:</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<a id="__codelineno-0-285" name="__codelineno-0-285"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Load the full image data for this TiledImage using the image loaders.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-286" name="__codelineno-0-286"></a>    <span class="n">shape</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">()</span>
+<a id="__codelineno-0-287" name="__codelineno-0-287"></a>    <span class="n">dtype</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data_type</span><span class="p">)</span>
+<a id="__codelineno-0-288" name="__codelineno-0-288"></a>    <span class="n">full_image</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
+<a id="__codelineno-0-289" name="__codelineno-0-289"></a>    <span class="n">slices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_slice_loading</span><span class="p">(</span><span class="n">resource</span><span class="o">=</span><span class="n">resource</span><span class="p">)</span>
+<a id="__codelineno-0-290" name="__codelineno-0-290"></a>    <span class="k">for</span> <span class="n">slicing</span><span class="p">,</span> <span class="n">loader</span> <span class="ow">in</span> <span class="n">slices</span><span class="p">:</span>
+<a id="__codelineno-0-291" name="__codelineno-0-291"></a>        <span class="n">full_image</span><span class="p">[</span><span class="n">slicing</span><span class="p">]</span> <span class="o">=</span> <span class="n">loader</span><span class="p">()</span>
+<a id="__codelineno-0-292" name="__codelineno-0-292"></a>    <span class="k">return</span> <span class="n">full_image</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -3284,29 +3350,29 @@ or it can directly contain a single TileFOVGroup.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>ome_zarr_converters_tools/core/_tile_region.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-277">277</a></span>
-<span class="normal"><a href="#__codelineno-0-278">278</a></span>
-<span class="normal"><a href="#__codelineno-0-279">279</a></span>
-<span class="normal"><a href="#__codelineno-0-280">280</a></span>
-<span class="normal"><a href="#__codelineno-0-281">281</a></span>
-<span class="normal"><a href="#__codelineno-0-282">282</a></span>
-<span class="normal"><a href="#__codelineno-0-283">283</a></span>
-<span class="normal"><a href="#__codelineno-0-284">284</a></span>
-<span class="normal"><a href="#__codelineno-0-285">285</a></span>
-<span class="normal"><a href="#__codelineno-0-286">286</a></span>
-<span class="normal"><a href="#__codelineno-0-287">287</a></span>
-<span class="normal"><a href="#__codelineno-0-288">288</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-277" name="__codelineno-0-277"></a><span class="k">def</span><span class="w"> </span><span class="nf">load_data_dask</span><span class="p">(</span>
-<a id="__codelineno-0-278" name="__codelineno-0-278"></a>    <span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">:</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">chunks</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-<a id="__codelineno-0-279" name="__codelineno-0-279"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">da</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
-<a id="__codelineno-0-280" name="__codelineno-0-280"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Load the full image data for this TiledImage using Dask.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-281" name="__codelineno-0-281"></a>    <span class="n">shape</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">()</span>
-<a id="__codelineno-0-282" name="__codelineno-0-282"></a>    <span class="n">dtype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_type</span>
-<a id="__codelineno-0-283" name="__codelineno-0-283"></a>    <span class="n">slices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_slice_loading</span><span class="p">(</span><span class="n">resource</span><span class="o">=</span><span class="n">resource</span><span class="p">)</span>
-<a id="__codelineno-0-284" name="__codelineno-0-284"></a>    <span class="k">if</span> <span class="n">chunks</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-285" name="__codelineno-0-285"></a>        <span class="n">chunks</span> <span class="o">=</span> <span class="n">shape</span>
-<a id="__codelineno-0-286" name="__codelineno-0-286"></a>    <span class="k">return</span> <span class="n">lazy_array_from_regions</span><span class="p">(</span>
-<a id="__codelineno-0-287" name="__codelineno-0-287"></a>        <span class="n">slices</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">shape</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="n">chunks</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">fill_value</span><span class="o">=</span><span class="mf">0.0</span>
-<a id="__codelineno-0-288" name="__codelineno-0-288"></a>    <span class="p">)</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-294">294</a></span>
+<span class="normal"><a href="#__codelineno-0-295">295</a></span>
+<span class="normal"><a href="#__codelineno-0-296">296</a></span>
+<span class="normal"><a href="#__codelineno-0-297">297</a></span>
+<span class="normal"><a href="#__codelineno-0-298">298</a></span>
+<span class="normal"><a href="#__codelineno-0-299">299</a></span>
+<span class="normal"><a href="#__codelineno-0-300">300</a></span>
+<span class="normal"><a href="#__codelineno-0-301">301</a></span>
+<span class="normal"><a href="#__codelineno-0-302">302</a></span>
+<span class="normal"><a href="#__codelineno-0-303">303</a></span>
+<span class="normal"><a href="#__codelineno-0-304">304</a></span>
+<span class="normal"><a href="#__codelineno-0-305">305</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-294" name="__codelineno-0-294"></a><span class="k">def</span><span class="w"> </span><span class="nf">load_data_dask</span><span class="p">(</span>
+<a id="__codelineno-0-295" name="__codelineno-0-295"></a>    <span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">:</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">chunks</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-0-296" name="__codelineno-0-296"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">da</span><span class="o">.</span><span class="n">Array</span><span class="p">:</span>
+<a id="__codelineno-0-297" name="__codelineno-0-297"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Load the full image data for this TiledImage using Dask.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-298" name="__codelineno-0-298"></a>    <span class="n">shape</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">()</span>
+<a id="__codelineno-0-299" name="__codelineno-0-299"></a>    <span class="n">dtype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_type</span>
+<a id="__codelineno-0-300" name="__codelineno-0-300"></a>    <span class="n">slices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_slice_loading</span><span class="p">(</span><span class="n">resource</span><span class="o">=</span><span class="n">resource</span><span class="p">)</span>
+<a id="__codelineno-0-301" name="__codelineno-0-301"></a>    <span class="k">if</span> <span class="n">chunks</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-302" name="__codelineno-0-302"></a>        <span class="n">chunks</span> <span class="o">=</span> <span class="n">shape</span>
+<a id="__codelineno-0-303" name="__codelineno-0-303"></a>    <span class="k">return</span> <span class="n">lazy_array_from_regions</span><span class="p">(</span>
+<a id="__codelineno-0-304" name="__codelineno-0-304"></a>        <span class="n">slices</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">shape</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="n">chunks</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">fill_value</span><span class="o">=</span><span class="mf">0.0</span>
+<a id="__codelineno-0-305" name="__codelineno-0-305"></a>    <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -3329,15 +3395,15 @@ or it can directly contain a single TileFOVGroup.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>ome_zarr_converters_tools/core/_tile_region.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-240">240</a></span>
-<span class="normal"><a href="#__codelineno-0-241">241</a></span>
-<span class="normal"><a href="#__codelineno-0-242">242</a></span>
-<span class="normal"><a href="#__codelineno-0-243">243</a></span>
-<span class="normal"><a href="#__codelineno-0-244">244</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-240" name="__codelineno-0-240"></a><span class="k">def</span><span class="w"> </span><span class="nf">roi</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Roi</span><span class="p">:</span>
-<a id="__codelineno-0-241" name="__codelineno-0-241"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the global ROI covering all TileSlices in the TiledImage.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-242" name="__codelineno-0-242"></a>    <span class="n">union_roi</span> <span class="o">=</span> <span class="n">bulk_roi_union</span><span class="p">([</span><span class="n">region</span><span class="o">.</span><span class="n">roi</span> <span class="k">for</span> <span class="n">region</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">regions</span><span class="p">])</span>
-<a id="__codelineno-0-243" name="__codelineno-0-243"></a>    <span class="n">union_roi</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span>
-<a id="__codelineno-0-244" name="__codelineno-0-244"></a>    <span class="k">return</span> <span class="n">union_roi</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-257">257</a></span>
+<span class="normal"><a href="#__codelineno-0-258">258</a></span>
+<span class="normal"><a href="#__codelineno-0-259">259</a></span>
+<span class="normal"><a href="#__codelineno-0-260">260</a></span>
+<span class="normal"><a href="#__codelineno-0-261">261</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-257" name="__codelineno-0-257"></a><span class="k">def</span><span class="w"> </span><span class="nf">roi</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Roi</span><span class="p">:</span>
+<a id="__codelineno-0-258" name="__codelineno-0-258"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the global ROI covering all TileSlices in the TiledImage.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-259" name="__codelineno-0-259"></a>    <span class="n">union_roi</span> <span class="o">=</span> <span class="n">bulk_roi_union</span><span class="p">([</span><span class="n">region</span><span class="o">.</span><span class="n">roi</span> <span class="k">for</span> <span class="n">region</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">regions</span><span class="p">])</span>
+<a id="__codelineno-0-260" name="__codelineno-0-260"></a>    <span class="n">union_roi</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span>
+<a id="__codelineno-0-261" name="__codelineno-0-261"></a>    <span class="k">return</span> <span class="n">union_roi</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -3360,19 +3426,19 @@ or it can directly contain a single TileFOVGroup.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>ome_zarr_converters_tools/core/_tile_region.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-232">232</a></span>
-<span class="normal"><a href="#__codelineno-0-233">233</a></span>
-<span class="normal"><a href="#__codelineno-0-234">234</a></span>
-<span class="normal"><a href="#__codelineno-0-235">235</a></span>
-<span class="normal"><a href="#__codelineno-0-236">236</a></span>
-<span class="normal"><a href="#__codelineno-0-237">237</a></span>
-<span class="normal"><a href="#__codelineno-0-238">238</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-232" name="__codelineno-0-232"></a><span class="k">def</span><span class="w"> </span><span class="nf">shape</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
-<a id="__codelineno-0-233" name="__codelineno-0-233"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the shape of the TiledImage by computing the union of all regions.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-234" name="__codelineno-0-234"></a>    <span class="k">return</span> <span class="n">shape_from_rois</span><span class="p">(</span>
-<a id="__codelineno-0-235" name="__codelineno-0-235"></a>        <span class="p">[</span><span class="n">region</span><span class="o">.</span><span class="n">roi</span> <span class="k">for</span> <span class="n">region</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">regions</span><span class="p">],</span>
-<a id="__codelineno-0-236" name="__codelineno-0-236"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">axes</span><span class="p">,</span>
-<a id="__codelineno-0-237" name="__codelineno-0-237"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">pixel_size</span><span class="p">,</span>
-<a id="__codelineno-0-238" name="__codelineno-0-238"></a>    <span class="p">)</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-249">249</a></span>
+<span class="normal"><a href="#__codelineno-0-250">250</a></span>
+<span class="normal"><a href="#__codelineno-0-251">251</a></span>
+<span class="normal"><a href="#__codelineno-0-252">252</a></span>
+<span class="normal"><a href="#__codelineno-0-253">253</a></span>
+<span class="normal"><a href="#__codelineno-0-254">254</a></span>
+<span class="normal"><a href="#__codelineno-0-255">255</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-249" name="__codelineno-0-249"></a><span class="k">def</span><span class="w"> </span><span class="nf">shape</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+<a id="__codelineno-0-250" name="__codelineno-0-250"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the shape of the TiledImage by computing the union of all regions.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-251" name="__codelineno-0-251"></a>    <span class="k">return</span> <span class="n">shape_from_rois</span><span class="p">(</span>
+<a id="__codelineno-0-252" name="__codelineno-0-252"></a>        <span class="p">[</span><span class="n">region</span><span class="o">.</span><span class="n">roi</span> <span class="k">for</span> <span class="n">region</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">regions</span><span class="p">],</span>
+<a id="__codelineno-0-253" name="__codelineno-0-253"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">axes</span><span class="p">,</span>
+<a id="__codelineno-0-254" name="__codelineno-0-254"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">pixel_size</span><span class="p">,</span>
+<a id="__codelineno-0-255" name="__codelineno-0-255"></a>    <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -3812,7 +3878,12 @@ support for both local and S3 URLs.</p>
 <span class="normal"><a href="#__codelineno-0-50">50</a></span>
 <span class="normal"><a href="#__codelineno-0-51">51</a></span>
 <span class="normal"><a href="#__codelineno-0-52">52</a></span>
-<span class="normal"><a href="#__codelineno-0-53">53</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-10" name="__codelineno-0-10"></a><span class="k">def</span><span class="w"> </span><span class="nf">tiled_image_from_tiles</span><span class="p">(</span>
+<span class="normal"><a href="#__codelineno-0-53">53</a></span>
+<span class="normal"><a href="#__codelineno-0-54">54</a></span>
+<span class="normal"><a href="#__codelineno-0-55">55</a></span>
+<span class="normal"><a href="#__codelineno-0-56">56</a></span>
+<span class="normal"><a href="#__codelineno-0-57">57</a></span>
+<span class="normal"><a href="#__codelineno-0-58">58</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-10" name="__codelineno-0-10"></a><span class="k">def</span><span class="w"> </span><span class="nf">tiled_image_from_tiles</span><span class="p">(</span>
 <a id="__codelineno-0-11" name="__codelineno-0-11"></a>    <span class="o">*</span><span class="p">,</span>
 <a id="__codelineno-0-12" name="__codelineno-0-12"></a>    <span class="n">tiles</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tile</span><span class="p">],</span>
 <a id="__codelineno-0-13" name="__codelineno-0-13"></a>    <span class="n">converter_options</span><span class="p">:</span> <span class="n">ConverterOptions</span><span class="p">,</span>
@@ -3836,26 +3907,31 @@ support for both local and S3 URLs.</p>
 <a id="__codelineno-0-31" name="__codelineno-0-31"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No tiles provided to build TiledImage.&quot;</span><span class="p">)</span>
 <a id="__codelineno-0-32" name="__codelineno-0-32"></a>    <span class="n">data_type</span> <span class="o">=</span> <span class="n">tiles</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">find_data_type</span><span class="p">(</span><span class="n">resource</span><span class="o">=</span><span class="n">resource</span><span class="p">)</span>
 <a id="__codelineno-0-33" name="__codelineno-0-33"></a>    <span class="k">for</span> <span class="n">tile</span> <span class="ow">in</span> <span class="n">tiles</span><span class="p">:</span>
-<a id="__codelineno-0-34" name="__codelineno-0-34"></a>        <span class="n">suffix</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">split_tiles</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">&quot;_</span><span class="si">{</span><span class="n">tile</span><span class="o">.</span><span class="n">fov_name</span><span class="si">}</span><span class="s2">&quot;</span>
-<a id="__codelineno-0-35" name="__codelineno-0-35"></a>        <span class="n">tile</span><span class="o">.</span><span class="n">collection</span><span class="o">.</span><span class="n">_suffix</span> <span class="o">=</span> <span class="n">suffix</span>
-<a id="__codelineno-0-36" name="__codelineno-0-36"></a>        <span class="n">path</span> <span class="o">=</span> <span class="n">tile</span><span class="o">.</span><span class="n">collection</span><span class="o">.</span><span class="n">path</span><span class="p">()</span>
-<a id="__codelineno-0-37" name="__codelineno-0-37"></a>        <span class="k">if</span> <span class="n">path</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">tiled_images</span><span class="p">:</span>
-<a id="__codelineno-0-38" name="__codelineno-0-38"></a>            <span class="n">acquisition_details</span> <span class="o">=</span> <span class="n">tile</span><span class="o">.</span><span class="n">acquisition_details</span>
-<a id="__codelineno-0-39" name="__codelineno-0-39"></a>            <span class="n">tiled_images</span><span class="p">[</span><span class="n">path</span><span class="p">]</span> <span class="o">=</span> <span class="n">TiledImage</span><span class="p">(</span>
-<a id="__codelineno-0-40" name="__codelineno-0-40"></a>                <span class="n">path</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
-<a id="__codelineno-0-41" name="__codelineno-0-41"></a>                <span class="n">regions</span><span class="o">=</span><span class="p">[],</span>
-<a id="__codelineno-0-42" name="__codelineno-0-42"></a>                <span class="n">data_type</span><span class="o">=</span><span class="n">data_type</span><span class="p">,</span>
-<a id="__codelineno-0-43" name="__codelineno-0-43"></a>                <span class="n">channels</span><span class="o">=</span><span class="n">acquisition_details</span><span class="o">.</span><span class="n">channels</span><span class="p">,</span>
-<a id="__codelineno-0-44" name="__codelineno-0-44"></a>                <span class="n">pixelsize</span><span class="o">=</span><span class="n">acquisition_details</span><span class="o">.</span><span class="n">pixelsize</span><span class="p">,</span>
-<a id="__codelineno-0-45" name="__codelineno-0-45"></a>                <span class="n">z_spacing</span><span class="o">=</span><span class="n">acquisition_details</span><span class="o">.</span><span class="n">z_spacing</span><span class="p">,</span>
-<a id="__codelineno-0-46" name="__codelineno-0-46"></a>                <span class="n">t_spacing</span><span class="o">=</span><span class="n">acquisition_details</span><span class="o">.</span><span class="n">t_spacing</span><span class="p">,</span>
-<a id="__codelineno-0-47" name="__codelineno-0-47"></a>                <span class="n">axes</span><span class="o">=</span><span class="n">acquisition_details</span><span class="o">.</span><span class="n">axes</span><span class="p">,</span>
-<a id="__codelineno-0-48" name="__codelineno-0-48"></a>                <span class="n">collection</span><span class="o">=</span><span class="n">tile</span><span class="o">.</span><span class="n">collection</span><span class="p">,</span>
-<a id="__codelineno-0-49" name="__codelineno-0-49"></a>                <span class="n">attributes</span><span class="o">=</span><span class="n">tile</span><span class="o">.</span><span class="n">attributes</span><span class="p">,</span>
-<a id="__codelineno-0-50" name="__codelineno-0-50"></a>            <span class="p">)</span>
-<a id="__codelineno-0-51" name="__codelineno-0-51"></a>        <span class="n">tiled_images</span><span class="p">[</span><span class="n">path</span><span class="p">]</span><span class="o">.</span><span class="n">add_tile</span><span class="p">(</span><span class="n">tile</span><span class="p">)</span>
-<a id="__codelineno-0-52" name="__codelineno-0-52"></a>
-<a id="__codelineno-0-53" name="__codelineno-0-53"></a>    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">tiled_images</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+<a id="__codelineno-0-34" name="__codelineno-0-34"></a>        <span class="k">if</span> <span class="ow">not</span> <span class="n">split_tiles</span><span class="p">:</span>
+<a id="__codelineno-0-35" name="__codelineno-0-35"></a>            <span class="n">suffix</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+<a id="__codelineno-0-36" name="__codelineno-0-36"></a>            <span class="n">add_translation</span> <span class="o">=</span> <span class="kc">False</span>
+<a id="__codelineno-0-37" name="__codelineno-0-37"></a>        <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-0-38" name="__codelineno-0-38"></a>            <span class="n">suffix</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;_</span><span class="si">{</span><span class="n">tile</span><span class="o">.</span><span class="n">fov_name</span><span class="si">}</span><span class="s2">&quot;</span>
+<a id="__codelineno-0-39" name="__codelineno-0-39"></a>            <span class="n">add_translation</span> <span class="o">=</span> <span class="kc">True</span>
+<a id="__codelineno-0-40" name="__codelineno-0-40"></a>        <span class="n">tile</span><span class="o">.</span><span class="n">collection</span><span class="o">.</span><span class="n">_suffix</span> <span class="o">=</span> <span class="n">suffix</span>
+<a id="__codelineno-0-41" name="__codelineno-0-41"></a>        <span class="n">path</span> <span class="o">=</span> <span class="n">tile</span><span class="o">.</span><span class="n">collection</span><span class="o">.</span><span class="n">path</span><span class="p">()</span>
+<a id="__codelineno-0-42" name="__codelineno-0-42"></a>        <span class="k">if</span> <span class="n">path</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">tiled_images</span><span class="p">:</span>
+<a id="__codelineno-0-43" name="__codelineno-0-43"></a>            <span class="n">acquisition_details</span> <span class="o">=</span> <span class="n">tile</span><span class="o">.</span><span class="n">acquisition_details</span>
+<a id="__codelineno-0-44" name="__codelineno-0-44"></a>            <span class="n">tiled_images</span><span class="p">[</span><span class="n">path</span><span class="p">]</span> <span class="o">=</span> <span class="n">TiledImage</span><span class="p">(</span>
+<a id="__codelineno-0-45" name="__codelineno-0-45"></a>                <span class="n">path</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
+<a id="__codelineno-0-46" name="__codelineno-0-46"></a>                <span class="n">regions</span><span class="o">=</span><span class="p">[],</span>
+<a id="__codelineno-0-47" name="__codelineno-0-47"></a>                <span class="n">data_type</span><span class="o">=</span><span class="n">data_type</span><span class="p">,</span>
+<a id="__codelineno-0-48" name="__codelineno-0-48"></a>                <span class="n">channels</span><span class="o">=</span><span class="n">acquisition_details</span><span class="o">.</span><span class="n">channels</span><span class="p">,</span>
+<a id="__codelineno-0-49" name="__codelineno-0-49"></a>                <span class="n">pixelsize</span><span class="o">=</span><span class="n">acquisition_details</span><span class="o">.</span><span class="n">pixelsize</span><span class="p">,</span>
+<a id="__codelineno-0-50" name="__codelineno-0-50"></a>                <span class="n">z_spacing</span><span class="o">=</span><span class="n">acquisition_details</span><span class="o">.</span><span class="n">z_spacing</span><span class="p">,</span>
+<a id="__codelineno-0-51" name="__codelineno-0-51"></a>                <span class="n">t_spacing</span><span class="o">=</span><span class="n">acquisition_details</span><span class="o">.</span><span class="n">t_spacing</span><span class="p">,</span>
+<a id="__codelineno-0-52" name="__codelineno-0-52"></a>                <span class="n">axes</span><span class="o">=</span><span class="n">acquisition_details</span><span class="o">.</span><span class="n">axes</span><span class="p">,</span>
+<a id="__codelineno-0-53" name="__codelineno-0-53"></a>                <span class="n">collection</span><span class="o">=</span><span class="n">tile</span><span class="o">.</span><span class="n">collection</span><span class="p">,</span>
+<a id="__codelineno-0-54" name="__codelineno-0-54"></a>                <span class="n">attributes</span><span class="o">=</span><span class="n">tile</span><span class="o">.</span><span class="n">attributes</span><span class="p">,</span>
+<a id="__codelineno-0-55" name="__codelineno-0-55"></a>            <span class="p">)</span>
+<a id="__codelineno-0-56" name="__codelineno-0-56"></a>        <span class="n">tiled_images</span><span class="p">[</span><span class="n">path</span><span class="p">]</span><span class="o">.</span><span class="n">add_tile</span><span class="p">(</span><span class="n">tile</span><span class="p">,</span> <span class="n">add_translation</span><span class="o">=</span><span class="n">add_translation</span><span class="p">)</span>
+<a id="__codelineno-0-57" name="__codelineno-0-57"></a>
+<a id="__codelineno-0-58" name="__codelineno-0-58"></a>    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">tiled_images</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -4356,6 +4432,25 @@ correction based on wavelength ID instead of channel name.</p>
 <p><span class="doc-section-title">Attributes:</span></p>
     <ul>
         <li class="doc-section-item field-body">
+          <b><code><span title="ome_zarr_converters_tools.models.ConverterOptions.writer_mode">writer_mode</span></code></b>
+              (<code><span title="ome_zarr_converters_tools.models._converter_options.WriterMode">WriterMode</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Mode for writing data during conversion.
+- By Tile: Write data one tile at a time. This consumes less memory,
+but may be slower.
+- By Tile (Using Dask): Write tiles in parallel using Dask. This is
+usually faster than writing by tile sequentially, but may consume more
+memory.
+- By FOV: Write data one field of view at a time. This may the best
+compromise between speed and memory usage in most cases.
+- By FOV (Using Dask): Write fields of view in parallel using Dask.
+This is usually faster than writing by FOV sequentially,
+but may consume more memory.
+- In Memory: Load all data into memory before writing.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
           <b><code><span title="ome_zarr_converters_tools.models.ConverterOptions.tiling_mode">tiling_mode</span></code></b>
               (<code><span title="ome_zarr_converters_tools.models._converter_options.TilingMode">TilingMode</span></code>)
           –
@@ -4373,22 +4468,13 @@ may lead to artifacts if microscope stage positions are not precise.
           </div>
         </li>
         <li class="doc-section-item field-body">
-          <b><code><span title="ome_zarr_converters_tools.models.ConverterOptions.writer_mode">writer_mode</span></code></b>
-              (<code><span title="ome_zarr_converters_tools.models._converter_options.WriterMode">WriterMode</span></code>)
+          <b><code><span title="ome_zarr_converters_tools.models.ConverterOptions.tiling_tolerance">tiling_tolerance</span></code></b>
+              (<code><span title="float">float</span></code>)
           –
           <div class="doc-md-description">
-            <p>Mode for writing data during conversion.
-- By Tile: Write data one tile at a time. This consumes less memory,
-but may be slower.
-- By Tile (Using Dask): Write tiles in parallel using Dask. This is
-usually faster than writing by tile sequentially, but may consume more
-memory.
-- By FOV: Write data one field of view at a time. This may the best
-compromise between speed and memory usage in most cases.
-- By FOV (Using Dask): Write fields of view in parallel using Dask.
-This is usually faster than writing by FOV sequentially,
-but may consume more memory.
-- In Memory: Load all data into memory before writing.</p>
+            <p>Tolerance in pixels for determining if Snap to Grid is
+possible. This accounts for minor jitter in microscope stage positions when
+determining if Snap to Grid tiling can be applied.</p>
           </div>
         </li>
         <li class="doc-section-item field-body">
@@ -4470,51 +4556,63 @@ but may consume more memory.
 <span class="normal"><a href="#__codelineno-0-200">200</a></span>
 <span class="normal"><a href="#__codelineno-0-201">201</a></span>
 <span class="normal"><a href="#__codelineno-0-202">202</a></span>
-<span class="normal"><a href="#__codelineno-0-203">203</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-159" name="__codelineno-0-159"></a><span class="k">class</span><span class="w"> </span><span class="nc">ConverterOptions</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="normal"><a href="#__codelineno-0-203">203</a></span>
+<span class="normal"><a href="#__codelineno-0-204">204</a></span>
+<span class="normal"><a href="#__codelineno-0-205">205</a></span>
+<span class="normal"><a href="#__codelineno-0-206">206</a></span>
+<span class="normal"><a href="#__codelineno-0-207">207</a></span>
+<span class="normal"><a href="#__codelineno-0-208">208</a></span>
+<span class="normal"><a href="#__codelineno-0-209">209</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-159" name="__codelineno-0-159"></a><span class="k">class</span><span class="w"> </span><span class="nc">ConverterOptions</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
 <a id="__codelineno-0-160" name="__codelineno-0-160"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Options for the OME-Zarr conversion process.</span>
 <a id="__codelineno-0-161" name="__codelineno-0-161"></a>
 <a id="__codelineno-0-162" name="__codelineno-0-162"></a><span class="sd">    Attributes:</span>
-<a id="__codelineno-0-163" name="__codelineno-0-163"></a><span class="sd">        tiling_mode: Tiling mode to use during conversion.</span>
-<a id="__codelineno-0-164" name="__codelineno-0-164"></a><span class="sd">            - Auto: Automatically determine if Snap to Grid is possible,</span>
-<a id="__codelineno-0-165" name="__codelineno-0-165"></a><span class="sd">            otherwise use Snap to Corners.</span>
-<a id="__codelineno-0-166" name="__codelineno-0-166"></a><span class="sd">            - Snap to Grid: Tile images to fit a regular grid. This is</span>
-<a id="__codelineno-0-167" name="__codelineno-0-167"></a><span class="sd">            only possible if image positions align to a grid (potentially with overlap).</span>
-<a id="__codelineno-0-168" name="__codelineno-0-168"></a><span class="sd">            - Snap to Corners: Tile images to fit a grid defined by the corner</span>
-<a id="__codelineno-0-169" name="__codelineno-0-169"></a><span class="sd">            positions.</span>
-<a id="__codelineno-0-170" name="__codelineno-0-170"></a><span class="sd">            - Inplace: Write tiles in their original positions without tiling. This</span>
-<a id="__codelineno-0-171" name="__codelineno-0-171"></a><span class="sd">            may lead to artifacts if microscope stage positions are not precise.</span>
-<a id="__codelineno-0-172" name="__codelineno-0-172"></a><span class="sd">            - No Tiling: Each field of view is written as a single OME-Zarr.</span>
-<a id="__codelineno-0-173" name="__codelineno-0-173"></a><span class="sd">        writer_mode: Mode for writing data during conversion.</span>
-<a id="__codelineno-0-174" name="__codelineno-0-174"></a><span class="sd">            - By Tile: Write data one tile at a time. This consumes less memory,</span>
-<a id="__codelineno-0-175" name="__codelineno-0-175"></a><span class="sd">            but may be slower.</span>
-<a id="__codelineno-0-176" name="__codelineno-0-176"></a><span class="sd">            - By Tile (Using Dask): Write tiles in parallel using Dask. This is</span>
-<a id="__codelineno-0-177" name="__codelineno-0-177"></a><span class="sd">            usually faster than writing by tile sequentially, but may consume more</span>
-<a id="__codelineno-0-178" name="__codelineno-0-178"></a><span class="sd">            memory.</span>
-<a id="__codelineno-0-179" name="__codelineno-0-179"></a><span class="sd">            - By FOV: Write data one field of view at a time. This may the best</span>
-<a id="__codelineno-0-180" name="__codelineno-0-180"></a><span class="sd">            compromise between speed and memory usage in most cases.</span>
-<a id="__codelineno-0-181" name="__codelineno-0-181"></a><span class="sd">            - By FOV (Using Dask): Write fields of view in parallel using Dask.</span>
-<a id="__codelineno-0-182" name="__codelineno-0-182"></a><span class="sd">            This is usually faster than writing by FOV sequentially,</span>
-<a id="__codelineno-0-183" name="__codelineno-0-183"></a><span class="sd">            but may consume more memory.</span>
-<a id="__codelineno-0-184" name="__codelineno-0-184"></a><span class="sd">            - In Memory: Load all data into memory before writing.</span>
-<a id="__codelineno-0-185" name="__codelineno-0-185"></a><span class="sd">        alignment_correction: Alignment correction options.</span>
-<a id="__codelineno-0-186" name="__codelineno-0-186"></a><span class="sd">        omezarr_options: Options specific to OME-Zarr writing.</span>
-<a id="__codelineno-0-187" name="__codelineno-0-187"></a><span class="sd">        temp_json_options: Options for temporary JSON storage.</span>
-<a id="__codelineno-0-188" name="__codelineno-0-188"></a>
-<a id="__codelineno-0-189" name="__codelineno-0-189"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-190" name="__codelineno-0-190"></a>
-<a id="__codelineno-0-191" name="__codelineno-0-191"></a>    <span class="n">tiling_mode</span><span class="p">:</span> <span class="n">TilingMode</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">TilingMode</span><span class="o">.</span><span class="n">AUTO</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Tiling Mode&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-192" name="__codelineno-0-192"></a>    <span class="n">writer_mode</span><span class="p">:</span> <span class="n">WriterMode</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">WriterMode</span><span class="o">.</span><span class="n">BY_FOV</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Writer Mode&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-193" name="__codelineno-0-193"></a>    <span class="n">alignment_correction</span><span class="p">:</span> <span class="n">AlignmentCorrections</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-<a id="__codelineno-0-194" name="__codelineno-0-194"></a>        <span class="n">default_factory</span><span class="o">=</span><span class="n">AlignmentCorrections</span><span class="p">,</span>
-<a id="__codelineno-0-195" name="__codelineno-0-195"></a>        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Alignment Corrections&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-196" name="__codelineno-0-196"></a>    <span class="p">)</span>
-<a id="__codelineno-0-197" name="__codelineno-0-197"></a>    <span class="n">omezarr_options</span><span class="p">:</span> <span class="n">OmeZarrOptions</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-<a id="__codelineno-0-198" name="__codelineno-0-198"></a>        <span class="n">default_factory</span><span class="o">=</span><span class="n">OmeZarrOptions</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;OME-Zarr Options&quot;</span>
-<a id="__codelineno-0-199" name="__codelineno-0-199"></a>    <span class="p">)</span>
-<a id="__codelineno-0-200" name="__codelineno-0-200"></a>    <span class="n">temp_json_options</span><span class="p">:</span> <span class="n">TempJsonOptions</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-<a id="__codelineno-0-201" name="__codelineno-0-201"></a>        <span class="n">default_factory</span><span class="o">=</span><span class="n">TempJsonOptions</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Temporary JSON Options&quot;</span>
+<a id="__codelineno-0-163" name="__codelineno-0-163"></a><span class="sd">        writer_mode: Mode for writing data during conversion.</span>
+<a id="__codelineno-0-164" name="__codelineno-0-164"></a><span class="sd">            - By Tile: Write data one tile at a time. This consumes less memory,</span>
+<a id="__codelineno-0-165" name="__codelineno-0-165"></a><span class="sd">            but may be slower.</span>
+<a id="__codelineno-0-166" name="__codelineno-0-166"></a><span class="sd">            - By Tile (Using Dask): Write tiles in parallel using Dask. This is</span>
+<a id="__codelineno-0-167" name="__codelineno-0-167"></a><span class="sd">            usually faster than writing by tile sequentially, but may consume more</span>
+<a id="__codelineno-0-168" name="__codelineno-0-168"></a><span class="sd">            memory.</span>
+<a id="__codelineno-0-169" name="__codelineno-0-169"></a><span class="sd">            - By FOV: Write data one field of view at a time. This may the best</span>
+<a id="__codelineno-0-170" name="__codelineno-0-170"></a><span class="sd">            compromise between speed and memory usage in most cases.</span>
+<a id="__codelineno-0-171" name="__codelineno-0-171"></a><span class="sd">            - By FOV (Using Dask): Write fields of view in parallel using Dask.</span>
+<a id="__codelineno-0-172" name="__codelineno-0-172"></a><span class="sd">            This is usually faster than writing by FOV sequentially,</span>
+<a id="__codelineno-0-173" name="__codelineno-0-173"></a><span class="sd">            but may consume more memory.</span>
+<a id="__codelineno-0-174" name="__codelineno-0-174"></a><span class="sd">            - In Memory: Load all data into memory before writing.</span>
+<a id="__codelineno-0-175" name="__codelineno-0-175"></a><span class="sd">        tiling_mode: Tiling mode to use during conversion.</span>
+<a id="__codelineno-0-176" name="__codelineno-0-176"></a><span class="sd">            - Auto: Automatically determine if Snap to Grid is possible,</span>
+<a id="__codelineno-0-177" name="__codelineno-0-177"></a><span class="sd">            otherwise use Snap to Corners.</span>
+<a id="__codelineno-0-178" name="__codelineno-0-178"></a><span class="sd">            - Snap to Grid: Tile images to fit a regular grid. This is</span>
+<a id="__codelineno-0-179" name="__codelineno-0-179"></a><span class="sd">            only possible if image positions align to a grid (potentially with overlap).</span>
+<a id="__codelineno-0-180" name="__codelineno-0-180"></a><span class="sd">            - Snap to Corners: Tile images to fit a grid defined by the corner</span>
+<a id="__codelineno-0-181" name="__codelineno-0-181"></a><span class="sd">            positions.</span>
+<a id="__codelineno-0-182" name="__codelineno-0-182"></a><span class="sd">            - Inplace: Write tiles in their original positions without tiling. This</span>
+<a id="__codelineno-0-183" name="__codelineno-0-183"></a><span class="sd">            may lead to artifacts if microscope stage positions are not precise.</span>
+<a id="__codelineno-0-184" name="__codelineno-0-184"></a><span class="sd">            - No Tiling: Each field of view is written as a single OME-Zarr.</span>
+<a id="__codelineno-0-185" name="__codelineno-0-185"></a><span class="sd">        tiling_tolerance: Tolerance in pixels for determining if Snap to Grid is</span>
+<a id="__codelineno-0-186" name="__codelineno-0-186"></a><span class="sd">            possible. This accounts for minor jitter in microscope stage positions when</span>
+<a id="__codelineno-0-187" name="__codelineno-0-187"></a><span class="sd">            determining if Snap to Grid tiling can be applied.</span>
+<a id="__codelineno-0-188" name="__codelineno-0-188"></a><span class="sd">        alignment_correction: Alignment correction options.</span>
+<a id="__codelineno-0-189" name="__codelineno-0-189"></a><span class="sd">        omezarr_options: Options specific to OME-Zarr writing.</span>
+<a id="__codelineno-0-190" name="__codelineno-0-190"></a><span class="sd">        temp_json_options: Options for temporary JSON storage.</span>
+<a id="__codelineno-0-191" name="__codelineno-0-191"></a>
+<a id="__codelineno-0-192" name="__codelineno-0-192"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-193" name="__codelineno-0-193"></a>
+<a id="__codelineno-0-194" name="__codelineno-0-194"></a>    <span class="n">writer_mode</span><span class="p">:</span> <span class="n">WriterMode</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">WriterMode</span><span class="o">.</span><span class="n">BY_FOV</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Writer Mode&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-195" name="__codelineno-0-195"></a>    <span class="n">tiling_mode</span><span class="p">:</span> <span class="n">TilingMode</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">TilingMode</span><span class="o">.</span><span class="n">AUTO</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Tiling Mode&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-196" name="__codelineno-0-196"></a>    <span class="n">tiling_tolerance</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+<a id="__codelineno-0-197" name="__codelineno-0-197"></a>        <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Tiling Tolerance (in pixels)&quot;</span>
+<a id="__codelineno-0-198" name="__codelineno-0-198"></a>    <span class="p">)</span>
+<a id="__codelineno-0-199" name="__codelineno-0-199"></a>    <span class="n">alignment_correction</span><span class="p">:</span> <span class="n">AlignmentCorrections</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+<a id="__codelineno-0-200" name="__codelineno-0-200"></a>        <span class="n">default_factory</span><span class="o">=</span><span class="n">AlignmentCorrections</span><span class="p">,</span>
+<a id="__codelineno-0-201" name="__codelineno-0-201"></a>        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Alignment Corrections&quot;</span><span class="p">,</span>
 <a id="__codelineno-0-202" name="__codelineno-0-202"></a>    <span class="p">)</span>
-<a id="__codelineno-0-203" name="__codelineno-0-203"></a>    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">&quot;forbid&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-203" name="__codelineno-0-203"></a>    <span class="n">omezarr_options</span><span class="p">:</span> <span class="n">OmeZarrOptions</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+<a id="__codelineno-0-204" name="__codelineno-0-204"></a>        <span class="n">default_factory</span><span class="o">=</span><span class="n">OmeZarrOptions</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;OME-Zarr Options&quot;</span>
+<a id="__codelineno-0-205" name="__codelineno-0-205"></a>    <span class="p">)</span>
+<a id="__codelineno-0-206" name="__codelineno-0-206"></a>    <span class="n">temp_json_options</span><span class="p">:</span> <span class="n">TempJsonOptions</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+<a id="__codelineno-0-207" name="__codelineno-0-207"></a>        <span class="n">default_factory</span><span class="o">=</span><span class="n">TempJsonOptions</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Temporary JSON Options&quot;</span>
+<a id="__codelineno-0-208" name="__codelineno-0-208"></a>    <span class="p">)</span>
+<a id="__codelineno-0-209" name="__codelineno-0-209"></a>    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">&quot;forbid&quot;</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -5682,7 +5780,7 @@ with the same name.</p>
 
 
 <h4 id="ome_zarr_converters_tools.pipelines.add_registration_func" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">add_registration_func</span><span class="p">(</span><span class="n">function</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">TiledImage</span><span class="p">],</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span></code>
+            <code class="highlight language-python"><span class="n">add_registration_func</span><span class="p">(</span><span class="n">function</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">TiledImage</span><span class="p">],</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span></code>
 
 </h4>
 
@@ -5696,9 +5794,7 @@ with the same name.</p>
     <ul>
         <li class="doc-section-item field-body">
             <b><code>name</code></b>
-              (<code><span title="str">str</span> | None</code>, default:
-                  <code>None</code>
-)
+              (<code><span title="str">str</span></code>)
           –
           <div class="doc-md-description">
             <p>Name of the registration step.</p>
@@ -5741,11 +5837,9 @@ with the same name.</p>
 <span class="normal"><a href="#__codelineno-0-47">47</a></span>
 <span class="normal"><a href="#__codelineno-0-48">48</a></span>
 <span class="normal"><a href="#__codelineno-0-49">49</a></span>
-<span class="normal"><a href="#__codelineno-0-50">50</a></span>
-<span class="normal"><a href="#__codelineno-0-51">51</a></span>
-<span class="normal"><a href="#__codelineno-0-52">52</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-36" name="__codelineno-0-36"></a><span class="k">def</span><span class="w"> </span><span class="nf">add_registration_func</span><span class="p">(</span>
+<span class="normal"><a href="#__codelineno-0-50">50</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-36" name="__codelineno-0-36"></a><span class="k">def</span><span class="w"> </span><span class="nf">add_registration_func</span><span class="p">(</span>
 <a id="__codelineno-0-37" name="__codelineno-0-37"></a>    <span class="n">function</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">TiledImage</span><span class="p">],</span>
-<a id="__codelineno-0-38" name="__codelineno-0-38"></a>    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-38" name="__codelineno-0-38"></a>    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 <a id="__codelineno-0-39" name="__codelineno-0-39"></a>    <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <a id="__codelineno-0-40" name="__codelineno-0-40"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <a id="__codelineno-0-41" name="__codelineno-0-41"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Register a new registration step function.</span>
@@ -5755,11 +5849,9 @@ with the same name.</p>
 <a id="__codelineno-0-45" name="__codelineno-0-45"></a><span class="sd">        function: Function that performs the registration step.</span>
 <a id="__codelineno-0-46" name="__codelineno-0-46"></a><span class="sd">        overwrite: Whether to overwrite an existing registration step.</span>
 <a id="__codelineno-0-47" name="__codelineno-0-47"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-48" name="__codelineno-0-48"></a>    <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-49" name="__codelineno-0-49"></a>        <span class="n">name</span> <span class="o">=</span> <span class="n">function</span><span class="o">.</span><span class="vm">__name__</span>
-<a id="__codelineno-0-50" name="__codelineno-0-50"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">overwrite</span> <span class="ow">and</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">_registration_registry</span><span class="p">:</span>
-<a id="__codelineno-0-51" name="__codelineno-0-51"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Registration step &#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; is already registered.&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-52" name="__codelineno-0-52"></a>    <span class="n">_registration_registry</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">function</span>
+<a id="__codelineno-0-48" name="__codelineno-0-48"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">overwrite</span> <span class="ow">and</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">_registration_registry</span><span class="p">:</span>
+<a id="__codelineno-0-49" name="__codelineno-0-49"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Registration step &#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; is already registered.&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-50" name="__codelineno-0-50"></a>    <span class="n">_registration_registry</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">function</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -6395,7 +6487,8 @@ constructs TiledImage models from the processed tiles.</p>
 <span class="normal"><a href="#__codelineno-0-219">219</a></span>
 <span class="normal"><a href="#__codelineno-0-220">220</a></span>
 <span class="normal"><a href="#__codelineno-0-221">221</a></span>
-<span class="normal"><a href="#__codelineno-0-222">222</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-136" name="__codelineno-0-136"></a><span class="k">def</span><span class="w"> </span><span class="nf">write_tiled_image_as_zarr</span><span class="p">(</span>
+<span class="normal"><a href="#__codelineno-0-222">222</a></span>
+<span class="normal"><a href="#__codelineno-0-223">223</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-136" name="__codelineno-0-136"></a><span class="k">def</span><span class="w"> </span><span class="nf">write_tiled_image_as_zarr</span><span class="p">(</span>
 <a id="__codelineno-0-137" name="__codelineno-0-137"></a>    <span class="o">*</span><span class="p">,</span>
 <a id="__codelineno-0-138" name="__codelineno-0-138"></a>    <span class="n">zarr_url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 <a id="__codelineno-0-139" name="__codelineno-0-139"></a>    <span class="n">tiled_image</span><span class="p">:</span> <span class="n">TiledImage</span><span class="p">,</span>
@@ -6447,41 +6540,42 @@ constructs TiledImage models from the processed tiles.</p>
 <a id="__codelineno-0-185" name="__codelineno-0-185"></a>            <span class="n">time_spacing</span><span class="o">=</span><span class="n">tiled_image</span><span class="o">.</span><span class="n">t_spacing</span><span class="p">,</span>
 <a id="__codelineno-0-186" name="__codelineno-0-186"></a>            <span class="n">levels</span><span class="o">=</span><span class="n">omezarr_options</span><span class="o">.</span><span class="n">num_levels</span><span class="p">,</span>
 <a id="__codelineno-0-187" name="__codelineno-0-187"></a>            <span class="n">channels_meta</span><span class="o">=</span><span class="n">channels_meta</span><span class="p">,</span>
-<a id="__codelineno-0-188" name="__codelineno-0-188"></a>            <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-<a id="__codelineno-0-189" name="__codelineno-0-189"></a>            <span class="n">ngff_version</span><span class="o">=</span><span class="n">omezarr_options</span><span class="o">.</span><span class="n">ngff_version</span><span class="p">,</span>
-<a id="__codelineno-0-190" name="__codelineno-0-190"></a>        <span class="p">)</span>
-<a id="__codelineno-0-191" name="__codelineno-0-191"></a>    <span class="n">image</span> <span class="o">=</span> <span class="n">ome_zarr</span><span class="o">.</span><span class="n">get_image</span><span class="p">()</span>
-<a id="__codelineno-0-192" name="__codelineno-0-192"></a>    <span class="n">write_to_zarr</span><span class="p">(</span>
-<a id="__codelineno-0-193" name="__codelineno-0-193"></a>        <span class="n">image</span><span class="o">=</span><span class="n">image</span><span class="p">,</span>
-<a id="__codelineno-0-194" name="__codelineno-0-194"></a>        <span class="n">tiled_image</span><span class="o">=</span><span class="n">tiled_image</span><span class="p">,</span>
-<a id="__codelineno-0-195" name="__codelineno-0-195"></a>        <span class="n">resource</span><span class="o">=</span><span class="n">resource</span><span class="p">,</span>
-<a id="__codelineno-0-196" name="__codelineno-0-196"></a>        <span class="n">writer_mode</span><span class="o">=</span><span class="n">writer_mode</span><span class="p">,</span>
-<a id="__codelineno-0-197" name="__codelineno-0-197"></a>    <span class="p">)</span>
-<a id="__codelineno-0-198" name="__codelineno-0-198"></a>    <span class="n">image</span><span class="o">.</span><span class="n">consolidate</span><span class="p">()</span>
-<a id="__codelineno-0-199" name="__codelineno-0-199"></a>    <span class="n">ome_zarr</span><span class="o">.</span><span class="n">set_channel_windows_with_percentiles</span><span class="p">()</span>
-<a id="__codelineno-0-200" name="__codelineno-0-200"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;OME-Zarr image creation and data writing complete.&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-201" name="__codelineno-0-201"></a>
-<a id="__codelineno-0-202" name="__codelineno-0-202"></a>    <span class="n">fov_tiles</span> <span class="o">=</span> <span class="n">tiled_image</span><span class="o">.</span><span class="n">group_by_fov</span><span class="p">()</span>
-<a id="__codelineno-0-203" name="__codelineno-0-203"></a>    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">fov_tiles</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-<a id="__codelineno-0-204" name="__codelineno-0-204"></a>        <span class="n">rois</span> <span class="o">=</span> <span class="p">[]</span>
-<a id="__codelineno-0-205" name="__codelineno-0-205"></a>        <span class="k">for</span> <span class="n">fov_tile</span> <span class="ow">in</span> <span class="n">tiled_image</span><span class="o">.</span><span class="n">group_by_fov</span><span class="p">():</span>
-<a id="__codelineno-0-206" name="__codelineno-0-206"></a>            <span class="n">roi_union</span> <span class="o">=</span> <span class="n">fov_tile</span><span class="o">.</span><span class="n">roi</span><span class="p">()</span><span class="o">.</span><span class="n">to_world</span><span class="p">(</span><span class="n">pixel_size</span><span class="o">=</span><span class="n">tiled_image</span><span class="o">.</span><span class="n">pixel_size</span><span class="p">)</span>
-<a id="__codelineno-0-207" name="__codelineno-0-207"></a>            <span class="n">rois</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">roi_union</span><span class="p">)</span>
-<a id="__codelineno-0-208" name="__codelineno-0-208"></a>
-<a id="__codelineno-0-209" name="__codelineno-0-209"></a>        <span class="n">roi_table</span> <span class="o">=</span> <span class="n">RoiTable</span><span class="p">(</span><span class="n">rois</span><span class="o">=</span><span class="n">rois</span><span class="p">)</span>
-<a id="__codelineno-0-210" name="__codelineno-0-210"></a>        <span class="n">ome_zarr</span><span class="o">.</span><span class="n">add_table</span><span class="p">(</span>
-<a id="__codelineno-0-211" name="__codelineno-0-211"></a>            <span class="s2">&quot;FOV_ROI_table&quot;</span><span class="p">,</span> <span class="n">roi_table</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="n">omezarr_options</span><span class="o">.</span><span class="n">table_backend</span>
-<a id="__codelineno-0-212" name="__codelineno-0-212"></a>        <span class="p">)</span>
-<a id="__codelineno-0-213" name="__codelineno-0-213"></a>
-<a id="__codelineno-0-214" name="__codelineno-0-214"></a>    <span class="n">well_roi</span> <span class="o">=</span> <span class="n">ome_zarr</span><span class="o">.</span><span class="n">build_image_roi_table</span><span class="p">()</span>
-<a id="__codelineno-0-215" name="__codelineno-0-215"></a>    <span class="n">ome_zarr</span><span class="o">.</span><span class="n">add_table</span><span class="p">(</span>
-<a id="__codelineno-0-216" name="__codelineno-0-216"></a>        <span class="s2">&quot;well_ROI_table&quot;</span><span class="p">,</span> <span class="n">well_roi</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="n">omezarr_options</span><span class="o">.</span><span class="n">table_backend</span>
-<a id="__codelineno-0-217" name="__codelineno-0-217"></a>    <span class="p">)</span>
-<a id="__codelineno-0-218" name="__codelineno-0-218"></a>    <span class="n">condition_table</span> <span class="o">=</span> <span class="n">_attribute_to_condition_table</span><span class="p">(</span><span class="n">tiled_image</span><span class="o">.</span><span class="n">attributes</span><span class="p">)</span>
-<a id="__codelineno-0-219" name="__codelineno-0-219"></a>    <span class="k">if</span> <span class="n">condition_table</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-220" name="__codelineno-0-220"></a>        <span class="n">ome_zarr</span><span class="o">.</span><span class="n">add_table</span><span class="p">(</span><span class="s2">&quot;condition_table&quot;</span><span class="p">,</span> <span class="n">condition_table</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="s2">&quot;csv&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-221" name="__codelineno-0-221"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Finished writing OME-Zarr Tables and metadata.&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-222" name="__codelineno-0-222"></a>    <span class="k">return</span> <span class="n">ome_zarr</span>
+<a id="__codelineno-0-188" name="__codelineno-0-188"></a>            <span class="n">translation</span><span class="o">=</span><span class="n">tiled_image</span><span class="o">.</span><span class="n">translation</span><span class="p">,</span>
+<a id="__codelineno-0-189" name="__codelineno-0-189"></a>            <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-0-190" name="__codelineno-0-190"></a>            <span class="n">ngff_version</span><span class="o">=</span><span class="n">omezarr_options</span><span class="o">.</span><span class="n">ngff_version</span><span class="p">,</span>
+<a id="__codelineno-0-191" name="__codelineno-0-191"></a>        <span class="p">)</span>
+<a id="__codelineno-0-192" name="__codelineno-0-192"></a>    <span class="n">image</span> <span class="o">=</span> <span class="n">ome_zarr</span><span class="o">.</span><span class="n">get_image</span><span class="p">()</span>
+<a id="__codelineno-0-193" name="__codelineno-0-193"></a>    <span class="n">write_to_zarr</span><span class="p">(</span>
+<a id="__codelineno-0-194" name="__codelineno-0-194"></a>        <span class="n">image</span><span class="o">=</span><span class="n">image</span><span class="p">,</span>
+<a id="__codelineno-0-195" name="__codelineno-0-195"></a>        <span class="n">tiled_image</span><span class="o">=</span><span class="n">tiled_image</span><span class="p">,</span>
+<a id="__codelineno-0-196" name="__codelineno-0-196"></a>        <span class="n">resource</span><span class="o">=</span><span class="n">resource</span><span class="p">,</span>
+<a id="__codelineno-0-197" name="__codelineno-0-197"></a>        <span class="n">writer_mode</span><span class="o">=</span><span class="n">writer_mode</span><span class="p">,</span>
+<a id="__codelineno-0-198" name="__codelineno-0-198"></a>    <span class="p">)</span>
+<a id="__codelineno-0-199" name="__codelineno-0-199"></a>    <span class="n">image</span><span class="o">.</span><span class="n">consolidate</span><span class="p">()</span>
+<a id="__codelineno-0-200" name="__codelineno-0-200"></a>    <span class="n">ome_zarr</span><span class="o">.</span><span class="n">set_channel_windows_with_percentiles</span><span class="p">()</span>
+<a id="__codelineno-0-201" name="__codelineno-0-201"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;OME-Zarr image creation and data writing complete.&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-202" name="__codelineno-0-202"></a>
+<a id="__codelineno-0-203" name="__codelineno-0-203"></a>    <span class="n">fov_tiles</span> <span class="o">=</span> <span class="n">tiled_image</span><span class="o">.</span><span class="n">group_by_fov</span><span class="p">()</span>
+<a id="__codelineno-0-204" name="__codelineno-0-204"></a>    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">fov_tiles</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+<a id="__codelineno-0-205" name="__codelineno-0-205"></a>        <span class="n">rois</span> <span class="o">=</span> <span class="p">[]</span>
+<a id="__codelineno-0-206" name="__codelineno-0-206"></a>        <span class="k">for</span> <span class="n">fov_tile</span> <span class="ow">in</span> <span class="n">tiled_image</span><span class="o">.</span><span class="n">group_by_fov</span><span class="p">():</span>
+<a id="__codelineno-0-207" name="__codelineno-0-207"></a>            <span class="n">roi_union</span> <span class="o">=</span> <span class="n">fov_tile</span><span class="o">.</span><span class="n">roi</span><span class="p">()</span><span class="o">.</span><span class="n">to_world</span><span class="p">(</span><span class="n">pixel_size</span><span class="o">=</span><span class="n">tiled_image</span><span class="o">.</span><span class="n">pixel_size</span><span class="p">)</span>
+<a id="__codelineno-0-208" name="__codelineno-0-208"></a>            <span class="n">rois</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">roi_union</span><span class="p">)</span>
+<a id="__codelineno-0-209" name="__codelineno-0-209"></a>
+<a id="__codelineno-0-210" name="__codelineno-0-210"></a>        <span class="n">roi_table</span> <span class="o">=</span> <span class="n">RoiTable</span><span class="p">(</span><span class="n">rois</span><span class="o">=</span><span class="n">rois</span><span class="p">)</span>
+<a id="__codelineno-0-211" name="__codelineno-0-211"></a>        <span class="n">ome_zarr</span><span class="o">.</span><span class="n">add_table</span><span class="p">(</span>
+<a id="__codelineno-0-212" name="__codelineno-0-212"></a>            <span class="s2">&quot;FOV_ROI_table&quot;</span><span class="p">,</span> <span class="n">roi_table</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="n">omezarr_options</span><span class="o">.</span><span class="n">table_backend</span>
+<a id="__codelineno-0-213" name="__codelineno-0-213"></a>        <span class="p">)</span>
+<a id="__codelineno-0-214" name="__codelineno-0-214"></a>
+<a id="__codelineno-0-215" name="__codelineno-0-215"></a>    <span class="n">well_roi</span> <span class="o">=</span> <span class="n">ome_zarr</span><span class="o">.</span><span class="n">build_image_roi_table</span><span class="p">()</span>
+<a id="__codelineno-0-216" name="__codelineno-0-216"></a>    <span class="n">ome_zarr</span><span class="o">.</span><span class="n">add_table</span><span class="p">(</span>
+<a id="__codelineno-0-217" name="__codelineno-0-217"></a>        <span class="s2">&quot;well_ROI_table&quot;</span><span class="p">,</span> <span class="n">well_roi</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="n">omezarr_options</span><span class="o">.</span><span class="n">table_backend</span>
+<a id="__codelineno-0-218" name="__codelineno-0-218"></a>    <span class="p">)</span>
+<a id="__codelineno-0-219" name="__codelineno-0-219"></a>    <span class="n">condition_table</span> <span class="o">=</span> <span class="n">_attribute_to_condition_table</span><span class="p">(</span><span class="n">tiled_image</span><span class="o">.</span><span class="n">attributes</span><span class="p">)</span>
+<a id="__codelineno-0-220" name="__codelineno-0-220"></a>    <span class="k">if</span> <span class="n">condition_table</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-221" name="__codelineno-0-221"></a>        <span class="n">ome_zarr</span><span class="o">.</span><span class="n">add_table</span><span class="p">(</span><span class="s2">&quot;condition_table&quot;</span><span class="p">,</span> <span class="n">condition_table</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="s2">&quot;csv&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-222" name="__codelineno-0-222"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Finished writing OME-Zarr Tables and metadata.&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-223" name="__codelineno-0-223"></a>    <span class="k">return</span> <span class="n">ome_zarr</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -7518,7 +7612,8 @@ use when loading the TiledImage.</p>
 <span class="normal"><a href="#__codelineno-0-135">135</a></span>
 <span class="normal"><a href="#__codelineno-0-136">136</a></span>
 <span class="normal"><a href="#__codelineno-0-137">137</a></span>
-<span class="normal"><a href="#__codelineno-0-138">138</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-74" name="__codelineno-0-74"></a><span class="k">def</span><span class="w"> </span><span class="nf">generic_compute_task</span><span class="p">(</span>
+<span class="normal"><a href="#__codelineno-0-138">138</a></span>
+<span class="normal"><a href="#__codelineno-0-139">139</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-74" name="__codelineno-0-74"></a><span class="k">def</span><span class="w"> </span><span class="nf">generic_compute_task</span><span class="p">(</span>
 <a id="__codelineno-0-75" name="__codelineno-0-75"></a>    <span class="o">*</span><span class="p">,</span>
 <a id="__codelineno-0-76" name="__codelineno-0-76"></a>    <span class="c1"># Fractal parameters</span>
 <a id="__codelineno-0-77" name="__codelineno-0-77"></a>    <span class="n">zarr_url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
@@ -7565,24 +7660,25 @@ use when loading the TiledImage.</p>
 <a id="__codelineno-0-118" name="__codelineno-0-118"></a>    <span class="n">registration_pipeline</span> <span class="o">=</span> <span class="n">build_default_registration_pipeline</span><span class="p">(</span>
 <a id="__codelineno-0-119" name="__codelineno-0-119"></a>        <span class="n">alignment_corrections</span><span class="o">=</span><span class="n">init_args</span><span class="o">.</span><span class="n">converter_options</span><span class="o">.</span><span class="n">alignment_correction</span><span class="p">,</span>
 <a id="__codelineno-0-120" name="__codelineno-0-120"></a>        <span class="n">tiling_mode</span><span class="o">=</span><span class="n">init_args</span><span class="o">.</span><span class="n">converter_options</span><span class="o">.</span><span class="n">tiling_mode</span><span class="p">,</span>
-<a id="__codelineno-0-121" name="__codelineno-0-121"></a>    <span class="p">)</span>
-<a id="__codelineno-0-122" name="__codelineno-0-122"></a>    <span class="n">ome_zarr</span> <span class="o">=</span> <span class="n">tiled_image_creation_pipeline</span><span class="p">(</span>
-<a id="__codelineno-0-123" name="__codelineno-0-123"></a>        <span class="n">zarr_url</span><span class="o">=</span><span class="n">zarr_url</span><span class="p">,</span>
-<a id="__codelineno-0-124" name="__codelineno-0-124"></a>        <span class="n">tiled_image</span><span class="o">=</span><span class="n">tiled_image_loaded</span><span class="p">,</span>
-<a id="__codelineno-0-125" name="__codelineno-0-125"></a>        <span class="n">registration_pipeline</span><span class="o">=</span><span class="n">registration_pipeline</span><span class="p">,</span>
-<a id="__codelineno-0-126" name="__codelineno-0-126"></a>        <span class="n">converter_options</span><span class="o">=</span><span class="n">init_args</span><span class="o">.</span><span class="n">converter_options</span><span class="p">,</span>
-<a id="__codelineno-0-127" name="__codelineno-0-127"></a>        <span class="n">writer_mode</span><span class="o">=</span><span class="n">init_args</span><span class="o">.</span><span class="n">converter_options</span><span class="o">.</span><span class="n">writer_mode</span><span class="p">,</span>
-<a id="__codelineno-0-128" name="__codelineno-0-128"></a>        <span class="n">overwrite_mode</span><span class="o">=</span><span class="n">init_args</span><span class="o">.</span><span class="n">overwrite_mode</span><span class="p">,</span>
-<a id="__codelineno-0-129" name="__codelineno-0-129"></a>        <span class="n">resource</span><span class="o">=</span><span class="n">resource</span><span class="p">,</span>
-<a id="__codelineno-0-130" name="__codelineno-0-130"></a>    <span class="p">)</span>
-<a id="__codelineno-0-131" name="__codelineno-0-131"></a>    <span class="n">remove_json</span><span class="p">(</span><span class="n">init_args</span><span class="o">.</span><span class="n">tiled_image_json_dump_url</span><span class="p">)</span>
-<a id="__codelineno-0-132" name="__codelineno-0-132"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Conversion complete&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-133" name="__codelineno-0-133"></a>    <span class="k">return</span> <span class="n">_build_image_list_update</span><span class="p">(</span>
-<a id="__codelineno-0-134" name="__codelineno-0-134"></a>        <span class="n">zarr_url</span><span class="o">=</span><span class="n">zarr_url</span><span class="p">,</span>
-<a id="__codelineno-0-135" name="__codelineno-0-135"></a>        <span class="n">ome_zarr</span><span class="o">=</span><span class="n">ome_zarr</span><span class="p">,</span>
-<a id="__codelineno-0-136" name="__codelineno-0-136"></a>        <span class="n">collection</span><span class="o">=</span><span class="n">tiled_image_loaded</span><span class="o">.</span><span class="n">collection</span><span class="p">,</span>
-<a id="__codelineno-0-137" name="__codelineno-0-137"></a>        <span class="n">attributes</span><span class="o">=</span><span class="n">tiled_image_loaded</span><span class="o">.</span><span class="n">attributes</span><span class="p">,</span>
-<a id="__codelineno-0-138" name="__codelineno-0-138"></a>    <span class="p">)</span>
+<a id="__codelineno-0-121" name="__codelineno-0-121"></a>        <span class="n">tolerance</span><span class="o">=</span><span class="n">init_args</span><span class="o">.</span><span class="n">converter_options</span><span class="o">.</span><span class="n">tiling_tolerance</span><span class="p">,</span>
+<a id="__codelineno-0-122" name="__codelineno-0-122"></a>    <span class="p">)</span>
+<a id="__codelineno-0-123" name="__codelineno-0-123"></a>    <span class="n">ome_zarr</span> <span class="o">=</span> <span class="n">tiled_image_creation_pipeline</span><span class="p">(</span>
+<a id="__codelineno-0-124" name="__codelineno-0-124"></a>        <span class="n">zarr_url</span><span class="o">=</span><span class="n">zarr_url</span><span class="p">,</span>
+<a id="__codelineno-0-125" name="__codelineno-0-125"></a>        <span class="n">tiled_image</span><span class="o">=</span><span class="n">tiled_image_loaded</span><span class="p">,</span>
+<a id="__codelineno-0-126" name="__codelineno-0-126"></a>        <span class="n">registration_pipeline</span><span class="o">=</span><span class="n">registration_pipeline</span><span class="p">,</span>
+<a id="__codelineno-0-127" name="__codelineno-0-127"></a>        <span class="n">converter_options</span><span class="o">=</span><span class="n">init_args</span><span class="o">.</span><span class="n">converter_options</span><span class="p">,</span>
+<a id="__codelineno-0-128" name="__codelineno-0-128"></a>        <span class="n">writer_mode</span><span class="o">=</span><span class="n">init_args</span><span class="o">.</span><span class="n">converter_options</span><span class="o">.</span><span class="n">writer_mode</span><span class="p">,</span>
+<a id="__codelineno-0-129" name="__codelineno-0-129"></a>        <span class="n">overwrite_mode</span><span class="o">=</span><span class="n">init_args</span><span class="o">.</span><span class="n">overwrite_mode</span><span class="p">,</span>
+<a id="__codelineno-0-130" name="__codelineno-0-130"></a>        <span class="n">resource</span><span class="o">=</span><span class="n">resource</span><span class="p">,</span>
+<a id="__codelineno-0-131" name="__codelineno-0-131"></a>    <span class="p">)</span>
+<a id="__codelineno-0-132" name="__codelineno-0-132"></a>    <span class="n">remove_json</span><span class="p">(</span><span class="n">init_args</span><span class="o">.</span><span class="n">tiled_image_json_dump_url</span><span class="p">)</span>
+<a id="__codelineno-0-133" name="__codelineno-0-133"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Conversion complete&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-134" name="__codelineno-0-134"></a>    <span class="k">return</span> <span class="n">_build_image_list_update</span><span class="p">(</span>
+<a id="__codelineno-0-135" name="__codelineno-0-135"></a>        <span class="n">zarr_url</span><span class="o">=</span><span class="n">zarr_url</span><span class="p">,</span>
+<a id="__codelineno-0-136" name="__codelineno-0-136"></a>        <span class="n">ome_zarr</span><span class="o">=</span><span class="n">ome_zarr</span><span class="p">,</span>
+<a id="__codelineno-0-137" name="__codelineno-0-137"></a>        <span class="n">collection</span><span class="o">=</span><span class="n">tiled_image_loaded</span><span class="o">.</span><span class="n">collection</span><span class="p">,</span>
+<a id="__codelineno-0-138" name="__codelineno-0-138"></a>        <span class="n">attributes</span><span class="o">=</span><span class="n">tiled_image_loaded</span><span class="o">.</span><span class="n">attributes</span><span class="p">,</span>
+<a id="__codelineno-0-139" name="__codelineno-0-139"></a>    <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
