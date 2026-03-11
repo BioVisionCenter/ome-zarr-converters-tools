@@ -41,8 +41,6 @@ def _find_tiling(
 ) -> dict[str, dict[str, float]]:
     if tiling_mode == TilingMode.INPLACE or tiling_mode == TilingMode.NO_TILING:
         return _no_tiling(regions)
-    if tiling_mode in [TilingMode.INPLACE, TilingMode.NO_TILING]:
-        return _no_tiling(regions)
     if tiling_mode == TilingMode.AUTO:
         return _auto_tiling(regions)
     if tiling_mode == TilingMode.SNAP_TO_CORNERS:

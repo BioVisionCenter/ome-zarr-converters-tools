@@ -33,6 +33,8 @@ from ome_zarr_converters_tools.pipelines._alignment import (
 from ome_zarr_converters_tools.pipelines._snap_utils import (
     BBox,
     NotAGridError,
+    calculate_snap_to_corner_offset,
+    calculate_snap_to_grid_offset,
     check_if_regular_grid,
     tiles_to_boxes,
 )
@@ -253,6 +255,79 @@ class TestSnapUtils:
         with pytest.raises(NotAGridError):
             check_if_regular_grid(tiles)
 
+    def test_check_if_slanted_grid_raises(self) -> None:
+        # Two tiles at diagonal positions only — missing (100,0) and (0,100)
+        tiles = [
+            _make_pixel_tile_slice(0.0, 0.0, 100.0, 100.0, "A"),
+            _make_pixel_tile_slice(100.0, 100.0, 100.0, 100.0, "B"),
+        ]
+        with pytest.raises(NotAGridError):
+            check_if_regular_grid(tiles)
+
+    def test_check_if_regular_grid_row_only(self) -> None:
+        # 3-tile single row — all share y=0, so Cartesian product is trivially satisfied
+        tiles = [
+            _make_pixel_tile_slice(0.0, 0.0, 100.0, 100.0, "A"),
+            _make_pixel_tile_slice(95.0, 0.0, 100.0, 100.0, "B"),
+            _make_pixel_tile_slice(190.0, 0.0, 100.0, 100.0, "C"),
+        ]
+        grid = check_if_regular_grid(tiles)  # should not raise
+        assert grid.length_x == 100.0
+
+    def test_snap_to_grid_y_offset_correct(self) -> None:
+        # Regression for the duplicate x_grid bug: y-offsets must be non-zero
+        tiles = {
+            "A": _make_pixel_tile_slice(0.0, 0.0, 100.0, 100.0, "A"),
+            "B": _make_pixel_tile_slice(95.0, 0.0, 100.0, 100.0, "B"),
+            "C": _make_pixel_tile_slice(0.0, 95.0, 100.0, 100.0, "C"),
+            "D": _make_pixel_tile_slice(95.0, 95.0, 100.0, 100.0, "D"),
+        }
+        offsets = calculate_snap_to_grid_offset(tiles)
+        assert np.isclose(offsets["A"]["x"], 0.0)
+        assert np.isclose(offsets["A"]["y"], 0.0)
+        assert np.isclose(offsets["B"]["x"], 5.0)
+        assert np.isclose(offsets["B"]["y"], 0.0)
+        assert np.isclose(offsets["C"]["x"], 0.0)
+        assert np.isclose(offsets["C"]["y"], 5.0)
+        assert np.isclose(offsets["D"]["x"], 5.0)
+        assert np.isclose(offsets["D"]["y"], 5.0)
+
+    def test_snap_to_grid_single_tile_zero_offset(self) -> None:
+        # Regression: single tile at non-zero origin must return zero offset
+        tiles = {"A": _make_pixel_tile_slice(500.0, 300.0, 100.0, 100.0, "A")}
+        offsets = calculate_snap_to_grid_offset(tiles)
+        assert offsets["A"] == {"x": 0.0, "y": 0.0}
+
+    def test_snap_to_corner_non_zero_origin(self) -> None:
+        # Regression: corner snapping must work without prior remove_offsets
+        tiles = {
+            "A": _make_pixel_tile_slice(200.0, 300.0, 100.0, 100.0, "A"),
+            "B": _make_pixel_tile_slice(295.0, 300.0, 100.0, 100.0, "B"),
+        }
+        offsets = calculate_snap_to_corner_offset(tiles)
+        assert np.isclose(offsets["A"]["x"], 0.0)
+        assert np.isclose(offsets["A"]["y"], 0.0)
+        assert np.isclose(offsets["B"]["x"], 5.0)  # 295 → 300
+        assert np.isclose(offsets["B"]["y"], 0.0)
+
+    def test_tiles_to_boxes_raises_value_error_missing_y(self) -> None:
+        # Regression: missing y-axis should raise ValueError, not AssertionError.
+        # Use x+z slices (valid Roi: ≥2 slices) so that get("y") returns None.
+        roi = Roi(
+            name="bad",
+            slices=[
+                RoiSlice(axis_name="x", start=0.0, length=100.0),
+                RoiSlice(axis_name="z", start=0.0, length=1.0),
+            ],
+            space="pixel",
+        )
+        from ome_zarr_converters_tools.core._dummy_tiles import DummyLoader, TileShape
+
+        loader = DummyLoader(shape=TileShape(x=100, y=100), text="bad")
+        bad_tile = TileSlice(roi=roi, image_loader=loader)
+        with pytest.raises(ValueError, match="missing the 'y' axis slice"):
+            tiles_to_boxes([bad_tile])
+
 
 # --- Tiling tests ---
 
@@ -287,6 +362,23 @@ class TestTiling:
         }
         with pytest.raises(NotAGridError):
             _find_tiling(tiles, TilingMode.SNAP_TO_GRID)
+
+    def test_inplace_returns_zero_offsets(self) -> None:
+        tiles = {"A": _make_pixel_tile_slice(50.0, 50.0, 100.0, 100.0, "A")}
+        offsets = _find_tiling(tiles, TilingMode.INPLACE)
+        assert offsets["A"] == {"x": 0.0, "y": 0.0}
+
+    def test_snap_to_grid_off_origin_2x1(self) -> None:
+        # 2-tile row starting at x=500 — offsets must be correct without remove_offsets
+        tiles = {
+            "A": _make_pixel_tile_slice(500.0, 0.0, 100.0, 100.0, "A"),
+            "B": _make_pixel_tile_slice(595.0, 0.0, 100.0, 100.0, "B"),
+        }
+        offsets = _find_tiling(tiles, TilingMode.SNAP_TO_GRID)
+        assert np.isclose(offsets["A"]["x"], 0.0)
+        assert np.isclose(offsets["B"]["x"], 5.0)  # 595 → 600
+        assert np.isclose(offsets["A"]["y"], 0.0)
+        assert np.isclose(offsets["B"]["y"], 0.0)
 
     def test_auto_tiling_falls_back_to_corners(self) -> None:
         tiles = {
