@@ -1,5 +1,5 @@
 import re
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from typing import Annotated, Any, Literal, ParamSpec, Protocol
 
 from pydantic import BaseModel, Field
@@ -89,7 +89,7 @@ class FilterFunctionProtocol(Protocol[P]):
     def __call__(self, tile: Tile, *args: P.args, **kwargs: P.kwargs) -> bool: ...
 
 
-_filter_registry: dict[str, FilterFunctionProtocol] = {
+_filter_registry: dict[str, Callable[..., bool]] = {
     "Path Regex Include Filter": apply_path_include_regex_filter,
     "Path Regex Exclude Filter": apply_path_exclude_regex_filter,
     "Well Filter": apply_well_filter,

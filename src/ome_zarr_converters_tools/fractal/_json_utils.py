@@ -58,7 +58,7 @@ def _tiled_image_from_json_local_fs(
     with open(json_path) as f:
         # Concretely specify the types to load the generic TiledImage
         tiled_image = TiledImage[
-            collection_type, image_loader_type
+            collection_type, image_loader_type  # ty:ignore[invalid-type-form]
         ].model_validate_json(f.read())
     return tiled_image
 
