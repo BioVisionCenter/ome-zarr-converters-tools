@@ -22,15 +22,17 @@ def _snap_to_corners_tiling(
 
 def _snap_to_grid_tiling(
     regions: dict[str, TileSlice],
+    tolerance: float = 0.0,
 ) -> dict[str, dict[str, float]]:
-    return calculate_snap_to_grid_offset(regions)
+    return calculate_snap_to_grid_offset(regions, tolerance)
 
 
 def _auto_tiling(
     regions: dict[str, TileSlice],
+    tolerance: float = 0.0,
 ) -> dict[str, dict[str, float]]:
     try:
-        return _snap_to_grid_tiling(regions)
+        return _snap_to_grid_tiling(regions, tolerance)
     except NotAGridError:
         return _snap_to_corners_tiling(regions)
 
@@ -38,17 +40,16 @@ def _auto_tiling(
 def _find_tiling(
     regions: dict[str, TileSlice],
     tiling_mode: TilingMode,
+    tolerance: float = 0.0,
 ) -> dict[str, dict[str, float]]:
     if tiling_mode == TilingMode.INPLACE or tiling_mode == TilingMode.NO_TILING:
         return _no_tiling(regions)
-    if tiling_mode in [TilingMode.INPLACE, TilingMode.NO_TILING]:
-        return _no_tiling(regions)
     if tiling_mode == TilingMode.AUTO:
-        return _auto_tiling(regions)
+        return _auto_tiling(regions, tolerance)
     if tiling_mode == TilingMode.SNAP_TO_CORNERS:
         return _snap_to_corners_tiling(regions)
     if tiling_mode == TilingMode.SNAP_TO_GRID:
-        return _snap_to_grid_tiling(regions)
+        return _snap_to_grid_tiling(regions, tolerance)
     raise ValueError(f"Tiling mode '{tiling_mode}' is not recognized.")
 
 
@@ -63,6 +64,7 @@ def _tile_regions(
 def apply_mosaic_tiling(
     tiled_image: TiledImage,
     tiling_mode: TilingMode,
+    tolerance: float = 0.0,
 ) -> TiledImage:
     """Tile all the TiledImages to the reference region of the first TiledImage.
 
@@ -71,7 +73,9 @@ def apply_mosaic_tiling(
     Args:
         tiled_image: TiledImage model to tile.
         tiling_mode: Tiling mode to use.
-
+        tolerance: Tolerance in pixels for determining if Snap to Grid is
+            possible. This accounts for minor jitter in microscope stage positions when
+            determining if Snap to Grid tiling can be applied.
     """
     fov_tiles = tiled_image.group_by_fov()
 
@@ -79,7 +83,7 @@ def apply_mosaic_tiling(
     for fov_tile in fov_tiles:
         reference_regions[fov_tile.fov_name] = fov_tile.ref_slice()
 
-    tiling_instructions = _find_tiling(reference_regions, tiling_mode)
+    tiling_instructions = _find_tiling(reference_regions, tiling_mode, tolerance)
     aligned_regions = []
     for fov_tile in fov_tiles:
         instruction = tiling_instructions[fov_tile.fov_name]

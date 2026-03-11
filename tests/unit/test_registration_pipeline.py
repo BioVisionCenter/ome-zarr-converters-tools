@@ -80,3 +80,11 @@ class TestRegistrationPipeline:
         assert "align_to_pixel_grid" in names
         assert "fov_alignment_corrections" in names
         assert "tile_regions" in names
+
+    def test_build_default_registration_pipeline_tolerance(self) -> None:
+        corrections = AlignmentCorrections()
+        pipeline = build_default_registration_pipeline(
+            corrections, TilingMode.AUTO, tolerance=2.5
+        )
+        tile_regions_step = next(s for s in pipeline if s["name"] == "tile_regions")
+        assert tile_regions_step["params"]["tolerance"] == 2.5

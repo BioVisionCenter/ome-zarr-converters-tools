@@ -160,16 +160,6 @@ class ConverterOptions(BaseModel):
     """Options for the OME-Zarr conversion process.
 
     Attributes:
-        tiling_mode: Tiling mode to use during conversion.
-            - Auto: Automatically determine if Snap to Grid is possible,
-            otherwise use Snap to Corners.
-            - Snap to Grid: Tile images to fit a regular grid. This is
-            only possible if image positions align to a grid (potentially with overlap).
-            - Snap to Corners: Tile images to fit a grid defined by the corner
-            positions.
-            - Inplace: Write tiles in their original positions without tiling. This
-            may lead to artifacts if microscope stage positions are not precise.
-            - No Tiling: Each field of view is written as a single OME-Zarr.
         writer_mode: Mode for writing data during conversion.
             - By Tile: Write data one tile at a time. This consumes less memory,
             but may be slower.
@@ -182,14 +172,30 @@ class ConverterOptions(BaseModel):
             This is usually faster than writing by FOV sequentially,
             but may consume more memory.
             - In Memory: Load all data into memory before writing.
+        tiling_mode: Tiling mode to use during conversion.
+            - Auto: Automatically determine if Snap to Grid is possible,
+            otherwise use Snap to Corners.
+            - Snap to Grid: Tile images to fit a regular grid. This is
+            only possible if image positions align to a grid (potentially with overlap).
+            - Snap to Corners: Tile images to fit a grid defined by the corner
+            positions.
+            - Inplace: Write tiles in their original positions without tiling. This
+            may lead to artifacts if microscope stage positions are not precise.
+            - No Tiling: Each field of view is written as a single OME-Zarr.
+        tiling_tolerance: Tolerance in pixels for determining if Snap to Grid is
+            possible. This accounts for minor jitter in microscope stage positions when
+            determining if Snap to Grid tiling can be applied.
         alignment_correction: Alignment correction options.
         omezarr_options: Options specific to OME-Zarr writing.
         temp_json_options: Options for temporary JSON storage.
 
     """
 
-    tiling_mode: TilingMode = Field(default=TilingMode.AUTO, title="Tiling Mode")
     writer_mode: WriterMode = Field(default=WriterMode.BY_FOV, title="Writer Mode")
+    tiling_mode: TilingMode = Field(default=TilingMode.AUTO, title="Tiling Mode")
+    tiling_tolerance: float = Field(
+        default=0, ge=0, title="Tiling Tolerance (in pixels)"
+    )
     alignment_correction: AlignmentCorrections = Field(
         default_factory=AlignmentCorrections,
         title="Alignment Corrections",

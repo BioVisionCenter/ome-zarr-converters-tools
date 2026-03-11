@@ -31,7 +31,12 @@ def tiled_image_from_tiles(
         raise ValueError("No tiles provided to build TiledImage.")
     data_type = tiles[0].find_data_type(resource=resource)
     for tile in tiles:
-        suffix = "" if not split_tiles else f"_{tile.fov_name}"
+        if not split_tiles:
+            suffix = ""
+            add_translation = False
+        else:
+            suffix = f"_{tile.fov_name}"
+            add_translation = True
         tile.collection._suffix = suffix
         path = tile.collection.path()
         if path not in tiled_images:
@@ -48,6 +53,6 @@ def tiled_image_from_tiles(
                 collection=tile.collection,
                 attributes=tile.attributes,
             )
-        tiled_images[path].add_tile(tile)
+        tiled_images[path].add_tile(tile, add_translation=add_translation)
 
     return list(tiled_images.values())

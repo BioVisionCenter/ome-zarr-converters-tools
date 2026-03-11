@@ -35,7 +35,7 @@ _registration_registry: dict[str, Callable[..., TiledImage]] = {
 
 def add_registration_func(
     function: Callable[..., TiledImage],
-    name: str | None = None,
+    name: str,
     overwrite: bool = False,
 ) -> None:
     """Register a new registration step function.
@@ -45,8 +45,6 @@ def add_registration_func(
         function: Function that performs the registration step.
         overwrite: Whether to overwrite an existing registration step.
     """
-    if name is None:
-        name = function.__name__
     if not overwrite and name in _registration_registry:
         raise ValueError(f"Registration step '{name}' is already registered.")
     _registration_registry[name] = function
@@ -66,7 +64,7 @@ def apply_registration_pipeline(
 
 
 def build_default_registration_pipeline(
-    alignment_corrections, tiling_mode
+    alignment_corrections, tiling_mode, tolerance: float = 0.0
 ) -> list[RegistrationStep]:
     return [
         RegistrationStep(name="remove_offsets", params={}),
@@ -75,5 +73,8 @@ def build_default_registration_pipeline(
             name="fov_alignment_corrections",
             params={"alignment_corrections": alignment_corrections},
         ),
-        RegistrationStep(name="tile_regions", params={"tiling_mode": tiling_mode}),
+        RegistrationStep(
+            name="tile_regions",
+            params={"tiling_mode": tiling_mode, "tolerance": tolerance},
+        ),
     ]
