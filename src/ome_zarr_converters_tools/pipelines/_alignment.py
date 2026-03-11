@@ -83,7 +83,7 @@ def apply_fov_alignment_corrections(
 
 
 def apply_align_to_pixel_grid(
-    tiled_image: TiledImage, mode: Literal["round", "floor", "ceil"] = "floor"
+    tiled_image: TiledImage, mode: Literal["round", "floor", "ceil"] = "round"
 ) -> TiledImage:
     """Align the start position to the pixel grid.
 
