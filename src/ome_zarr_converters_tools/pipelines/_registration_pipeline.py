@@ -64,7 +64,7 @@ def apply_registration_pipeline(
 
 
 def build_default_registration_pipeline(
-    alignment_corrections, tiling_mode
+    alignment_corrections, tiling_mode, tolerance: float = 0.0
 ) -> list[RegistrationStep]:
     return [
         RegistrationStep(name="remove_offsets", params={}),
@@ -73,5 +73,8 @@ def build_default_registration_pipeline(
             name="fov_alignment_corrections",
             params={"alignment_corrections": alignment_corrections},
         ),
-        RegistrationStep(name="tile_regions", params={"tiling_mode": tiling_mode}),
+        RegistrationStep(
+            name="tile_regions",
+            params={"tiling_mode": tiling_mode, "tolerance": tolerance},
+        ),
     ]
