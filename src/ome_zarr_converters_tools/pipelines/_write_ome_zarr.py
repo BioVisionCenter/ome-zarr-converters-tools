@@ -185,6 +185,7 @@ def write_tiled_image_as_zarr(
             time_spacing=tiled_image.t_spacing,
             levels=omezarr_options.num_levels,
             channels_meta=channels_meta,
+            translation=tiled_image.translation,
             overwrite=True,
             ngff_version=omezarr_options.ngff_version,
         )

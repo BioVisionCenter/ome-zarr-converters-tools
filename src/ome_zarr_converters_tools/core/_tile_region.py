@@ -180,6 +180,7 @@ class TiledImage(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfac
     axes: list[CANONICAL_AXES_TYPE]
     collection: CollectionInterfaceType
     channels: list[ChannelInfo] | None = None
+    translation: list[float | int] | None = None
     attributes: dict[str, AttributeType] = Field(default_factory=dict)
 
     model_config = ConfigDict(extra="forbid")
@@ -214,7 +215,7 @@ class TiledImage(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfac
             t=self.t_spacing,
         )
 
-    def add_tile(self, tile: Tile) -> None:
+    def add_tile(self, tile: Tile, add_translation: bool = False) -> None:
         """Add a Tile to the TiledImage as a TileRegion."""
         if self.channels != tile.acquisition_details.channels:
             raise ValueError("Tile channels do not match TiledImage channels.")
@@ -227,6 +228,22 @@ class TiledImage(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfac
         if self.t_spacing != tile.acquisition_details.t_spacing:
             raise ValueError("Tile t_spacing does not match TiledImage t_spacing.")
         tile_region = TileSlice.from_tile(tile)
+
+        if add_translation:
+            # This logic is a bit hacky to be improved
+            roi_extra = tile_region.roi.model_extra or {}
+            translation = []
+            for ax in self.axes:
+                o_ax = roi_extra.get(f"{ax}_micrometer_original")
+                translation.append(o_ax if o_ax is not None else 0.0)
+
+            if self.translation is None:
+                self.translation = translation
+            else:
+                self.translation = [
+                    min(t, tr)
+                    for t, tr in zip(translation, self.translation, strict=True)
+                ]
         self.regions.append(tile_region)
 
     def shape(self) -> tuple[int, ...]:

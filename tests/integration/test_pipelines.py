@@ -411,3 +411,70 @@ class TestHCSPlateWithAttributes:
 
         table_names = omezarr.list_tables()
         assert "condition_table" in table_names
+
+
+class TestNoTilingTranslation:
+    """Tests that NO_TILING mode sets a non-zero translation on OME-Zarr images."""
+
+    def test_no_tiling_translation_is_set(self, tmp_path: Path) -> None:
+        df = pd.read_csv(_HCS_EXAMPLE_DIR / "tiles.csv")
+        acq = _example_acq_details()
+        tiles = hcs_images_from_dataframe(
+            tiles_table=df, acquisition_details=acq, plate_name="TestPlate"
+        )
+        opts = ConverterOptions(tiling_mode=TilingMode.NO_TILING)
+        images = tiles_aggregation_pipeline(
+            tiles=tiles, converter_options=opts, resource=str(_HCS_DATA_DIR)
+        )
+        # NO_TILING splits into one TiledImage per FOV
+        assert len(images) == 3
+
+        pipeline = build_default_registration_pipeline(
+            AlignmentCorrections(), TilingMode.NO_TILING
+        )
+        for i, tiled_image in enumerate(images):
+            zarr_url = str(tmp_path / f"output_{i}.zarr")
+            omezarr = tiled_image_creation_pipeline(
+                zarr_url=zarr_url,
+                tiled_image=tiled_image,
+                registration_pipeline=pipeline,
+                converter_options=opts,
+                writer_mode=WriterMode.BY_FOV,
+                overwrite_mode=OverwriteMode.OVERWRITE,
+                resource=str(_HCS_DATA_DIR),
+            )
+            translation = omezarr.get_image().dataset.translation
+            assert any(v != 0.0 for v in translation), (
+                f"Expected non-zero translation for NO_TILING image {i}, "
+                f"got {translation}"
+            )
+
+    def test_tiling_mode_auto_has_no_translation(self, tmp_path: Path) -> None:
+        df = pd.read_csv(_HCS_EXAMPLE_DIR / "tiles.csv")
+        acq = _example_acq_details()
+        tiles = hcs_images_from_dataframe(
+            tiles_table=df, acquisition_details=acq, plate_name="TestPlate"
+        )
+        opts = ConverterOptions(tiling_mode=TilingMode.AUTO)
+        images = tiles_aggregation_pipeline(
+            tiles=tiles, converter_options=opts, resource=str(_HCS_DATA_DIR)
+        )
+        tiled_image = images[0]
+
+        pipeline = build_default_registration_pipeline(
+            AlignmentCorrections(), TilingMode.AUTO
+        )
+        zarr_url = str(tmp_path / "output_auto.zarr")
+        omezarr = tiled_image_creation_pipeline(
+            zarr_url=zarr_url,
+            tiled_image=tiled_image,
+            registration_pipeline=pipeline,
+            converter_options=opts,
+            writer_mode=WriterMode.BY_FOV,
+            overwrite_mode=OverwriteMode.OVERWRITE,
+            resource=str(_HCS_DATA_DIR),
+        )
+        translation = omezarr.get_image().dataset.translation
+        assert all(v == 0.0 for v in translation), (
+            f"Expected all-zero translation for AUTO tiling mode, got {translation}"
+        )
