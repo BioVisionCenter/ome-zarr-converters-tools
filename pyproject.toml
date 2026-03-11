@@ -84,9 +84,9 @@ dev = [
 ]
 
 docs = [
-    "mkdocs",
-    "mkdocs-material",
-    "mkdocstrings[python]",
+    "mkdocs==1.6.1",
+    "mkdocs-material==9.7.1",
+    "mkdocstrings[python]>=1.0.2,<1.1.0",
     "mkdocs-jupyter",
     "mkdocs-autorefs",
     "mkdocs-git-revision-date-localized-plugin",
