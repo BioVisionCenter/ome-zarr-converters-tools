@@ -50,45 +50,43 @@ class WriterMode(StrEnum):
 
 
 class AlignmentCorrections(BaseModel):
-    """Alignment correction for stage positions.
-
-    Attributes:
-        align_xy: Whether to align the positions in the XY plane by FOV.
-            This addresses minor imprecision that often occurs during
-            image acquisition.
-        align_z: Whether to align the positions in the Z axis by FOV.
-            This addresses minor imprecision that often occurs during
-            image acquisition.
-        align_t: Whether to align the positions in the T axis by FOV.
-            This addresses minor imprecision that often occurs during
-            image acquisition.
-    """
+    """Alignment correction for stage positions."""
 
     align_xy: bool = Field(default=False, title="Align XY")
+    """
+    Whether to align the positions in the XY plane by FOV.
+    This addresses minor imprecision that often occurs during image acquisition.
+    """
     align_z: bool = Field(default=False, title="Align Z")
+    """
+    Whether to align the positions in the Z axis by FOV.
+    This addresses minor imprecision that often occurs during image acquisition.
+    """
     align_t: bool = Field(default=False, title="Align T")
+    """
+    Whether to align the positions in the T axis by FOV.
+    This addresses minor imprecision that often occurs during image acquisition.
+    """
     model_config = ConfigDict(extra="forbid")
 
 
 class FovBasedChunking(BaseModel):
-    """Chunking strategy that matches the field of view.
-
-    Attributes:
-        mode: Chunking based on FOV size.
-        xy_scaling: Scaling factor for XY chunk size. If set to 1, chunk size matches
-            FOV size. If set to 0.5, chunk size is half the FOV size
-            (smaller chunks, more files). If set to 2, chunk size is double the FOV
-            size (larger chunks, less files).
-        z_chunk: Chunk size for Z dimension.
-        c_chunk: Chunk size for C dimension.
-        t_chunk: Chunk size for T dimension.
-    """
+    """Chunking strategy that matches the field of view."""
 
     mode: Literal["Same as FOV"] = "Same as FOV"
+    """Chunking based on FOV size."""
     xy_scaling: Scalings = Field(default=Scalings.ONE, title="XY Scaling Factor")
+    """
+    Scaling factor for XY chunk size. If set to 1, chunk size matches FOV size.
+    If set to 0.5, chunk size is half the FOV size (smaller chunks, more files).
+    If set to 2, chunk size is double the FOV size (larger chunks, less files).
+    """
     z_chunk: int = Field(default=10, ge=1, title="Chunk Size for Z")
+    """Chunk size for Z dimension."""
     c_chunk: int = Field(default=1, ge=1, title="Chunk Size for C")
+    """Chunk size for C dimension."""
     t_chunk: int = Field(default=1, ge=1, title="Chunk Size for T")
+    """Chunk size for T dimension."""
 
     def get_xy_chunk(self, fov_xy_shape: int) -> int:
         scaling_factor = self.xy_scaling.to_float()
@@ -97,21 +95,18 @@ class FovBasedChunking(BaseModel):
 
 
 class FixedSizeChunking(BaseModel):
-    """Chunking strategy with fixed chunk sizes.
-
-    Attributes:
-        mode: Fixed size chunking.
-        xy_chunk: Chunk size for XY dimensions.
-        z_chunk: Chunk size for Z dimension.
-        c_chunk: Chunk size for C dimension.
-        t_chunk: Chunk size for T dimension.
-    """
+    """Chunking strategy with fixed chunk sizes."""
 
     mode: Literal["Fixed Size"] = "Fixed Size"
+    """Fixed size chunking."""
     xy_chunk: int = Field(default=4096, ge=1, title="Chunk Size for XY")
+    """Chunk size for XY dimensions."""
     z_chunk: int = Field(default=10, ge=1, title="Chunk Size for Z")
+    """Chunk size for Z dimension."""
     c_chunk: int = Field(default=1, ge=1, title="Chunk Size for C")
+    """Chunk size for C dimension."""
     t_chunk: int = Field(default=1, ge=1, title="Chunk Size for T")
+    """Chunk size for T dimension."""
 
     def get_xy_chunk(self, fov_shape: int) -> int:
         return self.xy_chunk
@@ -123,89 +118,84 @@ ChunkingStrategy = Annotated[
 
 
 class OmeZarrOptions(BaseModel):
-    """Options specific to OME-Zarr writing.
-
-    Attributes:
-        num_levels: Number of resolution levels to create.
-        chunks: Chunking strategy to use.
-        ngff_version: Version of the OME-NGFF specification to target.
-        table_backend: Backend type for storing tables.
-    """
+    """Options specific to OME-Zarr writing."""
 
     num_levels: int = Field(default=5, ge=1)
+    """Number of resolution levels to create."""
     chunks: ChunkingStrategy = Field(
         default_factory=FovBasedChunking, title="Chunking Strategy"
     )
+    """Chunking strategy to use."""
     ngff_version: NgffVersions = DefaultNgffVersion
+    """Version of the OME-NGFF specification to target."""
     table_backend: BackendType = Field(
         default=BackendType.ANNDATA, title="Table Backend"
     )
+    """Backend type for storing tables."""
     model_config = ConfigDict(extra="forbid")
 
 
 class TempJsonOptions(BaseModel):
-    """Options for temporary JSON storage during conversion.
-
-    Attributes:
-        temp_url: Template for the temporary JSON URL.
-    """
+    """Options for temporary JSON storage during conversion."""
 
     temp_url: str = "{zarr_dir}/_tmp_json"
+    """Template for the temporary JSON URL."""
 
     def format_temp_url(self, zarr_dir: str) -> str:
         return self.temp_url.format(zarr_dir=zarr_dir)
 
 
 class ConverterOptions(BaseModel):
-    """Options for the OME-Zarr conversion process.
-
-    Attributes:
-        writer_mode: Mode for writing data during conversion.
-            - By Tile: Write data one tile at a time. This consumes less memory,
-            but may be slower.
-            - By Tile (Using Dask): Write tiles in parallel using Dask. This is
-            usually faster than writing by tile sequentially, but may consume more
-            memory.
-            - By FOV: Write data one field of view at a time. This may the best
-            compromise between speed and memory usage in most cases.
-            - By FOV (Using Dask): Write fields of view in parallel using Dask.
-            This is usually faster than writing by FOV sequentially,
-            but may consume more memory.
-            - In Memory: Load all data into memory before writing.
-        tiling_mode: Tiling mode to use during conversion.
-            - Auto: Automatically determine if Snap to Grid is possible,
-            otherwise use Snap to Corners.
-            - Snap to Grid: Tile images to fit a regular grid. This is
-            only possible if image positions align to a grid (potentially with overlap).
-            - Snap to Corners: Tile images to fit a grid defined by the corner
-            positions.
-            - Inplace: Write tiles in their original positions without tiling. This
-            may lead to artifacts if microscope stage positions are not precise.
-            - No Tiling: Each field of view is written as a single OME-Zarr.
-        tiling_tolerance: Tolerance in pixels for determining if Snap to Grid is
-            possible. This accounts for minor jitter in microscope stage positions when
-            determining if Snap to Grid tiling can be applied.
-        alignment_correction: Alignment correction options.
-        omezarr_options: Options specific to OME-Zarr writing.
-        temp_json_options: Options for temporary JSON storage.
-
-    """
+    """Options for the OME-Zarr conversion process."""
 
     writer_mode: WriterMode = Field(default=WriterMode.BY_FOV, title="Writer Mode")
+    """
+    Mode for writing data during conversion.
+
+    - By Tile: Write data one tile at a time. This consumes less memory, but may be
+      slower.
+    - By Tile (Using Dask): Write tiles in parallel using Dask. This is usually faster
+      than writing by tile sequentially, but may consume more memory.
+    - By FOV: Write data one field of view at a time. This may the best compromise
+      between speed and memory usage in most cases.
+    - By FOV (Using Dask): Write fields of view in parallel using Dask. This is usually
+      faster than writing by FOV sequentially, but may consume more memory.
+    - In Memory: Load all data into memory before writing.
+    """
     tiling_mode: TilingMode = Field(default=TilingMode.AUTO, title="Tiling Mode")
+    """
+    Tiling mode to use during conversion.
+
+    - Auto: Automatically determine if Snap to Grid is possible, otherwise use Snap to
+      Corners.
+    - Snap to Grid: Tile images to fit a regular grid. This is only possible if image
+      positions align to a grid (potentially with overlap).
+    - Snap to Corners: Tile images to fit a grid defined by the corner positions.
+    - Inplace: Write tiles in their original positions without tiling. This may lead to
+      artifacts if microscope stage positions are not precise.
+    - No Tiling: Each field of view is written as a single OME-Zarr.
+    """
     tiling_tolerance: float = Field(
         default=0, ge=0, title="Tiling Tolerance (in pixels)"
     )
+    """
+    Tolerance in pixels for determining if Snap to Grid is possible.
+    This accounts for minor jitter in microscope stage positions when determining if
+    Snap to Grid tiling can be applied.
+    """
     alignment_correction: AlignmentCorrections = Field(
         default_factory=AlignmentCorrections,
         title="Alignment Corrections",
     )
+    """Alignment correction options."""
     omezarr_options: OmeZarrOptions = Field(
         default_factory=OmeZarrOptions, title="OME-Zarr Options"
     )
+    """Options specific to OME-Zarr writing."""
     temp_json_options: TempJsonOptions = Field(
         default_factory=TempJsonOptions, title="Temporary JSON Options"
     )
+    """Options for temporary JSON storage."""
     model_config = ConfigDict(extra="forbid")
 
 

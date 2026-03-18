@@ -13,16 +13,15 @@ class FilterModel(BaseModel):
 
 
 class RegexIncludeFilter(FilterModel):
-    """Regex include filter model.
-
-    Attributes:
-        name: Name of the filter.
-        regex: Regex pattern to include. If the tile's base path matches this regex,
-            it will be included, otherwise it will be excluded.
-    """
+    """Regex include filter model."""
 
     name: Literal["Path Regex Include Filter"] = "Path Regex Include Filter"
+    """Name of the filter."""
     regex: str
+    """
+    Regex pattern to include. If the tile's base path matches this regex,
+    it will be included, otherwise it will be excluded.
+    """
 
 
 def _regex_bases_match(tile: Tile, regex: str) -> bool:
@@ -39,16 +38,15 @@ def apply_path_include_regex_filter(
 
 
 class RegexExcludeFilter(FilterModel):
-    """Regex exclude filter model.
-
-    Attributes:
-        name: Name of the filter.
-        regex: Regex pattern to exclude. If the tile's base path matches this regex,
-            it will be excluded, otherwise it will be included.
-    """
+    """Regex exclude filter model."""
 
     name: Literal["Path Regex Exclude Filter"] = "Path Regex Exclude Filter"
+    """Name of the filter."""
     regex: str
+    """
+    Regex pattern to exclude. If the tile's base path matches this regex,
+    it will be excluded, otherwise it will be included.
+    """
 
 
 def apply_path_exclude_regex_filter(
@@ -58,16 +56,12 @@ def apply_path_exclude_regex_filter(
 
 
 class WellFilter(FilterModel):
-    """Well filter model.
-
-    Attributes:
-        name: Name of the filter.
-        wells_to_remove: List of well identifiers to remove.
-            E.g., ["A1", "B2"]
-    """
+    """Well filter model."""
 
     name: Literal["Well Filter"] = "Well Filter"
+    """Name of the filter."""
     wells_to_remove: list[str]
+    """List of well identifiers to remove. E.g., ["A1", "B2"]"""
 
 
 def apply_well_filter(tile: Tile, filter_params: WellFilter) -> bool:
