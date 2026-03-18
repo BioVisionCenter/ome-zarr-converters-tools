@@ -26,17 +26,20 @@ class ConvertParallelInitArgs(BaseModel):
 
 
 class PixelSizeModel(BaseModel):
-    """Pixel size model 2.
-
-    Attributes:
-        pixelsize: Pixel size in micrometers.
-        z_spacing: Z spacing in micrometers.
-        t_spacing: Time spacing in seconds.
-    """
+    """Pixel size model."""
 
     pixelsize: float
+    """
+    Pixel size in micrometers.
+    """
     z_spacing: float
+    """
+    Z spacing in micrometers.
+    """
     t_spacing: float
+    """
+    Time spacing in seconds.
+    """
 
 
 class AcquisitionOptions(BaseModel):
@@ -47,28 +50,26 @@ class AcquisitionOptions(BaseModel):
     This is not to be confused with AcquisitionDetails,
     this model is used in fractal tasks to override/update
     details from AcquisitionDetails model.
-
-    Attributes:
-        channels: List of channel information.
-        pixel_info: Pixel size information.
-        condition_table_path: Optional path to a condition table CSV file.
-        axes: Axes to use for the image data, e.g. "czyx".
-        data_type: Data type of the image data.
-        stage_corrections: Stage orientation corrections.
-        filters: List of filters to apply.
     """
 
     channels: list[ChannelInfo] | None = None
+    """List of channel information."""
     pixel_info: PixelSizeModel | None = Field(
         default=None, title="Pixel Size Information"
     )
+    """Pixel size information."""
     condition_table_path: str | None = None
+    """Optional path to a condition table CSV file."""
     axes: str | None = None
+    """Axes to use for the image data, e.g. "czyx"."""
     data_type: DataTypeEnum | None = Field(default=None, title="Data Type")
+    """Data type of the image data."""
     stage_corrections: StageCorrections = Field(
         default_factory=StageCorrections, title="Stage Corrections"
     )
+    """Stage orientation corrections."""
     filters: list[ImplementedFilters] = Field(default_factory=list)
+    """List of filters to apply."""
 
     def to_axes_list(self) -> list[CANONICAL_AXES_TYPE] | None:
         """Convert axes string to list of axes."""

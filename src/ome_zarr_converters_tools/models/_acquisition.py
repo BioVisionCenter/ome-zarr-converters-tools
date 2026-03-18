@@ -80,34 +80,30 @@ class DefaultColors(StrEnum):
 
 
 class ChannelInfo(BaseModel):
-    """Channel information.
-
-    Attributes:
-        channel_label: Label of the channel.
-        wavelength_id: The wavelength ID of the channel.
-            This field can be used in some tasks as alternative to channel_label,
-            e.g. for multiplexed acquisitions it can be used for applying illumination
-            correction based on wavelength ID instead of channel name.
-        colors: The color associated with the channel, e.g. for visualization purposes.
-    """
+    """Channel information."""
 
     channel_label: str
+    """Label of the channel."""
     wavelength_id: str | None = None
+    """
+    The wavelength ID of the channel.
+    This field can be used in some tasks as alternative to channel_label,
+    e.g. for multiplexed acquisitions it can be used for applying illumination
+    correction based on wavelength ID instead of channel name.
+    """
     colors: DefaultColors = DefaultColors.blue
+    """The color associated with the channel, e.g. for visualization purposes."""
 
 
 class StageCorrections(BaseModel):
-    """Stage orientation corrections.
-
-    Attributes:
-        flip_x: Whether to flip the position along the X axis.
-        flip_y: Whether to flip the position along the Y axis.
-        swap_xy: Whether to swap the positions along the X and Y axes.
-    """
+    """Stage orientation corrections."""
 
     flip_x: bool = Field(default=False, title="Flip X")
+    """Whether to flip the position along the X axis."""
     flip_y: bool = Field(default=False, title="Flip Y")
+    """Whether to flip the position along the Y axis."""
     swap_xy: bool = Field(default=False, title="Swap XY")
+    """Whether to swap the positions along the X and Y axes."""
     model_config = ConfigDict(extra="forbid")
 
 
