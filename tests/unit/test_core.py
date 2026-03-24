@@ -101,6 +101,38 @@ class TestTile:
         dtype = single_tile.find_data_type()
         assert dtype == "uint8"
 
+    @pytest.mark.parametrize(
+        "start_x,pixelsize",
+        [
+            (-645.814, 0.5979760809567617),
+            (745.34, 1.294),
+        ],
+    )
+    def test_tile_to_roi_non_aligned_coordinates(
+        self, default_collection: SingleImage, start_x: float, pixelsize: float
+    ) -> None:
+        """Regression: coordinates that don't land exactly on the pixel grid.
+
+        Previously raised ValueError due to strict round-trip tolerance.
+        """
+        acq = AcquisitionDetails(
+            channels=[ChannelInfo(channel_label="DAPI")],
+            pixelsize=pixelsize,
+            z_spacing=1.0,
+            t_spacing=1.0,
+        )
+        tile = build_dummy_tile(
+            fov_name="FOV_0",
+            start=StartPosition(x=start_x, y=0),
+            shape=TileShape(x=256, y=256, z=1, c=1, t=1),
+            collection=default_collection,
+            acquisition_details=acq,
+        )
+        roi = tile.to_roi()
+        x_slice = roi.get("x")
+        assert x_slice is not None
+        assert x_slice.start is not None
+
 
 class TestTileSlice:
     def test_from_tile(self, single_tile: Tile[Any, Any]) -> None:
