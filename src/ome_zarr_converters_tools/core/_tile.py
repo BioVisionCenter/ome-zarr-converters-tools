@@ -22,26 +22,12 @@ def safe_to_world(
     start: float,
     spacing: float,
     coo_system: COO_SYSTEM_TYPE,
-    eps: float = 1e-6,
 ) -> float:
-    """Convert from world to pixel and back to world to ensure alignment."""
+    """Convert coordinates to world space, normalizing through pixel grid."""
     if coo_system == "world":
         pixel_coord = world_to_pixel(start, spacing)
-        world_coord = pixel_to_world(pixel_coord, spacing)
-        if abs(world_coord - start) > eps:
-            raise ValueError(
-                f"Coordinate {start}, with spacing {spacing}, "
-                f"cannot be accurately represented in pixel coordinates."
-            )
-        return world_coord
-    world_coord = pixel_to_world(start, spacing)
-    pixel_coord = world_to_pixel(world_coord, spacing)
-    if abs(pixel_coord - start) > eps:
-        raise ValueError(
-            f"Coordinate {start}, with spacing {spacing}, "
-            f"cannot be accurately represented in world coordinates."
-        )
-    return world_coord
+        return pixel_to_world(pixel_coord, spacing)
+    return pixel_to_world(start, spacing)
 
 
 AttributeType: TypeAlias = (
