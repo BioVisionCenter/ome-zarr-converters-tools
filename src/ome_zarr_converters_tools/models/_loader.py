@@ -8,7 +8,10 @@ import tifffile
 from PIL import Image
 from pydantic import BaseModel, ConfigDict
 
-from ome_zarr_converters_tools.models._url_utils import join_url_paths
+from ome_zarr_converters_tools.models._url_utils import (
+    filesystem_for_url,
+    join_url_paths,
+)
 
 
 class ImageLoaderInterface(BaseModel, ABC):
@@ -47,18 +50,21 @@ class DefaultImageLoader(ImageLoaderInterface):
         else:
             path = self.file_path
 
-        suffix = path.split("/")[-1].split(".")[-1]
-        if suffix.lower() in ["tiff", "tif"]:
-            with tifffile.TiffFile(path) as tif:
-                image = tif.asarray()
-        elif suffix.lower() in ["png", "jpg", "jpeg", "bmp"]:
-            image = np.array(Image.open(path))
+        suffix = path.split("/")[-1].split(".")[-1].lower()
+        fs = filesystem_for_url(path, error_msg_prefix="Loading image")
 
-        elif suffix.lower() == "npy":
-            image = np.load(path)
-        else:
-            raise ValueError(
-                f"DefaultImageLoader cannot handle file type {suffix}, "
-                "supported types are .tiff, .tif, .png, .jpg, .jpeg, .bmp, .npy"
-            )
-        return image
+        with fs.open(path, "rb") as f:
+            if suffix in ["tiff", "tif"]:
+                with tifffile.TiffFile(f) as tif:
+                    image = tif.asarray()
+            elif suffix in ["png", "jpg", "jpeg", "bmp"]:
+                image = np.array(Image.open(f))
+
+            elif suffix == "npy":
+                image = np.load(f)
+            else:
+                raise ValueError(
+                    f"DefaultImageLoader cannot handle file type {suffix}, "
+                    "supported types are .tiff, .tif, .png, .jpg, .jpeg, .bmp, .npy"
+                )
+            return image

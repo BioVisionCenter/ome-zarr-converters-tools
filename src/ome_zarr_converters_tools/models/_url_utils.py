@@ -2,6 +2,8 @@ from enum import Enum
 from logging import getLogger
 from pathlib import Path
 
+import fsspec
+
 logger = getLogger(__name__)
 
 
@@ -45,3 +47,15 @@ def join_url_paths(base_url: str, *paths: str) -> str:
         path = str(path).lstrip("/")
         base_url = f"{base_url}/{path}"
     return base_url
+
+
+def filesystem_for_url(
+    url: str, error_msg_prefix: str = "File handling"
+) -> fsspec.AbstractFileSystem:
+    url_type = find_url_type(url)
+    if url_type == UrlType.NOT_SUPPORTED:
+        raise NotImplementedError(
+            f"{error_msg_prefix} for URL {url} "
+            f"with detected type {url_type} is not implemented yet."
+        )
+    return fsspec.filesystem(url_type.value)

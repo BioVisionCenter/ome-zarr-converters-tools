@@ -1,9 +1,12 @@
 """Unit tests for fractal._json_utils: JSON serialization of TiledImages."""
 
 import json
+import os
 from pathlib import Path
 
 import pytest
+import s3fs
+from aiomoto import mock_aws
 
 from ome_zarr_converters_tools.core._dummy_tiles import (
     DummyLoader,
@@ -48,6 +51,20 @@ def sample_tiled_image() -> TiledImage:
     return tiled_image_from_tiles(tiles=tiles, converter_options=ConverterOptions())[0]
 
 
+@pytest.fixture(scope="function")
+def mocked_aws():
+    """
+    Mock all AWS interactions
+    """
+    os.environ["AWS_ACCESS_KEY_ID"] = "testing"
+    os.environ["AWS_SECRET_ACCESS_KEY"] = "testing"
+    os.environ["AWS_SECURITY_TOKEN"] = "testing"
+    os.environ["AWS_SESSION_TOKEN"] = "testing"
+    os.environ["AWS_DEFAULT_REGION"] = "us-east-1"
+    with mock_aws():
+        yield
+
+
 class TestDumpToJson:
     def test_creates_json_file(
         self, sample_tiled_image: TiledImage, tmp_path: Path
@@ -77,11 +94,16 @@ class TestDumpToJson:
         assert Path(result1).exists()
         assert Path(result2).exists()
 
-    def test_s3_url_raises_not_implemented(
+    def test_s3_url_support(self, sample_tiled_image: TiledImage, mocked_aws) -> None:
+        result = dump_to_json("s3://bucket/store", sample_tiled_image)
+        fs = s3fs.S3FileSystem()
+        assert fs.exists(result)
+
+    def test_unknown_url_raises_not_implemented(
         self, sample_tiled_image: TiledImage
     ) -> None:
-        with pytest.raises(NotImplementedError, match="S3"):
-            dump_to_json("s3://bucket/store", sample_tiled_image)
+        with pytest.raises(NotImplementedError, match="not implemented"):
+            dump_to_json("gcs://bucket/store", sample_tiled_image)
 
 
 class TestTiledImageFromJson:
@@ -116,10 +138,21 @@ class TestTiledImageFromJson:
                 image_loader_type=DummyLoader,
             )
 
-    def test_s3_url_raises_not_implemented(self) -> None:
-        with pytest.raises(NotImplementedError, match="S3"):
+    def test_s3_url_support(self, sample_tiled_image: TiledImage, mocked_aws) -> None:
+        json_path = dump_to_json("s3://bucket/store", sample_tiled_image)
+        loaded = tiled_image_from_json(
+            json_path,
+            collection_type=SingleImage,
+            image_loader_type=DummyLoader,
+        )
+        assert loaded.path == sample_tiled_image.path
+        assert len(loaded.regions) == len(sample_tiled_image.regions)
+        assert loaded.axes == sample_tiled_image.axes
+
+    def test_unknown_url_raises_not_implemented(self) -> None:
+        with pytest.raises(NotImplementedError, match="not implemented"):
             tiled_image_from_json(
-                "s3://bucket/test.json",
+                "gcs://bucket/test.json",
                 collection_type=SingleImage,
                 image_loader_type=DummyLoader,
             )
@@ -142,17 +175,24 @@ class TestRemoveJson:
         remove_json(json_path)
         assert not parent.exists()
 
-    def test_nonexistent_file_does_not_raise(self, tmp_path: Path) -> None:
+    def test_nonexistent_file_does_not_raise(
+        self, tmp_path: Path, caplog: pytest.LogCaptureFixture
+    ) -> None:
         # Should log an error but not raise
         remove_json(str(tmp_path / "nonexistent.json"))
+        assert "error" in caplog.text.lower()
 
-    def test_s3_url_logs_error(self, caplog: pytest.LogCaptureFixture) -> None:
-        remove_json("s3://bucket/test.json")
-        assert "not implemented" in caplog.text.lower()
+    def test_s3_url_support(self, sample_tiled_image: TiledImage, mocked_aws) -> None:
+        json_path = dump_to_json("s3://bucket/store", sample_tiled_image)
+        fs = s3fs.S3FileSystem()
+        assert fs.exists("s3://bucket/store")
+        remove_json(json_path)
+        assert not fs.exists("s3://bucket/store")
 
-    def test_unknown_url_logs_error(self, caplog: pytest.LogCaptureFixture) -> None:
-        remove_json("gcs://bucket/test.json")
-        assert "not implemented" in caplog.text.lower()
+    def test_unknown_url_raises_not_implemented(self) -> None:
+        # Should raise NotImplementedError as it's not supported at all
+        with pytest.raises(NotImplementedError, match="not implemented"):
+            remove_json("gcs://bucket/test.json")
 
 
 class TestCleanupIfExists:
@@ -174,23 +214,23 @@ class TestCleanupIfExists:
         self,
         sample_tiled_image: TiledImage,
         tmp_path: Path,
-        monkeypatch: pytest.MonkeyPatch,
         caplog: pytest.LogCaptureFixture,
     ) -> None:
-        json_url = str(tmp_path / "json_store")
-        dump_to_json(json_url, sample_tiled_image)
-
-        def _failing_iterdir(self):
-            raise PermissionError("no access")
-
-        monkeypatch.setattr(Path, "iterdir", _failing_iterdir)
-        cleanup_if_exists(json_url)
+        json_path = tmp_path / "json_store"
+        dump_to_json(str(json_path), sample_tiled_image)
+        json_path.chmod(0o000)  # remove permissions to trigger an error during cleanup
+        cleanup_if_exists(str(json_path))
         assert "error" in caplog.text.lower()
 
-    def test_s3_url_logs_error(self, caplog: pytest.LogCaptureFixture) -> None:
-        cleanup_if_exists("s3://bucket/store")
-        assert "not implemented" in caplog.text.lower()
+    def test_s3_url_support(self, sample_tiled_image: TiledImage, mocked_aws) -> None:
+        json_url = "s3://bucket/store"
+        dump_to_json(json_url, sample_tiled_image)
+        dump_to_json(json_url, sample_tiled_image)
+        fs = s3fs.S3FileSystem()
+        assert fs.exists("s3://bucket/store")
+        cleanup_if_exists(json_url)
+        assert not fs.exists("s3://bucket/store")
 
-    def test_unknown_url_logs_error(self, caplog: pytest.LogCaptureFixture) -> None:
-        cleanup_if_exists("gcs://bucket/store")
-        assert "not implemented" in caplog.text.lower()
+    def test_unknown_url_raises_not_implemented(self) -> None:
+        with pytest.raises(NotImplementedError, match="not implemented"):
+            cleanup_if_exists("gcs://bucket/store")
