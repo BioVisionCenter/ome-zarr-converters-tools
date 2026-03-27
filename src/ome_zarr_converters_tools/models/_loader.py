@@ -49,16 +49,25 @@ class DefaultImageLoader(ImageLoaderInterface):
 
         suffix = path.split("/")[-1].split(".")[-1]
         if suffix.lower() in ["tiff", "tif"]:
-            with tifffile.TiffFile(path) as tif:
-                image = tif.asarray()
+            image = self.load_tiff(path)
         elif suffix.lower() in ["png", "jpg", "jpeg", "bmp"]:
-            image = np.array(Image.open(path))
-
+            image = self.load_png(path)
         elif suffix.lower() == "npy":
-            image = np.load(path)
+            image = self.load_npy(path)
         else:
             raise ValueError(
                 f"DefaultImageLoader cannot handle file type {suffix}, "
                 "supported types are .tiff, .tif, .png, .jpg, .jpeg, .bmp, .npy"
             )
         return image
+
+    def load_tiff(self, path: str) -> np.ndarray:
+        with tifffile.TiffFile(path) as tif:
+            image = tif.asarray()
+        return image
+
+    def load_png(self, path: str) -> np.ndarray:
+        return np.array(Image.open(path))
+
+    def load_npy(self, path: str) -> np.ndarray:
+        return np.load(path)
