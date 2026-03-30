@@ -87,8 +87,9 @@ class TestDefaultImageLoader:
         assert loaded.shape[:2] == (10, 10)
 
     def test_unsupported_extension_raises(self, tmp_path: Path) -> None:
-        fake_path = str(tmp_path / "test.xyz")
-        loader = DefaultImageLoader(file_path=fake_path)
+        fake_path = tmp_path / "test.xyz"
+        fake_path.touch()
+        loader = DefaultImageLoader(file_path=str(fake_path))
         with pytest.raises(ValueError, match="cannot handle file type"):
             loader.load_data()
 

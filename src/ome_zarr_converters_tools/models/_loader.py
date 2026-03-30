@@ -8,7 +8,10 @@ import tifffile
 from PIL import Image
 from pydantic import BaseModel, ConfigDict
 
-from ome_zarr_converters_tools.models._url_utils import join_url_paths
+from ome_zarr_converters_tools.models._url_utils import (
+    filesystem_for_url,
+    join_url_paths,
+)
 
 
 class ImageLoaderInterface(BaseModel, ABC):
@@ -47,27 +50,31 @@ class DefaultImageLoader(ImageLoaderInterface):
         else:
             path = self.file_path
 
-        suffix = path.split("/")[-1].split(".")[-1]
-        if suffix.lower() in ["tiff", "tif"]:
-            image = self.load_tiff(path)
-        elif suffix.lower() in ["png", "jpg", "jpeg", "bmp"]:
-            image = self.load_png(path)
-        elif suffix.lower() == "npy":
-            image = self.load_npy(path)
+        suffix = path.split("/")[-1].split(".")[-1].lower()
+        if suffix in ["tiff", "tif"]:
+            return self.load_tiff(path)
+        elif suffix in ["png", "jpg", "jpeg", "bmp"]:
+            return self.load_png(path)
+        elif suffix == "npy":
+            return self.load_npy(path)
         else:
             raise ValueError(
                 f"DefaultImageLoader cannot handle file type {suffix}, "
                 "supported types are .tiff, .tif, .png, .jpg, .jpeg, .bmp, .npy"
             )
-        return image
 
     def load_tiff(self, path: str) -> np.ndarray:
-        with tifffile.TiffFile(path) as tif:
-            image = tif.asarray()
-        return image
+        fs = filesystem_for_url(path, error_msg_prefix="Loading image")
+        with fs.open(path, "rb") as f:
+            with tifffile.TiffFile(f) as tif:
+                return tif.asarray()
 
     def load_png(self, path: str) -> np.ndarray:
-        return np.array(Image.open(path))
+        fs = filesystem_for_url(path, error_msg_prefix="Loading image")
+        with fs.open(path, "rb") as f:
+            return np.array(Image.open(f))
 
     def load_npy(self, path: str) -> np.ndarray:
-        return np.load(path)
+        fs = filesystem_for_url(path, error_msg_prefix="Loading image")
+        with fs.open(path, "rb") as f:
+            return np.load(f)
