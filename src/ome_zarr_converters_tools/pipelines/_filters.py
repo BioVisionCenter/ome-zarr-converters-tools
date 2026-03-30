@@ -55,16 +55,16 @@ def apply_path_exclude_regex_filter(
     return not _regex_bases_match(tile, filter_params.regex)
 
 
-class WellFilter(FilterModel):
-    """Well filter model."""
+class WellExcludeFilter(FilterModel):
+    """Well exclude filter model."""
 
-    name: Literal["Well Filter"] = "Well Filter"
+    name: Literal["Well Exclude Filter"] = "Well Exclude Filter"
     """Name of the filter."""
     wells_to_remove: list[str]
     """List of well identifiers to remove. E.g., ["A01", "B02"]"""
 
 
-def apply_well_filter(tile: Tile, filter_params: WellFilter) -> bool:
+def apply_well_filter(tile: Tile, filter_params: WellExcludeFilter) -> bool:
     if not isinstance(tile.collection, ImageInPlate):
         raise ValueError(
             "Well filter can only be applied to To tile with ImageInPlate collection."
@@ -104,7 +104,7 @@ class FilterFunctionProtocol(Protocol[P]):
 _filter_registry: dict[str, Callable[..., bool]] = {
     "Path Regex Include Filter": apply_path_include_regex_filter,
     "Path Regex Exclude Filter": apply_path_exclude_regex_filter,
-    "Well Filter": apply_well_filter,
+    "Well Exclude Filter": apply_well_filter,
     "Well Include Filter": apply_well_include_filter,
 }
 
@@ -143,6 +143,6 @@ def apply_filter_pipeline(
 
 
 ImplementedFilters = Annotated[
-    RegexExcludeFilter | RegexIncludeFilter | WellFilter | WellIncludeFilter,
+    RegexExcludeFilter | RegexIncludeFilter | WellExcludeFilter | WellIncludeFilter,
     Field(discriminator="name"),
 ]

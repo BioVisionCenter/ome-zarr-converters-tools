@@ -129,7 +129,7 @@ def converters_tools_models(
         (
             base,
             "pipelines/_filters.py",
-            "WellFilter",
+            "WellExcludeFilter",
         ),
         (
             base,

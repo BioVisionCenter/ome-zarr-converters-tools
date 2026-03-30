@@ -19,7 +19,7 @@ from ome_zarr_converters_tools.models import (
 from ome_zarr_converters_tools.pipelines._filters import (
     RegexExcludeFilter,
     RegexIncludeFilter,
-    WellFilter,
+    WellExcludeFilter,
     WellIncludeFilter,
     _filter_registry,
     add_filter,
@@ -75,8 +75,8 @@ class TestFilterModels:
         assert f.regex == ".*exclude.*"
 
     def test_well_filter_creation(self) -> None:
-        f = WellFilter(wells_to_remove=["A01", "B02"])
-        assert f.name == "Well Filter"
+        f = WellExcludeFilter(wells_to_remove=["A01", "B02"])
+        assert f.name == "Well Exclude Filter"
         assert f.wells_to_remove == ["A01", "B02"]
 
     def test_well_include_filter_creation(self) -> None:
@@ -156,7 +156,7 @@ class TestFilterPipeline:
             _tile_in_plate("A", 2),
             _tile_in_plate("B", 1),
         ]
-        f = WellFilter(wells_to_remove=["A01"])
+        f = WellExcludeFilter(wells_to_remove=["A01"])
         result = apply_filter_pipeline(tiles, filters_config=[f])
         assert len(result) == 2
         wells = [t.collection.well for t in result]
@@ -164,7 +164,7 @@ class TestFilterPipeline:
 
     def test_well_filter_non_plate_error(self) -> None:
         tiles = [_tile_with_path("img_a")]
-        f = WellFilter(wells_to_remove=["A01"])
+        f = WellExcludeFilter(wells_to_remove=["A01"])
         with pytest.raises(ValueError, match="ImageInPlate"):
             apply_filter_pipeline(tiles, filters_config=[f])
 
