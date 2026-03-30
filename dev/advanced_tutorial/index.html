@@ -1805,7 +1805,7 @@ tiles[0]</div>
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
 <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[2]:</div>
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
-<pre>Tile(fov_name='FOV_1', start_x=10.0, start_y=10.0, start_z=0.0, start_c=0, start_t=0.0, length_x=2560.0, length_y=2160.0, length_z=1.0, length_c=1, length_t=1.0, attributes={}, collection=SingleImage(image_path='manual_example'), image_loader=PngLoader(file_path='20200812-CardiomyocyteDifferentiation14-Cycle1_B03_T0001F001L01A01Z01C01.png'), acquisition_details=AcquisitionDetails(start_x_coo='world', start_y_coo='world', start_z_coo='world', start_t_coo='world', length_x_coo='pixel', length_y_coo='pixel', length_z_coo='pixel', length_t_coo='pixel', pixelsize=0.65, z_spacing=5.0, t_spacing=1.0, channels=[ChannelInfo(channel_label='DAPI', wavelength_id=None, colors=&lt;DefaultColors.blue: 'Blue (0000FF)'&gt;)], axes=['t', 'c', 'z', 'y', 'x'], data_type=None, condition_table_path=None, stage_corrections=StageCorrections(flip_x=False, flip_y=False, swap_xy=False)))</pre>
+<pre>Tile(fov_name='FOV_1', start_x=10.0, start_y=10.0, start_z=0.0, start_c=0, start_t=0.0, length_x=2560.0, length_y=2160.0, length_z=1.0, length_c=1, length_t=1.0, attributes={}, collection=SingleImage(image_path='manual_example'), image_loader=PngLoader(file_path='20200812-CardiomyocyteDifferentiation14-Cycle1_B03_T0001F001L01A01Z01C01.png'), acquisition_details=AcquisitionDetails(start_x_coo='world', start_y_coo='world', start_z_coo='world', start_t_coo='world', length_x_coo='pixel', length_y_coo='pixel', length_z_coo='pixel', length_t_coo='pixel', pixelsize=0.65, z_spacing=5.0, t_spacing=1.0, channels=[ChannelInfo(channel_label='DAPI', wavelength_id=None, colors=&lt;DefaultColors.blue: 'Blue (0000FF)'&gt;)], axes=['t', 'c', 'z', 'y', 'x'], data_type=None, condition_table_path=None, stage_corrections=StageOrientation(flip_x=False, flip_y=False, swap_xy=False)))</pre>
 </div>
 </div>
 </div>
@@ -1939,9 +1939,20 @@ for tiled_image in tiled_images:
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Written: /tmp/tutorial_advanced_tgzydhzf/manual_example.zarr
-</pre>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">ImportError</span>                               Traceback (most recent call last)
+<span class="ansi-cyan-fg">Cell</span><span class="ansi-cyan-fg"> </span><span class="ansi-green-fg">In[3]</span><span class="ansi-green-fg">, line 4</span>
+<span class="ansi-green-fg">      1</span> <span class="ansi-bold" style="color: rgb(0,135,0)">import</span> tempfile
+<span class="ansi-green-fg">      2</span> 
+<span class="ansi-green-fg">      3</span> <span class="ansi-bold" style="color: rgb(0,135,0)">from</span> ome_zarr_converters_tools <span class="ansi-bold" style="color: rgb(0,135,0)">import</span> ConverterOptions, tiles_aggregation_pipeline
+<span class="ansi-green-fg">----&gt; </span><span class="ansi-green-fg">4</span> from ome_zarr_converters_tools.models import (
+<span class="ansi-green-fg">      5</span>     AlignmentCorrections,
+<span class="ansi-green-fg">      6</span>     OverwriteMode,
+<span class="ansi-green-fg">      7</span>     TilingMode,
+
+<span class="ansi-red-fg">ImportError</span>: cannot import name 'AlignmentCorrections' from 'ome_zarr_converters_tools.models' (/opt/hostedtoolcache/Python/3.13.12/x64/lib/python3.13/site-packages/ome_zarr_converters_tools/models/__init__.py)</pre>
 </div>
 </div>
 </div>
@@ -1998,10 +2009,17 @@ print(f"Channels: {img.channel_labels}")</div>
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Shape: (1, 1, 1, 2160, 2560)
-Channels: ['DAPI']
-</pre>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">NameError</span>                                 Traceback (most recent call last)
+<span class="ansi-cyan-fg">Cell</span><span class="ansi-cyan-fg"> </span><span class="ansi-green-fg">In[4]</span><span class="ansi-green-fg">, line 1</span>
+<span class="ansi-green-fg">----&gt; </span><span class="ansi-green-fg">1</span> img = omezarr.get_image()
+<span class="ansi-green-fg">      2</span> data = img.get_array()
+<span class="ansi-green-fg">      3</span> 
+<span class="ansi-green-fg">      4</span> print(f"Shape: {data.shape}")
+
+<span class="ansi-red-fg">NameError</span>: name 'omezarr' is not defined</pre>
 </div>
 </div>
 </div>
@@ -2056,9 +2074,17 @@ print("Cleaned up tutorial output.")</div>
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Cleaned up tutorial output.
-</pre>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">NameError</span>                                 Traceback (most recent call last)
+<span class="ansi-cyan-fg">Cell</span><span class="ansi-cyan-fg"> </span><span class="ansi-green-fg">In[5]</span><span class="ansi-green-fg">, line 3</span>
+<span class="ansi-green-fg">      1</span> <span class="ansi-bold" style="color: rgb(0,135,0)">import</span> shutil
+<span class="ansi-green-fg">      2</span> 
+<span class="ansi-green-fg">----&gt; </span><span class="ansi-green-fg">3</span> shutil.rmtree(zarr_dir, ignore_errors=<span class="ansi-bold" style="color: rgb(0,135,0)">True</span>)
+<span class="ansi-green-fg">      4</span> print(<span class="ansi-yellow-fg">"Cleaned up tutorial output."</span>)
+
+<span class="ansi-red-fg">NameError</span>: name 'zarr_dir' is not defined</pre>
 </div>
 </div>
 </div>
