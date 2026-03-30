@@ -18,10 +18,6 @@ def find_url_type(url: str) -> UrlType:
         return UrlType.LOCAL
     elif url.startswith("s3://"):
         return UrlType.S3
-    logger.error(
-        f"Unsupported URL type for {url}. "
-        "Only absolute local paths and S3 URLs are supported."
-    )
     return UrlType.NOT_SUPPORTED
 
 

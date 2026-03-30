@@ -12,6 +12,7 @@ from ome_zarr_converters_tools.models import (
 )
 from ome_zarr_converters_tools.models._url_utils import (
     filesystem_for_url,
+    join_url_paths,
 )
 
 logger = logging.getLogger(__name__)
@@ -23,7 +24,7 @@ def dump_to_json(temp_json_url: str, tiled_image: TiledImage) -> str:
     fs = filesystem_for_url(temp_json_url, error_msg_prefix="Dumping JSON")
     fs.makedirs(temp_json_url, exist_ok=True)
     unique_json_filename = f"{uuid4()}.json"
-    tile_json_name = fs.sep.join([temp_json_url, unique_json_filename])
+    tile_json_name = join_url_paths(temp_json_url, unique_json_filename)
 
     with fs.open(tile_json_name, "w") as f:
         f.write(json_data)
@@ -98,9 +99,14 @@ def remove_json(
     try:
         fs.rm(tiled_image_json_dump_url)
         parent_dir = tiled_image_json_dump_url.rsplit(fs.sep, 1)[0]
-        if not fs.ls(parent_dir):
-            # Remove the parent directory if it is empty
+        try:
+            # no-op if non-empty; avoids a listdir on potentially large directories
+            # for distributed filesystems like CephFS where listdir can be expensive
+            # also avoids a race condition where another process has already removed
+            # the file and directory
             fs.rmdir(parent_dir)
+        except OSError:
+            pass
     except Exception as e:
         logger.error(
             f"An error occurred while cleaning up the JSON file: {e}. "
@@ -125,6 +131,7 @@ def cleanup_if_exists(temp_json_url: str):
             f"Expected a directory for a cleanup, but got a file: {temp_json_url}"
         )
     try:
+        # Limit to depth 1: temp JSON store is flat (files only, no subdirs)
         fs.rm(temp_json_url, recursive=True, maxdepth=1)
     except Exception as e:
         logger.error(
