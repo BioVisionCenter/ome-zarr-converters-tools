@@ -4,6 +4,7 @@ import json
 import os
 from pathlib import Path
 
+import boto3
 import pytest
 import s3fs
 from aiomoto import mock_aws
@@ -62,6 +63,7 @@ def mocked_aws():
     os.environ["AWS_SESSION_TOKEN"] = "testing"
     os.environ["AWS_DEFAULT_REGION"] = "us-east-1"
     with mock_aws():
+        boto3.client("s3", region_name="us-east-1").create_bucket(Bucket="bucket")
         yield
 
 
@@ -214,11 +216,20 @@ class TestCleanupIfExists:
         self,
         sample_tiled_image: TiledImage,
         tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
         caplog: pytest.LogCaptureFixture,
     ) -> None:
+        import fsspec.implementations.local
+
         json_path = tmp_path / "json_store"
         dump_to_json(str(json_path), sample_tiled_image)
-        json_path.chmod(0o000)  # remove permissions to trigger an error during cleanup
+
+        def _failing_rm(self, path, **kwargs):
+            raise PermissionError("no access")
+
+        monkeypatch.setattr(
+            fsspec.implementations.local.LocalFileSystem, "rm", _failing_rm
+        )
         cleanup_if_exists(str(json_path))
         assert "error" in caplog.text.lower()
 
