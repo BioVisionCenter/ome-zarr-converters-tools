@@ -16,10 +16,10 @@ from ome_zarr_converters_tools.core._tile_region import TiledImage, TileSlice
 from ome_zarr_converters_tools.core._tile_to_tiled_images import tiled_image_from_tiles
 from ome_zarr_converters_tools.models import (
     AcquisitionDetails,
-    AlignmentCorrections,
     ChannelInfo,
     ConverterOptions,
     SingleImage,
+    StagePositionCorrections,
     TilingMode,
 )
 from ome_zarr_converters_tools.pipelines._alignment import (
@@ -153,7 +153,7 @@ class TestAlignment:
         images = tiled_image_from_tiles(
             tiles=tiles, converter_options=ConverterOptions()
         )
-        corrections = AlignmentCorrections(align_xy=True)
+        corrections = StagePositionCorrections(align_xy=True)
         result = apply_fov_alignment_corrections(images[0], corrections)
         x_slice = result.regions[0].roi.get("x")
         assert x_slice is not None

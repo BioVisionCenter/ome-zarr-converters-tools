@@ -19,12 +19,12 @@ from ome_zarr_converters_tools.core._table import (
 from ome_zarr_converters_tools.core._tile import Tile
 from ome_zarr_converters_tools.models import (
     AcquisitionDetails,
-    AlignmentCorrections,
     ChannelInfo,
     ConverterOptions,
     ImageInPlate,
     OverwriteMode,
     SingleImage,
+    StagePositionCorrections,
     TilingMode,
     WriterMode,
 )
@@ -130,7 +130,7 @@ class TestTiledImageCreationPipeline:
         tiled_image = images[0]
 
         pipeline = build_default_registration_pipeline(
-            AlignmentCorrections(), TilingMode.INPLACE
+            StagePositionCorrections(), TilingMode.INPLACE
         )
         zarr_url = str(tmp_path / "output.zarr")
         omezarr = tiled_image_creation_pipeline(
@@ -216,7 +216,7 @@ class TestHCSPlateEndToEnd:
         tiled_image = images[0]
 
         pipeline = build_default_registration_pipeline(
-            AlignmentCorrections(), TilingMode.AUTO
+            StagePositionCorrections(), TilingMode.AUTO
         )
         registered = apply_registration_pipeline(tiled_image, pipeline)
 
@@ -242,7 +242,7 @@ class TestHCSPlateEndToEnd:
         tiled_image = images[0]
 
         pipeline = build_default_registration_pipeline(
-            AlignmentCorrections(), TilingMode.AUTO
+            StagePositionCorrections(), TilingMode.AUTO
         )
         zarr_url = str(tmp_path / "output.zarr")
         omezarr = tiled_image_creation_pipeline(
@@ -300,7 +300,7 @@ class TestHCSPlateEndToEnd:
         tiled_image = images[0]
 
         pipeline = build_default_registration_pipeline(
-            AlignmentCorrections(), TilingMode.AUTO
+            StagePositionCorrections(), TilingMode.AUTO
         )
         zarr_url = str(tmp_path / f"output_{writer_mode.value}.zarr")
         omezarr = tiled_image_creation_pipeline(
@@ -350,7 +350,7 @@ class TestSingleImageEndToEnd:
         tiled_image = images[0]
 
         pipeline = build_default_registration_pipeline(
-            AlignmentCorrections(), TilingMode.AUTO
+            StagePositionCorrections(), TilingMode.AUTO
         )
         zarr_url = str(tmp_path / "single_output.zarr")
         omezarr = tiled_image_creation_pipeline(
@@ -396,7 +396,7 @@ class TestHCSPlateWithAttributes:
         assert "drug" in tiled_image.attributes
 
         pipeline = build_default_registration_pipeline(
-            AlignmentCorrections(), TilingMode.AUTO
+            StagePositionCorrections(), TilingMode.AUTO
         )
         zarr_url = str(tmp_path / "attrs_output.zarr")
         omezarr = tiled_image_creation_pipeline(
@@ -430,7 +430,7 @@ class TestNoTilingTranslation:
         assert len(images) == 3
 
         pipeline = build_default_registration_pipeline(
-            AlignmentCorrections(), TilingMode.NO_TILING
+            StagePositionCorrections(), TilingMode.NO_TILING
         )
         for i, tiled_image in enumerate(images):
             zarr_url = str(tmp_path / f"output_{i}.zarr")
@@ -462,7 +462,7 @@ class TestNoTilingTranslation:
         tiled_image = images[0]
 
         pipeline = build_default_registration_pipeline(
-            AlignmentCorrections(), TilingMode.AUTO
+            StagePositionCorrections(), TilingMode.AUTO
         )
         zarr_url = str(tmp_path / "output_auto.zarr")
         omezarr = tiled_image_creation_pipeline(

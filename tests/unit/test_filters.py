@@ -20,6 +20,7 @@ from ome_zarr_converters_tools.pipelines._filters import (
     RegexExcludeFilter,
     RegexIncludeFilter,
     WellFilter,
+    WellIncludeFilter,
     _filter_registry,
     add_filter,
     apply_filter_pipeline,
@@ -77,6 +78,11 @@ class TestFilterModels:
         f = WellFilter(wells_to_remove=["A01", "B02"])
         assert f.name == "Well Filter"
         assert f.wells_to_remove == ["A01", "B02"]
+
+    def test_well_include_filter_creation(self) -> None:
+        f = WellIncludeFilter(wells_to_include=["A01", "B02"])
+        assert f.name == "Well Include Filter"
+        assert f.wells_to_include == ["A01", "B02"]
 
 
 class TestFilterRegistry:
@@ -159,6 +165,26 @@ class TestFilterPipeline:
     def test_well_filter_non_plate_error(self) -> None:
         tiles = [_tile_with_path("img_a")]
         f = WellFilter(wells_to_remove=["A01"])
+        with pytest.raises(ValueError, match="ImageInPlate"):
+            apply_filter_pipeline(tiles, filters_config=[f])
+
+    def test_well_include_filter_keeps_wells(self) -> None:
+        tiles = [
+            _tile_in_plate("A", 1),
+            _tile_in_plate("A", 2),
+            _tile_in_plate("B", 1),
+        ]
+        f = WellIncludeFilter(wells_to_include=["A01", "B01"])
+        result = apply_filter_pipeline(tiles, filters_config=[f])
+        assert len(result) == 2
+        wells = [t.collection.well for t in result]
+        assert "A02" not in wells
+        assert "A01" in wells
+        assert "B01" in wells
+
+    def test_well_include_filter_non_plate_error(self) -> None:
+        tiles = [_tile_with_path("img_a")]
+        f = WellIncludeFilter(wells_to_include=["A01"])
         with pytest.raises(ValueError, match="ImageInPlate"):
             apply_filter_pipeline(tiles, filters_config=[f])
 

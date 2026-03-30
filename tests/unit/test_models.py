@@ -4,11 +4,11 @@ import pytest
 
 from ome_zarr_converters_tools import AcquisitionDetails, ChannelInfo
 from ome_zarr_converters_tools.models import (
-    AlignmentCorrections,
     ConverterOptions,
     ImageInPlate,
     SingleImage,
-    StageCorrections,
+    StageOrientation,
+    StagePositionCorrections,
 )
 from ome_zarr_converters_tools.models._collection import validate_zarr_name
 from ome_zarr_converters_tools.models._converter_options import (
@@ -123,21 +123,21 @@ class TestConverterOptions:
         assert opts.temp_json_options.temp_url == "{zarr_dir}/_tmp_json"
 
 
-class TestStageCorrections:
-    """Tests for the StageCorrections model."""
+class TestStageOrientation:
+    """Tests for the StageOrientation model."""
 
     def test_stage_corrections_creation(
-        self, sample_stage_corrections: StageCorrections
+        self, sample_stage_corrections: StageOrientation
     ) -> None:
         """Test basic stage corrections creation."""
         assert sample_stage_corrections is not None
 
 
-class TestAlignmentCorrections:
-    """Tests for the AlignmentCorrections model."""
+class TestStagePositionCorrections:
+    """Tests for the StagePositionCorrections model."""
 
     def test_alignment_corrections_creation(
-        self, sample_alignment_corrections: AlignmentCorrections
+        self, sample_alignment_corrections: StagePositionCorrections
     ) -> None:
         """Test basic alignment corrections creation."""
         assert sample_alignment_corrections is not None
