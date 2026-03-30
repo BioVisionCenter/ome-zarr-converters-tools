@@ -168,7 +168,7 @@ from ome_zarr_converters_tools import converters_tools_models
 models = converters_tools_models()
 # [
 #     ("ome_zarr_converters_tools", "fractal/_models.py", "AcquisitionOptions"),
-#     ("ome_zarr_converters_tools", "pipelines/_filters.py", "WellFilter"),
+#     ("ome_zarr_converters_tools", "pipelines/_filters.py", "WellExcludeFilter"),
 #     ("ome_zarr_converters_tools", "models/_converter_options.py", "ConverterOptions"),
 #     ...
 # ]
