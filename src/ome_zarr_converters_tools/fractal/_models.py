@@ -7,7 +7,7 @@ from ome_zarr_converters_tools.models._acquisition import (
     AcquisitionDetails,
     ChannelInfo,
     DataTypeEnum,
-    StageCorrections,
+    StageOrientation,
     canonical_axes,
 )
 from ome_zarr_converters_tools.models._converter_options import (
@@ -64,8 +64,8 @@ class AcquisitionOptions(BaseModel):
     """Axes to use for the image data, e.g. "czyx"."""
     data_type: DataTypeEnum | None = Field(default=None, title="Data Type")
     """Data type of the image data."""
-    stage_corrections: StageCorrections = Field(
-        default_factory=StageCorrections, title="Stage Corrections"
+    stage_corrections: StageOrientation = Field(
+        default_factory=StageOrientation, title="Stage Corrections"
     )
     """Stage orientation corrections."""
     filters: list[ImplementedFilters] = Field(default_factory=list)
@@ -134,6 +134,11 @@ def converters_tools_models(
         (
             base,
             "pipelines/_filters.py",
+            "WellIncludeFilter",
+        ),
+        (
+            base,
+            "pipelines/_filters.py",
             "RegexIncludeFilter",
         ),
         (
@@ -149,12 +154,12 @@ def converters_tools_models(
         (
             base,
             "models/_acquisition.py",
-            "StageCorrections",
+            "StageOrientation",
         ),
         (
             base,
             "models/_converter_options.py",
-            "AlignmentCorrections",
+            "StagePositionCorrections",
         ),
         (
             base,

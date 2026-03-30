@@ -95,7 +95,7 @@ class ChannelInfo(BaseModel):
     """The color associated with the channel, e.g. for visualization purposes."""
 
 
-class StageCorrections(BaseModel):
+class StageOrientation(BaseModel):
     """Stage orientation corrections."""
 
     flip_x: bool = Field(default=False, title="Flip X")
@@ -143,7 +143,7 @@ class AcquisitionDetails(BaseModel):
     condition_table_path: str | None = None
 
     # Stage orientation corrections
-    stage_corrections: StageCorrections = Field(default_factory=StageCorrections)
+    stage_corrections: StageOrientation = Field(default_factory=StageOrientation)
 
     model_config = ConfigDict(extra="forbid")
 

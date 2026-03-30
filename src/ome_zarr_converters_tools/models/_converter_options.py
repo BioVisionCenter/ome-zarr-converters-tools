@@ -49,7 +49,7 @@ class WriterMode(StrEnum):
     IN_MEMORY = "In Memory"
 
 
-class AlignmentCorrections(BaseModel):
+class StagePositionCorrections(BaseModel):
     """Alignment correction for stage positions."""
 
     align_xy: bool = Field(default=False, title="Align XY")
@@ -183,8 +183,8 @@ class ConverterOptions(BaseModel):
     This accounts for minor jitter in microscope stage positions when determining if
     Snap to Grid tiling can be applied.
     """
-    alignment_correction: AlignmentCorrections = Field(
-        default_factory=AlignmentCorrections,
+    alignment_correction: StagePositionCorrections = Field(
+        default_factory=StagePositionCorrections,
         title="Alignment Corrections",
     )
     """Alignment correction options."""

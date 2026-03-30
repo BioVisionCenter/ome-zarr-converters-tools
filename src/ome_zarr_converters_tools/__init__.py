@@ -31,7 +31,7 @@ from ome_zarr_converters_tools.models import (
     OmeZarrOptions,
     OverwriteMode,
     SingleImage,
-    StageCorrections,
+    StageOrientation,
     default_axes_builder,
     join_url_paths,
 )
@@ -63,7 +63,7 @@ __all__ = [
     "OmeZarrOptions",
     "OverwriteMode",
     "SingleImage",
-    "StageCorrections",
+    "StageOrientation",
     "Tile",
     "TiledImage",
     "converters_tools_models",

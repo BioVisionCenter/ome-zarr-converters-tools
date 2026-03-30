@@ -4,7 +4,7 @@ from ome_zarr_converters_tools.models._acquisition import (
     AcquisitionDetails,
     ChannelInfo,
     DataTypeEnum,
-    StageCorrections,
+    StageOrientation,
     default_axes_builder,
 )
 from ome_zarr_converters_tools.models._collection import (
@@ -14,7 +14,6 @@ from ome_zarr_converters_tools.models._collection import (
     SingleImage,
 )
 from ome_zarr_converters_tools.models._converter_options import (
-    AlignmentCorrections,
     BackendType,
     ChunkingStrategy,
     ConverterOptions,
@@ -24,6 +23,7 @@ from ome_zarr_converters_tools.models._converter_options import (
     NgffVersions,
     OmeZarrOptions,
     OverwriteMode,
+    StagePositionCorrections,
     TilingMode,
     WriterMode,
 )
@@ -39,7 +39,7 @@ from ome_zarr_converters_tools.models._url_utils import (
 
 __all__ = [
     "AcquisitionDetails",
-    "AlignmentCorrections",
+    "StagePositionCorrections",
     "BackendType",
     "ChannelInfo",
     "ChunkingStrategy",
@@ -57,7 +57,7 @@ __all__ = [
     "OmeZarrOptions",
     "OverwriteMode",
     "SingleImage",
-    "StageCorrections",
+    "StageOrientation",
     "TilingMode",
     "WriterMode",
     "default_axes_builder",

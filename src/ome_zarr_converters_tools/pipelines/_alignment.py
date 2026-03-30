@@ -9,7 +9,7 @@ from ome_zarr_converters_tools.core import (
     TileSlice,
 )
 from ome_zarr_converters_tools.core._roi_utils import move_roi_by, move_to
-from ome_zarr_converters_tools.models import AlignmentCorrections
+from ome_zarr_converters_tools.models import StagePositionCorrections
 
 
 def _align_xy_regions(regions: list[TileSlice]) -> list[TileSlice]:
@@ -46,7 +46,7 @@ def _align_t_regions(regions: list[TileSlice]) -> list[TileSlice]:
 
 def _align_regions(
     regions: list[TileSlice],
-    alignment_corrections: AlignmentCorrections,
+    alignment_corrections: StagePositionCorrections,
 ) -> list[TileSlice]:
     if alignment_corrections.align_xy:
         regions = _align_xy_regions(regions)
@@ -58,7 +58,7 @@ def _align_regions(
 
 
 def apply_fov_alignment_corrections(
-    tiled_image: TiledImage, alignment_corrections: AlignmentCorrections
+    tiled_image: TiledImage, alignment_corrections: StagePositionCorrections
 ) -> TiledImage:
     """Align all the regions in a TiledImage to be consistent.
 
@@ -69,7 +69,7 @@ def apply_fov_alignment_corrections(
 
     Args:
         tiled_image: TiledImage model to align.
-        alignment_corrections: AlignmentCorrections model specifying which
+        alignment_corrections: StagePositionCorrections model specifying which
             corrections to apply.
 
     """

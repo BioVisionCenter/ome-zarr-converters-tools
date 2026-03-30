@@ -61,7 +61,7 @@ class WellFilter(FilterModel):
     name: Literal["Well Filter"] = "Well Filter"
     """Name of the filter."""
     wells_to_remove: list[str]
-    """List of well identifiers to remove. E.g., ["A1", "B2"]"""
+    """List of well identifiers to remove. E.g., ["A01", "B02"]"""
 
 
 def apply_well_filter(tile: Tile, filter_params: WellFilter) -> bool:
@@ -72,6 +72,24 @@ def apply_well_filter(tile: Tile, filter_params: WellFilter) -> bool:
     if tile.collection.well in filter_params.wells_to_remove:
         return False
     return True
+
+
+class WellIncludeFilter(FilterModel):
+    """Well include filter model."""
+
+    name: Literal["Well Include Filter"] = "Well Include Filter"
+    """Name of the filter."""
+    wells_to_include: list[str]
+    """List of well identifiers to keep. E.g., ["A01", "B02"]"""
+
+
+def apply_well_include_filter(tile: Tile, filter_params: WellIncludeFilter) -> bool:
+    if not isinstance(tile.collection, ImageInPlate):
+        raise ValueError(
+            "Well include filter can only be applied to a tile with"
+            " ImageInPlate collection."
+        )
+    return tile.collection.well in filter_params.wells_to_include
 
 
 P = ParamSpec("P")
@@ -87,6 +105,7 @@ _filter_registry: dict[str, Callable[..., bool]] = {
     "Path Regex Include Filter": apply_path_include_regex_filter,
     "Path Regex Exclude Filter": apply_path_exclude_regex_filter,
     "Well Filter": apply_well_filter,
+    "Well Include Filter": apply_well_include_filter,
 }
 
 
@@ -124,5 +143,6 @@ def apply_filter_pipeline(
 
 
 ImplementedFilters = Annotated[
-    RegexExcludeFilter | RegexIncludeFilter | WellFilter, Field(discriminator="name")
+    RegexExcludeFilter | RegexIncludeFilter | WellFilter | WellIncludeFilter,
+    Field(discriminator="name"),
 ]

@@ -16,12 +16,12 @@ from ome_zarr_converters_tools.core._tile_region import TiledImage
 from ome_zarr_converters_tools.core._tile_to_tiled_images import tiled_image_from_tiles
 from ome_zarr_converters_tools.models import (
     AcquisitionDetails,
-    AlignmentCorrections,
     ChannelInfo,
     ConverterOptions,
     ImageInPlate,
     SingleImage,
-    StageCorrections,
+    StageOrientation,
+    StagePositionCorrections,
 )
 
 
@@ -63,15 +63,15 @@ def default_converter_options() -> ConverterOptions:
 
 
 @pytest.fixture
-def default_alignment_corrections() -> AlignmentCorrections:
-    """Default AlignmentCorrections."""
-    return AlignmentCorrections()
+def default_alignment_corrections() -> StagePositionCorrections:
+    """Default StagePositionCorrections."""
+    return StagePositionCorrections()
 
 
 @pytest.fixture
-def default_stage_corrections() -> StageCorrections:
-    """Default StageCorrections."""
-    return StageCorrections()
+def default_stage_corrections() -> StageOrientation:
+    """Default StageOrientation."""
+    return StageOrientation()
 
 
 @pytest.fixture
@@ -170,13 +170,13 @@ def sample_converter_options() -> ConverterOptions:
 
 
 @pytest.fixture
-def sample_stage_corrections() -> StageCorrections:
-    return StageCorrections()
+def sample_stage_corrections() -> StageOrientation:
+    return StageOrientation()
 
 
 @pytest.fixture
-def sample_alignment_corrections() -> AlignmentCorrections:
-    return AlignmentCorrections()
+def sample_alignment_corrections() -> StagePositionCorrections:
+    return StagePositionCorrections()
 
 
 @pytest.fixture
