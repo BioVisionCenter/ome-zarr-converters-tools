@@ -3,7 +3,6 @@
 from typing import Protocol
 
 import polars as pl
-import zarr
 from ngio import DefaultNgffVersion, NgffVersions
 from ngio.hcs import create_empty_plate, open_ome_zarr_plate
 from ngio.hcs._plate import ImageInWellPath
@@ -14,7 +13,10 @@ from ome_zarr_converters_tools.models import (
     ImageInPlate,
     OverwriteMode,
 )
-from ome_zarr_converters_tools.models._url_utils import join_url_paths
+from ome_zarr_converters_tools.models._url_utils import (
+    filesystem_for_url,
+    join_url_paths,
+)
 
 
 def _setup_condition_table(
@@ -71,14 +73,6 @@ def setup_plates(
 ) -> None:
     """Set up an ImageInPlate collection in the Zarr group."""
     assert isinstance(tiled_images[0].collection, ImageInPlate)
-    zarr_format = 2 if ngff_version == "0.4" else 3
-    if overwrite_mode == OverwriteMode.NO_OVERWRITE:
-        mode = "w-"
-    elif overwrite_mode == OverwriteMode.OVERWRITE:
-        mode = "w"
-    else:  # extend
-        mode = "a"
-
     images_grouped_by_plate: dict[str, list[TiledImage]] = {}
     for tiled_image in tiled_images:
         plate_path = tiled_image.collection.plate_path()
@@ -88,13 +82,22 @@ def setup_plates(
 
     for plate_path, tile_images in images_grouped_by_plate.items():
         plante_url = join_url_paths(zarr_dir, plate_path)
-        group = zarr.open_group(store=plante_url, mode=mode, zarr_format=zarr_format)
+        if overwrite_mode == OverwriteMode.NO_OVERWRITE:
+            fs = filesystem_for_url(plante_url)
+            if fs.exists(plante_url):
+                raise FileExistsError(
+                    f"A Plate already exists at {plante_url} "
+                    f"(overwrite_mode={OverwriteMode.NO_OVERWRITE.value}). "
+                    f"Set overwrite_mode={OverwriteMode.OVERWRITE.value} to "
+                    f"replace it, or "
+                    f"overwrite_mode={OverwriteMode.EXTEND.value} to add to it."
+                )
         try:
             # This can only succeed in "extend" mode if the group already exists
-            plate = open_ome_zarr_plate(group, cache=True)
+            plate = open_ome_zarr_plate(plante_url, cache=True)
         except Exception:
             plate = create_empty_plate(
-                store=group,
+                store=plante_url,
                 name=plate_path,
                 ngff_version=ngff_version,
                 overwrite=True,

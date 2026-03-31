@@ -279,6 +279,21 @@ class TestSetupPlates:
         assert (tmp_path / "PlateA.zarr").exists()
         assert (tmp_path / "PlateB.zarr").exists()
 
+    def test_no_overwrite_raises_when_plate_exists(self, tmp_path: Path) -> None:
+        images = _make_plate_tiled_images()
+        zarr_dir = str(tmp_path)
+        setup_plates(
+            zarr_dir=zarr_dir,
+            tiled_images=images,
+            overwrite_mode=OverwriteMode.OVERWRITE,
+        )
+        with pytest.raises(FileExistsError, match="already exists"):
+            setup_plates(
+                zarr_dir=zarr_dir,
+                tiled_images=images,
+                overwrite_mode=OverwriteMode.NO_OVERWRITE,
+            )
+
     def test_writes_condition_table(self, tmp_path: Path) -> None:
         images = _make_plate_tiled_images(attributes={"drug": ["DMSO"]})
         zarr_dir = str(tmp_path)
