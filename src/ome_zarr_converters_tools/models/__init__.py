@@ -32,6 +32,7 @@ from ome_zarr_converters_tools.models._loader import (
     ImageLoaderInterfaceType,
 )
 from ome_zarr_converters_tools.models._url_utils import (
+    filesystem_for_url,
     find_url_type,
     join_url_paths,
     local_url_to_path,
@@ -39,7 +40,6 @@ from ome_zarr_converters_tools.models._url_utils import (
 
 __all__ = [
     "AcquisitionDetails",
-    "StagePositionCorrections",
     "BackendType",
     "ChannelInfo",
     "ChunkingStrategy",
@@ -58,9 +58,11 @@ __all__ = [
     "OverwriteMode",
     "SingleImage",
     "StageOrientation",
+    "StagePositionCorrections",
     "TilingMode",
     "WriterMode",
     "default_axes_builder",
+    "filesystem_for_url",
     "find_url_type",
     "join_url_paths",
     "local_url_to_path",
