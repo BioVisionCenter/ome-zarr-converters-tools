@@ -33,6 +33,7 @@ from ome_zarr_converters_tools.models import (
     SingleImage,
     StageOrientation,
     default_axes_builder,
+    filesystem_for_url,
     join_url_paths,
 )
 from ome_zarr_converters_tools.pipelines import (
@@ -68,6 +69,7 @@ __all__ = [
     "TiledImage",
     "converters_tools_models",
     "default_axes_builder",
+    "filesystem_for_url",
     "generic_compute_task",
     "join_url_paths",
     "setup_images_for_conversion",
