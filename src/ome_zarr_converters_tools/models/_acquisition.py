@@ -32,51 +32,27 @@ def default_axes_builder(is_time_series: bool) -> list[CANONICAL_AXES_TYPE]:
         return ["c", "z", "y", "x"]
 
 
-class DefaultColors(StrEnum):
+class ChannelColor(StrEnum):
     """Default colors for the channels."""
 
-    blue = "Blue (0000FF)"
-    red = "Red (FF0000)"
-    yellow = "Yellow (FFFF00)"
-    magenta = "Magenta (FF00FF)"
-    cyan = "Cyan (00FFFF)"
-    gray = "Gray (808080)"
-    green = "Green (00FF00)"
-    orange = "Orange (FF8000)"
-    purple = "Purple (8000FF)"
-    teal = "Teal (008080)"
-    lime = "Lime (00FF80)"
-    amber = "Amber (FFBF00)"
-    pink = "Pink (FF0080)"
-    navy = "Navy (000080)"
-    maroon = "Maroon (800000)"
-    olive = "Olive (808000)"
-    coral = "Coral (FF7F50)"
-    violet = "Violet (8000FF)"
-
-    def to_hex(self) -> str:
-        """Convert the color to hex format."""
-        _color_mapping = {
-            DefaultColors.blue: "#0000FF",
-            DefaultColors.red: "#FF0000",
-            DefaultColors.yellow: "#FFFF00",
-            DefaultColors.magenta: "#FF00FF",
-            DefaultColors.cyan: "#00FFFF",
-            DefaultColors.gray: "#808080",
-            DefaultColors.green: "#00FF00",
-            DefaultColors.orange: "#FF8000",
-            DefaultColors.purple: "#8000FF",
-            DefaultColors.teal: "#008080",
-            DefaultColors.lime: "#00FF80",
-            DefaultColors.amber: "#FFBF00",
-            DefaultColors.pink: "#FF0080",
-            DefaultColors.navy: "#000080",
-            DefaultColors.maroon: "#800000",
-            DefaultColors.olive: "#808000",
-            DefaultColors.coral: "#FF7F50",
-            DefaultColors.violet: "#8000FF",
-        }
-        return _color_mapping[self]
+    Blue = "#0000FF"
+    Red = "#FF0000"
+    Yellow = "#FFFF00"
+    Magenta = "#FF00FF"
+    Cyan = "#00FFFF"
+    Gray = "#808080"
+    Green = "#00FF00"
+    Orange = "#FF8000"
+    Purple = "#8000FF"
+    Teal = "#008080"
+    Lime = "#00FF80"
+    Amber = "#FFBF00"
+    Pink = "#FF0080"
+    Navy = "#000080"
+    Maroon = "#800000"
+    Olive = "#808000"
+    Coral = "#FF7F50"
+    Violet = "#8000FF"
 
 
 class ChannelInfo(BaseModel):
@@ -91,7 +67,7 @@ class ChannelInfo(BaseModel):
     e.g. for multiplexed acquisitions it can be used for applying illumination
     correction based on wavelength ID instead of channel name.
     """
-    colors: DefaultColors = DefaultColors.blue
+    color: ChannelColor = ChannelColor.Blue
     """The color associated with the channel, e.g. for visualization purposes."""
 
 

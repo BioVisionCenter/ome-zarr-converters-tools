@@ -17,6 +17,7 @@ from ome_zarr_converters_tools.fractal import (
 )
 from ome_zarr_converters_tools.models import (
     AcquisitionDetails,
+    ChannelColor,
     ChannelInfo,
     ChunkingStrategy,
     CollectionInterface,
@@ -48,6 +49,7 @@ __all__ = [
     "AcquisitionDetails",
     "AcquisitionOptions",
     "AttributeType",
+    "ChannelColor",
     "ChannelInfo",
     "ChunkingStrategy",
     "CollectionInterface",

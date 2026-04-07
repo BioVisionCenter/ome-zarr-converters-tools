@@ -2,6 +2,7 @@
 
 from ome_zarr_converters_tools.models._acquisition import (
     AcquisitionDetails,
+    ChannelColor,
     ChannelInfo,
     DataTypeEnum,
     StageOrientation,
@@ -41,6 +42,7 @@ from ome_zarr_converters_tools.models._url_utils import (
 __all__ = [
     "AcquisitionDetails",
     "BackendType",
+    "ChannelColor",
     "ChannelInfo",
     "ChunkingStrategy",
     "CollectionInterface",
