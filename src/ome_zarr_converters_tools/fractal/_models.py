@@ -62,7 +62,7 @@ class AcquisitionOptions(BaseModel):
     """Optional path to a condition table CSV file."""
     axes: str | None = None
     """Axes to use for the image data, e.g. "czyx"."""
-    data_type: DataTypeEnum | None = Field(default=None, title="Data Type")
+    data_type: DataTypeEnum = Field(default=DataTypeEnum.AUTODETECT, title="Data Type")
     """Data type of the image data."""
     stage_corrections: StageOrientation = Field(
         default_factory=StageOrientation, title="Stage Corrections"
@@ -105,7 +105,7 @@ class AcquisitionOptions(BaseModel):
         axes = self.to_axes_list()
         if axes is not None:
             updated_details.axes = axes
-        if self.data_type is not None:
+        if self.data_type != DataTypeEnum.AUTODETECT:
             updated_details.data_type = self.data_type
         if self.condition_table_path is not None:
             updated_details.condition_table_path = self.condition_table_path

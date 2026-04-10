@@ -19,6 +19,7 @@ ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 class DataTypeEnum(StrEnum):
     """Data type enumeration."""
 
+    AUTODETECT = "autodetect"
     UINT8 = "uint8"
     UINT16 = "uint16"
     UINT32 = "uint32"
@@ -137,7 +138,7 @@ class AcquisitionDetails(BaseModel):
     )
 
     # Data type of the image data (if known)
-    data_type: DataTypeEnum | None = None
+    data_type: DataTypeEnum = DataTypeEnum.AUTODETECT
 
     # Condition table path (if applicable)
     condition_table_path: str | None = None
