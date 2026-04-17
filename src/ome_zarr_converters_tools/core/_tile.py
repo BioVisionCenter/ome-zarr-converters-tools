@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from ome_zarr_converters_tools.models._acquisition import (
     COO_SYSTEM_TYPE,
     AcquisitionDetails,
+    DataTypeEnum,
 )
 from ome_zarr_converters_tools.models._collection import (
     CollectionInterfaceType,
@@ -146,6 +147,6 @@ class Tile(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfaceType]
 
     def find_data_type(self, resource: Any | None = None) -> str:
         """Find the data type of the image data."""
-        if self.acquisition_details.data_type is not None:
+        if self.acquisition_details.data_type != DataTypeEnum.AUTODETECT:
             return self.acquisition_details.data_type
         return self.image_loader.find_data_type(resource)

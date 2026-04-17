@@ -49,7 +49,7 @@ class TestAcquisitionOptions:
         assert opts.channels is None
         assert opts.pixel_info is None
         assert opts.axes is None
-        assert opts.data_type is None
+        assert opts.data_type == DataTypeEnum.AUTODETECT
         assert opts.condition_table_path is None
         assert opts.filters == []
 
