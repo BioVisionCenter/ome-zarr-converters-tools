@@ -2082,7 +2082,7 @@ tiles[0]</div>
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>Number of tiles: 6
-FOV names: {'FOV_3', 'FOV_1', 'FOV_2'}
+FOV names: {'FOV_1', 'FOV_3', 'FOV_2'}
 Collection type: ImageInPlate
 </pre>
 </div>
@@ -2205,7 +2205,7 @@ for ti in tiled_images:
 <span class="ansi-green-fg">      8</span>     converter_options=opts,
 <span class="ansi-green-fg">      9</span>     resource=data_dir,
 
-<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.12/x64/lib/python3.13/site-packages/ome_zarr_converters_tools/pipelines/_tiles_aggregation_pipeline.py:45</span>, in <span class="ansi-cyan-fg">tiles_aggregation_pipeline</span><span class="ansi-blue-fg">(tiles, converter_options, filters, validators, resource)</span>
+<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.13/x64/lib/python3.13/site-packages/ome_zarr_converters_tools/pipelines/_tiles_aggregation_pipeline.py:45</span>, in <span class="ansi-cyan-fg">tiles_aggregation_pipeline</span><span class="ansi-blue-fg">(tiles, converter_options, filters, validators, resource)</span>
 <span class="ansi-green-fg">     43</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> filters <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>:
 <span class="ansi-green-fg">     44</span>     tiles = apply_filter_pipeline(tiles, filters_config=filters)
 <span class="ansi-green-fg">---&gt; </span><span class="ansi-green-fg">45</span> tiled_images = <span class="ansi-yellow-bg">tiled_image_from_tiles</span><span class="ansi-yellow-bg">(</span>
@@ -2218,37 +2218,37 @@ for ti in tiled_images:
 <span class="ansi-green-fg">     52</span>         tiled_images, validators_config=validators
 <span class="ansi-green-fg">     53</span>     )
 
-<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.12/x64/lib/python3.13/site-packages/ome_zarr_converters_tools/core/_tile_to_tiled_images.py:32</span>, in <span class="ansi-cyan-fg">tiled_image_from_tiles</span><span class="ansi-blue-fg">(tiles, converter_options, resource)</span>
+<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.13/x64/lib/python3.13/site-packages/ome_zarr_converters_tools/core/_tile_to_tiled_images.py:32</span>, in <span class="ansi-cyan-fg">tiled_image_from_tiles</span><span class="ansi-blue-fg">(tiles, converter_options, resource)</span>
 <span class="ansi-green-fg">     30</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span style="color: rgb(0,135,0)">len</span>(tiles) == <span class="ansi-green-fg">0</span>:
 <span class="ansi-green-fg">     31</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">raise</span> <span class="ansi-bold" style="color: rgb(215,95,95)">ValueError</span>(<span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">No tiles provided to build TiledImage.</span><span class="ansi-yellow-fg">"</span>)
 <span class="ansi-green-fg">---&gt; </span><span class="ansi-green-fg">32</span> data_type = <span class="ansi-yellow-bg">tiles</span><span class="ansi-yellow-bg">[</span><span class="ansi-green-fg ansi-yellow-bg">0</span><span class="ansi-yellow-bg">]</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">find_data_type</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">resource</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">resource</span><span class="ansi-yellow-bg">)</span>
 <span class="ansi-green-fg">     33</span> <span class="ansi-bold" style="color: rgb(0,135,0)">for</span> tile <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> tiles:
 <span class="ansi-green-fg">     34</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> split_tiles:
 
-<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.12/x64/lib/python3.13/site-packages/ome_zarr_converters_tools/core/_tile.py:152</span>, in <span class="ansi-cyan-fg">Tile.find_data_type</span><span class="ansi-blue-fg">(self, resource)</span>
+<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.13/x64/lib/python3.13/site-packages/ome_zarr_converters_tools/core/_tile.py:152</span>, in <span class="ansi-cyan-fg">Tile.find_data_type</span><span class="ansi-blue-fg">(self, resource)</span>
 <span class="ansi-green-fg">    150</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span style="color: rgb(0,135,0)">self</span>.acquisition_details.data_type != DataTypeEnum.AUTODETECT:
 <span class="ansi-green-fg">    151</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span style="color: rgb(0,135,0)">self</span>.acquisition_details.data_type
 <span class="ansi-green-fg">--&gt; </span><span class="ansi-green-fg">152</span> <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">image_loader</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">find_data_type</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">resource</span><span class="ansi-yellow-bg">)</span>
 
-<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.12/x64/lib/python3.13/site-packages/ome_zarr_converters_tools/models/_loader.py:27</span>, in <span class="ansi-cyan-fg">ImageLoaderInterface.find_data_type</span><span class="ansi-blue-fg">(self, resource)</span>
+<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.13/x64/lib/python3.13/site-packages/ome_zarr_converters_tools/models/_loader.py:27</span>, in <span class="ansi-cyan-fg">ImageLoaderInterface.find_data_type</span><span class="ansi-blue-fg">(self, resource)</span>
 <span class="ansi-green-fg">     25</span> <span class="ansi-bold" style="color: rgb(0,135,0)">def</span><span style="color: rgb(188,188,188)"> </span><span class="ansi-blue-fg">find_data_type</span>(<span style="color: rgb(0,135,0)">self</span>, resource: Any = <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>) -&gt; <span style="color: rgb(0,135,0)">str</span>:
 <span class="ansi-green-fg">     26</span> <span style="color: rgb(188,188,188)">    </span><span class="ansi-yellow-fg">"""Find the data type of the image data."""</span>
 <span class="ansi-green-fg">---&gt; </span><span class="ansi-green-fg">27</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span style="color: rgb(0,135,0)">str</span>(<span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">load_data</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">resource</span><span class="ansi-yellow-bg">)</span>.dtype)
 
-<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.12/x64/lib/python3.13/site-packages/ome_zarr_converters_tools/models/_loader.py:57</span>, in <span class="ansi-cyan-fg">DefaultImageLoader.load_data</span><span class="ansi-blue-fg">(self, resource)</span>
+<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.13/x64/lib/python3.13/site-packages/ome_zarr_converters_tools/models/_loader.py:57</span>, in <span class="ansi-cyan-fg">DefaultImageLoader.load_data</span><span class="ansi-blue-fg">(self, resource)</span>
 <span class="ansi-green-fg">     55</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span style="color: rgb(0,135,0)">self</span>.load_tiff(path)
 <span class="ansi-green-fg">     56</span> <span class="ansi-bold" style="color: rgb(0,135,0)">elif</span> suffix <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> [<span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">png</span><span class="ansi-yellow-fg">"</span>, <span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">jpg</span><span class="ansi-yellow-fg">"</span>, <span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">jpeg</span><span class="ansi-yellow-fg">"</span>, <span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">bmp</span><span class="ansi-yellow-fg">"</span>]:
 <span class="ansi-green-fg">---&gt; </span><span class="ansi-green-fg">57</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">load_png</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">path</span><span class="ansi-yellow-bg">)</span>
 <span class="ansi-green-fg">     58</span> <span class="ansi-bold" style="color: rgb(0,135,0)">elif</span> suffix == <span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">npy</span><span class="ansi-yellow-fg">"</span>:
 <span class="ansi-green-fg">     59</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span style="color: rgb(0,135,0)">self</span>.load_npy(path)
 
-<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.12/x64/lib/python3.13/site-packages/ome_zarr_converters_tools/models/_loader.py:73</span>, in <span class="ansi-cyan-fg">DefaultImageLoader.load_png</span><span class="ansi-blue-fg">(self, path)</span>
+<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.13/x64/lib/python3.13/site-packages/ome_zarr_converters_tools/models/_loader.py:73</span>, in <span class="ansi-cyan-fg">DefaultImageLoader.load_png</span><span class="ansi-blue-fg">(self, path)</span>
 <span class="ansi-green-fg">     72</span> <span class="ansi-bold" style="color: rgb(0,135,0)">def</span><span style="color: rgb(188,188,188)"> </span><span class="ansi-blue-fg">load_png</span>(<span style="color: rgb(0,135,0)">self</span>, path: <span style="color: rgb(0,135,0)">str</span>) -&gt; np.ndarray:
 <span class="ansi-green-fg">---&gt; </span><span class="ansi-green-fg">73</span>     fs = <span class="ansi-yellow-bg">filesystem_for_url</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">path</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">error_msg_prefix</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-fg ansi-yellow-bg">"</span><span class="ansi-yellow-fg ansi-yellow-bg">Loading image</span><span class="ansi-yellow-fg ansi-yellow-bg">"</span><span class="ansi-yellow-bg">)</span>
 <span class="ansi-green-fg">     74</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">with</span> fs.open(path, <span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">rb</span><span class="ansi-yellow-fg">"</span>) <span class="ansi-bold" style="color: rgb(0,135,0)">as</span> f:
 <span class="ansi-green-fg">     75</span>         <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> np.array(Image.open(f))
 
-<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.12/x64/lib/python3.13/site-packages/ome_zarr_converters_tools/models/_url_utils.py:53</span>, in <span class="ansi-cyan-fg">filesystem_for_url</span><span class="ansi-blue-fg">(url, error_msg_prefix)</span>
+<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.13/x64/lib/python3.13/site-packages/ome_zarr_converters_tools/models/_url_utils.py:53</span>, in <span class="ansi-cyan-fg">filesystem_for_url</span><span class="ansi-blue-fg">(url, error_msg_prefix)</span>
 <span class="ansi-green-fg">     51</span> url_type = find_url_type(url)
 <span class="ansi-green-fg">     52</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> url_type == UrlType.NOT_SUPPORTED:
 <span class="ansi-green-fg">---&gt; </span><span class="ansi-green-fg">53</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">raise</span> <span class="ansi-bold" style="color: rgb(215,95,95)">NotImplementedError</span>(
@@ -2475,7 +2475,7 @@ for tiled_image in tiled_images:
 <span class="ansi-green-fg">      3</span>     TilingMode,
 <span class="ansi-green-fg">      4</span>     WriterMode,
 
-<span class="ansi-red-fg">ImportError</span>: cannot import name 'AlignmentCorrections' from 'ome_zarr_converters_tools.models' (/opt/hostedtoolcache/Python/3.13.12/x64/lib/python3.13/site-packages/ome_zarr_converters_tools/models/__init__.py)</pre>
+<span class="ansi-red-fg">ImportError</span>: cannot import name 'AlignmentCorrections' from 'ome_zarr_converters_tools.models' (/opt/hostedtoolcache/Python/3.13.13/x64/lib/python3.13/site-packages/ome_zarr_converters_tools/models/__init__.py)</pre>
 </div>
 </div>
 </div>
@@ -2547,12 +2547,12 @@ print(f"Image shape: {image}")</div>
 <pre>
 <span class="ansi-red-fg">---------------------------------------------------------------------------</span>
 <span class="ansi-red-fg">FileNotFoundError</span>                         Traceback (most recent call last)
-<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.12/x64/lib/python3.13/site-packages/ngio/utils/_zarr_utils.py:89</span>, in <span class="ansi-cyan-fg">open_group_wrapper</span><span class="ansi-blue-fg">(store, mode, zarr_format)</span>
+<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.13/x64/lib/python3.13/site-packages/ngio/utils/_zarr_utils.py:89</span>, in <span class="ansi-cyan-fg">open_group_wrapper</span><span class="ansi-blue-fg">(store, mode, zarr_format)</span>
 <span class="ansi-green-fg">     88</span>     mode = mode <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> mode <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span> <span class="ansi-bold" style="color: rgb(0,135,0)">else</span> <span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">a</span><span class="ansi-yellow-fg">"</span>
 <span class="ansi-green-fg">---&gt; </span><span class="ansi-green-fg">89</span>     group = <span class="ansi-yellow-bg">zarr</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">open_group</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">store</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">store</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">mode</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">mode</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">zarr_format</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">zarr_format</span><span class="ansi-yellow-bg">)</span>
 <span class="ansi-green-fg">     91</span> <span class="ansi-bold" style="color: rgb(0,135,0)">except</span> <span class="ansi-bold" style="color: rgb(215,95,95)">FileExistsError</span> <span class="ansi-bold" style="color: rgb(0,135,0)">as</span> e:
 
-<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.12/x64/lib/python3.13/site-packages/zarr/api/synchronous.py:549</span>, in <span class="ansi-cyan-fg">open_group</span><span class="ansi-blue-fg">(store, mode, cache_attrs, synchronizer, path, chunk_store, storage_options, zarr_version, zarr_format, meta_array, attributes, use_consolidated)</span>
+<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.13/x64/lib/python3.13/site-packages/zarr/api/synchronous.py:549</span>, in <span class="ansi-cyan-fg">open_group</span><span class="ansi-blue-fg">(store, mode, cache_attrs, synchronizer, path, chunk_store, storage_options, zarr_version, zarr_format, meta_array, attributes, use_consolidated)</span>
 <span class="ansi-green-fg">    493</span> <span class="ansi-yellow-fg">"""Open a group using file-mode-like semantics.</span>
 <span class="ansi-green-fg">    494</span> 
 <span class="ansi-green-fg">    495</span> <span class="ansi-yellow-fg">Parameters</span>
@@ -2577,50 +2577,50 @@ print(f"Image shape: {image}")</div>
 <span class="ansi-green-fg">    564</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">)</span>
 <span class="ansi-green-fg">    565</span> )
 
-<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.12/x64/lib/python3.13/site-packages/zarr/core/sync.py:159</span>, in <span class="ansi-cyan-fg">sync</span><span class="ansi-blue-fg">(coro, loop, timeout)</span>
+<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.13/x64/lib/python3.13/site-packages/zarr/core/sync.py:159</span>, in <span class="ansi-cyan-fg">sync</span><span class="ansi-blue-fg">(coro, loop, timeout)</span>
 <span class="ansi-green-fg">    158</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span style="color: rgb(0,135,0)">isinstance</span>(return_result, <span class="ansi-bold" style="color: rgb(215,95,95)">BaseException</span>):
 <span class="ansi-green-fg">--&gt; </span><span class="ansi-green-fg">159</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">raise</span> return_result
 <span class="ansi-green-fg">    160</span> <span class="ansi-bold" style="color: rgb(0,135,0)">else</span>:
 
-<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.12/x64/lib/python3.13/site-packages/zarr/core/sync.py:119</span>, in <span class="ansi-cyan-fg">_runner</span><span class="ansi-blue-fg">(coro)</span>
+<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.13/x64/lib/python3.13/site-packages/zarr/core/sync.py:119</span>, in <span class="ansi-cyan-fg">_runner</span><span class="ansi-blue-fg">(coro)</span>
 <span class="ansi-green-fg">    118</span> <span class="ansi-bold" style="color: rgb(0,135,0)">try</span>:
 <span class="ansi-green-fg">--&gt; </span><span class="ansi-green-fg">119</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span class="ansi-bold" style="color: rgb(0,135,0)">await</span> coro
 <span class="ansi-green-fg">    120</span> <span class="ansi-bold" style="color: rgb(0,135,0)">except</span> <span class="ansi-bold" style="color: rgb(215,95,95)">Exception</span> <span class="ansi-bold" style="color: rgb(0,135,0)">as</span> ex:
 
-<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.12/x64/lib/python3.13/site-packages/zarr/api/asynchronous.py:860</span>, in <span class="ansi-cyan-fg">open_group</span><span class="ansi-blue-fg">(store, mode, cache_attrs, synchronizer, path, chunk_store, storage_options, zarr_version, zarr_format, meta_array, attributes, use_consolidated)</span>
+<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.13/x64/lib/python3.13/site-packages/zarr/api/asynchronous.py:860</span>, in <span class="ansi-cyan-fg">open_group</span><span class="ansi-blue-fg">(store, mode, cache_attrs, synchronizer, path, chunk_store, storage_options, zarr_version, zarr_format, meta_array, attributes, use_consolidated)</span>
 <span class="ansi-green-fg">    858</span>     warnings.warn(<span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">chunk_store is not yet implemented</span><span class="ansi-yellow-fg">"</span>, ZarrRuntimeWarning, stacklevel=<span class="ansi-green-fg">2</span>)
 <span class="ansi-green-fg">--&gt; </span><span class="ansi-green-fg">860</span> store_path = <span class="ansi-bold" style="color: rgb(0,135,0)">await</span> make_store_path(store, mode=mode, storage_options=storage_options, path=path)
 <span class="ansi-green-fg">    861</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> attributes <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>:
 
-<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.12/x64/lib/python3.13/site-packages/zarr/storage/_common.py:459</span>, in <span class="ansi-cyan-fg">make_store_path</span><span class="ansi-blue-fg">(store_like, path, mode, storage_options)</span>
+<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.13/x64/lib/python3.13/site-packages/zarr/storage/_common.py:459</span>, in <span class="ansi-cyan-fg">make_store_path</span><span class="ansi-blue-fg">(store_like, path, mode, storage_options)</span>
 <span class="ansi-green-fg">    458</span> <span class="ansi-bold" style="color: rgb(0,135,0)">else</span>:
 <span class="ansi-green-fg">--&gt; </span><span class="ansi-green-fg">459</span>     store = <span class="ansi-bold" style="color: rgb(0,135,0)">await</span> make_store(store_like, mode=mode, storage_options=storage_options)
 <span class="ansi-green-fg">    460</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span class="ansi-bold" style="color: rgb(0,135,0)">await</span> StorePath.open(store, path=path_normalized, mode=mode)
 
-<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.12/x64/lib/python3.13/site-packages/zarr/storage/_common.py:388</span>, in <span class="ansi-cyan-fg">make_store</span><span class="ansi-blue-fg">(store_like, mode, storage_options)</span>
+<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.13/x64/lib/python3.13/site-packages/zarr/storage/_common.py:388</span>, in <span class="ansi-cyan-fg">make_store</span><span class="ansi-blue-fg">(store_like, mode, storage_options)</span>
 <span class="ansi-green-fg">    386</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">else</span>:
 <span class="ansi-green-fg">    387</span>         <span style="color: rgb(95,135,135)"># Assume a filesystem path</span>
 <span class="ansi-green-fg">--&gt; </span><span class="ansi-green-fg">388</span>         <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span class="ansi-bold" style="color: rgb(0,135,0)">await</span> make_store(Path(store_like), mode=mode, storage_options=storage_options)
 <span class="ansi-green-fg">    390</span> <span class="ansi-bold" style="color: rgb(0,135,0)">elif</span> _has_fsspec <span class="ansi-bold" style="color: rgb(175,0,255)">and</span> <span style="color: rgb(0,135,0)">isinstance</span>(store_like, FSMap):
 
-<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.12/x64/lib/python3.13/site-packages/zarr/storage/_common.py:378</span>, in <span class="ansi-cyan-fg">make_store</span><span class="ansi-blue-fg">(store_like, mode, storage_options)</span>
+<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.13/x64/lib/python3.13/site-packages/zarr/storage/_common.py:378</span>, in <span class="ansi-cyan-fg">make_store</span><span class="ansi-blue-fg">(store_like, mode, storage_options)</span>
 <span class="ansi-green-fg">    376</span> <span class="ansi-bold" style="color: rgb(0,135,0)">elif</span> <span style="color: rgb(0,135,0)">isinstance</span>(store_like, Path):
 <span class="ansi-green-fg">    377</span>     <span style="color: rgb(95,135,135)"># Create a new LocalStore</span>
 <span class="ansi-green-fg">--&gt; </span><span class="ansi-green-fg">378</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span class="ansi-bold" style="color: rgb(0,135,0)">await</span> LocalStore.open(root=store_like, mode=mode, read_only=_read_only)
 <span class="ansi-green-fg">    380</span> <span class="ansi-bold" style="color: rgb(0,135,0)">elif</span> <span style="color: rgb(0,135,0)">isinstance</span>(store_like, <span style="color: rgb(0,135,0)">str</span>):
 <span class="ansi-green-fg">    381</span>     <span style="color: rgb(95,135,135)"># Either an FSSpec URI or a local filesystem path</span>
 
-<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.12/x64/lib/python3.13/site-packages/zarr/storage/_local.py:160</span>, in <span class="ansi-cyan-fg">LocalStore.open</span><span class="ansi-blue-fg">(cls, root, read_only, mode)</span>
+<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.13/x64/lib/python3.13/site-packages/zarr/storage/_local.py:160</span>, in <span class="ansi-cyan-fg">LocalStore.open</span><span class="ansi-blue-fg">(cls, root, read_only, mode)</span>
 <span class="ansi-green-fg">    159</span> store = <span style="color: rgb(0,135,0)">cls</span>(root, read_only=read_only_creation)
 <span class="ansi-green-fg">--&gt; </span><span class="ansi-green-fg">160</span> <span class="ansi-bold" style="color: rgb(0,135,0)">await</span> store._open()
 <span class="ansi-green-fg">    162</span> <span style="color: rgb(95,135,135)"># Set read_only state</span>
 
-<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.12/x64/lib/python3.13/site-packages/zarr/storage/_local.py:172</span>, in <span class="ansi-cyan-fg">LocalStore._open</span><span class="ansi-blue-fg">(self, mode)</span>
+<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.13/x64/lib/python3.13/site-packages/zarr/storage/_local.py:172</span>, in <span class="ansi-cyan-fg">LocalStore._open</span><span class="ansi-blue-fg">(self, mode)</span>
 <span class="ansi-green-fg">    171</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span style="color: rgb(0,135,0)">self</span>.root.exists():
 <span class="ansi-green-fg">--&gt; </span><span class="ansi-green-fg">172</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">raise</span> <span class="ansi-bold" style="color: rgb(215,95,95)">FileNotFoundError</span>(<span class="ansi-yellow-fg">f</span><span class="ansi-yellow-fg">"</span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span><span style="color: rgb(0,135,0)">self</span>.root<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span class="ansi-yellow-fg"> does not exist</span><span class="ansi-yellow-fg">"</span>)
 <span class="ansi-green-fg">    173</span> <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span class="ansi-bold" style="color: rgb(0,135,0)">await</span> <span style="color: rgb(0,135,0)">super</span>()._open()
 
-<span class="ansi-red-fg">FileNotFoundError</span>: /tmp/tutorial_hcs_533i21ql/CardiomyocytePlate.zarr does not exist
+<span class="ansi-red-fg">FileNotFoundError</span>: /tmp/tutorial_hcs_sxm71lly/CardiomyocytePlate.zarr does not exist
 
 The above exception was the direct cause of the following exception:
 
@@ -2633,7 +2633,7 @@ The above exception was the direct cause of the following exception:
 <span class="ansi-green-fg">      5</span> print(f"Plate: {ome_zarr_plate}")
 <span class="ansi-green-fg">      6</span> print(f"Images: {ome_zarr_plate.get_images()}")
 
-<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.12/x64/lib/python3.13/site-packages/ngio/hcs/_plate.py:1180</span>, in <span class="ansi-cyan-fg">open_ome_zarr_plate</span><span class="ansi-blue-fg">(store, cache, mode)</span>
+<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.13/x64/lib/python3.13/site-packages/ngio/hcs/_plate.py:1180</span>, in <span class="ansi-cyan-fg">open_ome_zarr_plate</span><span class="ansi-blue-fg">(store, cache, mode)</span>
 <span class="ansi-green-fg">   1167</span> <span class="ansi-bold" style="color: rgb(0,135,0)">def</span><span style="color: rgb(188,188,188)"> </span><span class="ansi-blue-fg">open_ome_zarr_plate</span>(
 <span class="ansi-green-fg">   1168</span>     store: StoreOrGroup,
 <span class="ansi-green-fg">   1169</span>     cache: <span style="color: rgb(0,135,0)">bool</span> = <span class="ansi-bold" style="color: rgb(0,135,0)">False</span>,
@@ -2647,14 +2647,14 @@ The above exception was the direct cause of the following exception:
 <span class="ansi-green-fg">-&gt; </span><span class="ansi-green-fg">1180</span>     group_handler = <span class="ansi-yellow-bg">ZarrGroupHandler</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">store</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">store</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">cache</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">cache</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">mode</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">mode</span><span class="ansi-yellow-bg">)</span>
 <span class="ansi-green-fg">   1181</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> OmeZarrPlate(group_handler)
 
-<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.12/x64/lib/python3.13/site-packages/ngio/utils/_zarr_utils.py:128</span>, in <span class="ansi-cyan-fg">ZarrGroupHandler.__init__</span><span class="ansi-blue-fg">(self, store, zarr_format, cache, mode)</span>
+<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.13/x64/lib/python3.13/site-packages/ngio/utils/_zarr_utils.py:128</span>, in <span class="ansi-cyan-fg">ZarrGroupHandler.__init__</span><span class="ansi-blue-fg">(self, store, zarr_format, cache, mode)</span>
 <span class="ansi-green-fg">    125</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> mode <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> [<span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">r</span><span class="ansi-yellow-fg">"</span>, <span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">r+</span><span class="ansi-yellow-fg">"</span>, <span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">w</span><span class="ansi-yellow-fg">"</span>, <span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">w-</span><span class="ansi-yellow-fg">"</span>, <span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">a</span><span class="ansi-yellow-fg">"</span>, <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>]:
 <span class="ansi-green-fg">    126</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">raise</span> NgioValueError(<span class="ansi-yellow-fg">f</span><span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">Mode </span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span>mode<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span class="ansi-yellow-fg"> is not supported.</span><span class="ansi-yellow-fg">"</span>)
 <span class="ansi-green-fg">--&gt; </span><span class="ansi-green-fg">128</span> group = <span class="ansi-yellow-bg">open_group_wrapper</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">store</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">store</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">mode</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">mode</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">zarr_format</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">zarr_format</span><span class="ansi-yellow-bg">)</span>
 <span class="ansi-green-fg">    129</span> <span style="color: rgb(0,135,0)">self</span>._group = group
 <span class="ansi-green-fg">    130</span> <span style="color: rgb(0,135,0)">self</span>.use_cache = cache
 
-<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.12/x64/lib/python3.13/site-packages/ngio/utils/_zarr_utils.py:97</span>, in <span class="ansi-cyan-fg">open_group_wrapper</span><span class="ansi-blue-fg">(store, mode, zarr_format)</span>
+<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">/opt/hostedtoolcache/Python/3.13.13/x64/lib/python3.13/site-packages/ngio/utils/_zarr_utils.py:97</span>, in <span class="ansi-cyan-fg">open_group_wrapper</span><span class="ansi-blue-fg">(store, mode, zarr_format)</span>
 <span class="ansi-green-fg">     92</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">raise</span> NgioFileExistsError(
 <span class="ansi-green-fg">     93</span>         <span class="ansi-yellow-fg">f</span><span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">A Zarr group already exists at </span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span>store<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span class="ansi-yellow-fg">, consider setting overwrite=True.</span><span class="ansi-yellow-fg">"</span>
 <span class="ansi-green-fg">     94</span>     ) <span class="ansi-bold" style="color: rgb(0,135,0)">from</span><span style="color: rgb(188,188,188)"> </span><span class="ansi-blue-intense-fg ansi-bold">e</span>
@@ -2665,7 +2665,7 @@ The above exception was the direct cause of the following exception:
 <span class="ansi-green-fg">    101</span>         <span class="ansi-yellow-fg">f</span><span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">A Zarr group already exists at </span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span>store<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span class="ansi-yellow-fg">, consider setting overwrite=True.</span><span class="ansi-yellow-fg">"</span>
 <span class="ansi-green-fg">    102</span>     ) <span class="ansi-bold" style="color: rgb(0,135,0)">from</span><span style="color: rgb(188,188,188)"> </span><span class="ansi-blue-intense-fg ansi-bold">e</span>
 
-<span class="ansi-red-fg">NgioFileNotFoundError</span>: No Zarr group found at /tmp/tutorial_hcs_533i21ql/CardiomyocytePlate.zarr</pre>
+<span class="ansi-red-fg">NgioFileNotFoundError</span>: No Zarr group found at /tmp/tutorial_hcs_sxm71lly/CardiomyocytePlate.zarr</pre>
 </div>
 </div>
 </div>
