@@ -1,3 +1,4 @@
+import ntpath
 from enum import Enum
 from logging import getLogger
 from pathlib import Path
@@ -14,7 +15,7 @@ class UrlType(Enum):
 
 
 def find_url_type(url: str) -> UrlType:
-    if url.startswith("/"):
+    if url.startswith("/") or ntpath.isabs(url):
         return UrlType.LOCAL
     elif url.startswith("s3://"):
         return UrlType.S3

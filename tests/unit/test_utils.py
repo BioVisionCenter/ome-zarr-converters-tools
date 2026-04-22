@@ -14,6 +14,12 @@ class TestUrlUtils:
     def test_find_url_type_local(self) -> None:
         assert find_url_type("/some/path") == UrlType.LOCAL
 
+    def test_find_url_type_windows_drive_local(self) -> None:
+        assert find_url_type(r"C:\some\path\file.tif") == UrlType.LOCAL
+
+    def test_find_url_type_unc_local(self) -> None:
+        assert find_url_type(r"\\server\share\file.tif") == UrlType.LOCAL
+
     def test_find_url_type_s3(self) -> None:
         assert find_url_type("s3://my-bucket/key") == UrlType.S3
 
