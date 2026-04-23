@@ -36,6 +36,11 @@ def join_url_paths(base_url: str, *paths: str) -> str:
     This is used instead of os.path.join or pathlib.Path to ensure
     support for both local and S3 URLs.
     """
+
+    # if local path handle platform-specific separators
+    if find_url_type(base_url) == UrlType.LOCAL:
+        return str(Path(base_url, *paths))
+
     # Ensure base_url does not end with a slash
     base_url = base_url.rstrip("/")
     # Iterate for all but the last path to avoid adding a trailing slash
