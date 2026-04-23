@@ -1,6 +1,6 @@
 """Models for defining regions to be converted into OME-Zarr format."""
 
-import re
+import re, os
 from typing import Any, TypeVar
 
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, field_validator
@@ -36,7 +36,9 @@ CollectionInterfaceType = TypeVar("CollectionInterfaceType", bound=CollectionInt
 
 def sanitize_path(path: str) -> str:
     """Make sure path ends with .zarr and is a valid Zarr name."""
-    validate_zarr_name(path)
+    # only validate the basename of the path
+    # as full paths may contain characters that are not valid for Zarr group/dataset names
+    # e.g. C:\... on windows
     if not path.endswith(".zarr"):
         path = f"{path}.zarr"
     return path
