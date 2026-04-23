@@ -18,6 +18,12 @@ def find_url_type(url: str) -> UrlType:
         return UrlType.LOCAL
     elif url.startswith("s3://"):
         return UrlType.S3
+    # Windows drive paths: C:\ or C:/
+    elif len(url) >= 2 and url[1] == ":" and url[0].isalpha():
+        return UrlType.LOCAL
+    # Windows UNC paths: \\server\share — "\\\\" is two backslash chars in Python
+    elif url.startswith("\\\\"):
+        return UrlType.LOCAL
     return UrlType.NOT_SUPPORTED
 
 
