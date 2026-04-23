@@ -39,6 +39,7 @@ def sanitize_path(path: str) -> str:
     # only validate the basename of the path
     # as full paths may contain characters that are not valid for Zarr group/dataset names
     # e.g. C:\... on windows
+    validate_zarr_name(os.path.basename(path))
     if not path.endswith(".zarr"):
         path = f"{path}.zarr"
     return path
