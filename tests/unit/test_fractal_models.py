@@ -4,6 +4,7 @@ import pytest
 
 from ome_zarr_converters_tools.fractal._models import (
     AcquisitionOptions,
+    ChannelInfoUI,
     ConvertParallelInitArgs,
     PixelSizeModel,
     converters_tools_models,
@@ -92,8 +93,8 @@ class TestAcquisitionOptions:
             t_spacing=1.0,
         )
         new_channels = [
-            ChannelInfo(channel_label="GFP"),
-            ChannelInfo(channel_label="RFP"),
+            ChannelInfoUI(channel_label="GFP"),
+            ChannelInfoUI(channel_label="RFP"),
         ]
         opts = AcquisitionOptions(channels=new_channels)
         updated = opts.update_acquisition_details(acq)
@@ -101,6 +102,7 @@ class TestAcquisitionOptions:
         assert channels is not None
         assert len(channels) == 2
         assert channels[0].channel_label == "GFP"
+        assert channels[0].colors is not None
 
     def test_update_acquisition_details_pixel_info(self) -> None:
         acq = AcquisitionDetails(
