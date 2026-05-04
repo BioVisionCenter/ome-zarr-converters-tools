@@ -20,6 +20,15 @@ class TestUrlUtils:
     def test_find_url_type_unsupported(self) -> None:
         assert find_url_type("http://example.com") == UrlType.NOT_SUPPORTED
 
+    def test_find_url_type_windows_drive_backslash(self) -> None:
+        assert find_url_type("C:\\path\\to\\file") == UrlType.LOCAL
+
+    def test_find_url_type_windows_drive_forward_slash(self) -> None:
+        assert find_url_type("C:/path/to/file") == UrlType.LOCAL
+
+    def test_find_url_type_unc_path(self) -> None:
+        assert find_url_type("\\\\server\\share\\path") == UrlType.LOCAL
+
     def test_join_url_paths(self) -> None:
         result = join_url_paths("/base", "sub", "file.txt")
         assert result == "/base/sub/file.txt"
