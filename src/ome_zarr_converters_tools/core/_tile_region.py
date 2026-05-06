@@ -72,6 +72,7 @@ class TileFOVGroup(BaseModel, Generic[ImageLoaderInterfaceType]):
     regions: list[TileSlice[ImageLoaderInterfaceType]] = Field(default_factory=list)
     axes: list[CANONICAL_AXES_TYPE]
     pixel_size: PixelSize
+    data_type: str
 
     model_config = ConfigDict(extra="forbid")
 
@@ -139,9 +140,7 @@ class TileFOVGroup(BaseModel, Generic[ImageLoaderInterfaceType]):
     def load_data(self, resource: Any | None = None) -> np.ndarray:
         """Load the full image data for this FOV group using."""
         shape = self.shape()
-        ref_slice = self.ref_slice()
-        ref_data = ref_slice.load_data(axes=self.axes, resource=resource)
-        full_image = np.zeros(shape, dtype=ref_data.dtype)
+        full_image = np.zeros(shape, dtype=np.dtype(self.data_type))
         slices = self._prepare_slice_loading(resource=resource)
         for slicing, loader in slices:
             full_image[slicing] = loader()
@@ -152,12 +151,10 @@ class TileFOVGroup(BaseModel, Generic[ImageLoaderInterfaceType]):
     ) -> da.Array:
         """Load the full image data for this FOV group using Dask."""
         shape = self.shape()
-        ref_slice = self.ref_slice()
-        ref_data = ref_slice.load_data(axes=self.axes, resource=resource)
-        dtype = str(ref_data.dtype)
+        dtype = self.data_type
         slices = self._prepare_slice_loading(resource=resource)
         if chunks is None:
-            chunks = ref_data.shape
+            chunks = shape
         return lazy_array_from_regions(
             slices, shape=shape, chunks=chunks, dtype=dtype, fill_value=0.0
         )
@@ -201,6 +198,7 @@ class TiledImage(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfac
                 regions=regions,
                 axes=self.axes,
                 pixel_size=self.pixel_size,
+                data_type=self.data_type,
             )
             for fov_name, regions in fov_dict.items()
         ]
