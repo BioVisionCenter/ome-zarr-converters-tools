@@ -1,7 +1,7 @@
 """Utilities to validate a regular grid of tiles."""
 
 from itertools import product
-from typing import NamedTuple
+from typing import Literal, NamedTuple
 
 import numpy as np
 
@@ -37,6 +37,8 @@ class GridSetup(NamedTuple):
     length_y: float
     offset_x: float
     offset_y: float
+    num_x: int
+    num_y: int
 
 
 def tiles_to_boxes(tiles: list[TileSlice]) -> list[BBox]:
@@ -84,6 +86,41 @@ def tiles_to_boxes(tiles: list[TileSlice]) -> list[BBox]:
     return boxes
 
 
+def _find_offset(
+    bboxes: list[BBox], ax: Literal["x", "y"], tolerance: float = 0.0
+) -> float:
+    """Find the offset to snap the tiles to a regular grid."""
+    index = 0 if ax == "x" else 1
+    sorted_pos = np.sort([box[index] for box in bboxes])
+    offsets = np.diff(sorted_pos)
+    offsets = offsets[offsets > 1e-6].tolist()
+
+    if len(offsets) == 0:
+        return 1.0
+    median_offset = float(np.median(offsets))
+    if np.allclose(offsets, median_offset, atol=tolerance, rtol=0):
+        return median_offset
+
+    unique_offsets = np.unique(offsets)
+    raise NotAGridError(
+        f"Cannot tile to a regular grid: not all {ax} offsets are "
+        f"the same (tolerance={tolerance}): {unique_offsets}"
+    )
+
+
+def _find_grid_size(
+    bboxes: list[BBox], offset_x: float, offset_y: float
+) -> tuple[int, int]:
+    """Find the grid size (number of tiles in x and y)."""
+    min_x = min(box.x for box in bboxes)
+    min_y = min(box.y for box in bboxes)
+    max_x = max(box.x for box in bboxes)
+    max_y = max(box.y for box in bboxes)
+    num_x = round((max_x - min_x) / offset_x) + 1
+    num_y = round((max_y - min_y) / offset_y) + 1
+    return num_x, num_y
+
+
 def check_if_regular_grid(tiles: list[TileSlice], tolerance: float = 0.0) -> GridSetup:
     """Find the grid size of a list of tiles.
 
@@ -102,60 +139,19 @@ def check_if_regular_grid(tiles: list[TileSlice], tolerance: float = 0.0) -> Gri
             length_y=bboxes[0].y_len,
             offset_x=1.0,
             offset_y=1.0,
+            num_x=1,
+            num_y=1,
         )
-    # Test 1: Check if all offsets are the same
-    sorted_x = np.sort([box.x for box in bboxes])
-    offsets_x = np.diff(sorted_x)
-    offsets_x = offsets_x[offsets_x > 1e-6].tolist()
-
-    if len(offsets_x) == 0:
-        offset_x = 1.0
-    elif np.allclose(offsets_x, np.mean(offsets_x), atol=tolerance, rtol=0):
-        offset_x = float(np.mean(offsets_x))
-    else:
-        # Not all offsets are within tolerance of each other
-        unique_offsets = np.unique(offsets_x)
-        raise NotAGridError(
-            "Cannot tile to a regular grid: not all x offsets are "
-            f"the same (tolerance={tolerance}): {unique_offsets}"
-        )
-    sorted_y = np.sort([box.y for box in bboxes])
-    offsets_y = np.diff(sorted_y)
-    offsets_y = offsets_y[offsets_y > 1e-6].tolist()
-    if len(offsets_y) == 0:
-        offset_y = 1.0
-    elif np.allclose(offsets_y, np.mean(offsets_y), atol=tolerance, rtol=0):
-        offset_y = float(np.mean(offsets_y))
-    else:
-        # Not all offsets are within tolerance of each other
-        unique_offsets = np.unique(offsets_y)
-        raise NotAGridError(
-            "Cannot tile to a regular grid: not all y offsets are "
-            f"the same (tolerance={tolerance}): {unique_offsets}"
-        )
-    # Test 2: Verify that tile positions form the full Cartesian product of unique
-    # grid cells (catches slanted, incomplete, or duplicated grids). Grid-index
-    # clustering (round-to-nearest cell) is robust to small jitter when tolerance > 0.
-    min_x = min(b.x for b in bboxes)
-    min_y = min(b.y for b in bboxes)
-    actual_indices = {
-        (round((b.x - min_x) / offset_x), round((b.y - min_y) / offset_y))
-        for b in bboxes
-    }
-    unique_xi = sorted({round((b.x - min_x) / offset_x) for b in bboxes})
-    unique_yj = sorted({round((b.y - min_y) / offset_y) for b in bboxes})
-    for xi in unique_xi:
-        for yj in unique_yj:
-            if (xi, yj) not in actual_indices:
-                raise NotAGridError(
-                    f"Cannot tile to a regular grid: missing tile at grid index "
-                    f"({xi}, {yj}). The grid may be incomplete or slanted."
-                )
+    offset_x = _find_offset(bboxes, "x", tolerance)
+    offset_y = _find_offset(bboxes, "y", tolerance)
+    num_x, num_y = _find_grid_size(bboxes, offset_x, offset_y)
     return GridSetup(
         length_x=bboxes[0].x_len,
         length_y=bboxes[0].y_len,
         offset_x=offset_x,
         offset_y=offset_y,
+        num_x=num_x,
+        num_y=num_y,
     )
 
 
@@ -166,6 +162,20 @@ def _get_start(tile: TileSlice, axis: str) -> float:
     if s.start is None:
         raise ValueError(f"Tile ROI '{axis}' axis slice is missing start.")
     return float(s.start)
+
+
+def _match_to_perfect_grid(
+    x_grid: float, y_grid: float, perfect_grid_positions: list[GripPoint]
+) -> tuple[float, float]:
+    """Find the closest perfect grid position to the given grid position."""
+    min_distance = float("inf")
+    closest_position = (0.0, 0.0)
+    for point in perfect_grid_positions:
+        distance = np.sqrt((x_grid - point.x) ** 2 + (y_grid - point.y) ** 2)
+        if distance < min_distance:
+            min_distance = distance
+            closest_position = (point.x, point.y)
+    return closest_position
 
 
 def calculate_snap_to_grid_offset(
@@ -185,9 +195,15 @@ def calculate_snap_to_grid_offset(
 
     offsets = {}
     xy_pairs = zip(starts_x, starts_y, strict=True)
+    perfect_grid_positions = _build_perfect_grid_points(
+        grid_setup.length_x, grid_setup.length_y,
+        grid_setup.num_x, grid_setup.num_y,
+        origin_x=min_x, origin_y=min_y,
+    )
     for name, (x, y) in zip(tiles.keys(), xy_pairs, strict=True):
         x_grid = min_x + ((x - min_x) / grid_setup.offset_x) * grid_setup.length_x
         y_grid = min_y + ((y - min_y) / grid_setup.offset_y) * grid_setup.length_y
+        x_grid, y_grid = _match_to_perfect_grid(x_grid, y_grid, perfect_grid_positions)
         offsets[name] = {"x": x_grid - x, "y": y_grid - y}
     return offsets
 

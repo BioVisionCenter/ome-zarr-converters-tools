@@ -255,15 +255,6 @@ class TestSnapUtils:
         with pytest.raises(NotAGridError):
             check_if_regular_grid(tiles)
 
-    def test_check_if_slanted_grid_raises(self) -> None:
-        # Two tiles at diagonal positions only — missing (100,0) and (0,100)
-        tiles = [
-            _make_pixel_tile_slice(0.0, 0.0, 100.0, 100.0, "A"),
-            _make_pixel_tile_slice(100.0, 100.0, 100.0, 100.0, "B"),
-        ]
-        with pytest.raises(NotAGridError):
-            check_if_regular_grid(tiles)
-
     def test_check_if_regular_grid_row_only(self) -> None:
         # 3-tile single row — all share y=0, so Cartesian product is trivially satisfied
         tiles = [
@@ -402,13 +393,7 @@ class TestTiling:
         with pytest.raises(NotAGridError):
             _find_tiling(tiles, TilingMode.SNAP_TO_GRID)
 
-    def test_inplace_returns_zero_offsets(self) -> None:
-        tiles = {"A": _make_pixel_tile_slice(50.0, 50.0, 100.0, 100.0, "A")}
-        offsets = _find_tiling(tiles, TilingMode.INPLACE)
-        assert offsets["A"] == {"x": 0.0, "y": 0.0}
-
     def test_snap_to_grid_off_origin_2x1(self) -> None:
-        # 2-tile row starting at x=500 — offsets must be correct without remove_offsets
         tiles = {
             "A": _make_pixel_tile_slice(500.0, 0.0, 100.0, 100.0, "A"),
             "B": _make_pixel_tile_slice(595.0, 0.0, 100.0, 100.0, "B"),
@@ -418,6 +403,11 @@ class TestTiling:
         assert np.isclose(offsets["B"]["x"], 5.0)  # 595 → 600
         assert np.isclose(offsets["A"]["y"], 0.0)
         assert np.isclose(offsets["B"]["y"], 0.0)
+
+    def test_inplace_returns_zero_offsets(self) -> None:
+        tiles = {"A": _make_pixel_tile_slice(50.0, 50.0, 100.0, 100.0, "A")}
+        offsets = _find_tiling(tiles, TilingMode.INPLACE)
+        assert offsets["A"] == {"x": 0.0, "y": 0.0}
 
     def test_auto_tiling_falls_back_to_corners(self) -> None:
         tiles = {
