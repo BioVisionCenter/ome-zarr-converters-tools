@@ -5,6 +5,8 @@ from contextlib import ExitStack, contextmanager
 from importlib.util import find_spec
 from typing import Annotated, Literal
 
+import dask
+import zarr
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
@@ -14,7 +16,7 @@ class ThreadScheduler(BaseModel):
     type: Literal["Threads"] = "Threads"
     """The dask scheduler will be set to "threads" when this scheduler is selected."""
 
-    num_workers: int = Field(default=1, ge=1, title="Number of Threads")
+    num_workers: int = Field(default=8, ge=1, title="Number of Threads")
     """Number of worker threads to use. Must be at least 1."""
 
     model_config = ConfigDict(extra="forbid")
@@ -29,7 +31,7 @@ class ProcessScheduler(BaseModel):
     type: Literal["Processes"] = "Processes"
     """The dask scheduler will be set to "processes" when this scheduler is selected."""
 
-    num_workers: int = Field(default=1, ge=1, title="Number of Processes")
+    num_workers: int = Field(default=8, ge=1, title="Number of Processes")
     """Number of worker processes to use. Must be at least 1."""
 
     model_config = ConfigDict(extra="forbid")
@@ -78,10 +80,9 @@ class RuntimeSettings(BaseModel):
     """
 
     use_zarrs_codec: bool = Field(default=False, title="Use Zarrs Codec Pipeline")
-    """Opt into the `zarrs.ZarrsCodecPipeline` Rust codec backend.
+    """Use the `zarrs.ZarrsCodecPipeline` Rust codec backend.
 
-    Requires the optional `zarrs` extra:
-    `pip install ome-zarr-converters-tools[zarrs]`.
+    Requires the optional `zarrs` dependency.
     """
     dask_scheduler: DaskScheduler = Field(
         default_factory=DefaultScheduler, title="Dask Scheduler"
@@ -110,12 +111,9 @@ class RuntimeSettings(BaseModel):
         (no zarr config mutation, and `dask.config.set({})` for the default
         scheduler).
         """
-        import dask
 
         with ExitStack() as stack:
             if self.use_zarrs_codec:
-                import zarr
-
                 stack.enter_context(
                     zarr.config.set({"codec_pipeline.path": "zarrs.ZarrsCodecPipeline"})
                 )
