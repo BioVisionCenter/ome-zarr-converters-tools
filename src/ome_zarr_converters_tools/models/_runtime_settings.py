@@ -111,7 +111,6 @@ class RuntimeSettings(BaseModel):
         (no zarr config mutation, and `dask.config.set({})` for the default
         scheduler).
         """
-
         with ExitStack() as stack:
             if self.use_zarrs_codec:
                 stack.enter_context(
