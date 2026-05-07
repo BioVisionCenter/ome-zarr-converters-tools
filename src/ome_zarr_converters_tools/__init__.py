@@ -2,7 +2,6 @@
 
 from importlib.metadata import version
 
-from ome_zarr_converters_tools._config import ConvertersToolsConfig, config
 from ome_zarr_converters_tools.core import (
     AttributeType,
     Tile,
@@ -31,6 +30,7 @@ from ome_zarr_converters_tools.models import (
     ImageLoaderInterfaceType,
     OmeZarrOptions,
     OverwriteMode,
+    RuntimeSettings,
     SingleImage,
     StageOrientation,
     default_axes_builder,
@@ -55,7 +55,6 @@ __all__ = [
     "CollectionInterfaceType",
     "ConvertParallelInitArgs",
     "ConverterOptions",
-    "ConvertersToolsConfig",
     "DataTypeEnum",
     "DefaultImageLoader",
     "FixedSizeChunking",
@@ -65,11 +64,11 @@ __all__ = [
     "ImageLoaderInterfaceType",
     "OmeZarrOptions",
     "OverwriteMode",
+    "RuntimeSettings",
     "SingleImage",
     "StageOrientation",
     "Tile",
     "TiledImage",
-    "config",
     "converters_tools_models",
     "default_axes_builder",
     "filesystem_for_url",

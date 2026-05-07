@@ -8,6 +8,8 @@ from pydantic import (
     Field,
 )
 
+from ome_zarr_converters_tools.models._runtime_settings import RuntimeSettings
+
 
 class OverwriteMode(StrEnum):
     NO_OVERWRITE = "No Overwrite"
@@ -196,6 +198,11 @@ class ConverterOptions(BaseModel):
         default_factory=TempJsonOptions, title="Temporary JSON Options"
     )
     """Options for temporary JSON storage."""
+    runtime_settings: RuntimeSettings = Field(
+        default_factory=RuntimeSettings, title="Runtime Settings"
+    )
+    """Runtime knobs (zarr codec, dask scheduler) applied via a scoped
+    context manager during conversion."""
     model_config = ConfigDict(extra="forbid")
 
 

@@ -33,15 +33,16 @@ def tiled_image_creation_pipeline(
     resource: Any | None = None,
 ) -> OmeZarrContainer:
     """Write a TiledImage from a dictionary."""
-    logger.info("Applying registration pipeline to TiledImage.")
-    tiled_image = apply_registration_pipeline(tiled_image, registration_pipeline)
-    logger.info("Starting to write TiledImage as OME-Zarr.")
-    omezarr = write_tiled_image_as_zarr(
-        zarr_url=zarr_url,
-        tiled_image=tiled_image,
-        converter_options=converter_options,
-        writer_mode=writer_mode,
-        overwrite_mode=overwrite_mode,
-        resource=resource,
-    )
-    return omezarr
+    with converter_options.runtime_settings.apply():
+        logger.info("Applying registration pipeline to TiledImage.")
+        tiled_image = apply_registration_pipeline(tiled_image, registration_pipeline)
+        logger.info("Starting to write TiledImage as OME-Zarr.")
+        omezarr = write_tiled_image_as_zarr(
+            zarr_url=zarr_url,
+            tiled_image=tiled_image,
+            converter_options=converter_options,
+            writer_mode=writer_mode,
+            overwrite_mode=overwrite_mode,
+            resource=resource,
+        )
+        return omezarr

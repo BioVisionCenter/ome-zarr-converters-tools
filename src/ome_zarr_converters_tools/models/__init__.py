@@ -31,6 +31,7 @@ from ome_zarr_converters_tools.models._loader import (
     DefaultImageLoader,
     ImageLoaderInterfaceType,
 )
+from ome_zarr_converters_tools.models._runtime_settings import RuntimeSettings
 from ome_zarr_converters_tools.models._url_utils import (
     filesystem_for_url,
     find_url_type,
@@ -56,6 +57,7 @@ __all__ = [
     "NgffVersions",
     "OmeZarrOptions",
     "OverwriteMode",
+    "RuntimeSettings",
     "SingleImage",
     "StageOrientation",
     "StagePositionCorrections",

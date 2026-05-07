@@ -196,9 +196,12 @@ def calculate_snap_to_grid_offset(
     offsets = {}
     xy_pairs = zip(starts_x, starts_y, strict=True)
     perfect_grid_positions = _build_perfect_grid_points(
-        grid_setup.length_x, grid_setup.length_y,
-        grid_setup.num_x, grid_setup.num_y,
-        origin_x=min_x, origin_y=min_y,
+        grid_setup.length_x,
+        grid_setup.length_y,
+        grid_setup.num_x,
+        grid_setup.num_y,
+        origin_x=min_x,
+        origin_y=min_y,
     )
     for name, (x, y) in zip(tiles.keys(), xy_pairs, strict=True):
         x_grid = min_x + ((x - min_x) / grid_setup.offset_x) * grid_setup.length_x
