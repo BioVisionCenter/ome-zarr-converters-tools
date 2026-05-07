@@ -116,7 +116,7 @@ def generic_compute_task(
             f"{init_args.tiled_image_json_dump_url}"
         )
     registration_pipeline = build_default_registration_pipeline(
-        alignment_corrections=init_args.converter_options.alignment_correction,
+        alignment_corrections=init_args.converter_options.stage_position_corrections,
         tiling_mode=init_args.converter_options.tiling_mode,
         tolerance=init_args.converter_options.tiling_tolerance,
     )

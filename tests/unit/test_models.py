@@ -115,9 +115,9 @@ class TestConverterOptions:
         opts = ConverterOptions()
         assert opts.tiling_mode == TilingMode.AUTO
         assert opts.writer_mode == WriterMode.BY_FOV
-        assert opts.alignment_correction.align_xy is False
-        assert opts.alignment_correction.align_z is False
-        assert opts.alignment_correction.align_t is False
+        assert opts.stage_position_corrections.align_xy is False
+        assert opts.stage_position_corrections.align_z is False
+        assert opts.stage_position_corrections.align_t is False
         assert opts.omezarr_options.num_levels == 5
         assert isinstance(opts.omezarr_options.chunks, FovBasedChunking)
         assert (

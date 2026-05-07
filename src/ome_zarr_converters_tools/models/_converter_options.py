@@ -175,7 +175,7 @@ class ConverterOptions(BaseModel):
     This accounts for minor jitter in microscope stage positions when determining if
     Snap to Grid tiling can be applied.
     """
-    alignment_correction: StagePositionCorrections = Field(
+    stage_position_corrections: StagePositionCorrections = Field(
         default_factory=StagePositionCorrections,
         title="Alignment Corrections",
     )

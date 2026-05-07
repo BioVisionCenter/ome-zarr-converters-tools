@@ -97,7 +97,7 @@ class Tile(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfaceType]
     def to_roi(self) -> Roi:
         """Convert the Tile to a Roi."""
         acquisition_details = self.acquisition_details
-        stage_corrections = acquisition_details.stage_corrections
+        stage_corrections = acquisition_details.stage_orientation
         spacing = {
             "x": acquisition_details.pixelsize,
             "y": acquisition_details.pixelsize,

@@ -12,7 +12,7 @@ from ome_zarr_converters_tools import ConverterOptions
 opts = ConverterOptions(
     tiling_mode=TilingMode.AUTO,          # How overlapping FOVs are arranged
     writer_mode=WriterMode.BY_FOV,        # How data is loaded and written
-    alignment_correction=AlignmentCorrections(),  # Stage position corrections
+    stage_position_corrections=AlignmentCorrections(),  # Stage position corrections
     omezarr_options=OmeZarrOptions(),     # OME-Zarr writing options (levels, chunks, etc.)
 )
 ```
@@ -97,7 +97,7 @@ from ome_zarr_converters_tools import AcquisitionDetails, StageCorrections
 
 acq = AcquisitionDetails(
     pixelsize=0.65,
-    stage_corrections=StageCorrections(
+    stage_orientation=StageOrientation(
         flip_x=True,    # Invert X positions
         flip_y=False,   # Keep Y as-is
         swap_xy=False,  # Don't swap X and Y
