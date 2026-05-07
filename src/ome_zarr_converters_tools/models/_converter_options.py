@@ -52,7 +52,7 @@ class WriterMode(StrEnum):
 
 
 class StagePositionCorrections(BaseModel):
-    """Alignment correction for stage positions."""
+    """Stage position correction options."""
 
     align_xy: bool = Field(default=False, title="Align XY")
     """
@@ -177,9 +177,9 @@ class ConverterOptions(BaseModel):
     """
     stage_position_corrections: StagePositionCorrections = Field(
         default_factory=StagePositionCorrections,
-        title="Alignment Corrections",
+        title="Stage Position Corrections",
     )
-    """Alignment correction options."""
+    """Stage position correction options."""
     omezarr_options: OmeZarrOptions = Field(
         default_factory=OmeZarrOptions, title="OME-Zarr Options"
     )
