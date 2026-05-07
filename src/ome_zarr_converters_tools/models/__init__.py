@@ -31,7 +31,14 @@ from ome_zarr_converters_tools.models._loader import (
     DefaultImageLoader,
     ImageLoaderInterfaceType,
 )
-from ome_zarr_converters_tools.models._runtime_settings import RuntimeSettings
+from ome_zarr_converters_tools.models._runtime_settings import (
+    DaskScheduler,
+    DefaultScheduler,
+    ProcessScheduler,
+    RuntimeSettings,
+    SynchronousScheduler,
+    ThreadScheduler,
+)
 from ome_zarr_converters_tools.models._url_utils import (
     filesystem_for_url,
     find_url_type,
@@ -47,9 +54,11 @@ __all__ = [
     "CollectionInterface",
     "CollectionInterfaceType",
     "ConverterOptions",
+    "DaskScheduler",
     "DataTypeEnum",
     "DefaultImageLoader",
     "DefaultNgffVersion",
+    "DefaultScheduler",
     "FixedSizeChunking",
     "FovBasedChunking",
     "ImageInPlate",
@@ -57,10 +66,13 @@ __all__ = [
     "NgffVersions",
     "OmeZarrOptions",
     "OverwriteMode",
+    "ProcessScheduler",
     "RuntimeSettings",
     "SingleImage",
     "StageOrientation",
     "StagePositionCorrections",
+    "SynchronousScheduler",
+    "ThreadScheduler",
     "TilingMode",
     "WriterMode",
     "default_axes_builder",

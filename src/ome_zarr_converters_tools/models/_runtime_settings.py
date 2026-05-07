@@ -3,11 +3,71 @@
 from collections.abc import Iterator
 from contextlib import ExitStack, contextmanager
 from importlib.util import find_spec
-from typing import Literal
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-DaskScheduler = Literal["threads", "synchronous", "processes"]
+
+class ThreadScheduler(BaseModel):
+    """Use Dask's threaded scheduler for parallelism."""
+
+    type: Literal["Threads"] = "Threads"
+    """The dask scheduler will be set to "threads" when this scheduler is selected."""
+
+    num_workers: int = Field(default=1, ge=1, title="Number of Threads")
+    """Number of worker threads to use. Must be at least 1."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    def get_config(self) -> dict[str, object]:
+        return {"scheduler": "threads", "num_workers": self.num_workers}
+
+
+class ProcessScheduler(BaseModel):
+    """Use Dask's multiprocessing scheduler for parallelism."""
+
+    type: Literal["Processes"] = "Processes"
+    """The dask scheduler will be set to "processes" when this scheduler is selected."""
+
+    num_workers: int = Field(default=1, ge=1, title="Number of Processes")
+    """Number of worker processes to use. Must be at least 1."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    def get_config(self) -> dict[str, object]:
+        return {"scheduler": "processes", "num_workers": self.num_workers}
+
+
+class SynchronousScheduler(BaseModel):
+    """Use Dask's synchronous scheduler (no parallelism)."""
+
+    type: Literal["Synchronous"] = "Synchronous"
+    """
+    The dask scheduler will be set to "synchronous" when this scheduler is selected.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    def get_config(self) -> dict[str, object]:
+        return {"scheduler": "synchronous"}
+
+
+class DefaultScheduler(BaseModel):
+    """Do not set a Dask scheduler; leave it up to the caller."""
+
+    type: Literal["Default"] = "Default"
+    """The dask scheduler will not be modified when this scheduler is selected."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    def get_config(self) -> dict[str, object]:
+        return {}
+
+
+DaskScheduler = Annotated[
+    ThreadScheduler | ProcessScheduler | SynchronousScheduler | DefaultScheduler,
+    Field(discriminator="type"),
+]
 
 
 class RuntimeSettings(BaseModel):
@@ -23,17 +83,11 @@ class RuntimeSettings(BaseModel):
     Requires the optional `zarrs` extra:
     `pip install ome-zarr-converters-tools[zarrs]`.
     """
-    dask_scheduler: DaskScheduler | None = Field(default=None, title="Dask Scheduler")
+    dask_scheduler: DaskScheduler = Field(
+        default_factory=DefaultScheduler, title="Dask Scheduler"
+    )
     """Dask scheduler to set via `dask.config.set` for the conversion call.
-
-    `None` leaves dask config untouched (so callers managing their own
-    scheduler/Client are not disrupted).
-    """
-    dask_num_workers: int | None = Field(default=None, ge=1, title="Dask Num Workers")
-    """Worker count to set alongside the dask scheduler.
-
-    Only meaningful for `"threads"` and `"processes"`; must be `None` when
-    `dask_scheduler` is `None` or `"synchronous"`.
+    If set to `DefaultScheduler`, the scheduler will not be modified.
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -45,15 +99,6 @@ class RuntimeSettings(BaseModel):
                 "use_zarrs_codec=True but the 'zarrs' package is not installed. "
                 "Install it with: pip install ome-zarr-converters-tools[zarrs]"
             )
-        if self.dask_num_workers is not None and self.dask_scheduler in (
-            None,
-            "synchronous",
-        ):
-            raise ValueError(
-                "dask_num_workers is only meaningful when dask_scheduler is "
-                "'threads' or 'processes'; got "
-                f"dask_scheduler={self.dask_scheduler!r}."
-            )
         return self
 
     @contextmanager
@@ -62,22 +107,18 @@ class RuntimeSettings(BaseModel):
 
         Mutates `zarr.config` and/or `dask.config` only for the duration of
         the `with` block. Default-constructed settings produce a no-op
-        (no imports, no config mutations).
+        (no zarr config mutation, and `dask.config.set({})` for the default
+        scheduler).
         """
+        import dask
+
         with ExitStack() as stack:
             if self.use_zarrs_codec:
                 import zarr
 
                 stack.enter_context(
-                    zarr.config.set(
-                        {"codec_pipeline.path": "zarrs.ZarrsCodecPipeline"}
-                    )
+                    zarr.config.set({"codec_pipeline.path": "zarrs.ZarrsCodecPipeline"})
                 )
-            if self.dask_scheduler is not None:
-                import dask
 
-                cfg: dict[str, object] = {"scheduler": self.dask_scheduler}
-                if self.dask_num_workers is not None:
-                    cfg["num_workers"] = self.dask_num_workers
-                stack.enter_context(dask.config.set(cfg))
+            stack.enter_context(dask.config.set(self.dask_scheduler.get_config()))
             yield

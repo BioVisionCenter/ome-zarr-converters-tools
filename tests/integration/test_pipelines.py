@@ -26,6 +26,7 @@ from ome_zarr_converters_tools.models import (
     RuntimeSettings,
     SingleImage,
     StagePositionCorrections,
+    ThreadScheduler,
     TilingMode,
     WriterMode,
 )
@@ -226,9 +227,9 @@ class TestHCSPlateEndToEnd:
         for region in registered.regions:
             for s in region.roi.slices:
                 if s.start is not None:
-                    assert float(s.start) == int(
-                        s.start
-                    ), f"start={s.start} is not pixel-aligned"
+                    assert float(s.start) == int(s.start), (
+                        f"start={s.start} is not pixel-aligned"
+                    )
 
     def test_full_pipeline_writes_omezarr(self, tmp_path: Path) -> None:
         df = pd.read_csv(_HCS_EXAMPLE_DIR / "tiles.csv")
@@ -278,7 +279,7 @@ class TestHCSPlateEndToEnd:
         assert "well_ROI_table" in table_names
 
     def test_runtime_settings_dask_scheduler(self, tmp_path: Path) -> None:
-        """End-to-end run with RuntimeSettings(dask_scheduler="threads")."""
+        """End-to-end run with RuntimeSettings(dask_scheduler=ThreadScheduler(...))."""
         df = pd.read_csv(_HCS_EXAMPLE_DIR / "tiles.csv")
         acq = _example_acq_details()
         tiles = hcs_images_from_dataframe(
@@ -286,7 +287,7 @@ class TestHCSPlateEndToEnd:
         )
         opts = ConverterOptions(
             runtime_settings=RuntimeSettings(
-                dask_scheduler="threads", dask_num_workers=2
+                dask_scheduler=ThreadScheduler(num_workers=2)
             ),
         )
         images = tiles_aggregation_pipeline(
@@ -511,6 +512,6 @@ class TestNoTilingTranslation:
             resource=str(_HCS_DATA_DIR),
         )
         translation = omezarr.get_image().dataset.translation
-        assert all(
-            v == 0.0 for v in translation
-        ), f"Expected all-zero translation for AUTO tiling mode, got {translation}"
+        assert all(v == 0.0 for v in translation), (
+            f"Expected all-zero translation for AUTO tiling mode, got {translation}"
+        )

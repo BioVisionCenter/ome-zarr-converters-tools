@@ -204,14 +204,3 @@ class ConverterOptions(BaseModel):
     """Runtime knobs (zarr codec, dask scheduler) applied via a scoped
     context manager during conversion."""
     model_config = ConfigDict(extra="forbid")
-
-
-# class ContextModel(NamedTuple):
-#    """Base model for context information during conversion.
-#
-#    This models holds the all context information needed during the conversion
-#    process, including acquisition details and converter options.
-#    """
-#
-#    acquisition_details: AcquisitionDetails
-#    converter_options: ConverterOptions
