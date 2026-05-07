@@ -227,9 +227,9 @@ class TestHCSPlateEndToEnd:
         for region in registered.regions:
             for s in region.roi.slices:
                 if s.start is not None:
-                    assert float(s.start) == int(s.start), (
-                        f"start={s.start} is not pixel-aligned"
-                    )
+                    assert float(s.start) == int(
+                        s.start
+                    ), f"start={s.start} is not pixel-aligned"
 
     def test_full_pipeline_writes_omezarr(self, tmp_path: Path) -> None:
         df = pd.read_csv(_HCS_EXAMPLE_DIR / "tiles.csv")
@@ -512,6 +512,6 @@ class TestNoTilingTranslation:
             resource=str(_HCS_DATA_DIR),
         )
         translation = omezarr.get_image().dataset.translation
-        assert all(v == 0.0 for v in translation), (
-            f"Expected all-zero translation for AUTO tiling mode, got {translation}"
-        )
+        assert all(
+            v == 0.0 for v in translation
+        ), f"Expected all-zero translation for AUTO tiling mode, got {translation}"

@@ -120,7 +120,9 @@ class TestConverterOptions:
         assert opts.alignment_correction.align_t is False
         assert opts.omezarr_options.num_levels == 5
         assert isinstance(opts.omezarr_options.chunks, FovBasedChunking)
-        assert opts.temp_json_options.temp_url == "{zarr_dir}/_tmp_json"
+        assert (
+            opts.runtime_settings.temp_json_options.temp_url == "{zarr_dir}/_tmp_json"
+        )
 
 
 class TestStageOrientation:

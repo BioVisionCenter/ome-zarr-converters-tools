@@ -168,7 +168,7 @@ def converters_tools_models(
         ),
         (
             base,
-            "models/_converter_options.py",
+            "models/_runtime_settings.py",
             "TempJsonOptions",
         ),
         (

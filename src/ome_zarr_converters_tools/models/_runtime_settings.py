@@ -72,6 +72,16 @@ DaskScheduler = Annotated[
 ]
 
 
+class TempJsonOptions(BaseModel):
+    """Options for temporary JSON storage during conversion."""
+
+    temp_url: str = "{zarr_dir}/_tmp_json"
+    """Template for the temporary JSON URL."""
+
+    def format_temp_url(self, zarr_dir: str) -> str:
+        return self.temp_url.format(zarr_dir=zarr_dir)
+
+
 class RuntimeSettings(BaseModel):
     """Runtime knobs applied during conversion via a scoped context manager.
 
@@ -90,6 +100,10 @@ class RuntimeSettings(BaseModel):
     """Dask scheduler to set via `dask.config.set` for the conversion call.
     If set to `DefaultScheduler`, the scheduler will not be modified.
     """
+    temp_json_options: TempJsonOptions = Field(
+        default_factory=TempJsonOptions, title="Temporary JSON Options"
+    )
+    """Options for temporary JSON storage."""
 
     model_config = ConfigDict(extra="forbid")
 

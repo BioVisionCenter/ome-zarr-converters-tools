@@ -137,16 +137,6 @@ class OmeZarrOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
-class TempJsonOptions(BaseModel):
-    """Options for temporary JSON storage during conversion."""
-
-    temp_url: str = "{zarr_dir}/_tmp_json"
-    """Template for the temporary JSON URL."""
-
-    def format_temp_url(self, zarr_dir: str) -> str:
-        return self.temp_url.format(zarr_dir=zarr_dir)
-
-
 class ConverterOptions(BaseModel):
     """Options for the OME-Zarr conversion process."""
 
@@ -194,10 +184,6 @@ class ConverterOptions(BaseModel):
         default_factory=OmeZarrOptions, title="OME-Zarr Options"
     )
     """Options specific to OME-Zarr writing."""
-    temp_json_options: TempJsonOptions = Field(
-        default_factory=TempJsonOptions, title="Temporary JSON Options"
-    )
-    """Options for temporary JSON storage."""
     runtime_settings: RuntimeSettings = Field(
         default_factory=RuntimeSettings, title="Runtime Settings"
     )
