@@ -17,12 +17,47 @@ class OverwriteMode(StrEnum):
     EXTEND = "Extend"
 
 
-class TilingMode(StrEnum):
-    AUTO = "Auto"
-    SNAP_TO_GRID = "Snap to Grid"
-    SNAP_TO_CORNERS = "Snap to Corners"
-    INPLACE = "Inplace"
-    NO_TILING = "No Tiling"
+class AutoTiling(BaseModel):
+    mode: Literal["Auto"] = "Auto"
+    """
+    Automatically determine if Snap to Grid is possible, otherwise use Snap to Corners.
+    """
+    tolerance: float = Field(default=0, ge=0, title="Tiling Tolerance (in pixels)")
+
+
+class SnapToGridTiling(BaseModel):
+    mode: Literal["Snap to Grid"] = "Snap to Grid"
+    """
+    Tile images to fit a regular grid. This is only possible if image positions align
+    to a grid (potentially with overlap).
+    """
+    tolerance: float = Field(default=0, ge=0, title="Tiling Tolerance (in pixels)")
+
+
+class SnapToCornersTiling(BaseModel):
+    mode: Literal["Snap to Corners"] = "Snap to Corners"
+    """Tile images to fit a grid defined by the corner positions."""
+
+
+class InplaceTiling(BaseModel):
+    mode: Literal["Inplace"] = "Inplace"
+    """
+    Write tiles in their original stage positions.
+    This may lead to artifacts if microscope stage positions are not precise,
+    when tiles overlap the last written tile will overwrite previous tiles in the
+    overlapping region.
+    """
+
+
+class NoTiling(BaseModel):
+    mode: Literal["No Tiling"] = "No Tiling"
+    """Each field of view is written as a single OME-Zarr."""
+
+
+TilingStrategy = Annotated[
+    AutoTiling | SnapToGridTiling | SnapToCornersTiling | InplaceTiling | NoTiling,
+    Field(discriminator="mode"),
+]
 
 
 class BackendType(StrEnum):
@@ -154,26 +189,21 @@ class ConverterOptions(BaseModel):
       faster than writing by FOV sequentially, but may consume more memory.
     - In Memory: Load all data into memory before writing.
     """
-    tiling_mode: TilingMode = Field(default=TilingMode.AUTO, title="Tiling Mode")
+    tiling_strategy: TilingStrategy = Field(
+        default_factory=AutoTiling, title="Tiling Strategy"
+    )
     """
-    Tiling mode to use during conversion.
+    Tiling strategy to use during conversion.
 
     - Auto: Automatically determine if Snap to Grid is possible, otherwise use Snap to
-      Corners.
+      Corners. Accepts an optional tolerance (in pixels) for grid alignment.
     - Snap to Grid: Tile images to fit a regular grid. This is only possible if image
-      positions align to a grid (potentially with overlap).
+      positions align to a grid (potentially with overlap). Accepts an optional
+      tolerance (in pixels).
     - Snap to Corners: Tile images to fit a grid defined by the corner positions.
     - Inplace: Write tiles in their original positions without tiling. This may lead to
       artifacts if microscope stage positions are not precise.
     - No Tiling: Each field of view is written as a single OME-Zarr.
-    """
-    tiling_tolerance: float = Field(
-        default=0, ge=0, title="Tiling Tolerance (in pixels)"
-    )
-    """
-    Tolerance in pixels for determining if Snap to Grid is possible.
-    This accounts for minor jitter in microscope stage positions when determining if
-    Snap to Grid tiling can be applied.
     """
     stage_position_corrections: StagePositionCorrections = Field(
         default_factory=StagePositionCorrections,

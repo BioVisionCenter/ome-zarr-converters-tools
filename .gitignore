@@ -123,3 +123,6 @@ pixi.lock
 # zarr
 *.zarr
 data/
+
+# Claude
+.claude/

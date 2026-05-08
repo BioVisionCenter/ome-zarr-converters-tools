@@ -4,7 +4,7 @@ from typing import Any
 
 from ome_zarr_converters_tools.core._tile import Tile
 from ome_zarr_converters_tools.core._tile_region import TiledImage
-from ome_zarr_converters_tools.models import ConverterOptions, TilingMode
+from ome_zarr_converters_tools.models import ConverterOptions, NoTiling
 
 
 def tiled_image_from_tiles(
@@ -24,7 +24,7 @@ def tiled_image_from_tiles(
         A list of TiledImage models created from the tiles.
 
     """
-    split_tiles = converter_options.tiling_mode == TilingMode.NO_TILING
+    split_tiles = isinstance(converter_options.tiling_strategy, NoTiling)
     tiled_images = {}
 
     if len(tiles) == 0:

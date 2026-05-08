@@ -1,6 +1,13 @@
 from ome_zarr_converters_tools.core._roi_utils import move_roi_by
 from ome_zarr_converters_tools.core._tile_region import TiledImage, TileSlice
-from ome_zarr_converters_tools.models import TilingMode
+from ome_zarr_converters_tools.models import (
+    AutoTiling,
+    InplaceTiling,
+    NoTiling,
+    SnapToCornersTiling,
+    SnapToGridTiling,
+    TilingStrategy,
+)
 from ome_zarr_converters_tools.pipelines._snap_utils import (
     NotAGridError,
     calculate_snap_to_corner_offset,
@@ -39,18 +46,17 @@ def _auto_tiling(
 
 def _find_tiling(
     regions: dict[str, TileSlice],
-    tiling_mode: TilingMode,
-    tolerance: float = 0.0,
+    strategy: TilingStrategy,
 ) -> dict[str, dict[str, float]]:
-    if tiling_mode == TilingMode.INPLACE or tiling_mode == TilingMode.NO_TILING:
+    if isinstance(strategy, (InplaceTiling, NoTiling)):
         return _no_tiling(regions)
-    if tiling_mode == TilingMode.AUTO:
-        return _auto_tiling(regions, tolerance)
-    if tiling_mode == TilingMode.SNAP_TO_CORNERS:
+    if isinstance(strategy, AutoTiling):
+        return _auto_tiling(regions, strategy.tolerance)
+    if isinstance(strategy, SnapToCornersTiling):
         return _snap_to_corners_tiling(regions)
-    if tiling_mode == TilingMode.SNAP_TO_GRID:
-        return _snap_to_grid_tiling(regions, tolerance)
-    raise ValueError(f"Tiling mode '{tiling_mode}' is not recognized.")
+    if isinstance(strategy, SnapToGridTiling):
+        return _snap_to_grid_tiling(regions, strategy.tolerance)
+    raise ValueError(f"Tiling strategy '{strategy}' is not recognized.")
 
 
 def _tile_regions(
@@ -63,8 +69,7 @@ def _tile_regions(
 
 def apply_mosaic_tiling(
     tiled_image: TiledImage,
-    tiling_mode: TilingMode,
-    tolerance: float = 0.0,
+    tiling_strategy: TilingStrategy,
 ) -> TiledImage:
     """Tile all the TiledImages to the reference region of the first TiledImage.
 
@@ -72,10 +77,7 @@ def apply_mosaic_tiling(
 
     Args:
         tiled_image: TiledImage model to tile.
-        tiling_mode: Tiling mode to use.
-        tolerance: Tolerance in pixels for determining if Snap to Grid is
-            possible. This accounts for minor jitter in microscope stage positions when
-            determining if Snap to Grid tiling can be applied.
+        tiling_strategy: Tiling strategy to use.
     """
     fov_tiles = tiled_image.group_by_fov()
 
@@ -83,7 +85,7 @@ def apply_mosaic_tiling(
     for fov_tile in fov_tiles:
         reference_regions[fov_tile.fov_name] = fov_tile.ref_slice()
 
-    tiling_instructions = _find_tiling(reference_regions, tiling_mode, tolerance)
+    tiling_instructions = _find_tiling(reference_regions, tiling_strategy)
     aligned_regions = []
     for fov_tile in fov_tiles:
         instruction = tiling_instructions[fov_tile.fov_name]

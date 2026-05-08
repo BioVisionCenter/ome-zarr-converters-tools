@@ -19,15 +19,17 @@ from ome_zarr_converters_tools.core._table import (
 from ome_zarr_converters_tools.core._tile import Tile
 from ome_zarr_converters_tools.models import (
     AcquisitionDetails,
+    AutoTiling,
     ChannelInfo,
     ConverterOptions,
     ImageInPlate,
+    InplaceTiling,
+    NoTiling,
     OverwriteMode,
     RuntimeSettings,
     SingleImage,
     StagePositionCorrections,
     ThreadScheduler,
-    TilingMode,
     WriterMode,
 )
 from ome_zarr_converters_tools.pipelines import (
@@ -132,7 +134,7 @@ class TestTiledImageCreationPipeline:
         tiled_image = images[0]
 
         pipeline = build_default_registration_pipeline(
-            StagePositionCorrections(), TilingMode.INPLACE
+            StagePositionCorrections(), InplaceTiling()
         )
         zarr_url = str(tmp_path / "output.zarr")
         omezarr = tiled_image_creation_pipeline(
@@ -218,7 +220,7 @@ class TestHCSPlateEndToEnd:
         tiled_image = images[0]
 
         pipeline = build_default_registration_pipeline(
-            StagePositionCorrections(), TilingMode.AUTO
+            StagePositionCorrections(), AutoTiling()
         )
         registered = apply_registration_pipeline(tiled_image, pipeline)
 
@@ -227,9 +229,9 @@ class TestHCSPlateEndToEnd:
         for region in registered.regions:
             for s in region.roi.slices:
                 if s.start is not None:
-                    assert float(s.start) == int(
-                        s.start
-                    ), f"start={s.start} is not pixel-aligned"
+                    assert float(s.start) == int(s.start), (
+                        f"start={s.start} is not pixel-aligned"
+                    )
 
     def test_full_pipeline_writes_omezarr(self, tmp_path: Path) -> None:
         df = pd.read_csv(_HCS_EXAMPLE_DIR / "tiles.csv")
@@ -244,7 +246,7 @@ class TestHCSPlateEndToEnd:
         tiled_image = images[0]
 
         pipeline = build_default_registration_pipeline(
-            StagePositionCorrections(), TilingMode.AUTO
+            StagePositionCorrections(), AutoTiling()
         )
         zarr_url = str(tmp_path / "output.zarr")
         omezarr = tiled_image_creation_pipeline(
@@ -296,7 +298,7 @@ class TestHCSPlateEndToEnd:
         tiled_image = images[0]
 
         pipeline = build_default_registration_pipeline(
-            StagePositionCorrections(), TilingMode.AUTO
+            StagePositionCorrections(), AutoTiling()
         )
         zarr_url = str(tmp_path / "output_runtime.zarr")
         omezarr = tiled_image_creation_pipeline(
@@ -337,7 +339,7 @@ class TestHCSPlateEndToEnd:
         tiled_image = images[0]
 
         pipeline = build_default_registration_pipeline(
-            StagePositionCorrections(), TilingMode.AUTO
+            StagePositionCorrections(), AutoTiling()
         )
         zarr_url = str(tmp_path / f"output_{writer_mode.value}.zarr")
         omezarr = tiled_image_creation_pipeline(
@@ -387,7 +389,7 @@ class TestSingleImageEndToEnd:
         tiled_image = images[0]
 
         pipeline = build_default_registration_pipeline(
-            StagePositionCorrections(), TilingMode.AUTO
+            StagePositionCorrections(), AutoTiling()
         )
         zarr_url = str(tmp_path / "single_output.zarr")
         omezarr = tiled_image_creation_pipeline(
@@ -433,7 +435,7 @@ class TestHCSPlateWithAttributes:
         assert "drug" in tiled_image.attributes
 
         pipeline = build_default_registration_pipeline(
-            StagePositionCorrections(), TilingMode.AUTO
+            StagePositionCorrections(), AutoTiling()
         )
         zarr_url = str(tmp_path / "attrs_output.zarr")
         omezarr = tiled_image_creation_pipeline(
@@ -459,7 +461,7 @@ class TestNoTilingTranslation:
         tiles = hcs_images_from_dataframe(
             tiles_table=df, acquisition_details=acq, plate_name="TestPlate"
         )
-        opts = ConverterOptions(tiling_mode=TilingMode.NO_TILING)
+        opts = ConverterOptions(tiling_strategy=NoTiling())
         images = tiles_aggregation_pipeline(
             tiles=tiles, converter_options=opts, resource=str(_HCS_DATA_DIR)
         )
@@ -467,7 +469,7 @@ class TestNoTilingTranslation:
         assert len(images) == 3
 
         pipeline = build_default_registration_pipeline(
-            StagePositionCorrections(), TilingMode.NO_TILING
+            StagePositionCorrections(), NoTiling()
         )
         for i, tiled_image in enumerate(images):
             zarr_url = str(tmp_path / f"output_{i}.zarr")
@@ -486,20 +488,20 @@ class TestNoTilingTranslation:
                 f"got {translation}"
             )
 
-    def test_tiling_mode_auto_has_no_translation(self, tmp_path: Path) -> None:
+    def test_tiling_strategy_auto_has_no_translation(self, tmp_path: Path) -> None:
         df = pd.read_csv(_HCS_EXAMPLE_DIR / "tiles.csv")
         acq = _example_acq_details()
         tiles = hcs_images_from_dataframe(
             tiles_table=df, acquisition_details=acq, plate_name="TestPlate"
         )
-        opts = ConverterOptions(tiling_mode=TilingMode.AUTO)
+        opts = ConverterOptions(tiling_strategy=AutoTiling())
         images = tiles_aggregation_pipeline(
             tiles=tiles, converter_options=opts, resource=str(_HCS_DATA_DIR)
         )
         tiled_image = images[0]
 
         pipeline = build_default_registration_pipeline(
-            StagePositionCorrections(), TilingMode.AUTO
+            StagePositionCorrections(), AutoTiling()
         )
         zarr_url = str(tmp_path / "output_auto.zarr")
         omezarr = tiled_image_creation_pipeline(
@@ -512,6 +514,6 @@ class TestNoTilingTranslation:
             resource=str(_HCS_DATA_DIR),
         )
         translation = omezarr.get_image().dataset.translation
-        assert all(
-            v == 0.0 for v in translation
-        ), f"Expected all-zero translation for AUTO tiling mode, got {translation}"
+        assert all(v == 0.0 for v in translation), (
+            f"Expected all-zero translation for AUTO tiling mode, got {translation}"
+        )

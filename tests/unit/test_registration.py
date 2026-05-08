@@ -16,11 +16,14 @@ from ome_zarr_converters_tools.core._tile_region import TiledImage, TileSlice
 from ome_zarr_converters_tools.core._tile_to_tiled_images import tiled_image_from_tiles
 from ome_zarr_converters_tools.models import (
     AcquisitionDetails,
+    AutoTiling,
     ChannelInfo,
     ConverterOptions,
+    InplaceTiling,
+    NoTiling,
     SingleImage,
+    SnapToGridTiling,
     StagePositionCorrections,
-    TilingMode,
 )
 from ome_zarr_converters_tools.pipelines._alignment import (
     _align_t_regions,
@@ -368,7 +371,7 @@ class TestTiling:
             "A": _make_pixel_tile_slice(10.0, 20.0, 100.0, 100.0, "A"),
             "B": _make_pixel_tile_slice(200.0, 300.0, 100.0, 100.0, "B"),
         }
-        offsets = _find_tiling(tiles, TilingMode.NO_TILING)
+        offsets = _find_tiling(tiles, NoTiling())
         for offset in offsets.values():
             assert offset == {"x": 0.0, "y": 0.0}
 
@@ -379,7 +382,7 @@ class TestTiling:
             "C": _make_pixel_tile_slice(0.0, 95.0, 100.0, 100.0, "C"),
             "D": _make_pixel_tile_slice(95.0, 95.0, 100.0, 100.0, "D"),
         }
-        offsets = _find_tiling(tiles, TilingMode.SNAP_TO_GRID)
+        offsets = _find_tiling(tiles, SnapToGridTiling())
         assert np.isclose(offsets["A"]["x"], 0.0)
         assert np.isclose(offsets["A"]["y"], 0.0)
 
@@ -391,14 +394,14 @@ class TestTiling:
             "D": _make_pixel_tile_slice(150.0, 100.0, 100.0, 100.0, "D"),
         }
         with pytest.raises(NotAGridError):
-            _find_tiling(tiles, TilingMode.SNAP_TO_GRID)
+            _find_tiling(tiles, SnapToGridTiling())
 
     def test_snap_to_grid_off_origin_2x1(self) -> None:
         tiles = {
             "A": _make_pixel_tile_slice(500.0, 0.0, 100.0, 100.0, "A"),
             "B": _make_pixel_tile_slice(595.0, 0.0, 100.0, 100.0, "B"),
         }
-        offsets = _find_tiling(tiles, TilingMode.SNAP_TO_GRID)
+        offsets = _find_tiling(tiles, SnapToGridTiling())
         assert np.isclose(offsets["A"]["x"], 0.0)
         assert np.isclose(offsets["B"]["x"], 5.0)  # 595 → 600
         assert np.isclose(offsets["A"]["y"], 0.0)
@@ -406,7 +409,7 @@ class TestTiling:
 
     def test_inplace_returns_zero_offsets(self) -> None:
         tiles = {"A": _make_pixel_tile_slice(50.0, 50.0, 100.0, 100.0, "A")}
-        offsets = _find_tiling(tiles, TilingMode.INPLACE)
+        offsets = _find_tiling(tiles, InplaceTiling())
         assert offsets["A"] == {"x": 0.0, "y": 0.0}
 
     def test_auto_tiling_falls_back_to_corners(self) -> None:
@@ -416,7 +419,7 @@ class TestTiling:
             "C": _make_pixel_tile_slice(0.0, 100.0, 100.0, 100.0, "C"),
             "D": _make_pixel_tile_slice(150.0, 100.0, 100.0, 100.0, "D"),
         }
-        offsets = _find_tiling(tiles, TilingMode.AUTO)
+        offsets = _find_tiling(tiles, AutoTiling())
         assert len(offsets) == 4
 
     def test_apply_mosaic_tiling(self) -> None:
@@ -440,5 +443,5 @@ class TestTiling:
         images = tiled_image_from_tiles(
             tiles=tiles, converter_options=ConverterOptions()
         )
-        result = apply_mosaic_tiling(images[0], TilingMode.INPLACE)
+        result = apply_mosaic_tiling(images[0], InplaceTiling())
         assert len(result.regions) == 4
