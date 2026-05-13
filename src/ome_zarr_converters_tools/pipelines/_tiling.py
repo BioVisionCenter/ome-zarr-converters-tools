@@ -48,15 +48,17 @@ def _find_tiling(
     regions: dict[str, TileSlice],
     strategy: TilingStrategy,
 ) -> dict[str, dict[str, float]]:
-    if isinstance(strategy, (InplaceTiling, NoTiling)):
-        return _no_tiling(regions)
-    if isinstance(strategy, AutoTiling):
-        return _auto_tiling(regions, strategy.tolerance)
-    if isinstance(strategy, SnapToCornersTiling):
-        return _snap_to_corners_tiling(regions)
-    if isinstance(strategy, SnapToGridTiling):
-        return _snap_to_grid_tiling(regions, strategy.tolerance)
-    raise ValueError(f"Tiling strategy '{strategy}' is not recognized.")
+    match strategy:
+        case InplaceTiling() | NoTiling():
+            return _no_tiling(regions)
+        case AutoTiling():
+            return _auto_tiling(regions, strategy.tolerance)
+        case SnapToCornersTiling():
+            return _snap_to_corners_tiling(regions)
+        case SnapToGridTiling():
+            return _snap_to_grid_tiling(regions, strategy.tolerance)
+        case _:
+            raise ValueError(f"Tiling strategy '{strategy}' is not recognized.")
 
 
 def _tile_regions(
