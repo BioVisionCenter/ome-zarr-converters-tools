@@ -41,8 +41,10 @@ def build_parallelization_list(
         tmp_path (str): The name of the temporary directory to store the
             pickled tiled images.
     """
-    temp_json_url = converter_options.temp_json_options.format_temp_url(
-        zarr_dir=zarr_dir
+    temp_json_url = (
+        converter_options.runtime_settings.temp_json_options.format_temp_url(
+            zarr_dir=zarr_dir
+        )
     )
     cleanup_if_exists(temp_json_url=temp_json_url)
     parallelization_list = []

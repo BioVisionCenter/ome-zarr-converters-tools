@@ -52,7 +52,7 @@ class TestTile:
             pixelsize=1.0,
             z_spacing=1.0,
             t_spacing=1.0,
-            stage_corrections=StageOrientation(flip_x=True, flip_y=False),
+            stage_orientation=StageOrientation(flip_x=True, flip_y=False),
         )
         tile = build_dummy_tile(
             fov_name="FOV_flip",
@@ -76,7 +76,7 @@ class TestTile:
             pixelsize=1.0,
             z_spacing=1.0,
             t_spacing=1.0,
-            stage_corrections=StageOrientation(swap_xy=True),
+            stage_orientation=StageOrientation(swap_xy=True),
         )
         tile = build_dummy_tile(
             fov_name="FOV_swap",

@@ -10,14 +10,14 @@ The conversion pipeline processes tiles through several stages before writing th
 from ome_zarr_converters_tools import ConverterOptions
 
 opts = ConverterOptions(
-    tiling_mode=TilingMode.AUTO,          # How overlapping FOVs are arranged
+    tiling_strategy=AutoTiling(),         # How overlapping FOVs are arranged
     writer_mode=WriterMode.BY_FOV,        # How data is loaded and written
-    alignment_correction=AlignmentCorrections(),  # Stage position corrections
+    stage_position_corrections=AlignmentCorrections(),  # Stage position corrections
     omezarr_options=OmeZarrOptions(),     # OME-Zarr writing options (levels, chunks, etc.)
 )
 ```
 
-When passed to `tiles_aggregation_pipeline()` and `tiled_image_creation_pipeline()`, its fields are used as defaults. You can also override specific settings (like `writer_mode` or `tiling_mode`) by passing them directly to the pipeline functions.
+When passed to `tiles_aggregation_pipeline()` and `tiled_image_creation_pipeline()`, its fields are used as defaults. You can also override specific settings (like `writer_mode` or `tiling_strategy`) by passing them directly to the pipeline functions.
 
 ## AcquisitionDetails
 
@@ -97,7 +97,7 @@ from ome_zarr_converters_tools import AcquisitionDetails, StageCorrections
 
 acq = AcquisitionDetails(
     pixelsize=0.65,
-    stage_corrections=StageCorrections(
+    stage_orientation=StageOrientation(
         flip_x=True,    # Invert X positions
         flip_y=False,   # Keep Y as-is
         swap_xy=False,  # Don't swap X and Y
@@ -228,12 +228,12 @@ The registration pipeline transforms tile positions to prepare them for writing.
 The default pipeline is built with `build_default_registration_pipeline()` and runs four steps in order:
 
 ```python
-from ome_zarr_converters_tools.models import AlignmentCorrections, TilingMode
+from ome_zarr_converters_tools.models import AlignmentCorrections, AutoTiling
 from ome_zarr_converters_tools.pipelines import build_default_registration_pipeline
 
 pipeline = build_default_registration_pipeline(
     alignment_corrections=AlignmentCorrections(),
-    tiling_mode=TilingMode.AUTO,
+    tiling_strategy=AutoTiling(),
 )
 ```
 
@@ -295,34 +295,38 @@ pipeline = [
 ]
 ```
 
-## Tiling Modes
+## Tiling Strategies
 
-Tiling controls how overlapping FOVs are arranged relative to each other. This is the last step in the default registration pipeline.
+Tiling controls how overlapping FOVs are arranged relative to each other. This is the last step in the default registration pipeline. Each strategy is a Pydantic model, so tolerance and other parameters are passed directly on construction.
 
-| Mode | Description |
-|------|-------------|
-| `TilingMode.AUTO` | Tries `SNAP_TO_GRID` first; falls back to `SNAP_TO_CORNERS` if tiles don't form a regular grid |
-| `TilingMode.SNAP_TO_GRID` | Snaps FOV positions to a regular grid, removing overlaps. Requires tiles to be arranged in a grid pattern |
-| `TilingMode.SNAP_TO_CORNERS` | Snaps each FOV to the nearest corner, removing overlaps without requiring a grid structure |
-| `TilingMode.INPLACE` | No tiling -- keeps original positions as-is |
-| `TilingMode.NO_TILING` | Same as `INPLACE` |
+| Strategy | Description |
+|----------|-------------|
+| `AutoTiling(tolerance=0)` | Tries `SnapToGridTiling` first; falls back to `SnapToCornersTiling` if tiles don't form a regular grid |
+| `SnapToGridTiling(tolerance=0)` | Snaps FOV positions to a regular grid, removing overlaps. Requires tiles to be arranged in a grid pattern |
+| `SnapToCornersTiling()` | Snaps each FOV to the nearest corner, removing overlaps without requiring a grid structure |
+| `InplaceTiling()` | No tiling -- keeps original positions as-is |
+| `NoTiling()` | Each FOV is written as a separate OME-Zarr |
 
 ```python
-from ome_zarr_converters_tools.models import TilingMode
+from ome_zarr_converters_tools.models import (
+    AutoTiling,
+    SnapToCornersTiling,
+    SnapToGridTiling,
+)
 
 # For regular grid acquisitions (e.g., snake scan)
 pipeline = build_default_registration_pipeline(
-    AlignmentCorrections(), TilingMode.SNAP_TO_GRID
+    AlignmentCorrections(), SnapToGridTiling()
 )
 
 # For irregular FOV arrangements
 pipeline = build_default_registration_pipeline(
-    AlignmentCorrections(), TilingMode.SNAP_TO_CORNERS
+    AlignmentCorrections(), SnapToCornersTiling()
 )
 
-# Let the library decide
+# Let the library decide (with tolerance for minor stage jitter)
 pipeline = build_default_registration_pipeline(
-    AlignmentCorrections(), TilingMode.AUTO
+    AlignmentCorrections(), AutoTiling(tolerance=2.5)
 )
 ```
 

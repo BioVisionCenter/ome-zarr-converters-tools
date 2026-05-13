@@ -124,5 +124,5 @@ pixi.lock
 *.zarr
 data/
 
-# claude
+# Claude
 .claude/

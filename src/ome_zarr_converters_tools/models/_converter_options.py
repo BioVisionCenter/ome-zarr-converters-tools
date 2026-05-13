@@ -8,6 +8,8 @@ from pydantic import (
     Field,
 )
 
+from ome_zarr_converters_tools.models._runtime_settings import RuntimeSettings
+
 
 class OverwriteMode(StrEnum):
     NO_OVERWRITE = "No Overwrite"
@@ -15,12 +17,47 @@ class OverwriteMode(StrEnum):
     EXTEND = "Extend"
 
 
-class TilingMode(StrEnum):
-    AUTO = "Auto"
-    SNAP_TO_GRID = "Snap to Grid"
-    SNAP_TO_CORNERS = "Snap to Corners"
-    INPLACE = "Inplace"
-    NO_TILING = "No Tiling"
+class AutoTiling(BaseModel):
+    mode: Literal["Auto"] = "Auto"
+    """
+    Automatically determine if Snap to Grid is possible, otherwise use Snap to Corners.
+    """
+    tolerance: float = Field(default=0, ge=0, title="Tiling Tolerance (in pixels)")
+
+
+class SnapToGridTiling(BaseModel):
+    mode: Literal["Snap to Grid"] = "Snap to Grid"
+    """
+    Tile images to fit a regular grid. This is only possible if image positions align
+    to a grid (potentially with overlap).
+    """
+    tolerance: float = Field(default=0, ge=0, title="Tiling Tolerance (in pixels)")
+
+
+class SnapToCornersTiling(BaseModel):
+    mode: Literal["Snap to Corners"] = "Snap to Corners"
+    """Tile images to fit a grid defined by the corner positions."""
+
+
+class InplaceTiling(BaseModel):
+    mode: Literal["Inplace"] = "Inplace"
+    """
+    Write tiles in their original stage positions.
+    This may lead to artifacts if microscope stage positions are not precise,
+    when tiles overlap the last written tile will overwrite previous tiles in the
+    overlapping region.
+    """
+
+
+class NoTiling(BaseModel):
+    mode: Literal["No Tiling"] = "No Tiling"
+    """Each field of view is written as a single OME-Zarr."""
+
+
+TilingStrategy = Annotated[
+    AutoTiling | SnapToGridTiling | SnapToCornersTiling | InplaceTiling | NoTiling,
+    Field(discriminator="mode"),
+]
 
 
 class BackendType(StrEnum):
@@ -50,7 +87,7 @@ class WriterMode(StrEnum):
 
 
 class StagePositionCorrections(BaseModel):
-    """Alignment correction for stage positions."""
+    """Stage position correction options."""
 
     align_xy: bool = Field(default=False, title="Align XY")
     """
@@ -135,16 +172,6 @@ class OmeZarrOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
-class TempJsonOptions(BaseModel):
-    """Options for temporary JSON storage during conversion."""
-
-    temp_url: str = "{zarr_dir}/_tmp_json"
-    """Template for the temporary JSON URL."""
-
-    def format_temp_url(self, zarr_dir: str) -> str:
-        return self.temp_url.format(zarr_dir=zarr_dir)
-
-
 class ConverterOptions(BaseModel):
     """Options for the OME-Zarr conversion process."""
 
@@ -162,49 +189,34 @@ class ConverterOptions(BaseModel):
       faster than writing by FOV sequentially, but may consume more memory.
     - In Memory: Load all data into memory before writing.
     """
-    tiling_mode: TilingMode = Field(default=TilingMode.AUTO, title="Tiling Mode")
+    tiling_strategy: TilingStrategy = Field(
+        default_factory=AutoTiling, title="Tiling Strategy"
+    )
     """
-    Tiling mode to use during conversion.
+    Tiling strategy to use during conversion.
 
     - Auto: Automatically determine if Snap to Grid is possible, otherwise use Snap to
-      Corners.
+      Corners. Accepts an optional tolerance (in pixels) for grid alignment.
     - Snap to Grid: Tile images to fit a regular grid. This is only possible if image
-      positions align to a grid (potentially with overlap).
+      positions align to a grid (potentially with overlap). Accepts an optional
+      tolerance (in pixels).
     - Snap to Corners: Tile images to fit a grid defined by the corner positions.
     - Inplace: Write tiles in their original positions without tiling. This may lead to
       artifacts if microscope stage positions are not precise.
     - No Tiling: Each field of view is written as a single OME-Zarr.
     """
-    tiling_tolerance: float = Field(
-        default=0, ge=0, title="Tiling Tolerance (in pixels)"
-    )
-    """
-    Tolerance in pixels for determining if Snap to Grid is possible.
-    This accounts for minor jitter in microscope stage positions when determining if
-    Snap to Grid tiling can be applied.
-    """
-    alignment_correction: StagePositionCorrections = Field(
+    stage_position_corrections: StagePositionCorrections = Field(
         default_factory=StagePositionCorrections,
-        title="Alignment Corrections",
+        title="Stage Position Corrections",
     )
-    """Alignment correction options."""
+    """Stage position correction options."""
     omezarr_options: OmeZarrOptions = Field(
         default_factory=OmeZarrOptions, title="OME-Zarr Options"
     )
     """Options specific to OME-Zarr writing."""
-    temp_json_options: TempJsonOptions = Field(
-        default_factory=TempJsonOptions, title="Temporary JSON Options"
+    runtime_settings: RuntimeSettings = Field(
+        default_factory=RuntimeSettings, title="Runtime Settings"
     )
-    """Options for temporary JSON storage."""
+    """Runtime knobs (zarr codec, dask scheduler) applied via a scoped
+    context manager during conversion."""
     model_config = ConfigDict(extra="forbid")
-
-
-# class ContextModel(NamedTuple):
-#    """Base model for context information during conversion.
-#
-#    This models holds the all context information needed during the conversion
-#    process, including acquisition details and converter options.
-#    """
-#
-#    acquisition_details: AcquisitionDetails
-#    converter_options: ConverterOptions

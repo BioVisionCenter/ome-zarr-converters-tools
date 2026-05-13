@@ -3,7 +3,7 @@
 import pytest
 
 from ome_zarr_converters_tools.core._tile_region import TiledImage
-from ome_zarr_converters_tools.models import StagePositionCorrections, TilingMode
+from ome_zarr_converters_tools.models import AutoTiling, StagePositionCorrections
 from ome_zarr_converters_tools.pipelines._registration_pipeline import (
     RegistrationStep,
     _registration_registry,
@@ -73,7 +73,7 @@ class TestRegistrationPipeline:
 
     def test_build_default_registration_pipeline(self) -> None:
         corrections = StagePositionCorrections()
-        pipeline = build_default_registration_pipeline(corrections, TilingMode.AUTO)
+        pipeline = build_default_registration_pipeline(corrections, AutoTiling())
         assert len(pipeline) == 4
         names = [step["name"] for step in pipeline]
         assert "remove_offsets" in names
@@ -83,8 +83,7 @@ class TestRegistrationPipeline:
 
     def test_build_default_registration_pipeline_tolerance(self) -> None:
         corrections = StagePositionCorrections()
-        pipeline = build_default_registration_pipeline(
-            corrections, TilingMode.AUTO, tolerance=2.5
-        )
+        strategy = AutoTiling(tolerance=2.5)
+        pipeline = build_default_registration_pipeline(corrections, strategy)
         tile_regions_step = next(s for s in pipeline if s["name"] == "tile_regions")
-        assert tile_regions_step["params"]["tolerance"] == 2.5
+        assert tile_regions_step["params"]["tiling_strategy"].tolerance == 2.5

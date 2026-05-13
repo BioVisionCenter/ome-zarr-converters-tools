@@ -121,8 +121,8 @@ class AcquisitionOptions(BaseModel):
     """Axes to use for the image data, e.g. "czyx"."""
     data_type: DataTypeEnum = Field(default=DataTypeEnum.AUTODETECT, title="Data Type")
     """Data type of the image data."""
-    stage_corrections: StageOrientation = Field(
-        default_factory=StageOrientation, title="Stage Corrections"
+    stage_orientation: StageOrientation = Field(
+        default_factory=StageOrientation, title="Stage Orientation"
     )
     """Stage orientation corrections."""
     filters: list[ImplementedFilters] = Field(default_factory=list)
@@ -234,7 +234,7 @@ def converters_tools_models(
         ),
         (
             base,
-            "models/_converter_options.py",
+            "models/_runtime_settings.py",
             "TempJsonOptions",
         ),
         (

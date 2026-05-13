@@ -102,7 +102,7 @@ class AcquisitionDetails(BaseModel):
     condition_table_path: str | None = None
 
     # Stage orientation corrections
-    stage_corrections: StageOrientation = Field(default_factory=StageOrientation)
+    stage_orientation: StageOrientation = Field(default_factory=StageOrientation)
 
     model_config = ConfigDict(extra="forbid")
 

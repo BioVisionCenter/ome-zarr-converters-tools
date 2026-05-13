@@ -12,8 +12,8 @@ from ome_zarr_converters_tools.models import (
 )
 from ome_zarr_converters_tools.models._collection import validate_zarr_name
 from ome_zarr_converters_tools.models._converter_options import (
+    AutoTiling,
     FovBasedChunking,
-    TilingMode,
     WriterMode,
 )
 
@@ -113,14 +113,16 @@ class TestConverterOptions:
     def test_converter_options_defaults(self) -> None:
         """Test default values."""
         opts = ConverterOptions()
-        assert opts.tiling_mode == TilingMode.AUTO
+        assert isinstance(opts.tiling_strategy, AutoTiling)
         assert opts.writer_mode == WriterMode.BY_FOV
-        assert opts.alignment_correction.align_xy is False
-        assert opts.alignment_correction.align_z is False
-        assert opts.alignment_correction.align_t is False
+        assert opts.stage_position_corrections.align_xy is False
+        assert opts.stage_position_corrections.align_z is False
+        assert opts.stage_position_corrections.align_t is False
         assert opts.omezarr_options.num_levels == 5
         assert isinstance(opts.omezarr_options.chunks, FovBasedChunking)
-        assert opts.temp_json_options.temp_url == "{zarr_dir}/_tmp_json"
+        assert (
+            opts.runtime_settings.temp_json_options.temp_url == "{zarr_dir}/_tmp_json"
+        )
 
 
 class TestStageOrientation:

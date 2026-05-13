@@ -19,13 +19,17 @@ from ome_zarr_converters_tools.core._table import (
 from ome_zarr_converters_tools.core._tile import Tile
 from ome_zarr_converters_tools.models import (
     AcquisitionDetails,
+    AutoTiling,
     ChannelInfo,
     ConverterOptions,
     ImageInPlate,
+    InplaceTiling,
+    NoTiling,
     OverwriteMode,
+    RuntimeSettings,
     SingleImage,
     StagePositionCorrections,
-    TilingMode,
+    ThreadScheduler,
     WriterMode,
 )
 from ome_zarr_converters_tools.pipelines import (
@@ -130,7 +134,7 @@ class TestTiledImageCreationPipeline:
         tiled_image = images[0]
 
         pipeline = build_default_registration_pipeline(
-            StagePositionCorrections(), TilingMode.INPLACE
+            StagePositionCorrections(), InplaceTiling()
         )
         zarr_url = str(tmp_path / "output.zarr")
         omezarr = tiled_image_creation_pipeline(
@@ -216,7 +220,7 @@ class TestHCSPlateEndToEnd:
         tiled_image = images[0]
 
         pipeline = build_default_registration_pipeline(
-            StagePositionCorrections(), TilingMode.AUTO
+            StagePositionCorrections(), AutoTiling()
         )
         registered = apply_registration_pipeline(tiled_image, pipeline)
 
@@ -242,7 +246,7 @@ class TestHCSPlateEndToEnd:
         tiled_image = images[0]
 
         pipeline = build_default_registration_pipeline(
-            StagePositionCorrections(), TilingMode.AUTO
+            StagePositionCorrections(), AutoTiling()
         )
         zarr_url = str(tmp_path / "output.zarr")
         omezarr = tiled_image_creation_pipeline(
@@ -276,6 +280,41 @@ class TestHCSPlateEndToEnd:
         assert "FOV_ROI_table" in table_names
         assert "well_ROI_table" in table_names
 
+    def test_runtime_settings_dask_scheduler(self, tmp_path: Path) -> None:
+        """End-to-end run with RuntimeSettings(dask_scheduler=ThreadScheduler(...))."""
+        df = pd.read_csv(_HCS_EXAMPLE_DIR / "tiles.csv")
+        acq = _example_acq_details()
+        tiles = hcs_images_from_dataframe(
+            tiles_table=df, acquisition_details=acq, plate_name="TestPlate"
+        )
+        opts = ConverterOptions(
+            runtime_settings=RuntimeSettings(
+                dask_scheduler=ThreadScheduler(num_workers=2)
+            ),
+        )
+        images = tiles_aggregation_pipeline(
+            tiles=tiles, converter_options=opts, resource=str(_HCS_DATA_DIR)
+        )
+        tiled_image = images[0]
+
+        pipeline = build_default_registration_pipeline(
+            StagePositionCorrections(), AutoTiling()
+        )
+        zarr_url = str(tmp_path / "output_runtime.zarr")
+        omezarr = tiled_image_creation_pipeline(
+            zarr_url=zarr_url,
+            tiled_image=tiled_image,
+            registration_pipeline=pipeline,
+            converter_options=opts,
+            writer_mode=WriterMode.BY_FOV_DASK,
+            overwrite_mode=OverwriteMode.OVERWRITE,
+            resource=str(_HCS_DATA_DIR),
+        )
+        assert omezarr is not None
+        data = omezarr.get_image().get_array()
+        assert data.ndim == 5
+        assert np.any(data > 0)
+
     @pytest.mark.parametrize(
         "writer_mode",
         [
@@ -300,7 +339,7 @@ class TestHCSPlateEndToEnd:
         tiled_image = images[0]
 
         pipeline = build_default_registration_pipeline(
-            StagePositionCorrections(), TilingMode.AUTO
+            StagePositionCorrections(), AutoTiling()
         )
         zarr_url = str(tmp_path / f"output_{writer_mode.value}.zarr")
         omezarr = tiled_image_creation_pipeline(
@@ -350,7 +389,7 @@ class TestSingleImageEndToEnd:
         tiled_image = images[0]
 
         pipeline = build_default_registration_pipeline(
-            StagePositionCorrections(), TilingMode.AUTO
+            StagePositionCorrections(), AutoTiling()
         )
         zarr_url = str(tmp_path / "single_output.zarr")
         omezarr = tiled_image_creation_pipeline(
@@ -396,7 +435,7 @@ class TestHCSPlateWithAttributes:
         assert "drug" in tiled_image.attributes
 
         pipeline = build_default_registration_pipeline(
-            StagePositionCorrections(), TilingMode.AUTO
+            StagePositionCorrections(), AutoTiling()
         )
         zarr_url = str(tmp_path / "attrs_output.zarr")
         omezarr = tiled_image_creation_pipeline(
@@ -422,7 +461,7 @@ class TestNoTilingTranslation:
         tiles = hcs_images_from_dataframe(
             tiles_table=df, acquisition_details=acq, plate_name="TestPlate"
         )
-        opts = ConverterOptions(tiling_mode=TilingMode.NO_TILING)
+        opts = ConverterOptions(tiling_strategy=NoTiling())
         images = tiles_aggregation_pipeline(
             tiles=tiles, converter_options=opts, resource=str(_HCS_DATA_DIR)
         )
@@ -430,7 +469,7 @@ class TestNoTilingTranslation:
         assert len(images) == 3
 
         pipeline = build_default_registration_pipeline(
-            StagePositionCorrections(), TilingMode.NO_TILING
+            StagePositionCorrections(), NoTiling()
         )
         for i, tiled_image in enumerate(images):
             zarr_url = str(tmp_path / f"output_{i}.zarr")
@@ -449,20 +488,20 @@ class TestNoTilingTranslation:
                 f"got {translation}"
             )
 
-    def test_tiling_mode_auto_has_no_translation(self, tmp_path: Path) -> None:
+    def test_tiling_strategy_auto_has_no_translation(self, tmp_path: Path) -> None:
         df = pd.read_csv(_HCS_EXAMPLE_DIR / "tiles.csv")
         acq = _example_acq_details()
         tiles = hcs_images_from_dataframe(
             tiles_table=df, acquisition_details=acq, plate_name="TestPlate"
         )
-        opts = ConverterOptions(tiling_mode=TilingMode.AUTO)
+        opts = ConverterOptions(tiling_strategy=AutoTiling())
         images = tiles_aggregation_pipeline(
             tiles=tiles, converter_options=opts, resource=str(_HCS_DATA_DIR)
         )
         tiled_image = images[0]
 
         pipeline = build_default_registration_pipeline(
-            StagePositionCorrections(), TilingMode.AUTO
+            StagePositionCorrections(), AutoTiling()
         )
         zarr_url = str(tmp_path / "output_auto.zarr")
         omezarr = tiled_image_creation_pipeline(
