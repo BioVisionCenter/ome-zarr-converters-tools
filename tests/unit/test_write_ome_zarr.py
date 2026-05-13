@@ -245,9 +245,8 @@ class TestBuildChannelsMeta:
 
     def test_channel_color_hex(self) -> None:
         img = _make_tiled_image_with_channels(
-            channels=[ChannelInfo(channel_label="DAPI")]
+            channels=[ChannelInfo(channel_label="DAPI", color="#0000FF")]
         )
         result = build_channels_meta(img)
         assert result is not None
-        # Default color is blue -> 0000FF (with or without # prefix)
         assert "0000FF" in result[0].channel_visualisation.color  # type: ignore

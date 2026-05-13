@@ -127,7 +127,7 @@ def build_channels_meta(tiled_image: TiledImage) -> list[Channel] | None:
         channel = Channel(
             label=channel.channel_label,
             wavelength_id=channel.wavelength_id,
-            channel_visualisation=ChannelVisualisation(color=channel.colors.to_hex()),
+            channel_visualisation=ChannelVisualisation(color=channel.color),
         )
         channels.append(channel)
     return channels

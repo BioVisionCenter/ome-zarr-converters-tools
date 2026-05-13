@@ -9,6 +9,7 @@ from ome_zarr_converters_tools.core import (
 )
 from ome_zarr_converters_tools.fractal import (
     AcquisitionOptions,
+    ChannelInfoUI,
     ConvertParallelInitArgs,
     ImageListUpdateDict,
     converters_tools_models,
@@ -49,6 +50,7 @@ __all__ = [
     "AcquisitionOptions",
     "AttributeType",
     "ChannelInfo",
+    "ChannelInfoUI",
     "ChunkingStrategy",
     "CollectionInterface",
     "CollectionInterfaceType",
