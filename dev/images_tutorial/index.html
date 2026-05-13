@@ -1932,7 +1932,7 @@ acq</div>
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
 <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[2]:</div>
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
-<pre>AcquisitionDetails(start_x_coo='world', start_y_coo='world', start_z_coo='pixel', start_t_coo='pixel', length_x_coo='pixel', length_y_coo='pixel', length_z_coo='pixel', length_t_coo='pixel', pixelsize=0.65, z_spacing=5.0, t_spacing=1.0, channels=[ChannelInfo(channel_label='DAPI', wavelength_id='405', color=None)], axes=['t', 'c', 'z', 'y', 'x'], data_type=&lt;DataTypeEnum.AUTODETECT: 'autodetect'&gt;, condition_table_path=None, stage_corrections=StageOrientation(flip_x=False, flip_y=False, swap_xy=False))</pre>
+<pre>AcquisitionDetails(start_x_coo='world', start_y_coo='world', start_z_coo='pixel', start_t_coo='pixel', length_x_coo='pixel', length_y_coo='pixel', length_z_coo='pixel', length_t_coo='pixel', pixelsize=0.65, z_spacing=5.0, t_spacing=1.0, channels=[ChannelInfo(channel_label='DAPI', wavelength_id='405', color=None)], axes=['t', 'c', 'z', 'y', 'x'], data_type=&lt;DataTypeEnum.AUTODETECT: 'autodetect'&gt;, condition_table_path=None, stage_orientation=StageOrientation(flip_x=False, flip_y=False, swap_xy=False))</pre>
 </div>
 </div>
 </div>
@@ -2012,7 +2012,7 @@ Image path: cardiomyocyte_scan
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
 <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[3]:</div>
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
-<pre>Tile(fov_name='FOV_1', start_x=10.0, start_y=10.0, start_z=0.0, start_c=0, start_t=0.0, length_x=2560.0, length_y=2160.0, length_z=1.0, length_c=1, length_t=1.0, attributes={}, collection=SingleImage(image_path='cardiomyocyte_scan'), image_loader=DefaultImageLoader(file_path='20200812-CardiomyocyteDifferentiation14-Cycle1_B03_T0001F001L01A01Z01C01.png'), acquisition_details=AcquisitionDetails(start_x_coo='world', start_y_coo='world', start_z_coo='pixel', start_t_coo='pixel', length_x_coo='pixel', length_y_coo='pixel', length_z_coo='pixel', length_t_coo='pixel', pixelsize=0.65, z_spacing=5.0, t_spacing=1.0, channels=[ChannelInfo(channel_label='DAPI', wavelength_id='405', color=None)], axes=['t', 'c', 'z', 'y', 'x'], data_type=&lt;DataTypeEnum.AUTODETECT: 'autodetect'&gt;, condition_table_path=None, stage_corrections=StageOrientation(flip_x=False, flip_y=False, swap_xy=False)))</pre>
+<pre>Tile(fov_name='FOV_1', start_x=10.0, start_y=10.0, start_z=0.0, start_c=0, start_t=0.0, length_x=2560.0, length_y=2160.0, length_z=1.0, length_c=1, length_t=1.0, attributes={}, collection=SingleImage(image_path='cardiomyocyte_scan'), image_loader=DefaultImageLoader(file_path='20200812-CardiomyocyteDifferentiation14-Cycle1_B03_T0001F001L01A01Z01C01.png'), acquisition_details=AcquisitionDetails(start_x_coo='world', start_y_coo='world', start_z_coo='pixel', start_t_coo='pixel', length_x_coo='pixel', length_y_coo='pixel', length_z_coo='pixel', length_t_coo='pixel', pixelsize=0.65, z_spacing=5.0, t_spacing=1.0, channels=[ChannelInfo(channel_label='DAPI', wavelength_id='405', color=None)], axes=['t', 'c', 'z', 'y', 'x'], data_type=&lt;DataTypeEnum.AUTODETECT: 'autodetect'&gt;, condition_table_path=None, stage_orientation=StageOrientation(flip_x=False, flip_y=False, swap_xy=False)))</pre>
 </div>
 </div>
 </div>
@@ -2210,7 +2210,7 @@ pipeline and writing step.</p>
 <span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.models</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">AlignmentCorrections</span><span class="p">,</span>
     <span class="n">OverwriteMode</span><span class="p">,</span>
-    <span class="n">TilingMode</span><span class="p">,</span>
+    <span class="n">AutoTiling</span><span class="p">,</span>
     <span class="n">WriterMode</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.pipelines</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -2220,7 +2220,7 @@ pipeline and writing step.</p>
 
 <span class="n">pipeline</span> <span class="o">=</span> <span class="n">build_default_registration_pipeline</span><span class="p">(</span>
     <span class="n">alignment_corrections</span><span class="o">=</span><span class="n">AlignmentCorrections</span><span class="p">(),</span>
-    <span class="n">tiling_mode</span><span class="o">=</span><span class="n">TilingMode</span><span class="o">.</span><span class="n">AUTO</span><span class="p">,</span>
+    <span class="n">tiling_strategy</span><span class="o">=</span><span class="n">AutoTiling</span><span class="p">(),</span>
 <span class="p">)</span>
 
 <span class="n">zarr_dir</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mkdtemp</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="s2">"tutorial_images_"</span><span class="p">)</span>
@@ -2243,7 +2243,7 @@ pipeline and writing step.</p>
 from ome_zarr_converters_tools.models import (
     AlignmentCorrections,
     OverwriteMode,
-    TilingMode,
+    AutoTiling,
     WriterMode,
 )
 from ome_zarr_converters_tools.pipelines import (
@@ -2253,7 +2253,7 @@ from ome_zarr_converters_tools.pipelines import (
 
 pipeline = build_default_registration_pipeline(
     alignment_corrections=AlignmentCorrections(),
-    tiling_mode=TilingMode.AUTO,
+    tiling_strategy=AutoTiling(),
 )
 
 zarr_dir = tempfile.mkdtemp(prefix="tutorial_images_")
@@ -2290,7 +2290,7 @@ for tiled_image in tiled_images:
 <span class="ansi-green-fg">----&gt; </span><span class="ansi-green-fg">3</span> from ome_zarr_converters_tools.models import (
 <span class="ansi-green-fg">      4</span>     AlignmentCorrections,
 <span class="ansi-green-fg">      5</span>     OverwriteMode,
-<span class="ansi-green-fg">      6</span>     TilingMode,
+<span class="ansi-green-fg">      6</span>     AutoTiling,
 
 <span class="ansi-red-fg">ImportError</span>: cannot import name 'AlignmentCorrections' from 'ome_zarr_converters_tools.models' (/opt/hostedtoolcache/Python/3.13.13/x64/lib/python3.13/site-packages/ome_zarr_converters_tools/models/__init__.py)</pre>
 </div>
@@ -2462,7 +2462,7 @@ print("Cleaned up tutorial output.")</div>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="March 11, 2026 16:35:21 UTC">March 11, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 8, 2026 09:17:12 UTC">May 8, 2026</span>
   </span>
 
     

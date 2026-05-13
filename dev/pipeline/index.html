@@ -886,10 +886,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#tiling-modes" class="md-nav__link">
+  <a href="#tiling-strategies" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Tiling Modes
+        Tiling Strategies
       
     </span>
   </a>
@@ -1005,13 +1005,13 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConverterOptions</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">opts</span> <span class="o">=</span> <span class="n">ConverterOptions</span><span class="p">(</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">tiling_mode</span><span class="o">=</span><span class="n">TilingMode</span><span class="o">.</span><span class="n">AUTO</span><span class="p">,</span>          <span class="c1"># How overlapping FOVs are arranged</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">tiling_strategy</span><span class="o">=</span><span class="n">AutoTiling</span><span class="p">(),</span>         <span class="c1"># How overlapping FOVs are arranged</span>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">writer_mode</span><span class="o">=</span><span class="n">WriterMode</span><span class="o">.</span><span class="n">BY_FOV</span><span class="p">,</span>        <span class="c1"># How data is loaded and written</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">alignment_correction</span><span class="o">=</span><span class="n">AlignmentCorrections</span><span class="p">(),</span>  <span class="c1"># Stage position corrections</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">stage_position_corrections</span><span class="o">=</span><span class="n">AlignmentCorrections</span><span class="p">(),</span>  <span class="c1"># Stage position corrections</span>
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">omezarr_options</span><span class="o">=</span><span class="n">OmeZarrOptions</span><span class="p">(),</span>     <span class="c1"># OME-Zarr writing options (levels, chunks, etc.)</span>
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="p">)</span>
 </code></pre></div>
-<p>When passed to <code>tiles_aggregation_pipeline()</code> and <code>tiled_image_creation_pipeline()</code>, its fields are used as defaults. You can also override specific settings (like <code>writer_mode</code> or <code>tiling_mode</code>) by passing them directly to the pipeline functions.</p>
+<p>When passed to <code>tiles_aggregation_pipeline()</code> and <code>tiled_image_creation_pipeline()</code>, its fields are used as defaults. You can also override specific settings (like <code>writer_mode</code> or <code>tiling_strategy</code>) by passing them directly to the pipeline functions.</p>
 <h2 id="acquisitiondetails">AcquisitionDetails</h2>
 <p><code>AcquisitionDetails</code> describes the physical properties of the acquisition: pixel sizes, coordinate systems, channel metadata, and stage corrections. It is passed when building <code>Tile</code> objects (via <code>hcs_images_from_dataframe()</code> or <code>single_images_from_dataframe()</code>) and is shared by all tiles in the same acquisition.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">AcquisitionDetails</span><span class="p">,</span> <span class="n">ChannelInfo</span>
@@ -1126,7 +1126,7 @@
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">acq</span> <span class="o">=</span> <span class="n">AcquisitionDetails</span><span class="p">(</span>
 <a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    <span class="n">pixelsize</span><span class="o">=</span><span class="mf">0.65</span><span class="p">,</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>    <span class="n">stage_corrections</span><span class="o">=</span><span class="n">StageCorrections</span><span class="p">(</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>    <span class="n">stage_orientation</span><span class="o">=</span><span class="n">StageOrientation</span><span class="p">(</span>
 <a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>        <span class="n">flip_x</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>    <span class="c1"># Invert X positions</span>
 <a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>        <span class="n">flip_y</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>   <span class="c1"># Keep Y as-is</span>
 <a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>        <span class="n">swap_xy</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>  <span class="c1"># Don&#39;t swap X and Y</span>
@@ -1235,12 +1235,12 @@
 <p>The registration pipeline transforms tile positions to prepare them for writing. It runs as a sequence of steps, each modifying the <code>TiledImage</code> in place. These steps convert raw microscope stage positions into clean, non-overlapping pixel coordinates suitable for writing into a Zarr array.</p>
 <h3 id="default-registration-pipeline">Default Registration Pipeline</h3>
 <p>The default pipeline is built with <code>build_default_registration_pipeline()</code> and runs four steps in order:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">AlignmentCorrections</span><span class="p">,</span> <span class="n">TilingMode</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">AlignmentCorrections</span><span class="p">,</span> <span class="n">AutoTiling</span>
 <a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.pipelines</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_default_registration_pipeline</span>
 <a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
 <a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="n">pipeline</span> <span class="o">=</span> <span class="n">build_default_registration_pipeline</span><span class="p">(</span>
 <a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>    <span class="n">alignment_corrections</span><span class="o">=</span><span class="n">AlignmentCorrections</span><span class="p">(),</span>
-<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>    <span class="n">tiling_mode</span><span class="o">=</span><span class="n">TilingMode</span><span class="o">.</span><span class="n">AUTO</span><span class="p">,</span>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>    <span class="n">tiling_strategy</span><span class="o">=</span><span class="n">AutoTiling</span><span class="p">(),</span>
 <a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="p">)</span>
 </code></pre></div>
 <p>This creates:</p>
@@ -1294,54 +1294,58 @@
 <a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>    <span class="n">RegistrationStep</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;align_to_pixel_grid&quot;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">{}),</span>
 <a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="p">]</span>
 </code></pre></div>
-<h2 id="tiling-modes">Tiling Modes</h2>
-<p>Tiling controls how overlapping FOVs are arranged relative to each other. This is the last step in the default registration pipeline.</p>
+<h2 id="tiling-strategies">Tiling Strategies</h2>
+<p>Tiling controls how overlapping FOVs are arranged relative to each other. This is the last step in the default registration pipeline. Each strategy is a Pydantic model, so tolerance and other parameters are passed directly on construction.</p>
 <table>
 <thead>
 <tr>
-<th>Mode</th>
+<th>Strategy</th>
 <th>Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>TilingMode.AUTO</code></td>
-<td>Tries <code>SNAP_TO_GRID</code> first; falls back to <code>SNAP_TO_CORNERS</code> if tiles don't form a regular grid</td>
+<td><code>AutoTiling(tolerance=0)</code></td>
+<td>Tries <code>SnapToGridTiling</code> first; falls back to <code>SnapToCornersTiling</code> if tiles don't form a regular grid</td>
 </tr>
 <tr>
-<td><code>TilingMode.SNAP_TO_GRID</code></td>
+<td><code>SnapToGridTiling(tolerance=0)</code></td>
 <td>Snaps FOV positions to a regular grid, removing overlaps. Requires tiles to be arranged in a grid pattern</td>
 </tr>
 <tr>
-<td><code>TilingMode.SNAP_TO_CORNERS</code></td>
+<td><code>SnapToCornersTiling()</code></td>
 <td>Snaps each FOV to the nearest corner, removing overlaps without requiring a grid structure</td>
 </tr>
 <tr>
-<td><code>TilingMode.INPLACE</code></td>
+<td><code>InplaceTiling()</code></td>
 <td>No tiling -- keeps original positions as-is</td>
 </tr>
 <tr>
-<td><code>TilingMode.NO_TILING</code></td>
-<td>Same as <code>INPLACE</code></td>
+<td><code>NoTiling()</code></td>
+<td>Each FOV is written as a separate OME-Zarr</td>
 </tr>
 </tbody>
 </table>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">TilingMode</span>
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>
-<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="c1"># For regular grid acquisitions (e.g., snake scan)</span>
-<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="n">pipeline</span> <span class="o">=</span> <span class="n">build_default_registration_pipeline</span><span class="p">(</span>
-<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>    <span class="n">AlignmentCorrections</span><span class="p">(),</span> <span class="n">TilingMode</span><span class="o">.</span><span class="n">SNAP_TO_GRID</span>
-<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="p">)</span>
-<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a>
-<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a><span class="c1"># For irregular FOV arrangements</span>
-<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a><span class="n">pipeline</span> <span class="o">=</span> <span class="n">build_default_registration_pipeline</span><span class="p">(</span>
-<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a>    <span class="n">AlignmentCorrections</span><span class="p">(),</span> <span class="n">TilingMode</span><span class="o">.</span><span class="n">SNAP_TO_CORNERS</span>
-<a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a><span class="p">)</span>
-<a id="__codelineno-16-12" name="__codelineno-16-12" href="#__codelineno-16-12"></a>
-<a id="__codelineno-16-13" name="__codelineno-16-13" href="#__codelineno-16-13"></a><span class="c1"># Let the library decide</span>
-<a id="__codelineno-16-14" name="__codelineno-16-14" href="#__codelineno-16-14"></a><span class="n">pipeline</span> <span class="o">=</span> <span class="n">build_default_registration_pipeline</span><span class="p">(</span>
-<a id="__codelineno-16-15" name="__codelineno-16-15" href="#__codelineno-16-15"></a>    <span class="n">AlignmentCorrections</span><span class="p">(),</span> <span class="n">TilingMode</span><span class="o">.</span><span class="n">AUTO</span>
-<a id="__codelineno-16-16" name="__codelineno-16-16" href="#__codelineno-16-16"></a><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.models</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>    <span class="n">AutoTiling</span><span class="p">,</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>    <span class="n">SnapToCornersTiling</span><span class="p">,</span>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>    <span class="n">SnapToGridTiling</span><span class="p">,</span>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="p">)</span>
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="c1"># For regular grid acquisitions (e.g., snake scan)</span>
+<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a><span class="n">pipeline</span> <span class="o">=</span> <span class="n">build_default_registration_pipeline</span><span class="p">(</span>
+<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a>    <span class="n">AlignmentCorrections</span><span class="p">(),</span> <span class="n">SnapToGridTiling</span><span class="p">()</span>
+<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a><span class="p">)</span>
+<a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a>
+<a id="__codelineno-16-12" name="__codelineno-16-12" href="#__codelineno-16-12"></a><span class="c1"># For irregular FOV arrangements</span>
+<a id="__codelineno-16-13" name="__codelineno-16-13" href="#__codelineno-16-13"></a><span class="n">pipeline</span> <span class="o">=</span> <span class="n">build_default_registration_pipeline</span><span class="p">(</span>
+<a id="__codelineno-16-14" name="__codelineno-16-14" href="#__codelineno-16-14"></a>    <span class="n">AlignmentCorrections</span><span class="p">(),</span> <span class="n">SnapToCornersTiling</span><span class="p">()</span>
+<a id="__codelineno-16-15" name="__codelineno-16-15" href="#__codelineno-16-15"></a><span class="p">)</span>
+<a id="__codelineno-16-16" name="__codelineno-16-16" href="#__codelineno-16-16"></a>
+<a id="__codelineno-16-17" name="__codelineno-16-17" href="#__codelineno-16-17"></a><span class="c1"># Let the library decide (with tolerance for minor stage jitter)</span>
+<a id="__codelineno-16-18" name="__codelineno-16-18" href="#__codelineno-16-18"></a><span class="n">pipeline</span> <span class="o">=</span> <span class="n">build_default_registration_pipeline</span><span class="p">(</span>
+<a id="__codelineno-16-19" name="__codelineno-16-19" href="#__codelineno-16-19"></a>    <span class="n">AlignmentCorrections</span><span class="p">(),</span> <span class="n">AutoTiling</span><span class="p">(</span><span class="n">tolerance</span><span class="o">=</span><span class="mf">2.5</span><span class="p">)</span>
+<a id="__codelineno-16-20" name="__codelineno-16-20" href="#__codelineno-16-20"></a><span class="p">)</span>
 </code></pre></div>
 <h2 id="writer-modes">Writer Modes</h2>
 <p>Writer modes control how image data is loaded and written to the OME-Zarr dataset. The choice affects memory usage and performance.</p>
@@ -1472,7 +1476,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="March 30, 2026 12:02:36 UTC">March 30, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 8, 2026 09:17:12 UTC">May 8, 2026</span>
   </span>
 
     
