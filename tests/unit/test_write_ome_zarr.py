@@ -245,7 +245,7 @@ class TestBuildChannelsMeta:
 
     def test_channel_color_hex(self) -> None:
         img = _make_tiled_image_with_channels(
-            channels=[ChannelInfo(channel_label="DAPI", colors="#0000FF")]
+            channels=[ChannelInfo(channel_label="DAPI", color="#0000FF")]
         )
         result = build_channels_meta(img)
         assert result is not None

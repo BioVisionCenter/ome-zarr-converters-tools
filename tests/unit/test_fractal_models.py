@@ -102,7 +102,7 @@ class TestAcquisitionOptions:
         assert channels is not None
         assert len(channels) == 2
         assert channels[0].channel_label == "GFP"
-        assert channels[0].colors is not None
+        assert channels[0].color is not None
 
     def test_update_acquisition_details_pixel_info(self) -> None:
         acq = AcquisitionDetails(

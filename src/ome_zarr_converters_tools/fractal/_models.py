@@ -95,7 +95,7 @@ class ChannelInfoUI(BaseModel):
     e.g. for multiplexed acquisitions it can be used for applying illumination
     correction based on wavelength ID instead of channel name.
     """
-    colors: DefaultColor = DefaultColor.Blue
+    color: DefaultColor = DefaultColor.Blue
     """The color associated with the channel, e.g. for visualization purposes."""
 
 
@@ -160,7 +160,7 @@ class AcquisitionOptions(BaseModel):
                     ChannelInfo(
                         channel_label=channel.channel_label,
                         wavelength_id=channel.wavelength_id,
-                        colors=channel.colors.to_hexstr(),
+                        color=channel.color.to_hexstr(),
                     )
                 )
             updated_details.channels = _updated_channels

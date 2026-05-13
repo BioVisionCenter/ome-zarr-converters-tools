@@ -45,7 +45,9 @@ class ChannelInfo(BaseModel):
     e.g. for multiplexed acquisitions it can be used for applying illumination
     correction based on wavelength ID instead of channel name.
     """
-    colors: str | None = None
+    color: str | None = Field(
+        default=None, pattern=r"^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$"
+    )
     """
     The color associated with the channel in hex format,
     e.g. for visualization purposes.
