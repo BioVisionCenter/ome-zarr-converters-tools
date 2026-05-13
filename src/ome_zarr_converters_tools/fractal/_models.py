@@ -1,5 +1,7 @@
 """Models to be used with Fractal tasks API."""
 
+from enum import StrEnum
+
 from pydantic import BaseModel, Field
 
 from ome_zarr_converters_tools.models._acquisition import (
@@ -42,6 +44,61 @@ class PixelSizeModel(BaseModel):
     """
 
 
+named_colors = {
+    "Blue": "#0000FF",
+    "Red": "#FF0000",
+    "Yellow": "#FFFF00",
+    "Magenta": "#FF00FF",
+    "Cyan": "#00FFFF",
+    "Gray": "#808080",
+    "Green": "#00FF00",
+    "Orange": "#FF8000",
+    "Purple": "#8000FF",
+    "Teal": "#008080",
+    "Lime": "#00FF80",
+    "Amber": "#FFBF00",
+    "Pink": "#FF0080",
+    "Navy": "#000080",
+    "Maroon": "#800000",
+    "Olive": "#808000",
+    "Coral": "#FF7F50",
+    "Violet": "#EE82EE",
+}
+
+
+class DefaultColorConversion(StrEnum):
+    """Default color conversion for the channels."""
+
+    def to_hexstr(self) -> str:
+        color = named_colors.get(self.name)
+        if color is None:
+            raise ValueError(f"No default color found for {self.name=}")
+        return color
+
+
+DefaultColor = StrEnum(
+    "DefaultColor",
+    {name: f"{name} ({val})" for name, val in named_colors.items()},
+    type=DefaultColorConversion,
+)
+
+
+class ChannelInfoUI(BaseModel):
+    """Channel information."""
+
+    channel_label: str
+    """Label of the channel."""
+    wavelength_id: str | None = None
+    """
+    The wavelength ID of the channel.
+    This field can be used in some tasks as alternative to channel_label,
+    e.g. for multiplexed acquisitions it can be used for applying illumination
+    correction based on wavelength ID instead of channel name.
+    """
+    color: DefaultColor = DefaultColor.Blue
+    """The color associated with the channel, e.g. for visualization purposes."""
+
+
 class AcquisitionOptions(BaseModel):
     """Acquisition options for conversion.
 
@@ -52,7 +109,7 @@ class AcquisitionOptions(BaseModel):
     details from AcquisitionDetails model.
     """
 
-    channels: list[ChannelInfo] | None = None
+    channels: list[ChannelInfoUI] | None = None
     """List of channel information."""
     pixel_info: PixelSizeModel | None = Field(
         default=None, title="Pixel Size Information"
@@ -97,7 +154,16 @@ class AcquisitionOptions(BaseModel):
         """
         updated_details = acquisition_details.model_copy()
         if self.channels is not None:
-            updated_details.channels = self.channels
+            _updated_channels = []
+            for channel in self.channels:
+                _updated_channels.append(
+                    ChannelInfo(
+                        channel_label=channel.channel_label,
+                        wavelength_id=channel.wavelength_id,
+                        color=channel.color.to_hexstr(),
+                    )
+                )
+            updated_details.channels = _updated_channels
         if self.pixel_info is not None:
             updated_details.pixelsize = self.pixel_info.pixelsize
             updated_details.z_spacing = self.pixel_info.z_spacing
