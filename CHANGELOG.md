@@ -11,6 +11,9 @@
 
 ## [v0.8.1]
 
+### Fix
+- Fix `setup_plates` silently reusing an existing plate instead of replacing it when `overwrite_mode=OVERWRITE`; the `OVERWRITE` branch now unconditionally calls `create_empty_plate(overwrite=True)` instead of falling through the open-or-create try/except.
+
 ## [v0.8.0]
 
 ### Features
