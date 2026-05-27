@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url>
+         <loc>https://github.com/BioVisionCenter/ome-zarr-converters-tools/v0.8.1/</loc>
+         <lastmod>2026-05-27</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/BioVisionCenter/ome-zarr-converters-tools/v0.8.1/advanced_tutorial/</loc>
+         <lastmod>2026-05-27</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/BioVisionCenter/ome-zarr-converters-tools/v0.8.1/api/</loc>
+         <lastmod>2026-05-27</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/BioVisionCenter/ome-zarr-converters-tools/v0.8.1/converters_as_fractal_tasks/</loc>
+         <lastmod>2026-05-27</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/BioVisionCenter/ome-zarr-converters-tools/v0.8.1/hcs_tutorial/</loc>
+         <lastmod>2026-05-27</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/BioVisionCenter/ome-zarr-converters-tools/v0.8.1/images_tutorial/</loc>
+         <lastmod>2026-05-27</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/BioVisionCenter/ome-zarr-converters-tools/v0.8.1/pipeline/</loc>
+         <lastmod>2026-05-27</lastmod>
+    </url>
+</urlset>
