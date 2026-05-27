@@ -71,7 +71,7 @@ class ColorMenuBase(StrEnum):
 
     def to_hexstr(self) -> str | None:
         if self.name == "Auto":
-            # Auto color assignment is handled in AcquisitionDetailsModel
+            # Auto color assignment is handled by ChannelInfo's model validator when color=None
             return None
         color = named_colors.get(self.name)
         if color is None:
