@@ -5,6 +5,7 @@ import pytest
 from ome_zarr_converters_tools.fractal._models import (
     AcquisitionOptions,
     ChannelInfoUI,
+    ColorMenu,
     ConvertParallelInitArgs,
     PixelSizeModel,
     converters_tools_models,
@@ -85,6 +86,17 @@ class TestAcquisitionOptions:
         assert updated.channels == acq.channels
         assert updated.pixelsize == acq.pixelsize
 
+    def test_channel_info_ui_default_color_is_auto(self) -> None:
+        ch = ChannelInfoUI(channel_label="DAPI")
+        assert ch.color == ColorMenu.Auto
+
+    def test_color_menu_auto_to_hexstr_returns_none(self) -> None:
+        assert ColorMenu.Auto.to_hexstr() is None  # type: ignore[attr-defined]
+
+    def test_color_menu_explicit_to_hexstr_returns_hex(self) -> None:
+        assert ColorMenu.Red.to_hexstr() == "#FF0000"  # type: ignore[attr-defined]
+        assert ColorMenu.Blue.to_hexstr() == "#0000FF"  # type: ignore[attr-defined]
+
     def test_update_acquisition_details_channels(self) -> None:
         acq = AcquisitionDetails(
             channels=[ChannelInfo(channel_label="DAPI")],
@@ -103,6 +115,35 @@ class TestAcquisitionOptions:
         assert len(channels) == 2
         assert channels[0].channel_label == "GFP"
         assert channels[0].color is not None
+
+    def test_update_auto_color_triggers_auto_assignment(self) -> None:
+        acq = AcquisitionDetails()
+        opts = AcquisitionOptions(channels=[
+            ChannelInfoUI(channel_label="DAPI"),
+            ChannelInfoUI(channel_label="GFP"),
+        ])
+        updated = opts.update_acquisition_details(acq)
+        assert updated.channels is not None
+        assert updated.channels[0].color == "#0000FF"  # DAPI → Blue
+        assert updated.channels[1].color == "#00FF00"  # GFP → Green
+
+    def test_update_explicit_color_overrides_auto_assignment(self) -> None:
+        acq = AcquisitionDetails()
+        opts = AcquisitionOptions(channels=[
+            ChannelInfoUI(channel_label="DAPI", color=ColorMenu.Red),
+        ])
+        updated = opts.update_acquisition_details(acq)
+        assert updated.channels is not None
+        assert updated.channels[0].color == "#FF0000"  # explicit Red, not DAPI Blue
+
+    def test_update_wavelength_id_used_for_auto_color(self) -> None:
+        acq = AcquisitionDetails()
+        opts = AcquisitionOptions(channels=[
+            ChannelInfoUI(channel_label="x", wavelength_id="561"),
+        ])
+        updated = opts.update_acquisition_details(acq)
+        assert updated.channels is not None
+        assert updated.channels[0].color == "#FFFF00"  # 561 nm → Yellow
 
     def test_update_acquisition_details_pixel_info(self) -> None:
         acq = AcquisitionDetails(
