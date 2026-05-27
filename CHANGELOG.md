@@ -11,11 +11,6 @@
 
 ## [v0.8.1]
 
-### Fix
-- Fix syntax error in `_color_from_channel_label` that prevented the module from loading.
-- Fix `ChannelInfo.validate_channel_info` model validator to mutate `self` in-place (Pydantic v2 requirement) instead of returning `model_copy`.
-- Fix `setup_plates` silently reusing an existing plate instead of replacing it when `overwrite_mode=OVERWRITE`; the `OVERWRITE` branch now unconditionally calls `create_empty_plate(overwrite=True)` instead of falling through the open-or-create try/except.
-
 ## [v0.8.0]
 
 ### Features
