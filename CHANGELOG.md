@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.8.2]
+
+### Fix
+- Fix `_find_offset` in `_snap_utils.py` incorrectly rejecting jittered regular grids when `tolerance > 0`: the hardcoded `1e-6` threshold used to filter intra-column near-zero diffs has been replaced with `tolerance`, so same-column position noise is correctly discarded before computing the grid step.
+
 ## [v0.8.1]
 
 ### Fix
