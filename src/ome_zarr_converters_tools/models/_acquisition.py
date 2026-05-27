@@ -1,5 +1,7 @@
 """Models for defining regions to be converted into OME-Zarr format."""
 
+import re
+from difflib import SequenceMatcher
 from enum import StrEnum
 from typing import Literal
 
@@ -8,6 +10,7 @@ from pydantic import (
     ConfigDict,
     Field,
     field_validator,
+    model_validator,
 )
 
 CANONICAL_AXES_TYPE = Literal["t", "c", "z", "y", "x"]
@@ -33,6 +36,74 @@ def default_axes_builder(is_time_series: bool) -> list[CANONICAL_AXES_TYPE]:
         return ["c", "z", "y", "x"]
 
 
+_WAVELENGTH_COLOR_TABLE: list[tuple[int, str]] = [
+    (380, "#FF00FF"),  # UV (<380 nm)      → Magenta
+    (450, "#0000FF"),  # Violet/Blue       → Blue
+    (495, "#00FFFF"),  # Cyan              → Cyan
+    (520, "#00FF00"),  # Green             → Green
+    (560, "#00FF80"),  # Lime/Yellow-green → Lime
+    (590, "#FFFF00"),  # Yellow            → Yellow
+    (620, "#FF8000"),  # Orange            → Orange
+    (750, "#FF0000"),  # Red               → Red
+]
+_WAVELENGTH_VALID_RANGE = (200, 1500)
+
+_LABEL_COLOR_MAP: dict[str, str] = {
+    "dapi": "#0000FF",
+    "hoechst": "#0000FF",
+    "blue": "#0000FF",
+    "cfp": "#00FFFF",
+    "cyan": "#00FFFF",
+    "gfp": "#00FF00",
+    "egfp": "#00FF00",
+    "fitc": "#00FF00",
+    "green": "#00FF00",
+    "yfp": "#FFFF00",
+    "yellow": "#FFFF00",
+    "cy3": "#FFFF00",
+    "rfp": "#FF0000",
+    "mcherry": "#FF0000",
+    "cy5": "#FF0000",
+    "red": "#FF0000",
+    "cy7": "#FF00FF",
+    "magenta": "#FF00FF",
+    "brightfield": "#808080",
+    "gray": "#808080",
+}
+
+
+def _color_from_wavelength_id(wavelength_id: str | None) -> str | None:
+    """Assign a default color based on the wavelength ID."""
+    if wavelength_id is None:
+        return None
+    match = re.search(r"\d+", wavelength_id)
+    if match is None:
+        return None
+    wavelength = int(match.group())
+    lo, hi = _WAVELENGTH_VALID_RANGE
+    # If wavelength is out of visible range,
+    # return None to allow fallback to label-based color assignment
+    if not (lo <= wavelength <= hi):
+        return None
+    # Assign color based on wavelength ranges corresponding to visible light
+    for upper_bound, color in _WAVELENGTH_COLOR_TABLE:
+        if wavelength < upper_bound:
+            return color
+    return "#FF00FF"  # >= 750 nm: far-red/IR → Magenta
+
+
+def _color_from_channel_label(channel_label: str) -> str:
+    """Assign a default color based on the channel label using fuzzy matching."""
+    lower = channel_label.lower()
+    # Use fuzzy string matching to find the closest label in the color map
+    # This allows for flexible matching of common fluorophore names and colors
+    similarity = {
+        key: SequenceMatcher(None, lower, key).ratio() for key in _LABEL_COLOR_MAP
+    }
+    best = max(similarity, key=similarity.get)  # type: ignore
+    return _LABEL_COLOR_MAP[best]
+
+
 class ChannelInfo(BaseModel):
     """Channel information."""
 
@@ -52,6 +123,17 @@ class ChannelInfo(BaseModel):
     The color associated with the channel in hex format,
     e.g. for visualization purposes.
     """
+
+    @model_validator(mode="after")
+    def validate_channel_info(self) -> "ChannelInfo":
+        """Assign a default color if None is provided."""
+        if self.color is not None:
+            return self
+        color = _color_from_wavelength_id(self.wavelength_id)
+        if color is None:
+            color = _color_from_channel_label(self.channel_label)
+        self.color = color
+        return self
 
 
 class StageOrientation(BaseModel):

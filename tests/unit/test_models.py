@@ -101,6 +101,106 @@ class TestAcquisitionDetails:
             )
 
 
+class TestChannelInfo:
+    """Tests for ChannelInfo color assignment logic."""
+
+    def test_wavelength_uv_gives_magenta(self) -> None:
+        ch = ChannelInfo(channel_label="UV", wavelength_id="350")
+        assert ch.color == "#FF00FF"
+
+    def test_wavelength_violet_gives_blue(self) -> None:
+        ch = ChannelInfo(channel_label="x", wavelength_id="405")
+        assert ch.color == "#0000FF"
+
+    def test_wavelength_cyan_band(self) -> None:
+        ch = ChannelInfo(channel_label="x", wavelength_id="488")
+        assert ch.color == "#00FFFF"
+
+    def test_wavelength_green_band(self) -> None:
+        ch = ChannelInfo(channel_label="x", wavelength_id="510")
+        assert ch.color == "#00FF00"
+
+    def test_wavelength_lime_band(self) -> None:
+        ch = ChannelInfo(channel_label="x", wavelength_id="540")
+        assert ch.color == "#00FF80"
+
+    def test_wavelength_yellow_band(self) -> None:
+        ch = ChannelInfo(channel_label="x", wavelength_id="575")
+        assert ch.color == "#FFFF00"
+
+    def test_wavelength_orange_band(self) -> None:
+        ch = ChannelInfo(channel_label="x", wavelength_id="605")
+        assert ch.color == "#FF8000"
+
+    def test_wavelength_red_band(self) -> None:
+        ch = ChannelInfo(channel_label="x", wavelength_id="640")
+        assert ch.color == "#FF0000"
+
+    def test_wavelength_far_ir_gives_magenta(self) -> None:
+        ch = ChannelInfo(channel_label="x", wavelength_id="800")
+        assert ch.color == "#FF00FF"
+
+    def test_wavelength_nm_suffix_parsed(self) -> None:
+        ch = ChannelInfo(channel_label="x", wavelength_id="561nm")
+        assert ch.color == "#FFFF00"
+
+    def test_wavelength_out_of_range_low_falls_back_to_label(self) -> None:
+        ch = ChannelInfo(channel_label="DAPI", wavelength_id="1")
+        assert ch.color == "#0000FF"
+
+    def test_wavelength_out_of_range_high_falls_back_to_label(self) -> None:
+        ch = ChannelInfo(channel_label="DAPI", wavelength_id="5000")
+        assert ch.color == "#0000FF"
+
+    def test_wavelength_non_numeric_falls_back_to_label(self) -> None:
+        ch = ChannelInfo(channel_label="DAPI", wavelength_id="GFP")
+        assert ch.color == "#0000FF"
+
+    def test_wavelength_none_falls_back_to_label(self) -> None:
+        ch = ChannelInfo(channel_label="DAPI", wavelength_id=None)
+        assert ch.color == "#0000FF"
+
+    def test_label_dapi_gives_blue(self) -> None:
+        ch = ChannelInfo(channel_label="DAPI")
+        assert ch.color == "#0000FF"
+
+    def test_label_gfp_gives_green(self) -> None:
+        ch = ChannelInfo(channel_label="GFP")
+        assert ch.color == "#00FF00"
+
+    def test_label_rfp_gives_red(self) -> None:
+        ch = ChannelInfo(channel_label="RFP")
+        assert ch.color == "#FF0000"
+
+    def test_label_mcherry_gives_red(self) -> None:
+        ch = ChannelInfo(channel_label="mCherry")
+        assert ch.color == "#FF0000"
+
+    def test_label_cfp_gives_cyan(self) -> None:
+        ch = ChannelInfo(channel_label="CFP")
+        assert ch.color == "#00FFFF"
+
+    def test_label_case_insensitive(self) -> None:
+        assert (
+            ChannelInfo(channel_label="dapi").color
+            == ChannelInfo(channel_label="DAPI").color
+        )
+
+    def test_explicit_color_not_overwritten(self) -> None:
+        ch = ChannelInfo(channel_label="DAPI", color="#FF0000")
+        assert ch.color == "#FF0000"
+
+    def test_same_label_produces_same_color(self) -> None:
+        assert ChannelInfo(channel_label="Channel 1") == ChannelInfo(
+            channel_label="Channel 1"
+        )
+
+    def test_color_is_always_set_after_validation(self) -> None:
+        ch = ChannelInfo(channel_label="unknown_fluorophore_xyz")
+        assert ch.color is not None
+        assert ch.color.startswith("#")
+
+
 class TestConverterOptions:
     """Tests for the ConverterOptions model."""
 

@@ -2,7 +2,12 @@
 
 ## [v0.8.1]
 
+### Features
+- Implement automatic color assignment in `ChannelInfo`: wavelength-based lookup covers the visible spectrum (200–1500 nm valid range, returns `None` outside bounds to fall back to label matching), and label-based fallback uses `SequenceMatcher` fuzzy matching against common fluorophore/color names (DAPI, GFP, RFP, CFP, mCherry, Cy3/5/7, FITC, etc.).
+
 ### Fix
+- Fix syntax error in `_color_from_channel_label` that prevented the module from loading.
+- Fix `ChannelInfo.validate_channel_info` model validator to mutate `self` in-place (Pydantic v2 requirement) instead of returning `model_copy`.
 - Fix `setup_plates` silently reusing an existing plate instead of replacing it when `overwrite_mode=OVERWRITE`; the `OVERWRITE` branch now unconditionally calls `create_empty_plate(overwrite=True)` instead of falling through the open-or-create try/except.
 
 ## [v0.8.0]
