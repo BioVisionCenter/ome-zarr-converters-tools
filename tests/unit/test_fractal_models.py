@@ -118,10 +118,12 @@ class TestAcquisitionOptions:
 
     def test_update_auto_color_triggers_auto_assignment(self) -> None:
         acq = AcquisitionDetails()
-        opts = AcquisitionOptions(channels=[
-            ChannelInfoUI(channel_label="DAPI"),
-            ChannelInfoUI(channel_label="GFP"),
-        ])
+        opts = AcquisitionOptions(
+            channels=[
+                ChannelInfoUI(channel_label="DAPI"),
+                ChannelInfoUI(channel_label="GFP"),
+            ]
+        )
         updated = opts.update_acquisition_details(acq)
         assert updated.channels is not None
         assert updated.channels[0].color == "#0000FF"  # DAPI → Blue
@@ -129,18 +131,22 @@ class TestAcquisitionOptions:
 
     def test_update_explicit_color_overrides_auto_assignment(self) -> None:
         acq = AcquisitionDetails()
-        opts = AcquisitionOptions(channels=[
-            ChannelInfoUI(channel_label="DAPI", color=ColorMenu.Red),
-        ])
+        opts = AcquisitionOptions(
+            channels=[
+                ChannelInfoUI(channel_label="DAPI", color=ColorMenu.Red),
+            ]
+        )
         updated = opts.update_acquisition_details(acq)
         assert updated.channels is not None
         assert updated.channels[0].color == "#FF0000"  # explicit Red, not DAPI Blue
 
     def test_update_wavelength_id_used_for_auto_color(self) -> None:
         acq = AcquisitionDetails()
-        opts = AcquisitionOptions(channels=[
-            ChannelInfoUI(channel_label="x", wavelength_id="561"),
-        ])
+        opts = AcquisitionOptions(
+            channels=[
+                ChannelInfoUI(channel_label="x", wavelength_id="561"),
+            ]
+        )
         updated = opts.update_acquisition_details(acq)
         assert updated.channels is not None
         assert updated.channels[0].color == "#FFFF00"  # 561 nm → Yellow
