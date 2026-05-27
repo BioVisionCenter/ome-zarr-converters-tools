@@ -294,6 +294,55 @@ class TestSetupPlates:
                 overwrite_mode=OverwriteMode.NO_OVERWRITE,
             )
 
+    def test_overwrite_replaces_existing_plate(self, tmp_path: Path) -> None:
+        # Create plate with image in well A/1
+        images_a = _make_plate_tiled_images(num_images=1)
+        zarr_dir = str(tmp_path)
+        setup_plates(
+            zarr_dir=zarr_dir,
+            tiled_images=images_a,
+            overwrite_mode=OverwriteMode.OVERWRITE,
+        )
+        # Overwrite with a different image in well B/2
+        acq = AcquisitionDetails(
+            channels=[ChannelInfo(channel_label="DAPI")],
+            pixelsize=1.0,
+            z_spacing=1.0,
+            t_spacing=1.0,
+        )
+        coll = ImageInPlate(plate_name="TestPlate", row="B", column=2, acquisition=0)
+        tile = build_dummy_tile(
+            fov_name="FOV_new",
+            start=StartPosition(x=0, y=0),
+            shape=TileShape(x=64, y=64, z=1, c=1, t=1),
+            collection=coll,
+            acquisition_details=acq,
+        )
+        images_b = tiled_image_from_tiles(
+            tiles=[tile], converter_options=ConverterOptions()
+        )
+        setup_plates(
+            zarr_dir=zarr_dir,
+            tiled_images=images_b,
+            overwrite_mode=OverwriteMode.OVERWRITE,
+        )
+        plate = open_ome_zarr_plate(tmp_path / "TestPlate.zarr")
+        image_paths = plate.images_paths()
+        # Old plate (well A/1) must be gone; only new plate (well B/2) remains
+        assert len(image_paths) == 1
+        assert not any("A" in p for p in image_paths), (
+            f"Old well A image still present after OVERWRITE: {image_paths}"
+        )
+
+    def test_no_overwrite_succeeds_when_plate_absent(self, tmp_path: Path) -> None:
+        images = _make_plate_tiled_images()
+        setup_plates(
+            zarr_dir=str(tmp_path),
+            tiled_images=images,
+            overwrite_mode=OverwriteMode.NO_OVERWRITE,
+        )
+        assert (tmp_path / "TestPlate.zarr").exists()
+
     def test_writes_condition_table(self, tmp_path: Path) -> None:
         images = _make_plate_tiled_images(attributes={"drug": ["DMSO"]})
         zarr_dir = str(tmp_path)

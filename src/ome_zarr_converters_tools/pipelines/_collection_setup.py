@@ -92,15 +92,32 @@ def setup_plates(
                     f"replace it, or "
                     f"overwrite_mode={OverwriteMode.EXTEND.value} to add to it."
                 )
-        try:
-            # This can only succeed in "extend" mode if the group already exists
-            plate = open_ome_zarr_plate(plante_url, cache=True)
-        except Exception:
+        if overwrite_mode == OverwriteMode.OVERWRITE:
             plate = create_empty_plate(
                 store=plante_url,
                 name=plate_path,
                 ngff_version=ngff_version,
                 overwrite=True,
+                cache=True,
+            )
+        elif overwrite_mode == OverwriteMode.EXTEND:
+            try:
+                plate = open_ome_zarr_plate(plante_url, cache=True)
+            except Exception:
+                plate = create_empty_plate(
+                    store=plante_url,
+                    name=plate_path,
+                    ngff_version=ngff_version,
+                    overwrite=True,
+                    cache=True,
+                )
+        else:
+            # NO_OVERWRITE — pre-flight check above already raised if plate existed
+            plate = create_empty_plate(
+                store=plante_url,
+                name=plate_path,
+                ngff_version=ngff_version,
+                overwrite=False,
                 cache=True,
             )
         existing_image = plate.images_paths()
