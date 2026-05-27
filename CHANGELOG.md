@@ -1,9 +1,15 @@
 # Changelog
 
-## [v0.8.1]
+## [v0.9.0]
 
 ### Features
 - Implement automatic color assignment in `ChannelInfo`: wavelength-based lookup covers the visible spectrum (200–1500 nm valid range, returns `None` outside bounds to fall back to label matching), and label-based fallback uses `SequenceMatcher` fuzzy matching against common fluorophore/color names (DAPI, GFP, RFP, CFP, mCherry, Cy3/5/7, FITC, etc.).
+
+### API Breaking Changes
+- `DefaultColor` / `DefaultColorConversion` renamed to `ColorMenu` / `ColorMenuBase`; update any direct imports of these names.
+- `ChannelInfoUI.color` default changed from `DefaultColor.Blue` to `ColorMenu.Auto`; channels that previously defaulted to blue will now have their color auto-assigned from the label or wavelength ID.
+
+## [v0.8.1]
 
 ### Fix
 - Fix syntax error in `_color_from_channel_label` that prevented the module from loading.
