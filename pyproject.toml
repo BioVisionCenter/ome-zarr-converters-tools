@@ -90,9 +90,7 @@ dev = [
     "ruff",
 ]
 
-zarrs = [
-    "zarrs",
-]
+zarrs = ["zarrs"]
 
 docs = [
     "mkdocs==1.6.1",
@@ -159,6 +157,9 @@ ignore = [
 [tool.ruff.format]
 docstring-code-format = true
 skip-magic-trailing-comma = false # default is false
+
+[tool.ty.environment]
+python = ".pixi/envs/dev"
 
 # https://mypy.readthedocs.io/en/stable/config_file.html
 [tool.mypy]
