@@ -10,8 +10,6 @@ fallback uses `SequenceMatcher` fuzzy matching against common fluorophore/color 
 - `DefaultColor` / `DefaultColorConversion` renamed to `ColorMenu` / `ColorMenuBase`; update any direct imports of these names.
 - `ChannelInfoUI.color` default changed from `DefaultColor.Blue` to `ColorMenu.Auto`; channels that previously defaulted to blue will now have their color auto-assigned from the label or wavelength ID.
 
-## [v0.8.3]
-
 ### Fix
 - Fix three pre-existing ruff violations in `tests/unit/test_registration.py` (E501 long comment, two RUF003 ambiguous `×` characters).
 
