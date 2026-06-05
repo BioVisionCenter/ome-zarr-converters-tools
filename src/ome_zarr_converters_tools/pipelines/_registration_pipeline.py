@@ -2,7 +2,7 @@ from collections.abc import Callable
 from typing import Any, ParamSpec, Protocol, TypedDict
 
 from ome_zarr_converters_tools.core import TiledImage
-from ome_zarr_converters_tools.models import TilingStrategy
+from ome_zarr_converters_tools.models import StagePositionCorrections, TilingStrategy
 from ome_zarr_converters_tools.pipelines._alignment import (
     apply_align_to_pixel_grid,
     apply_fov_alignment_corrections,
@@ -65,7 +65,7 @@ def apply_registration_pipeline(
 
 
 def build_default_registration_pipeline(
-    alignment_corrections, tiling_strategy: TilingStrategy
+    alignment_corrections: StagePositionCorrections, tiling_strategy: TilingStrategy
 ) -> list[RegistrationStep]:
     return [
         RegistrationStep(name="remove_offsets", params={}),

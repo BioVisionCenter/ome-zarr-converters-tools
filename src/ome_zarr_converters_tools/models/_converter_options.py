@@ -22,7 +22,7 @@ class AutoTiling(BaseModel):
     """
     Automatically determine if Snap to Grid is possible, otherwise use Snap to Corners.
     """
-    tolerance: float = Field(default=0, ge=0, title="Tiling Tolerance (in pixels)")
+    tolerance: float = Field(default=1, ge=0, title="Tiling Tolerance (in pixels)")
 
 
 class SnapToGridTiling(BaseModel):
@@ -31,7 +31,7 @@ class SnapToGridTiling(BaseModel):
     Tile images to fit a regular grid. This is only possible if image positions align
     to a grid (potentially with overlap).
     """
-    tolerance: float = Field(default=0, ge=0, title="Tiling Tolerance (in pixels)")
+    tolerance: float = Field(default=1, ge=0, title="Tiling Tolerance (in pixels)")
 
 
 class SnapToCornersTiling(BaseModel):
