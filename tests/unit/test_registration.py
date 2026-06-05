@@ -361,6 +361,84 @@ class TestSnapUtils:
         assert grid.length_x == 100.0
         assert np.isclose(grid.offset_x, 95.5)  # mean of 95 and 96
 
+    def test_check_if_regular_grid_with_column_jitter(self) -> None:
+        # Regression for hardcoded 1e-6 threshold: same-column tiles have ±1 px x jitter.
+        # Sorted x diffs are [2.0, 98.0, 2.0]; the old filter kept all three making
+        # the median ~2, which caused allclose to reject the valid ~98 step.
+        tiles = [
+            _make_pixel_tile_slice(1.0, 0.0, 100.0, 100.0, "A"),
+            _make_pixel_tile_slice(-1.0, 100.0, 100.0, 100.0, "B"),
+            _make_pixel_tile_slice(99.0, 0.0, 100.0, 100.0, "C"),
+            _make_pixel_tile_slice(101.0, 100.0, 100.0, 100.0, "D"),
+        ]
+        grid = check_if_regular_grid(tiles, tolerance=5.0)
+        assert grid.num_x == 2
+        assert grid.num_y == 2
+        with pytest.raises(NotAGridError):
+            check_if_regular_grid(tiles, tolerance=0.0)
+
+    def test_check_if_regular_grid_2x3_jitter(self) -> None:
+        # Regression: 2-col × 3-row grid matching the debug.py scenario.
+        jitter = [[-1.5, 0.5, 1.0], [1.5, -0.5, -1.0]]
+        tiles = [
+            _make_pixel_tile_slice(
+                x * 100 + jitter[x][y],
+                y * 100 + jitter[x][y],
+                100.0,
+                100.0,
+            )
+            for x in range(2)
+            for y in range(3)
+        ]
+        grid = check_if_regular_grid(tiles, tolerance=5.0)
+        assert grid.num_x == 2
+        assert grid.num_y == 3
+        with pytest.raises(NotAGridError):
+            check_if_regular_grid(tiles, tolerance=0.0)
+
+    def test_snap_to_grid_with_column_jitter(self) -> None:
+        # Regression: snapping a jittered 2×2 grid must produce a perfect grid.
+        tiles = {
+            "A": _make_pixel_tile_slice(1.0, 0.0, 100.0, 100.0, "A"),
+            "B": _make_pixel_tile_slice(-1.0, 100.0, 100.0, 100.0, "B"),
+            "C": _make_pixel_tile_slice(99.0, 0.0, 100.0, 100.0, "C"),
+            "D": _make_pixel_tile_slice(101.0, 100.0, 100.0, 100.0, "D"),
+        }
+        offsets = calculate_snap_to_grid_offset(tiles, tolerance=5.0)
+        snapped_x = sorted(
+            {
+                1.0 + offsets["A"]["x"],
+                -1.0 + offsets["B"]["x"],
+                99.0 + offsets["C"]["x"],
+                101.0 + offsets["D"]["x"],
+            }
+        )
+        snapped_y = sorted(
+            {
+                0.0 + offsets["A"]["y"],
+                100.0 + offsets["B"]["y"],
+                0.0 + offsets["C"]["y"],
+                100.0 + offsets["D"]["y"],
+            }
+        )
+        assert len(snapped_x) == 2
+        assert len(snapped_y) == 2
+        assert np.isclose(snapped_x[1] - snapped_x[0], 100.0)
+        assert np.isclose(snapped_y[1] - snapped_y[0], 100.0)
+
+    def test_check_if_regular_grid_jitter_exceeds_tolerance_raises(self) -> None:
+        # Jitter spread of 6 px (from -3 to +3) exceeds tolerance=2 → must raise.
+        tiles = [
+            _make_pixel_tile_slice(3.0, 0.0, 100.0, 100.0, "A"),
+            _make_pixel_tile_slice(-3.0, 100.0, 100.0, 100.0, "B"),
+            _make_pixel_tile_slice(99.0, 0.0, 100.0, 100.0, "C"),
+            _make_pixel_tile_slice(101.0, 100.0, 100.0, 100.0, "D"),
+        ]
+        with pytest.raises(NotAGridError):
+            check_if_regular_grid(tiles, tolerance=2.0)
+        grid = check_if_regular_grid(tiles, tolerance=10.0)
+        assert grid.num_x == 2
+
 
 # --- Tiling tests ---
 

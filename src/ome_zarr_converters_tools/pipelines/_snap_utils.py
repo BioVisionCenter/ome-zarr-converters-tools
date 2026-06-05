@@ -93,7 +93,7 @@ def _find_offset(
     index = 0 if ax == "x" else 1
     sorted_pos = np.sort([box[index] for box in bboxes])
     offsets = np.diff(sorted_pos)
-    offsets = offsets[offsets > 1e-6].tolist()
+    offsets = offsets[offsets > tolerance].tolist()
 
     if len(offsets) == 0:
         return 1.0
