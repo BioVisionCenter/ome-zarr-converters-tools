@@ -66,20 +66,29 @@ named_colors = {
 }
 
 
-class DefaultColorConversion(StrEnum):
+class ColorMenuBase(StrEnum):
     """Default color conversion for the channels."""
 
-    def to_hexstr(self) -> str:
+    def to_hexstr(self) -> str | None:
+        if self.name == "Auto":
+            # Auto color assignment is handled by ChannelInfo's model
+            # validator when color=None
+            return None
         color = named_colors.get(self.name)
         if color is None:
             raise ValueError(f"No default color found for {self.name=}")
         return color
 
 
-DefaultColor = StrEnum(
-    "DefaultColor",
-    {name: f"{name} ({val})" for name, val in named_colors.items()},
-    type=DefaultColorConversion,
+_color_menu = {
+    "Auto": "Auto",
+    **{name: f"{name} ({val})" for name, val in named_colors.items()},
+}
+
+ColorMenu = StrEnum(
+    "ColorMenu",
+    _color_menu,
+    type=ColorMenuBase,
 )
 
 
@@ -95,7 +104,7 @@ class ChannelInfoUI(BaseModel):
     e.g. for multiplexed acquisitions it can be used for applying illumination
     correction based on wavelength ID instead of channel name.
     """
-    color: DefaultColor = DefaultColor.Blue
+    color: ColorMenu = ColorMenu.Auto
     """The color associated with the channel, e.g. for visualization purposes."""
 
 

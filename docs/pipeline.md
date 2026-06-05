@@ -12,7 +12,7 @@ from ome_zarr_converters_tools import ConverterOptions
 opts = ConverterOptions(
     tiling_strategy=AutoTiling(),         # How overlapping FOVs are arranged
     writer_mode=WriterMode.BY_FOV,        # How data is loaded and written
-    stage_position_corrections=AlignmentCorrections(),  # Stage position corrections
+    stage_position_corrections=StagePositionCorrections(),  # Stage position corrections
     omezarr_options=OmeZarrOptions(),     # OME-Zarr writing options (levels, chunks, etc.)
 )
 ```
@@ -90,10 +90,10 @@ axes=["y", "x"]                 # 2D (minimum)
 
 ### Stage Corrections
 
-Some microscopes have inverted or swapped stage axes. Use `StageCorrections` to fix this:
+Some microscopes have inverted or swapped stage axes. Use `StageOrientation` to fix this:
 
 ```python
-from ome_zarr_converters_tools import AcquisitionDetails, StageCorrections
+from ome_zarr_converters_tools import AcquisitionDetails, StageOrientation
 
 acq = AcquisitionDetails(
     pixelsize=0.65,
@@ -228,11 +228,11 @@ The registration pipeline transforms tile positions to prepare them for writing.
 The default pipeline is built with `build_default_registration_pipeline()` and runs four steps in order:
 
 ```python
-from ome_zarr_converters_tools.models import AlignmentCorrections, AutoTiling
+from ome_zarr_converters_tools.models import StagePositionCorrections, AutoTiling
 from ome_zarr_converters_tools.pipelines import build_default_registration_pipeline
 
 pipeline = build_default_registration_pipeline(
-    alignment_corrections=AlignmentCorrections(),
+    alignment_corrections=StagePositionCorrections(),
     tiling_strategy=AutoTiling(),
 )
 ```
@@ -247,14 +247,14 @@ This creates:
 
 4. **`tile_regions`** -- Applies tiling/snapping to remove overlaps between FOVs (see [Tiling Modes](#tiling-modes) below). This is the step that determines the final non-overlapping layout.
 
-### AlignmentCorrections
+### StagePositionCorrections
 
 Controls which alignment corrections are applied in the `fov_alignment_corrections` step:
 
 ```python
-from ome_zarr_converters_tools.models import AlignmentCorrections
+from ome_zarr_converters_tools.models import StagePositionCorrections
 
-corrections = AlignmentCorrections(
+corrections = StagePositionCorrections(
     align_xy=True,   # Align XY positions within each FOV (default: False)
     align_z=False,    # Z alignment (not yet implemented)
     align_t=False,    # T alignment (not yet implemented)
@@ -316,17 +316,64 @@ from ome_zarr_converters_tools.models import (
 
 # For regular grid acquisitions (e.g., snake scan)
 pipeline = build_default_registration_pipeline(
-    AlignmentCorrections(), SnapToGridTiling()
+    StagePositionCorrections(), SnapToGridTiling()
 )
 
 # For irregular FOV arrangements
 pipeline = build_default_registration_pipeline(
-    AlignmentCorrections(), SnapToCornersTiling()
+    StagePositionCorrections(), SnapToCornersTiling()
 )
 
 # Let the library decide (with tolerance for minor stage jitter)
 pipeline = build_default_registration_pipeline(
-    AlignmentCorrections(), AutoTiling(tolerance=2.5)
+    StagePositionCorrections(), AutoTiling(tolerance=2.5)
+)
+```
+
+## RuntimeSettings
+
+`RuntimeSettings` configures low-level runtime behaviour for a conversion call. It is applied as a scoped context manager, so settings are restored when the block exits.
+
+```python
+from ome_zarr_converters_tools import RuntimeSettings
+from ome_zarr_converters_tools.models import ThreadScheduler
+
+settings = RuntimeSettings(
+    use_zarrs_codec=True,                     # Use the Zarrs Rust codec backend
+    dask_scheduler=ThreadScheduler(num_workers=4),  # Run Dask with 4 threads
+)
+
+with settings.apply():
+    # Conversion code here runs under the configured scheduler and codec
+    ...
+```
+
+### Dask Schedulers
+
+| Scheduler | Description |
+|-----------|-------------|
+| `DefaultScheduler()` | Do not change Dask's scheduler (default) |
+| `ThreadScheduler(num_workers=8)` | Use Dask's threaded scheduler |
+| `ProcessScheduler(num_workers=8)` | Use Dask's multiprocessing scheduler |
+| `SynchronousScheduler()` | Use Dask's synchronous scheduler (single-threaded, useful for debugging) |
+
+### Zarrs Codec Backend
+
+Setting `use_zarrs_codec=True` switches Zarr to the `zarrs.ZarrsCodecPipeline` Rust backend, which can significantly speed up encoding/decoding. This requires the optional `zarrs` package:
+
+```bash
+pip install ome-zarr-converters-tools[zarrs]
+```
+
+### Temporary JSON Storage
+
+`RuntimeSettings` also controls where temporary JSON metadata is stored during conversion via `temp_json_options`. The default stores it alongside the Zarr output:
+
+```python
+from ome_zarr_converters_tools.models._runtime_settings import TempJsonOptions
+
+settings = RuntimeSettings(
+    temp_json_options=TempJsonOptions(temp_url="{zarr_dir}/_my_tmp"),
 )
 ```
 

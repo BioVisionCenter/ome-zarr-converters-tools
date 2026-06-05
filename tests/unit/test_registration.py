@@ -362,7 +362,7 @@ class TestSnapUtils:
         assert np.isclose(grid.offset_x, 95.5)  # mean of 95 and 96
 
     def test_check_if_regular_grid_with_column_jitter(self) -> None:
-        # Regression for hardcoded 1e-6 threshold: same-column tiles have ±1 px x jitter.
+        # Regression for hardcoded 1e-6 threshold: same-column tiles have +-1 px jitter.
         # Sorted x diffs are [2.0, 98.0, 2.0]; the old filter kept all three making
         # the median ~2, which caused allclose to reject the valid ~98 step.
         tiles = [
@@ -378,7 +378,7 @@ class TestSnapUtils:
             check_if_regular_grid(tiles, tolerance=0.0)
 
     def test_check_if_regular_grid_2x3_jitter(self) -> None:
-        # Regression: 2-col × 3-row grid matching the debug.py scenario.
+        # Regression: 2-col x 3-row grid matching the debug.py scenario.
         jitter = [[-1.5, 0.5, 1.0], [1.5, -0.5, -1.0]]
         tiles = [
             _make_pixel_tile_slice(
@@ -397,7 +397,7 @@ class TestSnapUtils:
             check_if_regular_grid(tiles, tolerance=0.0)
 
     def test_snap_to_grid_with_column_jitter(self) -> None:
-        # Regression: snapping a jittered 2×2 grid must produce a perfect grid.
+        # Regression: snapping a jittered 2x2 grid must produce a perfect grid.
         tiles = {
             "A": _make_pixel_tile_slice(1.0, 0.0, 100.0, 100.0, "A"),
             "B": _make_pixel_tile_slice(-1.0, 100.0, 100.0, 100.0, "B"),
