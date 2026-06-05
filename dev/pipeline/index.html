@@ -859,10 +859,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#alignmentcorrections" class="md-nav__link">
+  <a href="#stagepositioncorrections" class="md-nav__link">
     <span class="md-ellipsis">
       
-        AlignmentCorrections
+        StagePositionCorrections
       
     </span>
   </a>
@@ -893,6 +893,56 @@
       
     </span>
   </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#runtimesettings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RuntimeSettings
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="RuntimeSettings">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dask-schedulers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dask Schedulers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#zarrs-codec-backend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Zarrs Codec Backend
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#temporary-json-storage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Temporary JSON Storage
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1007,7 +1057,7 @@
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">opts</span> <span class="o">=</span> <span class="n">ConverterOptions</span><span class="p">(</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">tiling_strategy</span><span class="o">=</span><span class="n">AutoTiling</span><span class="p">(),</span>         <span class="c1"># How overlapping FOVs are arranged</span>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">writer_mode</span><span class="o">=</span><span class="n">WriterMode</span><span class="o">.</span><span class="n">BY_FOV</span><span class="p">,</span>        <span class="c1"># How data is loaded and written</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">stage_position_corrections</span><span class="o">=</span><span class="n">AlignmentCorrections</span><span class="p">(),</span>  <span class="c1"># Stage position corrections</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">stage_position_corrections</span><span class="o">=</span><span class="n">StagePositionCorrections</span><span class="p">(),</span>  <span class="c1"># Stage position corrections</span>
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">omezarr_options</span><span class="o">=</span><span class="n">OmeZarrOptions</span><span class="p">(),</span>     <span class="c1"># OME-Zarr writing options (levels, chunks, etc.)</span>
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="p">)</span>
 </code></pre></div>
@@ -1121,8 +1171,8 @@
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="n">axes</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">]</span>                 <span class="c1"># 2D (minimum)</span>
 </code></pre></div>
 <h3 id="stage-corrections">Stage Corrections</h3>
-<p>Some microscopes have inverted or swapped stage axes. Use <code>StageCorrections</code> to fix this:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">AcquisitionDetails</span><span class="p">,</span> <span class="n">StageCorrections</span>
+<p>Some microscopes have inverted or swapped stage axes. Use <code>StageOrientation</code> to fix this:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">AcquisitionDetails</span><span class="p">,</span> <span class="n">StageOrientation</span>
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">acq</span> <span class="o">=</span> <span class="n">AcquisitionDetails</span><span class="p">(</span>
 <a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    <span class="n">pixelsize</span><span class="o">=</span><span class="mf">0.65</span><span class="p">,</span>
@@ -1235,11 +1285,11 @@
 <p>The registration pipeline transforms tile positions to prepare them for writing. It runs as a sequence of steps, each modifying the <code>TiledImage</code> in place. These steps convert raw microscope stage positions into clean, non-overlapping pixel coordinates suitable for writing into a Zarr array.</p>
 <h3 id="default-registration-pipeline">Default Registration Pipeline</h3>
 <p>The default pipeline is built with <code>build_default_registration_pipeline()</code> and runs four steps in order:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">AlignmentCorrections</span><span class="p">,</span> <span class="n">AutoTiling</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">StagePositionCorrections</span><span class="p">,</span> <span class="n">AutoTiling</span>
 <a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.pipelines</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_default_registration_pipeline</span>
 <a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
 <a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="n">pipeline</span> <span class="o">=</span> <span class="n">build_default_registration_pipeline</span><span class="p">(</span>
-<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>    <span class="n">alignment_corrections</span><span class="o">=</span><span class="n">AlignmentCorrections</span><span class="p">(),</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>    <span class="n">alignment_corrections</span><span class="o">=</span><span class="n">StagePositionCorrections</span><span class="p">(),</span>
 <a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>    <span class="n">tiling_strategy</span><span class="o">=</span><span class="n">AutoTiling</span><span class="p">(),</span>
 <a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="p">)</span>
 </code></pre></div>
@@ -1258,11 +1308,11 @@
 <p><strong><code>tile_regions</code></strong> -- Applies tiling/snapping to remove overlaps between FOVs (see <a href="#tiling-modes">Tiling Modes</a> below). This is the step that determines the final non-overlapping layout.</p>
 </li>
 </ol>
-<h3 id="alignmentcorrections">AlignmentCorrections</h3>
+<h3 id="stagepositioncorrections">StagePositionCorrections</h3>
 <p>Controls which alignment corrections are applied in the <code>fov_alignment_corrections</code> step:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">AlignmentCorrections</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">StagePositionCorrections</span>
 <a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="n">corrections</span> <span class="o">=</span> <span class="n">AlignmentCorrections</span><span class="p">(</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="n">corrections</span> <span class="o">=</span> <span class="n">StagePositionCorrections</span><span class="p">(</span>
 <a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>    <span class="n">align_xy</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>   <span class="c1"># Align XY positions within each FOV (default: False)</span>
 <a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>    <span class="n">align_z</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>    <span class="c1"># Z alignment (not yet implemented)</span>
 <a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>    <span class="n">align_t</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>    <span class="c1"># T alignment (not yet implemented)</span>
@@ -1334,18 +1384,71 @@
 <a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>
 <a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="c1"># For regular grid acquisitions (e.g., snake scan)</span>
 <a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a><span class="n">pipeline</span> <span class="o">=</span> <span class="n">build_default_registration_pipeline</span><span class="p">(</span>
-<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a>    <span class="n">AlignmentCorrections</span><span class="p">(),</span> <span class="n">SnapToGridTiling</span><span class="p">()</span>
+<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a>    <span class="n">StagePositionCorrections</span><span class="p">(),</span> <span class="n">SnapToGridTiling</span><span class="p">()</span>
 <a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a><span class="p">)</span>
 <a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a>
 <a id="__codelineno-16-12" name="__codelineno-16-12" href="#__codelineno-16-12"></a><span class="c1"># For irregular FOV arrangements</span>
 <a id="__codelineno-16-13" name="__codelineno-16-13" href="#__codelineno-16-13"></a><span class="n">pipeline</span> <span class="o">=</span> <span class="n">build_default_registration_pipeline</span><span class="p">(</span>
-<a id="__codelineno-16-14" name="__codelineno-16-14" href="#__codelineno-16-14"></a>    <span class="n">AlignmentCorrections</span><span class="p">(),</span> <span class="n">SnapToCornersTiling</span><span class="p">()</span>
+<a id="__codelineno-16-14" name="__codelineno-16-14" href="#__codelineno-16-14"></a>    <span class="n">StagePositionCorrections</span><span class="p">(),</span> <span class="n">SnapToCornersTiling</span><span class="p">()</span>
 <a id="__codelineno-16-15" name="__codelineno-16-15" href="#__codelineno-16-15"></a><span class="p">)</span>
 <a id="__codelineno-16-16" name="__codelineno-16-16" href="#__codelineno-16-16"></a>
 <a id="__codelineno-16-17" name="__codelineno-16-17" href="#__codelineno-16-17"></a><span class="c1"># Let the library decide (with tolerance for minor stage jitter)</span>
 <a id="__codelineno-16-18" name="__codelineno-16-18" href="#__codelineno-16-18"></a><span class="n">pipeline</span> <span class="o">=</span> <span class="n">build_default_registration_pipeline</span><span class="p">(</span>
-<a id="__codelineno-16-19" name="__codelineno-16-19" href="#__codelineno-16-19"></a>    <span class="n">AlignmentCorrections</span><span class="p">(),</span> <span class="n">AutoTiling</span><span class="p">(</span><span class="n">tolerance</span><span class="o">=</span><span class="mf">2.5</span><span class="p">)</span>
+<a id="__codelineno-16-19" name="__codelineno-16-19" href="#__codelineno-16-19"></a>    <span class="n">StagePositionCorrections</span><span class="p">(),</span> <span class="n">AutoTiling</span><span class="p">(</span><span class="n">tolerance</span><span class="o">=</span><span class="mf">2.5</span><span class="p">)</span>
 <a id="__codelineno-16-20" name="__codelineno-16-20" href="#__codelineno-16-20"></a><span class="p">)</span>
+</code></pre></div>
+<h2 id="runtimesettings">RuntimeSettings</h2>
+<p><code>RuntimeSettings</code> configures low-level runtime behaviour for a conversion call. It is applied as a scoped context manager, so settings are restored when the block exits.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">RuntimeSettings</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">ThreadScheduler</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="n">settings</span> <span class="o">=</span> <span class="n">RuntimeSettings</span><span class="p">(</span>
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>    <span class="n">use_zarrs_codec</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>                     <span class="c1"># Use the Zarrs Rust codec backend</span>
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>    <span class="n">dask_scheduler</span><span class="o">=</span><span class="n">ThreadScheduler</span><span class="p">(</span><span class="n">num_workers</span><span class="o">=</span><span class="mi">4</span><span class="p">),</span>  <span class="c1"># Run Dask with 4 threads</span>
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a><span class="p">)</span>
+<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a>
+<a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a><span class="k">with</span> <span class="n">settings</span><span class="o">.</span><span class="n">apply</span><span class="p">():</span>
+<a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a>    <span class="c1"># Conversion code here runs under the configured scheduler and codec</span>
+<a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a>    <span class="o">...</span>
+</code></pre></div>
+<h3 id="dask-schedulers">Dask Schedulers</h3>
+<table>
+<thead>
+<tr>
+<th>Scheduler</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>DefaultScheduler()</code></td>
+<td>Do not change Dask's scheduler (default)</td>
+</tr>
+<tr>
+<td><code>ThreadScheduler(num_workers=8)</code></td>
+<td>Use Dask's threaded scheduler</td>
+</tr>
+<tr>
+<td><code>ProcessScheduler(num_workers=8)</code></td>
+<td>Use Dask's multiprocessing scheduler</td>
+</tr>
+<tr>
+<td><code>SynchronousScheduler()</code></td>
+<td>Use Dask's synchronous scheduler (single-threaded, useful for debugging)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="zarrs-codec-backend">Zarrs Codec Backend</h3>
+<p>Setting <code>use_zarrs_codec=True</code> switches Zarr to the <code>zarrs.ZarrsCodecPipeline</code> Rust backend, which can significantly speed up encoding/decoding. This requires the optional <code>zarrs</code> package:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>pip<span class="w"> </span>install<span class="w"> </span>ome-zarr-converters-tools<span class="o">[</span>zarrs<span class="o">]</span>
+</code></pre></div>
+<h3 id="temporary-json-storage">Temporary JSON Storage</h3>
+<p><code>RuntimeSettings</code> also controls where temporary JSON metadata is stored during conversion via <code>temp_json_options</code>. The default stores it alongside the Zarr output:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.models._runtime_settings</span><span class="w"> </span><span class="kn">import</span> <span class="n">TempJsonOptions</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="n">settings</span> <span class="o">=</span> <span class="n">RuntimeSettings</span><span class="p">(</span>
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>    <span class="n">temp_json_options</span><span class="o">=</span><span class="n">TempJsonOptions</span><span class="p">(</span><span class="n">temp_url</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">{zarr_dir}</span><span class="s2">/_my_tmp&quot;</span><span class="p">),</span>
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="p">)</span>
 </code></pre></div>
 <h2 id="writer-modes">Writer Modes</h2>
 <p>Writer modes control how image data is loaded and written to the OME-Zarr dataset. The choice affects memory usage and performance.</p>
@@ -1391,25 +1494,25 @@
 </tr>
 </tbody>
 </table>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">WriterMode</span><span class="p">,</span> <span class="n">OverwriteMode</span>
-<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.pipelines</span><span class="w"> </span><span class="kn">import</span> <span class="n">tiled_image_creation_pipeline</span>
-<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>
-<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="c1"># For large datasets with limited memory</span>
-<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="n">omezarr</span> <span class="o">=</span> <span class="n">tiled_image_creation_pipeline</span><span class="p">(</span>
-<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>    <span class="n">zarr_url</span><span class="o">=</span><span class="n">zarr_url</span><span class="p">,</span>
-<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a>    <span class="n">tiled_image</span><span class="o">=</span><span class="n">tiled_image</span><span class="p">,</span>
-<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a>    <span class="n">registration_pipeline</span><span class="o">=</span><span class="n">pipeline</span><span class="p">,</span>
-<a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a>    <span class="n">converter_options</span><span class="o">=</span><span class="n">opts</span><span class="p">,</span>
-<a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a>    <span class="n">writer_mode</span><span class="o">=</span><span class="n">WriterMode</span><span class="o">.</span><span class="n">BY_FOV</span><span class="p">,</span>
-<a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a>    <span class="n">overwrite_mode</span><span class="o">=</span><span class="n">OverwriteMode</span><span class="o">.</span><span class="n">OVERWRITE</span><span class="p">,</span>
-<a id="__codelineno-17-12" name="__codelineno-17-12" href="#__codelineno-17-12"></a>    <span class="n">resource</span><span class="o">=</span><span class="n">data_dir</span><span class="p">,</span>
-<a id="__codelineno-17-13" name="__codelineno-17-13" href="#__codelineno-17-13"></a><span class="p">)</span>
-<a id="__codelineno-17-14" name="__codelineno-17-14" href="#__codelineno-17-14"></a>
-<a id="__codelineno-17-15" name="__codelineno-17-15" href="#__codelineno-17-15"></a><span class="c1"># For small datasets where speed matters</span>
-<a id="__codelineno-17-16" name="__codelineno-17-16" href="#__codelineno-17-16"></a><span class="n">omezarr</span> <span class="o">=</span> <span class="n">tiled_image_creation_pipeline</span><span class="p">(</span>
-<a id="__codelineno-17-17" name="__codelineno-17-17" href="#__codelineno-17-17"></a>    <span class="o">...</span><span class="p">,</span>
-<a id="__codelineno-17-18" name="__codelineno-17-18" href="#__codelineno-17-18"></a>    <span class="n">writer_mode</span><span class="o">=</span><span class="n">WriterMode</span><span class="o">.</span><span class="n">IN_MEMORY</span><span class="p">,</span>
-<a id="__codelineno-17-19" name="__codelineno-17-19" href="#__codelineno-17-19"></a><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">WriterMode</span><span class="p">,</span> <span class="n">OverwriteMode</span>
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.pipelines</span><span class="w"> </span><span class="kn">import</span> <span class="n">tiled_image_creation_pipeline</span>
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="c1"># For large datasets with limited memory</span>
+<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a><span class="n">omezarr</span> <span class="o">=</span> <span class="n">tiled_image_creation_pipeline</span><span class="p">(</span>
+<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a>    <span class="n">zarr_url</span><span class="o">=</span><span class="n">zarr_url</span><span class="p">,</span>
+<a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a>    <span class="n">tiled_image</span><span class="o">=</span><span class="n">tiled_image</span><span class="p">,</span>
+<a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a>    <span class="n">registration_pipeline</span><span class="o">=</span><span class="n">pipeline</span><span class="p">,</span>
+<a id="__codelineno-20-9" name="__codelineno-20-9" href="#__codelineno-20-9"></a>    <span class="n">converter_options</span><span class="o">=</span><span class="n">opts</span><span class="p">,</span>
+<a id="__codelineno-20-10" name="__codelineno-20-10" href="#__codelineno-20-10"></a>    <span class="n">writer_mode</span><span class="o">=</span><span class="n">WriterMode</span><span class="o">.</span><span class="n">BY_FOV</span><span class="p">,</span>
+<a id="__codelineno-20-11" name="__codelineno-20-11" href="#__codelineno-20-11"></a>    <span class="n">overwrite_mode</span><span class="o">=</span><span class="n">OverwriteMode</span><span class="o">.</span><span class="n">OVERWRITE</span><span class="p">,</span>
+<a id="__codelineno-20-12" name="__codelineno-20-12" href="#__codelineno-20-12"></a>    <span class="n">resource</span><span class="o">=</span><span class="n">data_dir</span><span class="p">,</span>
+<a id="__codelineno-20-13" name="__codelineno-20-13" href="#__codelineno-20-13"></a><span class="p">)</span>
+<a id="__codelineno-20-14" name="__codelineno-20-14" href="#__codelineno-20-14"></a>
+<a id="__codelineno-20-15" name="__codelineno-20-15" href="#__codelineno-20-15"></a><span class="c1"># For small datasets where speed matters</span>
+<a id="__codelineno-20-16" name="__codelineno-20-16" href="#__codelineno-20-16"></a><span class="n">omezarr</span> <span class="o">=</span> <span class="n">tiled_image_creation_pipeline</span><span class="p">(</span>
+<a id="__codelineno-20-17" name="__codelineno-20-17" href="#__codelineno-20-17"></a>    <span class="o">...</span><span class="p">,</span>
+<a id="__codelineno-20-18" name="__codelineno-20-18" href="#__codelineno-20-18"></a>    <span class="n">writer_mode</span><span class="o">=</span><span class="n">WriterMode</span><span class="o">.</span><span class="n">IN_MEMORY</span><span class="p">,</span>
+<a id="__codelineno-20-19" name="__codelineno-20-19" href="#__codelineno-20-19"></a><span class="p">)</span>
 </code></pre></div>
 <h3 id="choosing-a-writer-mode">Choosing a Writer Mode</h3>
 <ul>
@@ -1443,16 +1546,16 @@
 </tr>
 </tbody>
 </table>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">OverwriteMode</span>
-<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>
-<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="c1"># Fail if output already exists (safe default for production)</span>
-<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="n">overwrite_mode</span> <span class="o">=</span> <span class="n">OverwriteMode</span><span class="o">.</span><span class="n">NO_OVERWRITE</span>
-<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>
-<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="c1"># Replace existing output (useful during development)</span>
-<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a><span class="n">overwrite_mode</span> <span class="o">=</span> <span class="n">OverwriteMode</span><span class="o">.</span><span class="n">OVERWRITE</span>
-<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a>
-<a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a><span class="c1"># Append to existing dataset</span>
-<a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a><span class="n">overwrite_mode</span> <span class="o">=</span> <span class="n">OverwriteMode</span><span class="o">.</span><span class="n">EXTEND</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">OverwriteMode</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="c1"># Fail if output already exists (safe default for production)</span>
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="n">overwrite_mode</span> <span class="o">=</span> <span class="n">OverwriteMode</span><span class="o">.</span><span class="n">NO_OVERWRITE</span>
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a>
+<a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a><span class="c1"># Replace existing output (useful during development)</span>
+<a id="__codelineno-21-7" name="__codelineno-21-7" href="#__codelineno-21-7"></a><span class="n">overwrite_mode</span> <span class="o">=</span> <span class="n">OverwriteMode</span><span class="o">.</span><span class="n">OVERWRITE</span>
+<a id="__codelineno-21-8" name="__codelineno-21-8" href="#__codelineno-21-8"></a>
+<a id="__codelineno-21-9" name="__codelineno-21-9" href="#__codelineno-21-9"></a><span class="c1"># Append to existing dataset</span>
+<a id="__codelineno-21-10" name="__codelineno-21-10" href="#__codelineno-21-10"></a><span class="n">overwrite_mode</span> <span class="o">=</span> <span class="n">OverwriteMode</span><span class="o">.</span><span class="n">EXTEND</span>
 </code></pre></div>
 
 
@@ -1476,7 +1579,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 8, 2026 09:17:12 UTC">May 8, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 5, 2026 13:41:07 UTC">June 5, 2026</span>
   </span>
 
     
