@@ -19,15 +19,7 @@ fallback uses `SequenceMatcher` fuzzy matching against common fluorophore/color 
 
 ### Chores
 - Add missing type annotation for `alignment_corrections` parameter in `build_default_registration_pipeline` (`_registration_pipeline.py`).
-
-## [v0.8.2]
-
-### Features
-- Implement automatic color assignment in `ChannelInfo`: wavelength-based lookup covers the visible spectrum (200–1500 nm valid range, returns `None` outside bounds to fall back to label matching), and label-based fallback uses `SequenceMatcher` fuzzy matching against common fluorophore/color names (DAPI, GFP, RFP, CFP, mCherry, Cy3/5/7, FITC, etc.).
-
-### API Breaking Changes
-- `DefaultColor` / `DefaultColorConversion` renamed to `ColorMenu` / `ColorMenuBase`; update any direct imports of these names.
-- `ChannelInfoUI.color` default changed from `DefaultColor.Blue` to `ColorMenu.Auto`; channels that previously defaulted to blue will now have their color auto-assigned from the label or wavelength ID.
+- Change default `tolerance` from `0` to `1` pixel in `AutoTiling` and `SnapToGridTiling`; aligns with the v0.8.2 fix that made non-zero tolerance work correctly.
 
 ## [v0.8.2]
 
