@@ -3,6 +3,7 @@
 ## [v0.9.1]
 
 ### Features
+- Add `exec_compound_task` public API for running Fractal compound tasks with pluggable execution strategies: `SequentialRunner` (default), `ThreadedRunner` (I/O-bound parallelism via `ThreadPoolExecutor`), and `MultiprocessingRunner` (CPU-bound parallelism via `ProcessPoolExecutor`). All three runner types and `RunnerType` are now exported from the top-level package.
 - Add built-in `setup_singleimage` collection setup handler for `SingleImage` outputs; registered as `"SingleImage"` in the default `_collection_setup_registry` alongside `setup_plates`. The handler enforces the `OverwriteMode` contract (raises `FileExistsError` on `NO_OVERWRITE` when the target zarr already exists) without creating an upfront skeleton, since the zarr group is created during the compute task.
 
 ## [v0.9.0]
