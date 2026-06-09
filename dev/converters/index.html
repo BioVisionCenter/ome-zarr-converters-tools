@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://github.com/BioVisionCenter/ome-zarr-converters-tools/dev/converters_as_fractal_tasks/">
+        <link rel="canonical" href="https://github.com/BioVisionCenter/ome-zarr-converters-tools/dev/converters/">
       
       
-        <link rel="prev" href="../advanced_tutorial/">
+        <link rel="prev" href="../converters_as_fractal_tasks/">
       
       
-        <link rel="next" href="../converters/">
+        <link rel="next" href="../pipeline/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Fractal Tasks - OME-Zarr Converters Tools</title>
+        <title>Converters - OME-Zarr Converters Tools</title>
       
     
     
@@ -84,7 +84,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#building-converters-as-fractal-tasks" class="md-skip">
+        <a href="#converters" class="md-skip">
           Skip to content
         </a>
       
@@ -122,7 +122,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Fractal Tasks
+              Converters
             
           </span>
         </div>
@@ -279,11 +279,9 @@
   
   
   
-    
   
-  
-    <li class="md-tabs__item md-tabs__item--active">
-      <a href="./" class="md-tabs__link">
+    <li class="md-tabs__item">
+      <a href="../converters_as_fractal_tasks/" class="md-tabs__link">
         
   
   
@@ -300,9 +298,11 @@
   
   
   
+    
   
-    <li class="md-tabs__item">
-      <a href="../converters/" class="md-tabs__link">
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
         
   
   
@@ -582,6 +582,33 @@
       
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../converters_as_fractal_tasks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fractal Tasks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
     
   
   
@@ -601,7 +628,7 @@
   <span class="md-ellipsis">
     
   
-    Fractal Tasks
+    Converters
   
 
     
@@ -619,7 +646,7 @@
   <span class="md-ellipsis">
     
   
-    Fractal Tasks
+    Converters
   
 
     
@@ -645,10 +672,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
+  <a href="#fractal-uzh-converters" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Overview
+        fractal-uzh-converters
       
     </span>
   </a>
@@ -656,10 +683,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#init-task" class="md-nav__link">
+  <a href="#fractal-lif-converters" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Init Task
+        fractal-lif-converters
       
     </span>
   </a>
@@ -667,10 +694,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#compute-task" class="md-nav__link">
+  <a href="#fractal-czi-converters" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Compute Task
+        fractal-czi-converters
       
     </span>
   </a>
@@ -678,32 +705,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#acquisitionoptions" class="md-nav__link">
+  <a href="#fractal-nd2-converters" class="md-nav__link">
     <span class="md-ellipsis">
       
-        AcquisitionOptions
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#fractal-manifest-registering-input-models" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Fractal Manifest: Registering Input Models
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#learning-more" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Learning More
+        fractal-nd2-converters
       
     </span>
   </a>
@@ -714,33 +719,6 @@
   
 </nav>
       
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../converters/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Converters
-  
-
-    
-  </span>
-  
-  
-
-      </a>
     </li>
   
 
@@ -827,167 +805,55 @@
   
 
 
-<h1 id="building-converters-as-fractal-tasks">Building Converters as Fractal Tasks</h1>
-<p>The <a href="https://fractal-analytics-platform.github.io/fractal-server/">Fractal platform</a> enables parallel processing of image conversion tasks.
-<code>ome-zarr-converters-tools</code> provides utilities to integrate with Fractal's <strong>init/compute task model</strong>, where:</p>
-<ul>
-<li>An <strong>init task</strong> sets up the output structure and creates a parallelization list</li>
-<li>Multiple <strong>compute tasks</strong> run independently (one per image), each converting a <code>TiledImage</code> to OME-Zarr</li>
-</ul>
-<p>This page shows how to build a converter that plugs into the Fractal workflow.</p>
-<h2 id="overview">Overview</h2>
-<p>The Fractal integration builds on the same pipeline used in the tutorials.
-The difference is that the init task serializes <code>TiledImage</code> objects to JSON and the compute tasks
-deserialize and process them independently.</p>
-<pre class="mermaid"><code>graph LR
-    A[Init Task] --&gt;|parallelization list| B[Compute Task 1]
-    A --&gt;|parallelization list| C[Compute Task 2]
-    A --&gt;|parallelization list| D[Compute Task N]
-    B --&gt; E[OME-Zarr Image 1]
-    C --&gt; F[OME-Zarr Image 2]
-    D --&gt; G[OME-Zarr Image N]</code></pre>
-<h2 id="init-task">Init Task</h2>
-<p>The init task is responsible for:</p>
-<ol>
-<li>Building <code>Tile</code> objects from your data source (DataFrame, custom parsing, etc.)</li>
-<li>Aggregating them into <code>TiledImage</code> objects</li>
-<li>Setting up the OME-Zarr collection structure (plates, wells)</li>
-<li>Creating a parallelization list for the compute tasks</li>
-</ol>
-<p>Use <code>setup_images_for_conversion()</code> which combines steps 3 and 4:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">AcquisitionDetails</span><span class="p">,</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">ChannelInfo</span><span class="p">,</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">ConverterOptions</span><span class="p">,</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">setup_images_for_conversion</span><span class="p">,</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">tiles_aggregation_pipeline</span><span class="p">,</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="p">)</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">hcs_images_from_dataframe</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">OverwriteMode</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="k">def</span><span class="w"> </span><span class="nf">my_init_task</span><span class="p">(</span>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    <span class="o">*</span><span class="p">,</span>
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>    <span class="n">zarr_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    <span class="n">tiles_csv_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>    <span class="c1"># ... your custom parameters</span>
-<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
-<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Init task: set up plates and build parallelization list.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>    <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
-<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>
-<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>    <span class="c1"># Step 1: Build tiles from your data source</span>
-<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>    <span class="n">acq</span> <span class="o">=</span> <span class="n">AcquisitionDetails</span><span class="p">(</span>
-<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>        <span class="n">channels</span><span class="o">=</span><span class="p">[</span><span class="n">ChannelInfo</span><span class="p">(</span><span class="n">channel_label</span><span class="o">=</span><span class="s2">&quot;DAPI&quot;</span><span class="p">)],</span>
-<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>        <span class="n">pixelsize</span><span class="o">=</span><span class="mf">0.65</span><span class="p">,</span>
-<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>        <span class="n">z_spacing</span><span class="o">=</span><span class="mf">5.0</span><span class="p">,</span>
-<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>    <span class="p">)</span>
-<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>    <span class="n">tiles_table</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">tiles_csv_path</span><span class="p">)</span>
-<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>    <span class="n">tiles</span> <span class="o">=</span> <span class="n">hcs_images_from_dataframe</span><span class="p">(</span>
-<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>        <span class="n">tiles_table</span><span class="o">=</span><span class="n">tiles_table</span><span class="p">,</span>
-<a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a>        <span class="n">acquisition_details</span><span class="o">=</span><span class="n">acq</span><span class="p">,</span>
-<a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a>        <span class="n">plate_name</span><span class="o">=</span><span class="s2">&quot;MyPlate&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a>    <span class="p">)</span>
-<a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a>
-<a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a>    <span class="c1"># Step 2: Aggregate tiles</span>
-<a id="__codelineno-0-35" name="__codelineno-0-35" href="#__codelineno-0-35"></a>    <span class="n">opts</span> <span class="o">=</span> <span class="n">ConverterOptions</span><span class="p">()</span>
-<a id="__codelineno-0-36" name="__codelineno-0-36" href="#__codelineno-0-36"></a>    <span class="n">tiled_images</span> <span class="o">=</span> <span class="n">tiles_aggregation_pipeline</span><span class="p">(</span>
-<a id="__codelineno-0-37" name="__codelineno-0-37" href="#__codelineno-0-37"></a>        <span class="n">tiles</span><span class="o">=</span><span class="n">tiles</span><span class="p">,</span>
-<a id="__codelineno-0-38" name="__codelineno-0-38" href="#__codelineno-0-38"></a>        <span class="n">converter_options</span><span class="o">=</span><span class="n">opts</span><span class="p">,</span>
-<a id="__codelineno-0-39" name="__codelineno-0-39" href="#__codelineno-0-39"></a>        <span class="n">resource</span><span class="o">=</span><span class="s2">&quot;/path/to/image/data&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-40" name="__codelineno-0-40" href="#__codelineno-0-40"></a>    <span class="p">)</span>
-<a id="__codelineno-0-41" name="__codelineno-0-41" href="#__codelineno-0-41"></a>
-<a id="__codelineno-0-42" name="__codelineno-0-42" href="#__codelineno-0-42"></a>    <span class="c1"># Step 3+4: Set up collection and build parallelization list</span>
-<a id="__codelineno-0-43" name="__codelineno-0-43" href="#__codelineno-0-43"></a>    <span class="n">parallelization_list</span> <span class="o">=</span> <span class="n">setup_images_for_conversion</span><span class="p">(</span>
-<a id="__codelineno-0-44" name="__codelineno-0-44" href="#__codelineno-0-44"></a>        <span class="n">tiled_images</span><span class="o">=</span><span class="n">tiled_images</span><span class="p">,</span>
-<a id="__codelineno-0-45" name="__codelineno-0-45" href="#__codelineno-0-45"></a>        <span class="n">zarr_dir</span><span class="o">=</span><span class="n">zarr_dir</span><span class="p">,</span>
-<a id="__codelineno-0-46" name="__codelineno-0-46" href="#__codelineno-0-46"></a>        <span class="n">collection_type</span><span class="o">=</span><span class="s2">&quot;ImageInPlate&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-47" name="__codelineno-0-47" href="#__codelineno-0-47"></a>        <span class="n">converter_options</span><span class="o">=</span><span class="n">opts</span><span class="p">,</span>
-<a id="__codelineno-0-48" name="__codelineno-0-48" href="#__codelineno-0-48"></a>        <span class="n">overwrite_mode</span><span class="o">=</span><span class="n">OverwriteMode</span><span class="o">.</span><span class="n">OVERWRITE</span><span class="p">,</span>
-<a id="__codelineno-0-49" name="__codelineno-0-49" href="#__codelineno-0-49"></a>    <span class="p">)</span>
-<a id="__codelineno-0-50" name="__codelineno-0-50" href="#__codelineno-0-50"></a>
-<a id="__codelineno-0-51" name="__codelineno-0-51" href="#__codelineno-0-51"></a>    <span class="k">return</span> <span class="n">parallelization_list</span>
-</code></pre></div>
-<p><code>setup_images_for_conversion()</code> does two things internally:</p>
-<ul>
-<li>Calls <code>setup_ome_zarr_collection()</code> to create the plate/well structure in the Zarr store</li>
-<li>Calls <code>build_parallelization_list()</code> to serialize each <code>TiledImage</code> to a temporary JSON file and return a list of <code>{"zarr_url": ..., "init_args": ...}</code> dictionaries</li>
-</ul>
-<h2 id="compute-task">Compute Task</h2>
-<p>Each compute task receives one entry from the parallelization list and converts a single <code>TiledImage</code>.
-Use <code>generic_compute_task()</code> which handles JSON deserialization, the registration pipeline, writing, and cleanup:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="n">ConvertParallelInitArgs</span><span class="p">,</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="n">DefaultImageLoader</span><span class="p">,</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="n">ImageInPlate</span><span class="p">,</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="n">ImageListUpdateDict</span><span class="p">,</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="n">generic_compute_task</span><span class="p">,</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="p">)</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="k">def</span><span class="w"> </span><span class="nf">my_compute_task</span><span class="p">(</span>
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>    <span class="o">*</span><span class="p">,</span>
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>    <span class="n">zarr_url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>    <span class="n">init_args</span><span class="p">:</span> <span class="n">ConvertParallelInitArgs</span><span class="p">,</span>
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ImageListUpdateDict</span><span class="p">:</span>
-<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute task: convert one TiledImage to OME-Zarr.&quot;&quot;&quot;</span>
-<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>    <span class="k">return</span> <span class="n">generic_compute_task</span><span class="p">(</span>
-<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>        <span class="n">zarr_url</span><span class="o">=</span><span class="n">zarr_url</span><span class="p">,</span>
-<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>        <span class="n">init_args</span><span class="o">=</span><span class="n">init_args</span><span class="p">,</span>
-<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>        <span class="n">collection_type</span><span class="o">=</span><span class="n">ImageInPlate</span><span class="p">,</span>
-<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>        <span class="n">image_loader_type</span><span class="o">=</span><span class="n">DefaultImageLoader</span><span class="p">,</span>
-<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>        <span class="n">resource</span><span class="o">=</span><span class="s2">&quot;/path/to/image/data&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>    <span class="p">)</span>
-</code></pre></div>
-<p><code>generic_compute_task()</code> internally:</p>
-<ol>
-<li>Loads the <code>TiledImage</code> from its JSON dump (with retry logic for filesystem latency)</li>
-<li>Builds the default registration pipeline from <code>converter_options</code></li>
-<li>Calls <code>tiled_image_creation_pipeline()</code> to write the OME-Zarr data</li>
-<li>Cleans up the temporary JSON file</li>
-<li>Returns an <code>ImageListUpdateDict</code> with metadata for the Fractal image list</li>
-</ol>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>The <code>collection_type</code> and <code>image_loader_type</code> parameters are needed because <code>TiledImage</code> is generic --
-the concrete types must be specified when deserializing from JSON.</p>
-</div>
-<h2 id="acquisitionoptions">AcquisitionOptions</h2>
-<p>When building Fractal tasks, you often want to let users override acquisition details at runtime
-(e.g., pixel size, channels, filters) without modifying the init task.
-The <code>AcquisitionOptions</code> model provides this:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">AcquisitionOptions</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="c1"># User-provided overrides</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="n">acq_options</span> <span class="o">=</span> <span class="n">AcquisitionOptions</span><span class="p">(</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="n">channels</span><span class="o">=</span><span class="p">[</span><span class="n">ChannelInfo</span><span class="p">(</span><span class="n">channel_label</span><span class="o">=</span><span class="s2">&quot;GFP&quot;</span><span class="p">,</span> <span class="n">wavelength_id</span><span class="o">=</span><span class="s2">&quot;488&quot;</span><span class="p">)],</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    <span class="n">pixel_info</span><span class="o">=</span><span class="n">PixelSizeModel</span><span class="p">(</span><span class="n">pixelsize</span><span class="o">=</span><span class="mf">0.325</span><span class="p">,</span> <span class="n">z_spacing</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">t_spacing</span><span class="o">=</span><span class="mf">1.0</span><span class="p">),</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>    <span class="n">filters</span><span class="o">=</span><span class="p">[</span><span class="n">RegexIncludeFilter</span><span class="p">(</span><span class="n">field</span><span class="o">=</span><span class="s2">&quot;fov_name&quot;</span><span class="p">,</span> <span class="n">pattern</span><span class="o">=</span><span class="s2">&quot;FOV_[12]&quot;</span><span class="p">)],</span>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="p">)</span>
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>
-<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="c1"># Apply overrides to base acquisition details</span>
-<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="n">updated_acq</span> <span class="o">=</span> <span class="n">acq_options</span><span class="o">.</span><span class="n">update_acquisition_details</span><span class="p">(</span><span class="n">base_acquisition_details</span><span class="p">)</span>
-</code></pre></div>
-<h2 id="fractal-manifest-registering-input-models">Fractal Manifest: Registering Input Models</h2>
-<p>Fractal tasks need to declare their input models in the task manifest.
-Use <code>converters_tools_models()</code> to get the list of models provided by this library:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">converters_tools_models</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="c1"># Returns a list of (package, module_path, class_name) tuples</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="n">models</span> <span class="o">=</span> <span class="n">converters_tools_models</span><span class="p">()</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="c1"># [</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="c1">#     (&quot;ome_zarr_converters_tools&quot;, &quot;fractal/_models.py&quot;, &quot;AcquisitionOptions&quot;),</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="c1">#     (&quot;ome_zarr_converters_tools&quot;, &quot;pipelines/_filters.py&quot;, &quot;WellExcludeFilter&quot;),</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="c1">#     (&quot;ome_zarr_converters_tools&quot;, &quot;models/_converter_options.py&quot;, &quot;ConverterOptions&quot;),</span>
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="c1">#     ...</span>
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="c1"># ]</span>
-</code></pre></div>
-<p>These tuples can be passed directly to Fractal's manifest generation tools
-so that the platform can render the correct input forms for your task.</p>
-<h2 id="learning-more">Learning More</h2>
-<p>For concrete examples of converters built as Fractal tasks, see <a href="https://github.com/fractal-analytics-platform/fractal-uzh-converters">Fractal UZH Converters</a>
-Which includes several fractal tasks built with <code>ome-zarr-converters-tools</code> for different microscopy datasets.</p>
-<p>For more details on Fractal task development, see the official
-<a href="https://fractal-analytics-platform.github.io/">Fractal documentation</a>.</p>
+<h1 id="converters">Converters</h1>
+<p>The following projects use <code>ome-zarr-converters-tools</code> to build OME-Zarr converters for different microscopy formats.</p>
+<h2 id="fractal-uzh-converters"><a href="https://github.com/fractal-analytics-platform/fractal-uzh-converters">fractal-uzh-converters</a></h2>
+<p>A collection of Fractal tasks for converting HCS plate data from various high-content screening microscopes to OME-Zarr.</p>
+<table>
+<thead>
+<tr>
+<th>Microscope</th>
+<th>Manufacturer</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Operetta / Opera Phenix</td>
+<td>Revvity</td>
+</tr>
+<tr>
+<td>ScanR</td>
+<td>Evident</td>
+</tr>
+<tr>
+<td>CQ3K</td>
+<td>Yokogawa</td>
+</tr>
+<tr>
+<td>CellVoyager</td>
+<td>Yokogawa</td>
+</tr>
+<tr>
+<td>ImageXpress HCS.ai</td>
+<td>Molecular Devices</td>
+</tr>
+<tr>
+<td>TIFF (HCS plate)</td>
+<td>Any</td>
+</tr>
+<tr>
+<td>TIFF (single images)</td>
+<td>Any</td>
+</tr>
+</tbody>
+</table>
+<h2 id="fractal-lif-converters"><a href="https://github.com/fractal-analytics-platform/fractal-lif-converters">fractal-lif-converters</a></h2>
+<p>Fractal tasks for converting Leica <code>.lif</code> files to OME-Zarr. Supports plate layouts (single-position, multi-position, and mosaic) and standalone scene conversions. Partial support for autosave in format <code>xlef + .lof</code> and <code>xlef + .tiff</code>.
+This converter supports both converting Leica files containing HCS plate data to OME-Zarr HCS plates, as well as converting individual scenes (single or multi-position) to standalone OME-Zarr images.</p>
+<h2 id="fractal-czi-converters"><a href="https://github.com/fractal-analytics-platform/fractal-czi-converters">fractal-czi-converters</a></h2>
+<p>Fractal tasks for converting Zeiss <code>.czi</code> files to OME-Zarr. This converter supports both converting Zeiss files containing HCS plate data to OME-Zarr HCS plates, as well as converting single scenes, multi-scenes and mosaic scenes to standalone OME-Zarr images.</p>
+<h2 id="fractal-nd2-converters"><a href="https://github.com/fractal-analytics-platform/fractal-nd2-converters">fractal-nd2-converters</a></h2>
+<p>Fractal tasks for converting Nikon <code>.nd2</code> files to OME-Zarr. This converter supports both converting Nikon files containing HCS plate data to OME-Zarr HCS plates, as well as converting single scenes and multi-scenes to standalone OME-Zarr images.</p>
 
 
 
@@ -1010,7 +876,7 @@ Which includes several fractal tasks built with <code>ome-zarr-converters-tools<
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="March 30, 2026 12:02:36 UTC">March 30, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 9, 2026 14:28:30 UTC">June 9, 2026</span>
   </span>
 
     
@@ -1020,7 +886,7 @@ Which includes several fractal tasks built with <code>ome-zarr-converters-tools<
     <span class="md-icon" title="Created">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="February 16, 2026 14:30:14 UTC">February 16, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 9, 2026 14:25:17 UTC">June 9, 2026</span>
   </span>
 
     
@@ -1041,11 +907,6 @@ Which includes several fractal tasks built with <code>ome-zarr-converters-tools<
         <a href="https://github.com/lorenzocerrone" class="md-author" title="@lorenzocerrone">
           
           <img src="https://avatars.githubusercontent.com/u/23013839?v=4&size=72" alt="lorenzocerrone">
-        </a>
-      
-        <a href="https://github.com/web-flow" class="md-author" title="@web-flow">
-          
-          <img src="https://avatars.githubusercontent.com/u/19864447?v=4&size=72" alt="web-flow">
         </a>
       
       
@@ -1079,7 +940,7 @@ Which includes several fractal tasks built with <code>ome-zarr-converters-tools<
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../advanced_tutorial/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Advanced: Programmatic Tile Construction">
+          <a href="../converters_as_fractal_tasks/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Fractal Tasks">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -1089,20 +950,20 @@ Which includes several fractal tasks built with <code>ome-zarr-converters-tools<
                 Previous
               </span>
               <div class="md-ellipsis">
-                Advanced: Programmatic Tile Construction
+                Fractal Tasks
               </div>
             </div>
           </a>
         
         
           
-          <a href="../converters/" class="md-footer__link md-footer__link--next" aria-label="Next: Converters">
+          <a href="../pipeline/" class="md-footer__link md-footer__link--next" aria-label="Next: Pipeline Configuration">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Converters
+                Pipeline Configuration
               </div>
             </div>
             <div class="md-footer__button md-icon">
