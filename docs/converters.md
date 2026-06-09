@@ -18,7 +18,7 @@ A collection of Fractal tasks for converting HCS plate data from various high-co
 
 ## [fractal-lif-converters](https://github.com/fractal-analytics-platform/fractal-lif-converters)
 
-Fractal tasks for converting Leica `.lif` files to OME-Zarr. Supports plate layouts (single-position, multi-position, and mosaic) and standalone scene conversions. Partial support for autosave in format `xlef + lof` and `xlef + tiff`.
+Fractal tasks for converting Leica `.lif` files to OME-Zarr. Supports plate layouts (single-position, multi-position, and mosaic) and standalone scene conversions. Partial support for autosave in format `xlef + .lof` and `xlef + .tiff`.
 This converter supports both converting Leica files containing HCS plate data to OME-Zarr HCS plates, as well as converting individual scenes (single or multi-position) to standalone OME-Zarr images.
 
 ## [fractal-czi-converters](https://github.com/fractal-analytics-platform/fractal-czi-converters)
