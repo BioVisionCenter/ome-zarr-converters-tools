@@ -2,6 +2,9 @@
 
 ## [v0.10.0]
 
+### Documentation
+- Add "Converters" page listing projects that use `ome-zarr-converters-tools` (`fractal-uzh-converters`, `fractal-lif-converters`, `fractal-czi-converters`, `fractal-nd2-converters`).
+
 ### Features
 - Add `TempJsonOptions.serialization` field (`"Auto"` / `"Memory"` / `"JSON"`) to control how tiled image data is handed off between the init and compute phases. `"Memory"` skips all filesystem I/O by embedding the JSON string directly in `ConvertParallelInitArgs`; `"Auto"` (default) uses in-memory when the total serialized payload is ≤50 MB and falls back to disk otherwise. `"JSON"` preserves the original file-based behaviour required for distributed Fractal runs.
 - Add `tiled_image_from_json_str` and `dump_json_str` helpers to `ome_zarr_converters_tools.fractal` for in-memory serialization without filesystem round-trips.

@@ -103,5 +103,6 @@ nav:
     - "Single Images": images_tutorial.ipynb
     - "Advanced: Programmatic Tiles": advanced_tutorial.ipynb
   - "Fractal Tasks": converters_as_fractal_tasks.md
+  - "Converters": converters.md
   - "Pipeline Configuration": pipeline.md
   - "API Reference": api.md
