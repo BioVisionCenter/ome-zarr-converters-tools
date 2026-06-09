@@ -1,0 +1,5 @@
+file_path,image_path,fov_name,start_x,start_y,start_z,start_c,start_t,length_x,length_y,length_z,length_c,length_t
+20200812-CardiomyocyteDifferentiation14-Cycle1_B03_T0001F001L01A01Z01C01.png,cardiomyocyte_scan,FOV_1,10.0,10.0,0.0,0,0,2560,2160,1,1,1
+20200812-CardiomyocyteDifferentiation14-Cycle1_B03_T0001F001L01A01Z02C01.png,cardiomyocyte_scan,FOV_1,10.1,10.1,1.0,0,0,2560,2160,1,1,1
+20200812-CardiomyocyteDifferentiation14-Cycle1_B03_T0001F002L01A01Z01C01.png,cardiomyocyte_scan,FOV_2,1000.0,1000.0,0.0,0,0,2560,2160,1,1,1
+20200812-CardiomyocyteDifferentiation14-Cycle1_B03_T0001F002L01A01Z02C01.png,cardiomyocyte_scan,FOV_2,1000.0,1000.1,1.0,0,0,2560,2160,1,1,1

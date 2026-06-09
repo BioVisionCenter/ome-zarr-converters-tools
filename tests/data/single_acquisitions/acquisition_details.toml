@@ -1,0 +1,27 @@
+# Coordinate space definitions
+# Implicit casting rules:
+# - all start_* fields default to "world" if not specified
+# - all length_* fields default to "pixel" if not specified
+# start_c and length_c are always in pixel coordinates
+# and do not need to be specified here.
+start_x_coo = "world"  # can either be "world" or "pixel"
+start_y_coo = "world"  # can either be "world" or "pixel"
+start_z_coo = "pixel"  # can either be "world" or "pixel"
+start_t_coo = "pixel"  # can either be "world" or "pixel"
+length_x_coo = "pixel" # can either be "world" or "pixel"
+length_y_coo = "pixel" # can either be "world" or "pixel"
+length_z_coo = "pixel" # can either be "world" or "pixel"
+length_t_coo = "pixel" # can either be "world" or "pixel"
+
+# Pixel size in micrometers
+pixelsize = 0.65
+# Z spacing in micrometers
+z_spacing = 5.0
+# T spacing in seconds
+t_spacing = 1.0
+# Channel names
+channel_names = ["DAPI"]
+# Wavelengths id (e.g., string of the excitation wavelength in nm)
+wavelengths = ["405"]
+# Axes
+axes = ["t", "c", "z", "y", "x"]
