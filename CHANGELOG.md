@@ -2,20 +2,18 @@
 
 ## [v0.10.0]
 
-### Chores
-- Move test fixture data from `examples/` to `tests/data/` to clarify that these datasets are for testing only.
-
 ### Features
 - Add `TempJsonOptions.serialization` field (`"Auto"` / `"Memory"` / `"JSON"`) to control how tiled image data is handed off between the init and compute phases. `"Memory"` skips all filesystem I/O by embedding the JSON string directly in `ConvertParallelInitArgs`; `"Auto"` (default) uses in-memory when the total serialized payload is ≤50 MB and falls back to disk otherwise. `"JSON"` preserves the original file-based behaviour required for distributed Fractal runs.
 - Add `tiled_image_from_json_str` and `dump_json_str` helpers to `ome_zarr_converters_tools.fractal` for in-memory serialization without filesystem round-trips.
 - `generic_compute_task` now accepts `init_args` as either a `ConvertParallelInitArgs` instance or a plain dict (as produced by Fractal's orchestration layer), eliminating the need for callers to manually validate the args.
+- Add `exec_compound_task` public API for running Fractal compound tasks with pluggable execution strategies: `SequentialRunner` (default), `ThreadedRunner` (I/O-bound parallelism via `ThreadPoolExecutor`), and `MultiprocessingRunner` (CPU-bound parallelism via `ProcessPoolExecutor`). All three runner types and `RunnerType` are now exported from the top-level package.
+- Add built-in `setup_singleimage` collection setup handler for `SingleImage` outputs; registered as `"SingleImage"` in the default `_collection_setup_registry` alongside `setup_plates`. The handler enforces the `OverwriteMode` contract (raises `FileExistsError` on `NO_OVERWRITE` when the target zarr already exists) without creating an upfront skeleton, since the zarr group is created during the compute task.
 
 ### API Breaking Changes
 - `ConvertParallelInitArgs.tiled_image_json_dump_url` changed from `str` to `str | None` (defaults to `None`). Exactly one of `tiled_image_json_dump_url` or the new `tiled_image_json_str` must be set; existing code that constructs `ConvertParallelInitArgs(tiled_image_json_dump_url="...", ...)` continues to work unchanged.
 
-
-- Add `exec_compound_task` public API for running Fractal compound tasks with pluggable execution strategies: `SequentialRunner` (default), `ThreadedRunner` (I/O-bound parallelism via `ThreadPoolExecutor`), and `MultiprocessingRunner` (CPU-bound parallelism via `ProcessPoolExecutor`). All three runner types and `RunnerType` are now exported from the top-level package.
-- Add built-in `setup_singleimage` collection setup handler for `SingleImage` outputs; registered as `"SingleImage"` in the default `_collection_setup_registry` alongside `setup_plates`. The handler enforces the `OverwriteMode` contract (raises `FileExistsError` on `NO_OVERWRITE` when the target zarr already exists) without creating an upfront skeleton, since the zarr group is created during the compute task.
+### Chores
+- Move test fixture data from `examples/` to `tests/data/` to clarify that these datasets are for testing only.
 
 ## [v0.9.0]
 
