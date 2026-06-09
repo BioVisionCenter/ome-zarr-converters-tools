@@ -3,6 +3,7 @@
 from ome_zarr_converters_tools.pipelines._collection_setup import (
     add_collection_handler,
     setup_ome_zarr_collection,
+    setup_singleimage,
 )
 from ome_zarr_converters_tools.pipelines._filters import (
     FilterModel,
@@ -45,6 +46,7 @@ __all__ = [
     "apply_validator_pipeline",
     "build_default_registration_pipeline",
     "setup_ome_zarr_collection",
+    "setup_singleimage",
     "tiled_image_creation_pipeline",
     "tiles_aggregation_pipeline",
     "write_tiled_image_as_zarr",

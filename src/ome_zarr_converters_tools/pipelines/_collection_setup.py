@@ -12,6 +12,7 @@ from ome_zarr_converters_tools.core._tile_region import TiledImage
 from ome_zarr_converters_tools.models import (
     ImageInPlate,
     OverwriteMode,
+    SingleImage,
 )
 from ome_zarr_converters_tools.models._url_utils import (
     filesystem_for_url,
@@ -155,6 +156,34 @@ def setup_plates(
                 )
 
 
+def setup_singleimage(
+    zarr_dir: str,
+    tiled_images: list[TiledImage],
+    ngff_version: NgffVersions = DefaultNgffVersion,
+    overwrite_mode: OverwriteMode = OverwriteMode.NO_OVERWRITE,
+) -> None:
+    """Set up a SingleImage collection (overwrite-mode enforcement only).
+
+    SingleImage outputs do not need an upfront zarr skeleton — the zarr
+    group is created during the compute task. This handler only enforces
+    the OverwriteMode contract.
+    """
+    for tiled_image in tiled_images:
+        collection = tiled_image.collection
+        if not isinstance(collection, SingleImage):
+            raise ValueError(f"Expected SingleImage collection, got {type(collection)}")
+        zarr_url = join_url_paths(zarr_dir, collection.path())
+        if overwrite_mode == OverwriteMode.NO_OVERWRITE:
+            fs = filesystem_for_url(zarr_url)
+            if fs.exists(zarr_url):
+                raise FileExistsError(
+                    f"A zarr already exists at {zarr_url} "
+                    f"(overwrite_mode={OverwriteMode.NO_OVERWRITE.value}). "
+                    f"Set overwrite_mode={OverwriteMode.OVERWRITE.value} to "
+                    f"replace it."
+                )
+
+
 class SetupCollectionFunction(Protocol):
     """Protocol for collection setup handler functions.
 
@@ -177,6 +206,7 @@ class SetupCollectionFunction(Protocol):
 
 _collection_setup_registry: dict[str, SetupCollectionFunction] = {
     "ImageInPlate": setup_plates,
+    "SingleImage": setup_singleimage,
 }
 
 

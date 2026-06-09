@@ -18,6 +18,7 @@ from ome_zarr_converters_tools.models import (
     ConverterOptions,
     ImageInPlate,
     OverwriteMode,
+    SingleImage,
 )
 from ome_zarr_converters_tools.pipelines._collection_setup import (
     _collection_setup_registry,
@@ -25,6 +26,7 @@ from ome_zarr_converters_tools.pipelines._collection_setup import (
     add_collection_handler,
     setup_ome_zarr_collection,
     setup_plates,
+    setup_singleimage,
 )
 
 
@@ -59,6 +61,28 @@ def _make_plate_tiled_images(
         tiles=all_tiles, converter_options=ConverterOptions()
     )
     return images
+
+
+def _make_single_tiled_images(num_images: int = 1) -> list:
+    """Build TiledImages with SingleImage collections."""
+    acq = AcquisitionDetails(
+        channels=[ChannelInfo(channel_label="DAPI")],
+        pixelsize=1.0,
+        z_spacing=1.0,
+        t_spacing=1.0,
+    )
+    tiles = []
+    for i in range(num_images):
+        coll = SingleImage(image_path=f"image_{i}")
+        tile = build_dummy_tile(
+            fov_name=f"FOV_{i}",
+            start=StartPosition(x=0, y=0),
+            shape=TileShape(x=64, y=64, z=1, c=1, t=1),
+            collection=coll,
+            acquisition_details=acq,
+        )
+        tiles.append(tile)
+    return tiled_image_from_tiles(tiles=tiles, converter_options=ConverterOptions())
 
 
 class TestSetupConditionTable:
@@ -114,9 +138,59 @@ class TestSetupConditionTable:
         assert result.shape[0] == 2  # two rows
 
 
+class TestSetupSingleimage:
+    def test_no_overwrite_succeeds_when_zarr_absent(self, tmp_path: Path) -> None:
+        images = _make_single_tiled_images()
+        setup_singleimage(
+            zarr_dir=str(tmp_path),
+            tiled_images=images,
+            overwrite_mode=OverwriteMode.NO_OVERWRITE,
+        )
+
+    def test_no_overwrite_raises_when_zarr_exists(self, tmp_path: Path) -> None:
+        images = _make_single_tiled_images()
+        (tmp_path / "image_0.zarr").mkdir()
+        with pytest.raises(FileExistsError, match="already exists"):
+            setup_singleimage(
+                zarr_dir=str(tmp_path),
+                tiled_images=images,
+                overwrite_mode=OverwriteMode.NO_OVERWRITE,
+            )
+
+    def test_overwrite_succeeds_when_zarr_exists(self, tmp_path: Path) -> None:
+        images = _make_single_tiled_images()
+        (tmp_path / "image_0.zarr").mkdir()
+        setup_singleimage(
+            zarr_dir=str(tmp_path),
+            tiled_images=images,
+            overwrite_mode=OverwriteMode.OVERWRITE,
+        )
+
+    def test_extend_succeeds_when_zarr_exists(self, tmp_path: Path) -> None:
+        images = _make_single_tiled_images()
+        (tmp_path / "image_0.zarr").mkdir()
+        setup_singleimage(
+            zarr_dir=str(tmp_path),
+            tiled_images=images,
+            overwrite_mode=OverwriteMode.EXTEND,
+        )
+
+    def test_wrong_collection_type_raises(self, tmp_path: Path) -> None:
+        images = _make_plate_tiled_images()
+        with pytest.raises(ValueError, match="Expected SingleImage"):
+            setup_singleimage(
+                zarr_dir=str(tmp_path),
+                tiled_images=images,
+                overwrite_mode=OverwriteMode.NO_OVERWRITE,
+            )
+
+
 class TestCollectionSetupRegistry:
     def test_default_registry_has_image_in_plate(self) -> None:
         assert "ImageInPlate" in _collection_setup_registry
+
+    def test_default_registry_has_single_image(self) -> None:
+        assert "SingleImage" in _collection_setup_registry
 
     def test_add_handler(self) -> None:
         def dummy_handler(
@@ -330,9 +404,9 @@ class TestSetupPlates:
         image_paths = plate.images_paths()
         # Old plate (well A/1) must be gone; only new plate (well B/2) remains
         assert len(image_paths) == 1
-        assert not any(
-            "A" in p for p in image_paths
-        ), f"Old well A image still present after OVERWRITE: {image_paths}"
+        assert not any("A" in p for p in image_paths), (
+            f"Old well A image still present after OVERWRITE: {image_paths}"
+        )
 
     def test_no_overwrite_succeeds_when_plate_absent(self, tmp_path: Path) -> None:
         images = _make_plate_tiled_images()
@@ -376,3 +450,12 @@ class TestSetupOmeZarrCollection:
         )
         plate_path = tmp_path / "TestPlate.zarr"
         assert plate_path.exists()
+
+    def test_dispatches_to_singleimage_handler(self, tmp_path: Path) -> None:
+        images = _make_single_tiled_images()
+        setup_ome_zarr_collection(
+            tiled_images=images,
+            collection_type="SingleImage",
+            zarr_dir=str(tmp_path),
+            overwrite_mode=OverwriteMode.NO_OVERWRITE,
+        )
