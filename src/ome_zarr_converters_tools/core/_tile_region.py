@@ -97,9 +97,9 @@ class TileFOVGroup(BaseModel, Generic[ImageLoaderInterfaceType]):
             point[axis] = 0.0
 
         ref_region = self.regions[0]
-        ref_distance = roi_to_point_distance(ref_region.roi, point)
+        ref_distance = roi_to_point_distance(ref_region.roi, point)  # type: ignore
         for region in self.regions[1:]:
-            distance = roi_to_point_distance(region.roi, point)
+            distance = roi_to_point_distance(region.roi, point)  # type: ignore
             if distance < ref_distance:
                 ref_region = region
                 ref_distance = distance
@@ -128,7 +128,7 @@ class TileFOVGroup(BaseModel, Generic[ImageLoaderInterfaceType]):
             return lambda: region.load_data(axes=self.axes, resource=resource)
 
         for region in self.regions:
-            roi_zeroed = move_roi_by(region.roi, offset)
+            roi_zeroed = move_roi_by(region.roi, offset)  # type: ignore
             roi_slice = roi_zeroed.to_slicing_dict(pixel_size=self.pixel_size)
             slicing = []
             for axis in self.axes:

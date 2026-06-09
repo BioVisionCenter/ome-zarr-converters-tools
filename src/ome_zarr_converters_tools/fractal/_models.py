@@ -2,7 +2,7 @@
 
 from enum import StrEnum
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from ome_zarr_converters_tools.models._acquisition import (
     CANONICAL_AXES_TYPE,
@@ -22,9 +22,21 @@ from ome_zarr_converters_tools.pipelines._filters import ImplementedFilters
 class ConvertParallelInitArgs(BaseModel):
     """Arguments for the compute task."""
 
-    tiled_image_json_dump_url: str
+    tiled_image_json_dump_url: str | None = None
+    tiled_image_json_str: str | None = None
     converter_options: ConverterOptions
     overwrite_mode: OverwriteMode = OverwriteMode.NO_OVERWRITE
+
+    @model_validator(mode="after")
+    def _validate_exactly_one_source(self) -> "ConvertParallelInitArgs":
+        if (self.tiled_image_json_dump_url is None) == (
+            self.tiled_image_json_str is None
+        ):
+            raise ValueError(
+                "Exactly one of tiled_image_json_dump_url or "
+                "tiled_image_json_str must be set."
+            )
+        return self
 
 
 class PixelSizeModel(BaseModel):
@@ -146,7 +158,7 @@ class AcquisitionOptions(BaseModel):
             if ax not in canonical_axes:
                 raise ValueError(f"Invalid axis '{ax}' in axes string.")
             _axes.append(ax)
-        return _axes
+        return _axes  # type: ignore
 
     def update_acquisition_details(
         self,

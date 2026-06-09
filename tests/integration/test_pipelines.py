@@ -45,9 +45,10 @@ from ome_zarr_converters_tools.pipelines._registration_pipeline import (
 # ---------------------------------------------------------------------------
 # Project root / example paths
 # ---------------------------------------------------------------------------
-_PROJECT_ROOT = Path(__file__).resolve().parents[2]
-_HCS_EXAMPLE_DIR = _PROJECT_ROOT / "examples" / "hcs_plate"
-_SINGLE_EXAMPLE_DIR = _PROJECT_ROOT / "examples" / "single_acquisitions"
+_HCS_EXAMPLE_DIR = Path(__file__).resolve().parents[1] / "data" / "hcs_plate"
+_SINGLE_EXAMPLE_DIR = (
+    Path(__file__).resolve().parents[1] / "data" / "single_acquisitions"
+)
 _HCS_DATA_DIR = _HCS_EXAMPLE_DIR / "data"
 
 
@@ -229,9 +230,9 @@ class TestHCSPlateEndToEnd:
         for region in registered.regions:
             for s in region.roi.slices:
                 if s.start is not None:
-                    assert float(s.start) == int(
-                        s.start
-                    ), f"start={s.start} is not pixel-aligned"
+                    assert float(s.start) == int(s.start), (
+                        f"start={s.start} is not pixel-aligned"
+                    )
 
     def test_full_pipeline_writes_omezarr(self, tmp_path: Path) -> None:
         df = pd.read_csv(_HCS_EXAMPLE_DIR / "tiles.csv")
@@ -514,6 +515,6 @@ class TestNoTilingTranslation:
             resource=str(_HCS_DATA_DIR),
         )
         translation = omezarr.get_image().dataset.translation
-        assert all(
-            v == 0.0 for v in translation
-        ), f"Expected all-zero translation for AUTO tiling mode, got {translation}"
+        assert all(v == 0.0 for v in translation), (
+            f"Expected all-zero translation for AUTO tiling mode, got {translation}"
+        )

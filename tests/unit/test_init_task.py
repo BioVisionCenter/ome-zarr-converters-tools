@@ -20,6 +20,10 @@ from ome_zarr_converters_tools.models import (
     OverwriteMode,
     SingleImage,
 )
+from ome_zarr_converters_tools.models._runtime_settings import (
+    RuntimeSettings,
+    TempJsonOptions,
+)
 
 
 def _make_tiled_images(num: int = 1) -> list:
@@ -85,7 +89,7 @@ class TestBuildParallelizationList:
 
         assert images[0].path in result[0]["zarr_url"]
 
-    def test_init_args_has_json_dump_url(self, tmp_path: Path) -> None:
+    def test_init_args_has_json_str_in_memory_mode(self, tmp_path: Path) -> None:
         images = _make_tiled_images(1)
         zarr_dir = str(tmp_path / "output.zarr")
 
@@ -96,8 +100,28 @@ class TestBuildParallelizationList:
         )
 
         init_args = result[0]["init_args"]
-        assert "tiled_image_json_dump_url" in init_args
+        assert init_args["tiled_image_json_str"] is not None
+        assert init_args["tiled_image_json_dump_url"] is None
+
+    def test_init_args_has_json_dump_url_in_json_mode(self, tmp_path: Path) -> None:
+        images = _make_tiled_images(1)
+        zarr_dir = str(tmp_path / "output.zarr")
+        options = ConverterOptions(
+            runtime_settings=RuntimeSettings(
+                temp_json_options=TempJsonOptions(serialization="JSON")
+            )
+        )
+
+        result = build_parallelization_list(
+            images,
+            zarr_dir=zarr_dir,
+            converter_options=options,
+        )
+
+        init_args = result[0]["init_args"]
+        assert init_args["tiled_image_json_dump_url"] is not None
         assert init_args["tiled_image_json_dump_url"].endswith(".json")
+        assert init_args["tiled_image_json_str"] is None
 
     def test_init_args_contains_converter_options(self, tmp_path: Path) -> None:
         images = _make_tiled_images(1)
@@ -127,7 +151,26 @@ class TestBuildParallelizationList:
         init_args = result[0]["init_args"]
         assert init_args["overwrite_mode"] == OverwriteMode.OVERWRITE
 
-    def test_json_files_created(self, tmp_path: Path) -> None:
+    def test_json_files_created_in_json_mode(self, tmp_path: Path) -> None:
+        images = _make_tiled_images(2)
+        zarr_dir = str(tmp_path / "output.zarr")
+        options = ConverterOptions(
+            runtime_settings=RuntimeSettings(
+                temp_json_options=TempJsonOptions(serialization="JSON")
+            )
+        )
+
+        result = build_parallelization_list(
+            images,
+            zarr_dir=zarr_dir,
+            converter_options=options,
+        )
+
+        for entry in result:
+            json_path = entry["init_args"]["tiled_image_json_dump_url"]
+            assert Path(json_path).exists()
+
+    def test_no_json_files_in_memory_mode(self, tmp_path: Path) -> None:
         images = _make_tiled_images(2)
         zarr_dir = str(tmp_path / "output.zarr")
 
@@ -138,8 +181,28 @@ class TestBuildParallelizationList:
         )
 
         for entry in result:
-            json_path = entry["init_args"]["tiled_image_json_dump_url"]
-            assert Path(json_path).exists()
+            assert entry["init_args"]["tiled_image_json_dump_url"] is None
+            assert entry["init_args"]["tiled_image_json_str"] is not None
+
+    def test_auto_mode_uses_json_for_large_payload(self, tmp_path: Path) -> None:
+        images = _make_tiled_images(2)
+        zarr_dir = str(tmp_path / "output.zarr")
+        options = ConverterOptions(
+            runtime_settings=RuntimeSettings(
+                temp_json_options=TempJsonOptions(
+                    serialization="Auto", max_in_memory_bytes=1
+                )
+            )
+        )
+        result = build_parallelization_list(
+            images,
+            zarr_dir=zarr_dir,
+            converter_options=options,
+        )
+
+        for entry in result:
+            assert entry["init_args"]["tiled_image_json_dump_url"] is not None
+            assert entry["init_args"]["tiled_image_json_str"] is None
 
 
 class TestSetupImagesForConversion:

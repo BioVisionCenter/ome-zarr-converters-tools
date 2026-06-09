@@ -24,7 +24,6 @@ exclude = [
     # TBD if we want to include these or not
     "docs/*",
     "data",
-    "examples",
     "notebooks",
     ".github",
     # Remove all jupyter notebook and checkpoints

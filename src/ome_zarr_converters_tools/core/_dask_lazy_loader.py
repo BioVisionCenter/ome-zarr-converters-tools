@@ -328,6 +328,6 @@ def lazy_array_from_regions(
         graph,
         output_name,  # type: ignore
         chunks_normalized,
-        dtype=dtype,
-        meta=np.array([], dtype=dtype),
+        dtype=dtype,  # type: ignore
+        meta=np.array([], dtype=dtype),  # type: ignore
     )

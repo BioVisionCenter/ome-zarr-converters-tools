@@ -10,6 +10,7 @@ from ome_zarr_converters_tools.core import AttributeType
 from ome_zarr_converters_tools.fractal._json_utils import (
     remove_json,
     tiled_image_from_json,
+    tiled_image_from_json_str,
 )
 from ome_zarr_converters_tools.fractal._models import (
     ConvertParallelInitArgs,
@@ -75,7 +76,7 @@ def generic_compute_task(
     *,
     # Fractal parameters
     zarr_url: str,
-    init_args: ConvertParallelInitArgs,
+    init_args: ConvertParallelInitArgs | dict,
     collection_type: type[CollectionInterfaceType],
     image_loader_type: type[ImageLoaderInterfaceType],
     resource: Any = None,
@@ -84,7 +85,9 @@ def generic_compute_task(
 
     Args:
         zarr_url (str): URL to the OME-Zarr file.
-        init_args (ConvertParallelInitArgs): Arguments from the initialization task.
+        init_args (ConvertParallelInitArgs | dict): Arguments from the initialization
+            task. Accepts either a ``ConvertParallelInitArgs`` instance or a plain dict
+            (as produced by Fractal's orchestration layer).
         collection_type (type[CollectionInterfaceType]): The collection type to use
             when loading the TiledImage.
         image_loader_type (type[ImageLoaderInterfaceType]): The image loader type to
@@ -92,43 +95,55 @@ def generic_compute_task(
         resource (Any): The resource to associate with the context model.
     """
     logger.info(f"Starting conversion for Zarr URL: {zarr_url}")
-    for t in range(3):  # Retry up to 3 times
-        try:
-            tiled_image_loaded = tiled_image_from_json(
-                tiled_image_json_dump_url=init_args.tiled_image_json_dump_url,
-                collection_type=collection_type,
-                image_loader_type=image_loader_type,
-            )
-            logger.info(
-                f"Successfully loaded JSON file: {init_args.tiled_image_json_dump_url}"
-            )
-            break  # Exit loop if successful
-        except FileNotFoundError:
-            logger.error(
-                f"JSON file does not exist: "
-                f"{init_args.tiled_image_json_dump_url}, retrying..."
-            )
-            sleep_time = 2 ** (t + 1)
-            time.sleep(sleep_time)
-    else:
-        raise FileNotFoundError(
-            f"JSON file does not exist after 3 retries: "
-            f"{init_args.tiled_image_json_dump_url}"
+    parsed_args = ConvertParallelInitArgs.model_validate(init_args)
+
+    if parsed_args.tiled_image_json_str is not None:
+        tiled_image_loaded = tiled_image_from_json_str(
+            json_str=parsed_args.tiled_image_json_str,
+            collection_type=collection_type,
+            image_loader_type=image_loader_type,
         )
+    else:
+        for t in range(3):  # Retry up to 3 times
+            try:
+                tiled_image_loaded = tiled_image_from_json(
+                    tiled_image_json_dump_url=parsed_args.tiled_image_json_dump_url,  # ty:ignore
+                    collection_type=collection_type,
+                    image_loader_type=image_loader_type,
+                )
+                logger.info(
+                    "Successfully loaded JSON file: "
+                    f"{parsed_args.tiled_image_json_dump_url}"
+                )
+                break  # Exit loop if successful
+            except FileNotFoundError:
+                logger.error(
+                    f"JSON file does not exist: "
+                    f"{parsed_args.tiled_image_json_dump_url}, retrying..."
+                )
+                sleep_time = 2 ** (t + 1)
+                time.sleep(sleep_time)
+        else:
+            raise FileNotFoundError(
+                f"JSON file does not exist after 3 retries: "
+                f"{parsed_args.tiled_image_json_dump_url}"
+            )
+
     registration_pipeline = build_default_registration_pipeline(
-        alignment_corrections=init_args.converter_options.stage_position_corrections,
-        tiling_strategy=init_args.converter_options.tiling_strategy,
+        alignment_corrections=parsed_args.converter_options.stage_position_corrections,
+        tiling_strategy=parsed_args.converter_options.tiling_strategy,
     )
     ome_zarr = tiled_image_creation_pipeline(
         zarr_url=zarr_url,
         tiled_image=tiled_image_loaded,
         registration_pipeline=registration_pipeline,
-        converter_options=init_args.converter_options,
-        writer_mode=init_args.converter_options.writer_mode,
-        overwrite_mode=init_args.overwrite_mode,
+        converter_options=parsed_args.converter_options,
+        writer_mode=parsed_args.converter_options.writer_mode,
+        overwrite_mode=parsed_args.overwrite_mode,
         resource=resource,
     )
-    remove_json(init_args.tiled_image_json_dump_url)
+    if parsed_args.tiled_image_json_dump_url is not None:
+        remove_json(parsed_args.tiled_image_json_dump_url)
     logger.info("Conversion complete")
     return _build_image_list_update(
         zarr_url=zarr_url,

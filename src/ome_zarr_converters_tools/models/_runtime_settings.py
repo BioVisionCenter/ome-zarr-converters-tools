@@ -77,9 +77,36 @@ class TempJsonOptions(BaseModel):
 
     temp_url: str = "{zarr_dir}/_tmp_json"
     """Template for the temporary JSON URL."""
+    serialization: Literal["Auto", "Memory", "JSON"] = "Auto"
+    """Serialization mode for tiled image data between init and compute phases.
+
+    - ``"Memory"``: always keep data in-memory (skips all filesystem I/O).
+    - ``"JSON"``: always write to a temporary JSON file on disk (required for
+      distributed Fractal runs where init and compute execute on different machines).
+    - ``"Auto"``: use in-memory when the total serialized payload is ≤50 MB,
+      otherwise fall back to JSON files on disk.
+    """
+    max_in_memory_bytes: int = Field(
+        default=10 * 1024 * 1024,
+        ge=1,
+        title="Max In-Memory Bytes",
+    )
+    """Maximum total size of serialized tiled image data to keep in-memory
+    between init and compute phases when serialization="Auto".
+    If the total size exceeds this threshold, data will be written to temporary
+    JSON files on disk instead. Default is 10 MiB.
+    """
 
     def format_temp_url(self, zarr_dir: str) -> str:
         return self.temp_url.format(zarr_dir=zarr_dir)
+
+    def use_in_memory(self, total_bytes: int) -> bool:
+        """Resolve whether to skip disk I/O for the given total serialized size."""
+        if self.serialization == "Memory":
+            return True
+        if self.serialization == "JSON":
+            return False
+        return total_bytes <= self.max_in_memory_bytes
 
 
 class RuntimeSettings(BaseModel):
