@@ -9,6 +9,10 @@ from ome_zarr_converters_tools.fractal._compound_task_wrapper import (
     ThreadedRunner,
     exec_compound_task,
 )
+from ome_zarr_converters_tools.fractal._compute_task import (
+    ImageListUpdateDict,
+    UpdateDict,
+)
 
 
 def _make_init_fn(n: int):
@@ -20,8 +24,12 @@ def _make_init_fn(n: int):
     return init_fn
 
 
-def _compute_fn(index: int, extra: str = "", **kwargs) -> dict:
-    return {"image_list_updates": [{"zarr_url": f"/zarr/{index}", "extra": extra}]}
+def _compute_fn(index: int, extra: str = "", **kwargs) -> ImageListUpdateDict:
+    return ImageListUpdateDict(
+        image_list_updates=[
+            UpdateDict(zarr_url=f"/zarr/{index}", types={}, attributes={"extra": extra})
+        ]
+    )
 
 
 class TestRunnerModels:
@@ -91,7 +99,7 @@ class TestExecCompoundTaskSequential:
             compute_task_kwargs={"extra": "hello"},
         )
         for r in results:
-            assert r["image_list_updates"][0]["extra"] == "hello"
+            assert r["image_list_updates"][0]["attributes"]["extra"] == "hello"
 
     def test_empty_parallelization_list(self) -> None:
         results = exec_compound_task(
@@ -145,7 +153,7 @@ class TestExecCompoundTaskThreaded:
             runner=ThreadedRunner(num_threads=2),
         )
         for r in results:
-            assert r["image_list_updates"][0]["extra"] == "threaded"
+            assert r["image_list_updates"][0]["attributes"]["extra"] == "threaded"
 
     def test_threaded_empty_list(self) -> None:
         results = exec_compound_task(
@@ -186,7 +194,7 @@ class TestExecCompoundTaskMultiprocessing:
             runner=MultiprocessingRunner(num_processes=2),
         )
         for r in results:
-            assert r["image_list_updates"][0]["extra"] == "mp"
+            assert r["image_list_updates"][0]["attributes"]["extra"] == "mp"
 
     def test_multiprocessing_empty_list(self) -> None:
         results = exec_compound_task(

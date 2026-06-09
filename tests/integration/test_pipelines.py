@@ -45,9 +45,10 @@ from ome_zarr_converters_tools.pipelines._registration_pipeline import (
 # ---------------------------------------------------------------------------
 # Project root / example paths
 # ---------------------------------------------------------------------------
-_PROJECT_ROOT = Path(__file__).resolve().parents[2]
-_HCS_EXAMPLE_DIR = _PROJECT_ROOT / "examples" / "hcs_plate"
-_SINGLE_EXAMPLE_DIR = _PROJECT_ROOT / "examples" / "single_acquisitions"
+_HCS_EXAMPLE_DIR = Path(__file__).resolve().parents[1] / "data" / "hcs_plate"
+_SINGLE_EXAMPLE_DIR = (
+    Path(__file__).resolve().parents[1] / "data" / "single_acquisitions"
+)
 _HCS_DATA_DIR = _HCS_EXAMPLE_DIR / "data"
 
 

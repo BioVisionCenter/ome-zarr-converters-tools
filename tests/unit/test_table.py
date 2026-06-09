@@ -17,9 +17,9 @@ from ome_zarr_converters_tools.models import (
     SingleImage,
 )
 
-EXAMPLES_DIR = Path(__file__).resolve().parents[2] / "examples"
-HCS_EXAMPLE_DIR = EXAMPLES_DIR / "hcs_plate"
-SINGLE_EXAMPLE_DIR = EXAMPLES_DIR / "single_acquisitions"
+_DATA_DIR = Path(__file__).resolve().parents[1] / "data"
+HCS_EXAMPLE_DIR = _DATA_DIR / "hcs_plate"
+SINGLE_EXAMPLE_DIR = _DATA_DIR / "single_acquisitions"
 
 
 @pytest.fixture

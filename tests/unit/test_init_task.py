@@ -185,25 +185,20 @@ class TestBuildParallelizationList:
             assert entry["init_args"]["tiled_image_json_str"] is not None
 
     def test_auto_mode_uses_json_for_large_payload(self, tmp_path: Path) -> None:
-        from unittest.mock import patch
-
         images = _make_tiled_images(2)
         zarr_dir = str(tmp_path / "output.zarr")
         options = ConverterOptions(
             runtime_settings=RuntimeSettings(
-                temp_json_options=TempJsonOptions(serialization="Auto")
+                temp_json_options=TempJsonOptions(
+                    serialization="Auto", max_in_memory_bytes=1
+                )
             )
         )
-
-        with patch(
-            "ome_zarr_converters_tools.models._runtime_settings._IN_MEMORY_THRESHOLD_BYTES",
-            0,
-        ):
-            result = build_parallelization_list(
-                images,
-                zarr_dir=zarr_dir,
-                converter_options=options,
-            )
+        result = build_parallelization_list(
+            images,
+            zarr_dir=zarr_dir,
+            converter_options=options,
+        )
 
         for entry in result:
             assert entry["init_args"]["tiled_image_json_dump_url"] is not None
