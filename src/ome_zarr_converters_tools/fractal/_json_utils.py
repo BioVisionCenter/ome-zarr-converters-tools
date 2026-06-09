@@ -18,19 +18,23 @@ from ome_zarr_converters_tools.models._url_utils import (
 logger = logging.getLogger(__name__)
 
 
-def dump_to_json(temp_json_url: str, tiled_image: TiledImage) -> str:
-    """Create a pickle file for the tiled image."""
-    json_data = tiled_image.model_dump_json()
+def dump_json_str(temp_json_url: str, json_str: str) -> str:
+    """Write a pre-serialized JSON string to a unique file in temp_json_url."""
     fs = filesystem_for_url(temp_json_url, error_msg_prefix="Dumping JSON")
     fs.makedirs(temp_json_url, exist_ok=True)
     unique_json_filename = f"{uuid4()}.json"
     tile_json_name = join_url_paths(temp_json_url, unique_json_filename)
-
     with fs.open(tile_json_name, "w") as f:
-        f.write(json_data)
+        f.write(json_str)
     logger.debug(f"JSON file created: {tile_json_name}")
-
     return tile_json_name
+
+
+def dump_to_json(temp_json_url: str, tiled_image: TiledImage) -> str:
+    """Create a JSON file for the tiled image."""
+    return dump_json_str(
+        temp_json_url=temp_json_url, json_str=tiled_image.model_dump_json()
+    )
 
 
 def tiled_image_from_json(
@@ -82,6 +86,26 @@ def tiled_image_from_json(
         f"JSON file does not exist after {num_retries} "
         f"retries: {tiled_image_json_dump_url}"
     )
+
+
+def tiled_image_from_json_str(
+    json_str: str,
+    collection_type: type[CollectionInterfaceType],
+    image_loader_type: type[ImageLoaderInterfaceType],
+) -> TiledImage:
+    """Deserialize a TiledImage from a JSON string (no filesystem I/O).
+
+    Args:
+        json_str: The JSON string to deserialize.
+        collection_type: The concrete collection type of the TiledImage.
+        image_loader_type: The concrete image loader type of the TiledImage.
+
+    Returns:
+        TiledImage: The loaded TiledImage object.
+    """
+    return TiledImage[
+        collection_type, image_loader_type  # ty:ignore[invalid-type-form]
+    ].model_validate_json(json_str)
 
 
 def remove_json(

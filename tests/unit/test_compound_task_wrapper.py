@@ -40,11 +40,11 @@ class TestRunnerModels:
         assert r.num_processes == 4
 
     def test_threaded_runner_invalid_num_threads(self) -> None:
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             ThreadedRunner(num_threads=0)
 
     def test_multiprocessing_runner_invalid_num_processes(self) -> None:
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             MultiprocessingRunner(num_processes=-1)
 
     def test_runner_type_discriminated_union(self) -> None:

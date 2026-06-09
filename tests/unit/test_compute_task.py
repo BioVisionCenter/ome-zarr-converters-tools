@@ -140,6 +140,46 @@ class TestGenericComputeTask:
     @patch(
         "ome_zarr_converters_tools.fractal._compute_task.build_default_registration_pipeline"
     )
+    @patch("ome_zarr_converters_tools.fractal._compute_task.tiled_image_from_json_str")
+    def test_successful_compute_in_memory(
+        self,
+        mock_from_json_str: MagicMock,
+        mock_build_reg: MagicMock,
+        mock_pipeline: MagicMock,
+    ) -> None:
+        mock_tiled_image = MagicMock()
+        mock_tiled_image.collection = SingleImage(image_path="test")
+        mock_tiled_image.attributes = {}
+        mock_from_json_str.return_value = mock_tiled_image
+
+        mock_ome_zarr = MagicMock()
+        mock_ome_zarr.is_3d = False
+        mock_ome_zarr.is_time_series = False
+        mock_pipeline.return_value = mock_ome_zarr
+        mock_build_reg.return_value = []
+
+        init_args = ConvertParallelInitArgs(
+            tiled_image_json_str='{"some": "json"}',
+            converter_options=ConverterOptions(),
+        )
+
+        result = generic_compute_task(
+            zarr_url="/tmp/test.zarr",
+            init_args=init_args,
+            collection_type=SingleImage,
+            image_loader_type=MagicMock,
+        )
+
+        assert "image_list_updates" in result
+        mock_from_json_str.assert_called_once()
+        mock_pipeline.assert_called_once()
+
+    @patch(
+        "ome_zarr_converters_tools.fractal._compute_task.tiled_image_creation_pipeline"
+    )
+    @patch(
+        "ome_zarr_converters_tools.fractal._compute_task.build_default_registration_pipeline"
+    )
     @patch("ome_zarr_converters_tools.fractal._compute_task.remove_json")
     @patch("ome_zarr_converters_tools.fractal._compute_task.tiled_image_from_json")
     def test_successful_compute(
