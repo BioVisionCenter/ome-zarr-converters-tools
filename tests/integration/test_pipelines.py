@@ -153,6 +153,34 @@ class TestTiledImageCreationPipeline:
         assert data.shape[-2:] == (128, 128)  # 2x2 grid of 64x64
         assert np.any(data > 0)
 
+    def test_output_dtype_matches_source(self, tmp_path: Path) -> None:
+        """The on-disk array preserves the source dtype (regression for #56).
+
+        The DummyLoader source data is ``uint8``; before the fix the writer
+        always created ``uint16`` arrays regardless of the source.
+        """
+        coll = SingleImage(image_path="test_dtype")
+        tiles = _make_tiles(coll)
+        opts = ConverterOptions()
+        images = tiles_aggregation_pipeline(tiles=tiles, converter_options=opts)
+        tiled_image = images[0]
+        assert tiled_image.data_type == "uint8"
+
+        pipeline = build_default_registration_pipeline(
+            StagePositionCorrections(), InplaceTiling()
+        )
+        zarr_url = str(tmp_path / "output_dtype.zarr")
+        omezarr = tiled_image_creation_pipeline(
+            zarr_url=zarr_url,
+            tiled_image=tiled_image,
+            registration_pipeline=pipeline,
+            converter_options=opts,
+            writer_mode=WriterMode.BY_FOV_DASK,
+            overwrite_mode=OverwriteMode.OVERWRITE,
+        )
+        data = omezarr.get_image().get_array()
+        assert data.dtype == np.uint8
+
 
 # ===================================================================
 # Real-data integration tests (examples/ PNGs)

@@ -188,6 +188,7 @@ def write_tiled_image_as_zarr(
             translation=tiled_image.translation,
             overwrite=True,
             ngff_version=omezarr_options.ngff_version,
+            dtype=tiled_image.data_type,
         )
     image = ome_zarr.get_image()
     write_to_zarr(
