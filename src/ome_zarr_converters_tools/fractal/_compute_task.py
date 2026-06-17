@@ -106,8 +106,10 @@ def generic_compute_task(
     else:
         for t in range(3):  # Retry up to 3 times
             try:
+                json_url = parsed_args.tiled_image_json_dump_url
+                assert json_url is not None
                 tiled_image_loaded = tiled_image_from_json(
-                    tiled_image_json_dump_url=parsed_args.tiled_image_json_dump_url,  # ty:ignore
+                    tiled_image_json_dump_url=json_url,
                     collection_type=collection_type,
                     image_loader_type=image_loader_type,
                 )
