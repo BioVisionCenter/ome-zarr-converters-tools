@@ -1,9 +1,11 @@
 # Changelog
 
-## [v0.10.0]
+## [v0.10.1]
 
 ### Fix
 - `write_tiled_image_as_zarr` now forwards `TiledImage.data_type` to `ngio.create_empty_ome_zarr`; output arrays preserve the source dtype (e.g. `uint8`) instead of always being written as `uint16`.
+
+## [v0.10.0]
 
 ### Documentation
 - Add "Converters" page listing projects that use `ome-zarr-converters-tools` (`fractal-uzh-converters`, `fractal-lif-converters`, `fractal-czi-converters`, `fractal-nd2-converters`).
