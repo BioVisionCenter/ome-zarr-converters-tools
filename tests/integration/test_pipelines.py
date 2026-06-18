@@ -444,7 +444,6 @@ class TestSingleImageEndToEnd:
         assert "FOV_ROI_table" in table_names
         assert "well_ROI_table" in table_names
 
-
 class TestHCSPlateWithAttributes:
     """Test that CSV attributes (e.g. drug column) flow through to OME-Zarr."""
 
