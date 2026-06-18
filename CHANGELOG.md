@@ -1,5 +1,10 @@
 # Changelog
 
+## [Unreleased]
+
+### Chores
+- Align project tooling with `fractal-uzh-converters` standards: replace `mypy` with `ty` for type checking (drop the `[tool.mypy]` config and `mypy` dev dependency); rename ruff rule selector `TCH` → `TC` and ignore `D415`; add `docstring-code-line-length = 89` to the ruff formatter; bump pytest `minversion` to `8.0` and drop `-vv` from `addopts`; simplify `.pre-commit-config.yaml` (drop the `ci:` autoupdate block and commented-out mypy hook) and update hook pins to latest (`ruff-pre-commit` `v0.15.17`, `validate-pyproject` `v0.25`, `typos` `v1.47.2`, `nbstripout` `0.9.1`); fix the codecov upload condition in CI to run on Python `3.12` (was an unreachable `3.10`).
+
 ## [v0.10.1]
 
 ### Fix

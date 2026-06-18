@@ -11,7 +11,7 @@ All commands require `pixi run -e dev` prefix (never bare `python`/`pytest`/`ruf
 
 - Ruff: line length 88, target py311
 - Google-style docstrings (disabled for tests)
-- Strict mypy
+- Type checking via `ty`
 - Internal modules prefixed with `_`
 - Spell check via typos — false positives go in `_typos.toml`
 - Pydantic v2: `@field_validator` before `@classmethod`

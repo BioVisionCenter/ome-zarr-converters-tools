@@ -404,9 +404,9 @@ class TestSetupPlates:
         image_paths = plate.images_paths()
         # Old plate (well A/1) must be gone; only new plate (well B/2) remains
         assert len(image_paths) == 1
-        assert not any(
-            "A" in p for p in image_paths
-        ), f"Old well A image still present after OVERWRITE: {image_paths}"
+        assert not any("A" in p for p in image_paths), (
+            f"Old well A image still present after OVERWRITE: {image_paths}"
+        )
 
     def test_no_overwrite_succeeds_when_plate_absent(self, tmp_path: Path) -> None:
         images = _make_plate_tiled_images()
