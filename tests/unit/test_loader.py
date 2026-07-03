@@ -63,6 +63,28 @@ class TestDefaultImageLoader:
         loaded = loader.load_data()
         np.testing.assert_array_equal(loaded, data)
 
+    def test_load_bigtiff_tf2_extension(self, tmp_path: Path) -> None:
+        tifffile = pytest.importorskip("tifffile")
+        data = np.random.randint(0, 255, (10, 10), dtype=np.uint8)
+        tf2_path = tmp_path / "test.tf2"
+        tifffile.imwrite(str(tf2_path), data, bigtiff=True)
+
+        loader = DefaultImageLoader(file_path=str(tf2_path))
+        loaded = loader.load_data()
+        np.testing.assert_array_equal(loaded, data)
+
+    def test_unknown_extension_falls_back_to_tiff(self, tmp_path: Path) -> None:
+        tifffile = pytest.importorskip("tifffile")
+        data = np.random.randint(0, 255, (10, 10), dtype=np.uint8)
+        # Valid TIFF payload written to a file with an uncommon/custom extension.
+        custom_path = tmp_path / "test.customext"
+        tifffile.imwrite(str(custom_path), data)
+
+        loader = DefaultImageLoader(file_path=str(custom_path))
+        with pytest.warns(UserWarning, match="attempting to load it as a TIFF"):
+            loaded = loader.load_data()
+        np.testing.assert_array_equal(loaded, data)
+
     def test_load_png(self, tmp_path: Path) -> None:
         from PIL import Image
 
@@ -86,11 +108,15 @@ class TestDefaultImageLoader:
         loaded = loader.load_data()
         assert loaded.shape[:2] == (10, 10)
 
-    def test_unsupported_extension_raises(self, tmp_path: Path) -> None:
+    def test_unsupported_extension_warns_then_raises(self, tmp_path: Path) -> None:
+        # Not a valid TIFF: the fallback warns, then the TIFF read fails and raises.
         fake_path = tmp_path / "test.xyz"
         fake_path.touch()
         loader = DefaultImageLoader(file_path=str(fake_path))
-        with pytest.raises(ValueError, match="cannot handle file type"):
+        with (
+            pytest.warns(UserWarning, match="attempting to load it as a TIFF"),
+            pytest.raises(ValueError, match="the TIFF fallback failed"),
+        ):
             loader.load_data()
 
     def test_resource_prepends_path(self, tmp_path: Path) -> None:
