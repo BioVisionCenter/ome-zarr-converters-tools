@@ -1,5 +1,6 @@
 """Models for defining regions to be converted into OME-Zarr format."""
 
+import warnings
 from abc import ABC, abstractmethod
 from typing import Any, TypeVar
 
@@ -51,17 +52,28 @@ class DefaultImageLoader(ImageLoaderInterface):
             path = self.file_path
 
         suffix = path.split("/")[-1].split(".")[-1].lower()
-        if suffix in ["tiff", "tif"]:
+        if suffix in ["tiff", "tif", "tf2", "tf8", "btf"]:
             return self.load_tiff(path)
         elif suffix in ["png", "jpg", "jpeg", "bmp"]:
             return self.load_png(path)
         elif suffix == "npy":
             return self.load_npy(path)
         else:
-            raise ValueError(
-                f"DefaultImageLoader cannot handle file type {suffix}, "
-                "supported types are .tiff, .tif, .png, .jpg, .jpeg, .bmp, .npy"
+            # Unknown extension: many files (e.g. custom/uncommon TIFF variants) are
+            # still readable by tifffile, so warn and attempt a best-effort TIFF read.
+            warnings.warn(
+                f"DefaultImageLoader does not recognize file type {suffix!r}; "
+                "attempting to load it as a TIFF file.",
+                stacklevel=2,
             )
+            try:
+                return self.load_tiff(path)
+            except Exception as e:
+                raise ValueError(
+                    f"DefaultImageLoader cannot handle file type {suffix!r}: "
+                    "the TIFF fallback failed to read the file. Supported types are "
+                    ".tiff, .tif, .tf2, .tf8, .btf, .png, .jpg, .jpeg, .bmp, .npy."
+                ) from e
 
     def load_tiff(self, path: str) -> np.ndarray:
         fs = filesystem_for_url(path, error_msg_prefix="Loading image")
