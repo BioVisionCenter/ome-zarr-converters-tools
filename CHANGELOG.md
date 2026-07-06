@@ -1,9 +1,8 @@
 # Changelog
 
-## [v0.10.3]
+## [v0.10.4]
 
 ### Features
-- `DefaultImageLoader` now recognizes additional TIFF extensions (`.tf2`, `.tf8`, `.btf` BigTiff variants, closing [#60](https://github.com/BioVisionCenter/ome-zarr-converters-tools/issues/60)) and, for any unrecognized extension, warns and attempts a best-effort TIFF read instead of raising immediately.
 - Add protocol-aware URL path helpers to `_url_utils`, exported from the package root and `ome_zarr_converters_tools.models`: `parent_url`, `basename_url`, `is_absolute_url`, and `glob_url_paths`. They are the URL equivalents of `os.path.dirname`/`basename`/`isabs`/`glob`, working transparently for local paths and `s3://` URLs and robust to Windows backslash separators.
 
 ### Fix
@@ -16,6 +15,16 @@
 
 ### Chores
 - Route the remaining ad-hoc path manipulation through the centralized `_url_utils` helpers: `DefaultImageLoader` suffix detection uses `basename_url`, JSON cleanup uses `parent_url`, and `TempJsonOptions.format_temp_url` normalizes its result via `join_url_paths`.
+- Add `ipywidgets` to the `docs` environment so `tqdm.auto` progress bars find `IProgress` when notebooks are executed during the docs build, silencing the `TqdmWarning: IProgress not found` warning.
+
+### Documentation
+- Fix the tutorial notebooks (`docs/hcs_tutorial.ipynb`, `docs/images_tutorial.ipynb`, `docs/advanced_tutorial.ipynb`) so they execute against the current API: use `StagePositionCorrections` (the removed `AlignmentCorrections` name) and read the example data from `../tests/data/` (the deleted `../examples/` path).
+- Rewrite docstrings across `src/` to render cleanly as Markdown under mkdocstrings/Griffe: replace RST double-backticks and `:func:`/`:class:` roles with single backticks, drop parameter types restated in `Args:`/`Returns:` (they already come from signature annotations), and convert `core/_dask_lazy_loader.py`'s RST-style module docstring (underlined headers, `::` literal block) to Markdown with a `Note:` section and a fenced `python` code block.
+
+## [v0.10.3]
+
+### Features
+- `DefaultImageLoader` now recognizes additional TIFF extensions (`.tf2`, `.tf8`, `.btf` BigTiff variants, closing [#60](https://github.com/BioVisionCenter/ome-zarr-converters-tools/issues/60)) and, for any unrecognized extension, warns and attempts a best-effort TIFF read instead of raising immediately.
 
 ## [v0.10.2]
 
