@@ -82,29 +82,24 @@ def join_url_paths(base_url: str, *paths: str) -> str:
 
 
 def parent_url(url: str) -> str:
-    """Return the parent directory of a URL path.
+    r"""Return the parent directory of a URL path.
 
-    Robust to forward/back slashes and URL protocols. For remote protocols the
-    first component after the protocol is the network location (e.g. the S3
-    bucket), which has no parent.
+    Robust to forward/back slashes and URL protocols, and always returns POSIX
+    ``/`` separators regardless of host OS (uses ``posixpath`` for the local
+    branch too, never OS-native ``pathlib``, which would emit ``\`` on Windows).
+    For remote protocols the first component after the protocol is the network
+    location (e.g. the S3 bucket), which has no parent.
 
     Raises:
         ValueError: if ``url`` is a filesystem/network-location root with no
             parent (e.g. ``/``, ``s3://bucket``, or an empty string).
     """
     protocol, path = fsspec.core.split_protocol(url)
-    path = path.rstrip("\\").rstrip("/")
-    if protocol is None:
-        parent = str(Path(path).parent)
-        # Path("").parent == "." so the naive `parent == path` guard never
-        # fires for "/"; catch the empty / "." / root case explicitly.
-        if parent == path or path in ("", "."):
-            raise ValueError(f"No parent directory for URL: {url}")
-        return parent
-    parent = posixpath.dirname(path.replace("\\", "/"))
+    path = path.replace("\\", "/").rstrip("/")
+    parent = posixpath.dirname(path)
     if parent == "":
         raise ValueError(f"No parent directory for URL: {url}")
-    return f"{protocol}://{parent}"
+    return parent if protocol is None else f"{protocol}://{parent}"
 
 
 def basename_url(url: str) -> str:

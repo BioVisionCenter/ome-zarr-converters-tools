@@ -12,6 +12,7 @@
 - `find_url_type`, `is_absolute_url`, and `local_url_to_path` now handle `~`-anchored home paths: `~/…` classifies as `LOCAL`/absolute and `local_url_to_path` expands it via `expanduser` (previously `~` was treated as a literal relative directory).
 - `local_url_to_path` no longer creates the parent directory on disk (undocumented side effect); it now purely resolves the path (expanding `~`). Callers that relied on the implicit `mkdir` must create the directory explicitly.
 - `is_absolute_url` now classifies Windows drive/UNC and `~` paths as absolute independently of the host OS, matching `find_url_type` (previously `is_absolute_url("C:/path")` returned `False` on POSIX).
+- `parent_url` now always returns POSIX `/` separators (uses `posixpath` for the local branch too, never OS-native `pathlib`), so it no longer emits backslashes on Windows (e.g. `parent_url("/path/to/file.txt")` returned `\path\to` on Windows).
 
 ### Chores
 - Route the remaining ad-hoc path manipulation through the centralized `_url_utils` helpers: `DefaultImageLoader` suffix detection uses `basename_url`, JSON cleanup uses `parent_url`, and `TempJsonOptions.format_temp_url` normalizes its result via `join_url_paths`.

@@ -100,6 +100,10 @@ class TestUrlUtils:
     def test_parent_url_local_dir_trailing_slash(self) -> None:
         assert parent_url("/path/to/dir/") == "/path/to"
 
+    def test_parent_url_windows_drive_posix_output(self) -> None:
+        # Always POSIX `/` separators, even for a Windows backslash path.
+        assert parent_url("C:\\data\\exp\\file.tif") == "C:/data/exp"
+
     def test_parent_url_s3(self) -> None:
         assert parent_url("s3://bucket/dir/file.txt") == "s3://bucket/dir"
 
@@ -159,10 +163,11 @@ class TestUrlUtils:
         (tmp_path / "b.jdce").touch()
         (tmp_path / "c.txt").touch()
         result = glob_url_paths(base_url=str(tmp_path), pattern="*.jdce")
-        assert sorted(result) == [
-            str(tmp_path / "a.jdce"),
-            str(tmp_path / "b.jdce"),
-        ]
+        # Compare via Path so separator style (POSIX vs. Windows) is irrelevant.
+        assert {Path(p) for p in result} == {
+            tmp_path / "a.jdce",
+            tmp_path / "b.jdce",
+        }
 
     def test_glob_url_paths_nonexistent_returns_empty(self, tmp_path: Path) -> None:
         assert glob_url_paths(base_url=str(tmp_path), pattern="nope.jdce") == []
