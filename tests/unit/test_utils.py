@@ -1,12 +1,19 @@
 """Unit tests for utility functions."""
 
+from pathlib import Path
+
 import numpy as np
+import pytest
 
 from ome_zarr_converters_tools.core._dask_lazy_loader import lazy_array_from_regions
 from ome_zarr_converters_tools.models._url_utils import (
     UrlType,
+    basename_url,
     find_url_type,
+    glob_url_paths,
+    is_absolute_url,
     join_url_paths,
+    parent_url,
 )
 
 
@@ -40,6 +47,83 @@ class TestUrlUtils:
     def test_join_url_paths_s3(self) -> None:
         result = join_url_paths("s3://bucket", "prefix", "key")
         assert result == "s3://bucket/prefix/key"
+
+    def test_join_url_paths_s3_nested(self) -> None:
+        assert join_url_paths("s3://bucket/dir", "a", "b") == "s3://bucket/dir/a/b"
+
+    def test_join_url_paths_resolves_dotdot(self) -> None:
+        assert join_url_paths("s3://bucket/dir", "..", "x") == "s3://bucket/x"
+
+    def test_join_url_paths_local_file(self) -> None:
+        assert join_url_paths("/data/exp", "tiles.csv") == "/data/exp/tiles.csv"
+
+    @pytest.mark.parametrize(
+        ("base_url", "paths"),
+        [
+            ("s3://bucket/dir", ("a", "b")),
+            ("s3://bucket/dir", ("..", "x")),
+            ("s3://bucket", ("sub\\dir", "file.txt")),
+        ],
+    )
+    def test_join_url_paths_no_backslash_in_remote_output(
+        self, base_url: str, paths: tuple[str, ...]
+    ) -> None:
+        # Guards against the os.path.normpath Windows regression that turns
+        # `/` into `\` on remote URLs (an invalid S3 key).
+        assert "\\" not in join_url_paths(base_url, *paths)
+
+    def test_parent_url_local_file(self) -> None:
+        assert parent_url("/path/to/file.txt") == "/path/to"
+
+    def test_parent_url_local_dir_trailing_slash(self) -> None:
+        assert parent_url("/path/to/dir/") == "/path/to"
+
+    def test_parent_url_s3(self) -> None:
+        assert parent_url("s3://bucket/dir/file.txt") == "s3://bucket/dir"
+
+    def test_parent_url_s3_dir(self) -> None:
+        assert parent_url("s3://bucket/dir/") == "s3://bucket"
+
+    @pytest.mark.parametrize("url", ["/", "", "s3://bucket"])
+    def test_parent_url_raises_at_root(self, url: str) -> None:
+        with pytest.raises(ValueError, match="No parent directory"):
+            parent_url(url)
+
+    @pytest.mark.parametrize(
+        ("url", "expected"),
+        [
+            ("/path/to/dir/", "dir"),
+            ("/path/to/dir", "dir"),
+            ("/path/to/file.txt", "file.txt"),
+            ("s3://bucket/a/b", "b"),
+        ],
+    )
+    def test_basename_url(self, url: str, expected: str) -> None:
+        assert basename_url(url) == expected
+
+    @pytest.mark.parametrize(
+        ("url", "expected"),
+        [
+            ("/abs/path", True),
+            ("relative/path", False),
+            ("s3://bucket/key", True),
+        ],
+    )
+    def test_is_absolute_url(self, url: str, expected: bool) -> None:
+        assert is_absolute_url(url) is expected
+
+    def test_glob_url_paths_local(self, tmp_path: Path) -> None:
+        (tmp_path / "a.jdce").touch()
+        (tmp_path / "b.jdce").touch()
+        (tmp_path / "c.txt").touch()
+        result = glob_url_paths(base_url=str(tmp_path), pattern="*.jdce")
+        assert sorted(result) == [
+            str(tmp_path / "a.jdce"),
+            str(tmp_path / "b.jdce"),
+        ]
+
+    def test_glob_url_paths_nonexistent_returns_empty(self, tmp_path: Path) -> None:
+        assert glob_url_paths(base_url=str(tmp_path), pattern="nope.jdce") == []
 
 
 class TestDaskLazyLoader:

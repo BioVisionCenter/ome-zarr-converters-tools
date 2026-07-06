@@ -4,6 +4,10 @@
 
 ### Features
 - `DefaultImageLoader` now recognizes additional TIFF extensions (`.tf2`, `.tf8`, `.btf` BigTiff variants, closing [#60](https://github.com/BioVisionCenter/ome-zarr-converters-tools/issues/60)) and, for any unrecognized extension, warns and attempts a best-effort TIFF read instead of raising immediately.
+- Add protocol-aware URL path helpers to `_url_utils`, exported from the package root and `ome_zarr_converters_tools.models`: `parent_url`, `basename_url`, `is_absolute_url`, and `glob_url_paths`. They are the URL equivalents of `os.path.dirname`/`basename`/`isabs`/`glob`, working transparently for local paths and `s3://` URLs and robust to Windows backslash separators.
+
+### Fix
+- `join_url_paths` now resolves `.`/`..` segments and collapses redundant slashes. It uses `posixpath` (never `os.path`) so `s3://` keys keep `/` separators on Windows instead of being rewritten to `\` (an invalid S3 key).
 
 ## [v0.10.2]
 
