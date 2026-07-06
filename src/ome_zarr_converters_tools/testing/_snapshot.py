@@ -299,7 +299,8 @@ def _compare_roi(
 ) -> None:
     if exp.slice_repr != act.slice_repr:
         diffs.append(
-            f"{path}.slice_repr: expected {exp.slice_repr!r} != actual {act.slice_repr!r}"
+            f"{path}.slice_repr: expected {exp.slice_repr!r} "
+            f"!= actual {act.slice_repr!r}"
         )
     _compare_fingerprint(
         f"{path}.finger_print", exp.finger_print, act.finger_print, diffs
@@ -368,7 +369,8 @@ def _compare_image(
     exp_tables, act_tables = set(exp.tables), set(act.tables)
     if exp_tables != act_tables:
         diffs.append(
-            f"{path}.tables: expected {sorted(exp_tables)} != actual {sorted(act_tables)}"
+            f"{path}.tables: expected {sorted(exp_tables)} "
+            f"!= actual {sorted(act_tables)}"
         )
     for name in sorted(exp_tables & act_tables):
         _compare_table(

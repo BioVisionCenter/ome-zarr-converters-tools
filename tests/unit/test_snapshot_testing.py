@@ -1,7 +1,6 @@
 """Unit tests for the shared snapshot testing helpers."""
 
 import numpy as np
-import pytest
 
 from ome_zarr_converters_tools.testing import (
     FingerprintModel,
