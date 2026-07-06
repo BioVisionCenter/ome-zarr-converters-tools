@@ -1889,12 +1889,13 @@ aggregate into <code>TiledImage</code> objects, build a registration pipeline, a
 </clipboard-copy>
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConverterOptions</span><span class="p">,</span> <span class="n">tiles_aggregation_pipeline</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.models</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">AlignmentCorrections</span><span class="p">,</span>
     <span class="n">AutoTiling</span><span class="p">,</span>
     <span class="n">OverwriteMode</span><span class="p">,</span>
+    <span class="n">StagePositionCorrections</span><span class="p">,</span>
     <span class="n">WriterMode</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.pipelines</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -1902,7 +1903,7 @@ aggregate into <code>TiledImage</code> objects, build a registration pipeline, a
     <span class="n">tiled_image_creation_pipeline</span><span class="p">,</span>
 <span class="p">)</span>
 
-<span class="n">data_dir</span> <span class="o">=</span> <span class="s2">"../examples/hcs_plate/data"</span>
+<span class="n">data_dir</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="s2">"../tests/data/hcs_plate/data"</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">())</span>
 <span class="n">opts</span> <span class="o">=</span> <span class="n">ConverterOptions</span><span class="p">()</span>
 
 <span class="c1"># Aggregate</span>
@@ -1914,7 +1915,7 @@ aggregate into <code>TiledImage</code> objects, build a registration pipeline, a
 
 <span class="c1"># Register and write</span>
 <span class="n">pipeline</span> <span class="o">=</span> <span class="n">build_default_registration_pipeline</span><span class="p">(</span>
-    <span class="n">alignment_corrections</span><span class="o">=</span><span class="n">AlignmentCorrections</span><span class="p">(),</span>
+    <span class="n">alignment_corrections</span><span class="o">=</span><span class="n">StagePositionCorrections</span><span class="p">(),</span>
     <span class="n">tiling_strategy</span><span class="o">=</span><span class="n">AutoTiling</span><span class="p">(),</span>
 <span class="p">)</span>
 
@@ -1933,12 +1934,13 @@ aggregate into <code>TiledImage</code> objects, build a registration pipeline, a
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Written: </span><span class="si">{</span><span class="n">zarr_url</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-3">import tempfile
+from pathlib import Path
 
 from ome_zarr_converters_tools import ConverterOptions, tiles_aggregation_pipeline
 from ome_zarr_converters_tools.models import (
-    AlignmentCorrections,
     AutoTiling,
     OverwriteMode,
+    StagePositionCorrections,
     WriterMode,
 )
 from ome_zarr_converters_tools.pipelines import (
@@ -1946,7 +1948,7 @@ from ome_zarr_converters_tools.pipelines import (
     tiled_image_creation_pipeline,
 )
 
-data_dir = "../examples/hcs_plate/data"
+data_dir = str(Path("../tests/data/hcs_plate/data").resolve())
 opts = ConverterOptions()
 
 # Aggregate
@@ -1958,7 +1960,7 @@ tiled_images = tiles_aggregation_pipeline(
 
 # Register and write
 pipeline = build_default_registration_pipeline(
-    alignment_corrections=AlignmentCorrections(),
+    alignment_corrections=StagePositionCorrections(),
     tiling_strategy=AutoTiling(),
 )
 
@@ -1985,20 +1987,9 @@ for tiled_image in tiled_images:
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
-<pre>
-<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
-<span class="ansi-red-fg">ImportError</span>                               Traceback (most recent call last)
-<span class="ansi-cyan-fg">Cell</span><span class="ansi-cyan-fg"> </span><span class="ansi-green-fg">In[3]</span><span class="ansi-green-fg">, line 4</span>
-<span class="ansi-green-fg">      1</span> <span class="ansi-bold" style="color: rgb(0,135,0)">import</span> tempfile
-<span class="ansi-green-fg">      2</span> 
-<span class="ansi-green-fg">      3</span> <span class="ansi-bold" style="color: rgb(0,135,0)">from</span> ome_zarr_converters_tools <span class="ansi-bold" style="color: rgb(0,135,0)">import</span> ConverterOptions, tiles_aggregation_pipeline
-<span class="ansi-green-fg">----&gt; </span><span class="ansi-green-fg">4</span> from ome_zarr_converters_tools.models import (
-<span class="ansi-green-fg">      5</span>     AlignmentCorrections,
-<span class="ansi-green-fg">      6</span>     AutoTiling,
-<span class="ansi-green-fg">      7</span>     OverwriteMode,
-
-<span class="ansi-red-fg">ImportError</span>: cannot import name 'AlignmentCorrections' from 'ome_zarr_converters_tools.models' (/opt/hostedtoolcache/Python/3.13.14/x64/lib/python3.13/site-packages/ome_zarr_converters_tools/models/__init__.py)</pre>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>Written: /tmp/tutorial_advanced_r7x0sbrg/manual_example.zarr
+</pre>
 </div>
 </div>
 </div>
@@ -2055,17 +2046,10 @@ print(f"Channels: {img.channel_labels}")</div>
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
-<pre>
-<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
-<span class="ansi-red-fg">NameError</span>                                 Traceback (most recent call last)
-<span class="ansi-cyan-fg">Cell</span><span class="ansi-cyan-fg"> </span><span class="ansi-green-fg">In[4]</span><span class="ansi-green-fg">, line 1</span>
-<span class="ansi-green-fg">----&gt; </span><span class="ansi-green-fg">1</span> img = omezarr.get_image()
-<span class="ansi-green-fg">      2</span> data = img.get_array()
-<span class="ansi-green-fg">      3</span> 
-<span class="ansi-green-fg">      4</span> print(f"Shape: {data.shape}")
-
-<span class="ansi-red-fg">NameError</span>: name 'omezarr' is not defined</pre>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>Shape: (1, 1, 1, 2160, 2560)
+Channels: ['DAPI']
+</pre>
 </div>
 </div>
 </div>
@@ -2120,17 +2104,9 @@ print("Cleaned up tutorial output.")</div>
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
-<pre>
-<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
-<span class="ansi-red-fg">NameError</span>                                 Traceback (most recent call last)
-<span class="ansi-cyan-fg">Cell</span><span class="ansi-cyan-fg"> </span><span class="ansi-green-fg">In[5]</span><span class="ansi-green-fg">, line 3</span>
-<span class="ansi-green-fg">      1</span> <span class="ansi-bold" style="color: rgb(0,135,0)">import</span> shutil
-<span class="ansi-green-fg">      2</span> 
-<span class="ansi-green-fg">----&gt; </span><span class="ansi-green-fg">3</span> shutil.rmtree(zarr_dir, ignore_errors=<span class="ansi-bold" style="color: rgb(0,135,0)">True</span>)
-<span class="ansi-green-fg">      4</span> print(<span class="ansi-yellow-fg">"Cleaned up tutorial output."</span>)
-
-<span class="ansi-red-fg">NameError</span>: name 'zarr_dir' is not defined</pre>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>Cleaned up tutorial output.
+</pre>
 </div>
 </div>
 </div>
@@ -2166,7 +2142,7 @@ print("Cleaned up tutorial output.")</div>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 27, 2026 09:29:10 UTC">May 27, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 6, 2026 13:11:22 UTC">July 6, 2026</span>
   </span>
 
     
