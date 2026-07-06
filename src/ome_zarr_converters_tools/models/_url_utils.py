@@ -37,6 +37,7 @@ def _is_local_absolute(url: str) -> bool:
 
 
 def find_url_type(url: str) -> UrlType:
+    """Classify a URL as local, S3, or unsupported (see :class:`UrlType`)."""
     if url.startswith("s3://"):
         return UrlType.S3
     elif _is_local_absolute(url):
@@ -128,6 +129,7 @@ def is_absolute_url(url: str) -> bool:
 def filesystem_for_url(
     url: str, error_msg_prefix: str = "File handling"
 ) -> fsspec.AbstractFileSystem:
+    """Return the fsspec filesystem for a URL; raise if its type is unsupported."""
     url_type = find_url_type(url)
     if url_type == UrlType.NOT_SUPPORTED:
         raise NotImplementedError(

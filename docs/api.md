@@ -16,6 +16,25 @@ Key exports: `ConverterOptions`, `AcquisitionDetails`, `ChannelInfo`, `ImageInPl
 
 ::: ome_zarr_converters_tools.models
 
+## URL & Path Utilities
+
+Protocol-aware path helpers that work transparently for local paths and remote `s3://` URLs, and are robust to Windows backslash separators (they always emit POSIX `/`). Use these instead of `os.path` / `pathlib` whenever a location may point at object storage -- they are the URL equivalents of `os.path.join` / `dirname` / `basename` / `isabs` / `glob`, plus fsspec filesystem resolution.
+
+Key exports: `join_url_paths`, `parent_url`, `basename_url`, `is_absolute_url`, `glob_url_paths`, `filesystem_for_url`, `find_url_type`, `local_url_to_path`, `UrlType`.
+
+::: ome_zarr_converters_tools.models._url_utils
+    options:
+      members:
+        - join_url_paths
+        - parent_url
+        - basename_url
+        - is_absolute_url
+        - glob_url_paths
+        - filesystem_for_url
+        - find_url_type
+        - local_url_to_path
+        - UrlType
+
 ## Pipelines
 
 Pipeline functions for aggregation, registration, filtering, validation, and writing. This module orchestrates the full conversion flow: aggregating tiles into images, running registration steps, applying filters, and writing the final OME-Zarr datasets. It also provides extension points for custom filters, validators, and registration steps.
