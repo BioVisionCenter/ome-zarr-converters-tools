@@ -15,6 +15,7 @@
 - `parent_url` now always returns POSIX `/` separators (uses `posixpath` for the local branch too, never OS-native `pathlib`), so it no longer emits backslashes on Windows (e.g. `parent_url("/path/to/file.txt")` returned `\path\to` on Windows).
 
 ### Chores
+- Add unit tests for `ome_zarr_converters_tools.testing` (comparison branches, `build_snapshot`/`run_converter_test` over tiny ngio-built OME-Zarrs, and the pytest plugin hooks). `testing/__init__` now imports `_snapshot` lazily via module `__getattr__`, so loading the `pytest11` plugin no longer eagerly pulls in numpy/ngio/pydantic and coverage can instrument `_snapshot` when tests first import it.
 - Route the remaining ad-hoc path manipulation through the centralized `_url_utils` helpers: `DefaultImageLoader` suffix detection uses `basename_url`, JSON cleanup uses `parent_url`, and `TempJsonOptions.format_temp_url` normalizes its result via `join_url_paths`.
 - Add `ipywidgets` to the `docs` environment so `tqdm.auto` progress bars find `IProgress` when notebooks are executed during the docs build, silencing the `TqdmWarning: IProgress not found` warning.
 
