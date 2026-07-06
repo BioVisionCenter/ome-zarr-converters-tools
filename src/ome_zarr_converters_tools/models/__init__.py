@@ -45,10 +45,14 @@ from ome_zarr_converters_tools.models._runtime_settings import (
     ThreadScheduler,
 )
 from ome_zarr_converters_tools.models._url_utils import (
+    basename_url,
     filesystem_for_url,
     find_url_type,
+    glob_url_paths,
+    is_absolute_url,
     join_url_paths,
     local_url_to_path,
+    parent_url,
 )
 
 __all__ = [
@@ -85,9 +89,13 @@ __all__ = [
     "ThreadScheduler",
     "TilingStrategy",
     "WriterMode",
+    "basename_url",
     "default_axes_builder",
     "filesystem_for_url",
     "find_url_type",
+    "glob_url_paths",
+    "is_absolute_url",
     "join_url_paths",
     "local_url_to_path",
+    "parent_url",
 ]

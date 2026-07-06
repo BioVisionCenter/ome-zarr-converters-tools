@@ -63,9 +63,10 @@ def apply_fov_alignment_corrections(
     """Align all the regions in a TiledImage to be consistent.
 
     The function:
-        -groups regions by their field of view (FOV)
-        -applies alignment corrections to each group
-        -updates the TiledImage with the aligned regions
+
+    - Groups regions by their field of view (FOV).
+    - Applies alignment corrections to each group.
+    - Updates the TiledImage with the aligned regions.
 
     Args:
         tiled_image: TiledImage model to align.

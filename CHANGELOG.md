@@ -1,5 +1,28 @@
 # Changelog
 
+## [v0.10.4]
+
+### Features
+- Add a shared `ome_zarr_converters_tools.testing` subpackage that centralizes the converter snapshot tests (previously copy-pasted into each `fractal-*-converters/tests/utils.py`). Exposes `run_converter_test` plus `build_snapshot`/`compare_snapshots` and the assertion models. Snapshots are now stored as **JSON** (was YAML): stdlib, no dependency, native `null`, and no YAML implicit-typing coercion of channel/well strings. Generation and validation share one code path (`build_snapshot`), fingerprint stats are compared with a tolerance while the sha256 pixel hash stays exact, and a mismatch raises a single `AssertionError` listing every differing field with its full path. A `ome_zarr_converters_tools.testing.plugin` pytest plugin provides `--update-snapshots`, `--extended`, the `extended` marker, and the `update_snapshots` fixture; each consumer loads it with `pytest_plugins = ["ome_zarr_converters_tools.testing.plugin"]` in its `tests/conftest.py`, so converters no longer duplicate that wiring.
+- Add protocol-aware URL path helpers to `_url_utils`, exported from the package root and `ome_zarr_converters_tools.models`: `parent_url`, `basename_url`, `is_absolute_url`, and `glob_url_paths`. They are the URL equivalents of `os.path.dirname`/`basename`/`isabs`/`glob`, working transparently for local paths and `s3://` URLs and robust to Windows backslash separators.
+
+### Fix
+- `join_url_paths` now resolves `.`/`..` segments and collapses redundant slashes. It uses `posixpath` (never `os.path`) so `s3://` keys keep `/` separators on Windows instead of being rewritten to `\` (an invalid S3 key).
+- `join_url_paths` now raises `ValueError` when `..` segments would ascend above the network location of a protocol URL, instead of silently dropping it (e.g. `join_url_paths("s3://bucket", "..", "x")` previously returned `s3://x`, targeting a different bucket).
+- `find_url_type`, `is_absolute_url`, and `local_url_to_path` now handle `~`-anchored home paths: `~/…` classifies as `LOCAL`/absolute and `local_url_to_path` expands it via `expanduser` (previously `~` was treated as a literal relative directory).
+- `local_url_to_path` no longer creates the parent directory on disk (undocumented side effect); it now purely resolves the path (expanding `~`). Callers that relied on the implicit `mkdir` must create the directory explicitly.
+- `is_absolute_url` now classifies Windows drive/UNC and `~` paths as absolute independently of the host OS, matching `find_url_type` (previously `is_absolute_url("C:/path")` returned `False` on POSIX).
+- `parent_url` now always returns POSIX `/` separators (uses `posixpath` for the local branch too, never OS-native `pathlib`), so it no longer emits backslashes on Windows (e.g. `parent_url("/path/to/file.txt")` returned `\path\to` on Windows).
+
+### Chores
+- Add unit tests for `ome_zarr_converters_tools.testing` (comparison branches, `build_snapshot`/`run_converter_test` over tiny ngio-built OME-Zarrs, and the pytest plugin hooks). The plugin is loaded via `pytest_plugins` in each consumer's conftest rather than a `pytest11` entry point: an entry point imports the package during pytest's plugin bootstrap (before pytest-cov starts), which marks the whole package `module-not-measured` and deflated coverage from ~97% to ~62%. `testing/__init__` also imports `_snapshot` lazily via module `__getattr__` so merely loading the plugin does not pull in numpy/ngio/pydantic.
+- Route the remaining ad-hoc path manipulation through the centralized `_url_utils` helpers: `DefaultImageLoader` suffix detection uses `basename_url`, JSON cleanup uses `parent_url`, and `TempJsonOptions.format_temp_url` normalizes its result via `join_url_paths`.
+- Add `ipywidgets` to the `docs` environment so `tqdm.auto` progress bars find `IProgress` when notebooks are executed during the docs build, silencing the `TqdmWarning: IProgress not found` warning.
+
+### Documentation
+- Fix the tutorial notebooks (`docs/hcs_tutorial.ipynb`, `docs/images_tutorial.ipynb`, `docs/advanced_tutorial.ipynb`) so they execute against the current API: use `StagePositionCorrections` (the removed `AlignmentCorrections` name) and read the example data from `../tests/data/` (the deleted `../examples/` path).
+- Rewrite docstrings across `src/` to render cleanly as Markdown under mkdocstrings/Griffe: replace RST double-backticks and `:func:`/`:class:` roles with single backticks, drop parameter types restated in `Args:`/`Returns:` (they already come from signature annotations), and convert `core/_dask_lazy_loader.py`'s RST-style module docstring (underlined headers, `::` literal block) to Markdown with a `Note:` section and a fenced `python` code block.
+
 ## [v0.10.3]
 
 ### Features

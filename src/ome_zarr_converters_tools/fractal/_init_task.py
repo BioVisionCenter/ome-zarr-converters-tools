@@ -32,14 +32,14 @@ def build_parallelization_list(
     """Build a list of dictionaries to parallelize the conversion.
 
     Args:
-        tiled_images (list[TiledImageWithContext]): A list of tiled images objects
-            to convert.
-        zarr_dir (str): The base directory for the zarr data.
-        converter_options (ConverterOptions): The converter options to use during
-            conversion.
-        overwrite_mode (OverwriteMode): The overwrite mode to use when writing the data.
-        tmp_path (str): The name of the temporary directory to store the
-            pickled tiled images.
+        tiled_images: List of tiled images to convert.
+        zarr_dir: The base directory for the zarr data.
+        converter_options: The converter options to use during conversion.
+        overwrite_mode: The overwrite mode to use when writing the data.
+
+    Returns:
+        One dict per image, each with a `zarr_url` and `init_args` entry, ready
+        to be consumed by the Fractal compute task.
     """
     # Determine whether to use in-memory JSON strings or temporary JSON files
     # based on the total size of the serialized tiled images and the temp_json_options.
@@ -95,7 +95,7 @@ def setup_images_for_conversion(
         - Build the parallelization list (used by the fractal compute task).
 
     Args:
-        tiled_images: List of TiledImageWithContext models that have been converted.
+        tiled_images: List of tiled images that have been converted.
         zarr_dir: The base directory for the zarr data.
         collection_type: The type of collection to set up.
         converter_options: The converter options to use during conversion.

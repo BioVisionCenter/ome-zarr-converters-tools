@@ -138,7 +138,7 @@ class TileFOVGroup(BaseModel, Generic[ImageLoaderInterfaceType]):
         return slices
 
     def load_data(self, resource: Any | None = None) -> np.ndarray:
-        """Load the full image data for this FOV group using."""
+        """Load the full image data for this FOV group."""
         shape = self.shape()
         full_image = np.zeros(shape, dtype=np.dtype(self.data_type))
         slices = self._prepare_slice_loading(resource=resource)

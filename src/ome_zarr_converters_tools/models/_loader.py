@@ -10,6 +10,7 @@ from PIL import Image
 from pydantic import BaseModel, ConfigDict
 
 from ome_zarr_converters_tools.models._url_utils import (
+    basename_url,
     filesystem_for_url,
     join_url_paths,
 )
@@ -51,7 +52,7 @@ class DefaultImageLoader(ImageLoaderInterface):
         else:
             path = self.file_path
 
-        suffix = path.split("/")[-1].split(".")[-1].lower()
+        suffix = basename_url(path).split(".")[-1].lower()
         if suffix in ["tiff", "tif", "tf2", "tf8", "btf"]:
             return self.load_tiff(path)
         elif suffix in ["png", "jpg", "jpeg", "bmp"]:

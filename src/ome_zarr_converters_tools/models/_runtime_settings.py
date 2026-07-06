@@ -9,6 +9,8 @@ import dask
 import zarr
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from ome_zarr_converters_tools.models._url_utils import join_url_paths
+
 
 class ThreadScheduler(BaseModel):
     """Use Dask's threaded scheduler for parallelism."""
@@ -80,10 +82,10 @@ class TempJsonOptions(BaseModel):
     serialization: Literal["Auto", "Memory", "JSON"] = "Auto"
     """Serialization mode for tiled image data between init and compute phases.
 
-    - ``"Memory"``: always keep data in-memory (skips all filesystem I/O).
-    - ``"JSON"``: always write to a temporary JSON file on disk (required for
+    - `"Memory"`: always keep data in-memory (skips all filesystem I/O).
+    - `"JSON"`: always write to a temporary JSON file on disk (required for
       distributed Fractal runs where init and compute execute on different machines).
-    - ``"Auto"``: use in-memory when the total serialized payload is ≤50 MB,
+    - `"Auto"`: use in-memory when the total serialized payload is ≤50 MB,
       otherwise fall back to JSON files on disk.
     """
     max_in_memory_bytes: int = Field(
@@ -98,7 +100,9 @@ class TempJsonOptions(BaseModel):
     """
 
     def format_temp_url(self, zarr_dir: str) -> str:
-        return self.temp_url.format(zarr_dir=zarr_dir)
+        # Route through join_url_paths (no extra parts) so a zarr_dir with a
+        # trailing/duplicate/back-slash is normalized and the protocol preserved.
+        return join_url_paths(self.temp_url.format(zarr_dir=zarr_dir))
 
     def use_in_memory(self, total_bytes: int) -> bool:
         """Resolve whether to skip disk I/O for the given total serialized size."""

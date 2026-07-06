@@ -14,10 +14,10 @@ def rasterize_text_with_boundary(shape_x, shape_y, text, font_scale=0.34):
     """Create a uint8 array with text rasterized and boundaries set to 255.
 
     Args:
-        shape_x (int): The width of the output array
-        shape_y (int): The height of the output array
-        text (str): The string to rasterize
-        font_scale (float): Scale factor for font size relative to min(shape_x, shape_y)
+        shape_x: The width of the output array.
+        shape_y: The height of the output array.
+        text: The string to rasterize.
+        font_scale: Scale factor for font size relative to `min(shape_x, shape_y)`.
     """
     # Use PIL's built-in default font
     font_size = int(font_scale * min(shape_x, shape_y))

@@ -96,6 +96,7 @@ docs = [
     "mkdocs-material==9.7.1",
     "mkdocstrings[python]>=1.0.2,<1.1.0",
     "mkdocs-jupyter>=0.25.1,<0.26.0",
+    "ipywidgets",
     "mkdocs-autorefs",
     "mkdocs-git-revision-date-localized-plugin",
     "mkdocs-git-committers-plugin-2",
@@ -118,8 +119,12 @@ repository = "https://github.com/BioVisionCenter/ome-zarr-converters-tools"
 # [project.scripts]
 # ome-zarr-converters-tools-cli = "ome_zarr_converters_tools:main_cli"
 
-# [project.entry-points."some.group"]
-# tomatoes = "ome_zarr_converters_tools:main_tomatoes"
+# The snapshot-testing pytest plugin (--update-snapshots / --extended, the
+# `extended` marker, and the `update_snapshots` fixture) is loaded explicitly via
+# `pytest_plugins = ["ome_zarr_converters_tools.testing.plugin"]` in each
+# consumer's tests/conftest.py — NOT via a pytest11 entry point. An entry point
+# would import the package during pytest's plugin bootstrap (before pytest-cov
+# starts), leaving the whole package "module-not-measured" and deflating coverage.
 
 # https://docs.astral.sh/ruff
 [tool.ruff]
