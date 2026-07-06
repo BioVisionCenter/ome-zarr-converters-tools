@@ -9,6 +9,8 @@ import dask
 import zarr
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from ome_zarr_converters_tools.models._url_utils import join_url_paths
+
 
 class ThreadScheduler(BaseModel):
     """Use Dask's threaded scheduler for parallelism."""
@@ -98,7 +100,9 @@ class TempJsonOptions(BaseModel):
     """
 
     def format_temp_url(self, zarr_dir: str) -> str:
-        return self.temp_url.format(zarr_dir=zarr_dir)
+        # Route through join_url_paths (no extra parts) so a zarr_dir with a
+        # trailing/duplicate/back-slash is normalized and the protocol preserved.
+        return join_url_paths(self.temp_url.format(zarr_dir=zarr_dir))
 
     def use_in_memory(self, total_bytes: int) -> bool:
         """Resolve whether to skip disk I/O for the given total serialized size."""

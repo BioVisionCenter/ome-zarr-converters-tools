@@ -13,6 +13,7 @@ from ome_zarr_converters_tools.models import (
 from ome_zarr_converters_tools.models._url_utils import (
     filesystem_for_url,
     join_url_paths,
+    parent_url,
 )
 
 logger = logging.getLogger(__name__)
@@ -122,7 +123,7 @@ def remove_json(
 
     try:
         fs.rm(tiled_image_json_dump_url)
-        parent_dir = tiled_image_json_dump_url.rsplit(fs.sep, 1)[0]
+        parent_dir = parent_url(tiled_image_json_dump_url)
         try:
             # no-op if non-empty; avoids a listdir on potentially large directories
             # for distributed filesystems like CephFS where listdir can be expensive

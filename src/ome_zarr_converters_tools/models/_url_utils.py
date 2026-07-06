@@ -15,26 +15,41 @@ class UrlType(Enum):
     NOT_SUPPORTED = "not_supported"
 
 
+def _is_windows_drive(url: str) -> bool:
+    r"""Return True for a Windows drive path like ``C:\`` or ``C:/``."""
+    return len(url) >= 2 and url[1] == ":" and url[0].isalpha()
+
+
+def _is_local_absolute(url: str) -> bool:
+    r"""Return True if ``url`` is an absolute local path (host-independent).
+
+    Covers POSIX roots (``/``), ``~``-anchored home paths, Windows drive paths
+    (``C:\`` / ``C:/``), and UNC paths (``\\server\share``). Used by both
+    :func:`find_url_type` and :func:`is_absolute_url` so their classification of
+    Windows/home paths cannot drift across operating systems.
+    """
+    return (
+        url.startswith(("/", "~"))
+        or _is_windows_drive(url)
+        # Windows UNC paths: \\server\share — "\\\\" is two backslash chars.
+        or url.startswith("\\\\")
+    )
+
+
 def find_url_type(url: str) -> UrlType:
-    if url.startswith("/"):
-        return UrlType.LOCAL
-    elif url.startswith("s3://"):
+    if url.startswith("s3://"):
         return UrlType.S3
-    # Windows drive paths: C:\ or C:/
-    elif len(url) >= 2 and url[1] == ":" and url[0].isalpha():
-        return UrlType.LOCAL
-    # Windows UNC paths: \\server\share — "\\\\" is two backslash chars in Python
-    elif url.startswith("\\\\"):
+    elif _is_local_absolute(url):
         return UrlType.LOCAL
     return UrlType.NOT_SUPPORTED
 
 
 def local_url_to_path(url: str) -> Path:
-    """Convert a local URL to a Path object."""
-    path = Path(url)
-    path = path.resolve().absolute()
-    path.parent.mkdir(parents=True, exist_ok=True)
-    return path
+    """Convert a local URL to an absolute Path, expanding ``~``.
+
+    Does not touch the filesystem.
+    """
+    return Path(url).expanduser().resolve()
 
 
 def join_url_paths(base_url: str, *paths: str) -> str:
@@ -45,11 +60,25 @@ def join_url_paths(base_url: str, *paths: str) -> str:
     staying protocol- and Windows-safe: it uses ``posixpath.normpath`` (never
     ``os.path.normpath``, which on Windows would rewrite forward slashes to
     backslashes and corrupt S3 keys).
+
+    Raises:
+        ValueError: if ``..`` segments would ascend above the network location
+            of a protocol URL (e.g. ``join_url_paths("s3://bucket", "..", "x")``
+            would otherwise silently drop the bucket).
     """
     protocol, base = fsspec.core.split_protocol(base_url)
     combined = f"{base}/{'/'.join(str(p) for p in paths)}".replace("\\", "/")
     joined = posixpath.normpath(combined)
-    return joined if protocol is None else f"{protocol}://{joined}"
+    if protocol is None:
+        return joined
+    # The first component after the protocol is the network location (e.g. the
+    # S3 bucket) and is inviolable — reject any ``..`` that escapes it.
+    netloc = base.replace("\\", "/").split("/", 1)[0]
+    if joined != netloc and not joined.startswith(f"{netloc}/"):
+        raise ValueError(
+            f"Path escapes network location for URL: {base_url!r} + {paths!r}"
+        )
+    return f"{protocol}://{joined}"
 
 
 def parent_url(url: str) -> str:
@@ -87,13 +116,18 @@ def basename_url(url: str) -> str:
 
 
 def is_absolute_url(url: str) -> bool:
-    """Return True if the URL has a protocol, else ``Path(path).is_absolute()``.
+    """Return True if the URL is absolute (protocol, root, home, or Windows).
 
-    Used to decide whether a path from a manifest/CSV needs to be resolved
-    against a base directory.
+    Host-independent: shares :func:`_is_local_absolute` with :func:`find_url_type`
+    so a Windows drive/UNC path or a ``~``-anchored home path is treated as
+    absolute even when the suite runs on POSIX. Falls back to
+    ``Path(path).is_absolute()`` for anything else. Used to decide whether a path
+    from a manifest/CSV needs to be resolved against a base directory.
     """
     protocol, path = fsspec.core.split_protocol(url)
-    return True if protocol is not None else Path(path).is_absolute()
+    if protocol is not None or _is_local_absolute(path):
+        return True
+    return Path(path).is_absolute()
 
 
 def filesystem_for_url(
@@ -113,7 +147,9 @@ def glob_url_paths(*, base_url: str | None, pattern: str) -> list[str]:
 
     Uses :func:`filesystem_for_url` so it works for local and S3 URLs, and
     re-prefixes the protocol on each result so matches stay usable URLs. If
-    ``base_url`` is ``None``, ``pattern`` is treated as absolute.
+    ``base_url`` is ``None``, ``pattern`` is treated as absolute — it must then
+    itself be absolute (``/…``, ``~/…``, ``s3://…``, or a Windows path), since a
+    relative pattern classifies as ``NOT_SUPPORTED`` and raises.
 
     A literal, non-existent pattern yields an empty list (fsspec behaviour that
     downstream code relies on for existence checks).

@@ -13,6 +13,7 @@ from ome_zarr_converters_tools.models._url_utils import (
     glob_url_paths,
     is_absolute_url,
     join_url_paths,
+    local_url_to_path,
     parent_url,
 )
 
@@ -36,6 +37,14 @@ class TestUrlUtils:
     def test_find_url_type_unc_path(self) -> None:
         assert find_url_type("\\\\server\\share\\path") == UrlType.LOCAL
 
+    def test_find_url_type_home(self) -> None:
+        assert find_url_type("~/data") == UrlType.LOCAL
+        assert find_url_type("~user/data") == UrlType.LOCAL
+
+    def test_find_url_type_relative_unsupported(self) -> None:
+        assert find_url_type("rel/path") == UrlType.NOT_SUPPORTED
+        assert find_url_type("../up/path") == UrlType.NOT_SUPPORTED
+
     def test_join_url_paths(self) -> None:
         result = join_url_paths("/base", "sub", "file.txt")
         assert result == "/base/sub/file.txt"
@@ -56,6 +65,19 @@ class TestUrlUtils:
 
     def test_join_url_paths_local_file(self) -> None:
         assert join_url_paths("/data/exp", "tiles.csv") == "/data/exp/tiles.csv"
+
+    def test_join_url_paths_raises_when_escaping_bucket(self) -> None:
+        # `..` must not silently drop the bucket (would target a different one).
+        with pytest.raises(ValueError, match="escapes network location"):
+            join_url_paths("s3://bucket", "..", "x")
+
+    def test_join_url_paths_dotdot_within_bucket_ok(self) -> None:
+        # Ascending within the bucket key is fine.
+        assert join_url_paths("s3://bucket/dir", "..", "x") == "s3://bucket/x"
+
+    def test_join_url_paths_local_absolute_clamps_at_root(self) -> None:
+        # posixpath.normpath clamps at `/`; a local absolute base cannot escape.
+        assert join_url_paths("/data/exp", "..", "..", "..", "x") == "/x"
 
     @pytest.mark.parametrize(
         ("base_url", "paths"),
@@ -96,6 +118,9 @@ class TestUrlUtils:
             ("/path/to/dir", "dir"),
             ("/path/to/file.txt", "file.txt"),
             ("s3://bucket/a/b", "b"),
+            # Backslash paths must yield the trailing component (loader relies
+            # on basename_url instead of a raw split("/")).
+            ("C:\\data\\exp\\file.tif", "file.tif"),
         ],
     )
     def test_basename_url(self, url: str, expected: str) -> None:
@@ -107,10 +132,27 @@ class TestUrlUtils:
             ("/abs/path", True),
             ("relative/path", False),
             ("s3://bucket/key", True),
+            # Host-independent: home-anchored and Windows paths are absolute even
+            # when the suite runs on POSIX.
+            ("~/data", True),
+            ("C:/path", True),
+            ("\\\\server\\share", True),
         ],
     )
     def test_is_absolute_url(self, url: str, expected: bool) -> None:
         assert is_absolute_url(url) is expected
+
+    def test_local_url_to_path_expands_home_without_touching_fs(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # Run from an isolated cwd so a regression that creates a literal `~`
+        # directory would be observable and would not pollute the repo.
+        monkeypatch.chdir(tmp_path)
+        result = local_url_to_path("~/some_dir/file.txt")
+        assert result == (Path.home() / "some_dir" / "file.txt").resolve()
+        # No filesystem side effects: neither `~` nor the home subdir is created.
+        assert not (tmp_path / "~").exists()
+        assert not (Path.home() / "some_dir").exists()
 
     def test_glob_url_paths_local(self, tmp_path: Path) -> None:
         (tmp_path / "a.jdce").touch()
