@@ -96,6 +96,7 @@ docs = [
     "mkdocs-material==9.7.1",
     "mkdocstrings[python]>=1.0.2,<1.1.0",
     "mkdocs-jupyter>=0.25.1,<0.26.0",
+    "ipywidgets",
     "mkdocs-autorefs",
     "mkdocs-git-revision-date-localized-plugin",
     "mkdocs-git-committers-plugin-2",
