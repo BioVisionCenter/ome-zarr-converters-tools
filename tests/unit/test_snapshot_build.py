@@ -31,11 +31,10 @@ def _make_container(
     container = ngio.create_ome_zarr_from_array(
         store=store,
         array=arr,
-        xy_pixelsize=0.5,
+        pixelsize=0.5,
         levels=1,
         axes_names=["c", "y", "x"],
-        channel_labels=list(channels),
-        channel_wavelengths=[str(400 + 50 * i) for i in range(len(channels))],
+        channels_meta=list(channels),
         overwrite=overwrite,
     )
     if with_table:
