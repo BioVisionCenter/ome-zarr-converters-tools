@@ -49,14 +49,12 @@ def tiled_image_from_json(
     when loading it from json otherwise pydantic cannot infer them.
 
     Args:
-        tiled_image_json_dump_url (str): The URL to the json file.
-        collection_type (type[CollectionInterfaceType]): The concrete collection type
-            of the TiledImage.
-        image_loader_type (type[ImageLoaderInterfaceType]): The concrete image loader
-            type of the TiledImage.
+        tiled_image_json_dump_url: The URL to the json file.
+        collection_type: The concrete collection type of the `TiledImage`.
+        image_loader_type: The concrete image loader type of the `TiledImage`.
 
     Returns:
-        TiledImage: The loaded TiledImage object.
+        The loaded `TiledImage` object.
     """
     num_retries = int(os.getenv("CONVERTERS_TOOLS_NUM_RETRIES", 5))
 
@@ -102,7 +100,7 @@ def tiled_image_from_json_str(
         image_loader_type: The concrete image loader type of the TiledImage.
 
     Returns:
-        TiledImage: The loaded TiledImage object.
+        The loaded `TiledImage` object.
     """
     return TiledImage[
         collection_type, image_loader_type  # ty:ignore[invalid-type-form]
@@ -115,7 +113,7 @@ def remove_json(
     """Clean up the JSON file and the directory if it is empty.
 
     Args:
-        tiled_image_json_dump_url (str): The URL to the json file.
+        tiled_image_json_dump_url: The URL to the json file.
     """
     fs = filesystem_for_url(
         tiled_image_json_dump_url, error_msg_prefix="Cleaning up JSON"
@@ -145,7 +143,7 @@ def cleanup_if_exists(temp_json_url: str):
     If cleaning up is not possible, log an error message, but do not raise.
 
     Args:
-        temp_json_url (str): The URL to the temporary JSON directory.
+        temp_json_url: The URL to the temporary JSON directory.
     """
     fs = filesystem_for_url(temp_json_url, error_msg_prefix="Cleanup")
 

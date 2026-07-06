@@ -254,9 +254,6 @@ def setup_ome_zarr_collection(
         zarr_dir: The base directory for the zarr data.
         ngff_version: NGFF version to use for the collection setup.
         overwrite_mode: Overwrite mode to use for the collection setup.
-
-    Returns:
-        The list of TiledImage after applying the collection setup handler.
     """
     collection_type = collection_type
     setup_function = _collection_setup_registry.get(collection_type)

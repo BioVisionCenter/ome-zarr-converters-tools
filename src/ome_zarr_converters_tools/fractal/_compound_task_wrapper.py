@@ -95,22 +95,21 @@ def exec_compound_task(
 ) -> list[ImageListUpdateDict]:
     """Execute a Fractal compound task.
 
-    Runs ``init_task_fn`` once to obtain a ``parallelization_list``, then
-    calls ``compute_task_fn`` for each item, merging ``compute_task_kwargs``
-    into each call. Results are returned in the same order as
-    ``parallelization_list``.
+    Runs `init_task_fn` once to obtain a `parallelization_list`, then calls
+    `compute_task_fn` for each item, merging `compute_task_kwargs` into each
+    call. Results are returned in the same order as `parallelization_list`.
 
     Args:
-        init_task_fn: Returns a dict with a ``"parallelization_list"`` key.
+        init_task_fn: Returns a dict with a `"parallelization_list"` key.
         compute_task_fn: Invoked once per parallelization item. When using
-            ``MultiprocessingRunner``, this must be a picklable module-level
+            `MultiprocessingRunner`, this must be a picklable module-level
             function.
-        init_task_kwargs: Keyword arguments forwarded to ``init_task_fn``.
+        init_task_kwargs: Keyword arguments forwarded to `init_task_fn`.
         compute_task_kwargs: Additional kwargs merged into each compute call.
-        runner: Execution strategy. Defaults to sequential when ``None``.
+        runner: Execution strategy. Defaults to sequential when `None`.
 
     Returns:
-        List of ``ImageListUpdateDict`` in ``parallelization_list`` order.
+        List of `ImageListUpdateDict` in `parallelization_list` order.
     """
     match runner:
         case None | SequentialRunner():

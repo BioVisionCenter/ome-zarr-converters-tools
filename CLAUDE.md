@@ -10,7 +10,13 @@ All commands require `pixi run -e dev` prefix (never bare `python`/`pytest`/`ruf
 ## Code Style
 
 - Ruff: line length 88, target py311
-- Google-style docstrings (disabled for tests)
+- Google-style docstrings, rendered by mkdocstrings/Griffe as Markdown (disabled for tests):
+  - Inline code uses single backticks (`` `None` ``), never RST double backticks
+  - Don't restate types in prose — they live in the signature (`channel: The channel to load.`, not `channel (int): ...`)
+  - Sections: `Args`, `Returns`, `Raises`, `Example`, `Note`
+  - One-line summary, blank line, then body
+  - Code examples in fenced ` ```python ` blocks, not `>>>` doctests
+  - Terse: behavior and edge cases only, don't restate the signature
 - Type checking via `ty`
 - Internal modules prefixed with `_`
 - Spell check via typos — false positives go in `_typos.toml`

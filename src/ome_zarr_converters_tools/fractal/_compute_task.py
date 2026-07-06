@@ -84,15 +84,16 @@ def generic_compute_task(
     """Initialize the task to convert a LIF plate to OME-Zarr.
 
     Args:
-        zarr_url (str): URL to the OME-Zarr file.
-        init_args (ConvertParallelInitArgs | dict): Arguments from the initialization
-            task. Accepts either a ``ConvertParallelInitArgs`` instance or a plain dict
-            (as produced by Fractal's orchestration layer).
-        collection_type (type[CollectionInterfaceType]): The collection type to use
-            when loading the TiledImage.
-        image_loader_type (type[ImageLoaderInterfaceType]): The image loader type to
-            use when loading the TiledImage.
-        resource (Any): The resource to associate with the context model.
+        zarr_url: URL to the OME-Zarr file.
+        init_args: Arguments from the initialization task. Accepts either a
+            `ConvertParallelInitArgs` instance or a plain dict (as produced by
+            Fractal's orchestration layer).
+        collection_type: The collection type to use when loading the `TiledImage`.
+        image_loader_type: The image loader type to use when loading the `TiledImage`.
+        resource: The resource to associate with the context model.
+
+    Returns:
+        The Fractal image-list update entry for the converted image.
     """
     logger.info(f"Starting conversion for Zarr URL: {zarr_url}")
     parsed_args = ConvertParallelInitArgs.model_validate(init_args)

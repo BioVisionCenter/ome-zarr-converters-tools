@@ -1,74 +1,62 @@
 """Build a lazy dask array by compositing overlapping loader regions.
 
-Problem
--------
-We have a large N-dimensional output array and many *loader* callables, each
-producing a sub-array that covers a rectangular slice of the output.  Loaders
+There is a large N-dimensional output array and many *loader* callables, each
+producing a sub-array that covers a rectangular slice of the output. Loaders
 may overlap (last writer wins) and may not cover the entire output (uncovered
-areas are filled with *fill_value*).  The result must be a lazy ``dask.array``
-where each loader is called **at most once** during compute, even when its
-region spans multiple output chunks.
+areas are filled with `fill_value`). The result is a lazy `dask.array` where
+each loader is called **at most once** during compute, even when its region
+spans multiple output chunks.
 
-Design decisions
-----------------
-1. **Direct graph construction with HighLevelGraph**
-   Instead of using ``dask.delayed`` + ``da.from_delayed`` + ``da.block``
-   (which creates and merges one mini-graph per chunk — expensive at scale),
-   we build the task graph dict directly and wrap it in a ``HighLevelGraph``.
-   This is a single O(C + L) pass that produces a flat dict, avoiding the
-   quadratic merge cost of ``da.block`` with many chunks.
+Note:
+    Design decisions behind the graph construction:
 
-   ``HighLevelGraph`` (rather than a raw dict) is used so that dask's
-   internal optimisation passes and schedulers can reason about layer
-   dependencies.
+    - **Direct graph construction with `HighLevelGraph`**: instead of
+      `dask.delayed` + `da.from_delayed` + `da.block` (which creates and
+      merges one mini-graph per chunk — expensive at scale), the task graph
+      dict is built directly in a single O(C + L) pass, avoiding the
+      quadratic merge cost of `da.block` with many chunks. `HighLevelGraph`
+      (rather than a raw dict) lets dask's optimisation passes and schedulers
+      reason about layer dependencies.
+    - **Loader deduplication via graph keys**: each loader gets exactly one
+      graph key `(loader_layer_name, i)`. Output chunk tasks reference these
+      keys, so the scheduler computes each key once regardless of how many
+      chunks depend on it.
+    - **Inverted overlap index, O(L*k) instead of O(C*L)**: a naive approach
+      checks every loader against every chunk (O(C*L); 10^10 checks at 100k
+      loaders and 100k chunks). Instead, for each loader, `bisect` on the
+      sorted chunk-start coordinates finds the small set of chunks it
+      overlaps. Cost: O(L*k), where k is the average number of chunks per
+      loader (typically 1-4 for aligned tiles).
+    - **Flat loader args, no intermediate graph keys**: dask resolves graph
+      keys that appear as positional arguments in a task tuple, but does not
+      recurse into nested lists. Earlier versions worked around this with
+      `pair-`/`pairs-` helper keys to assemble `(array, bounds)` tuples at
+      compute time, doubling the graph size. Loader references are instead
+      flattened directly into the task tuple:
 
-2. **Loader deduplication via graph keys**
-   Each loader gets exactly one graph key ``(loader_layer_name, i)``.
-   Output chunk tasks reference these keys; the scheduler ensures each key
-   is computed once regardless of how many chunks depend on it.
+      ```python
+      (
+          func,
+          chunk_bounds,
+          dtype,
+          fill,
+          loader_key_0,
+          bounds_0,
+          loader_key_1,
+          bounds_1,
+          ...,
+      )
+      ```
 
-3. **Inverted overlap index — O(L*k) instead of O(C*L)**
-   A naive approach iterates all L loaders for every chunk (O(C*L)).
-   With 100k loaders and 100k chunks that's 10^10 checks.
-
-   Instead we invert the loop: for each loader, use ``bisect`` on the
-   sorted chunk-start coordinates to find the (small) set of chunks it
-   overlaps, then record that mapping.  Cost: O(L*k) where k is the
-   average number of chunks a loader spans (typically 1-4 for aligned tiles).
-
-4. **Flat loader args — no intermediate graph keys**
-   Dask resolves graph keys that appear as *positional arguments* in a task
-   tuple, but does **not** recurse into nested lists.  Earlier versions
-   worked around this by creating ``pair-`` and ``pairs-`` helper keys to
-   assemble ``(array, bounds)`` tuples at compute time — doubling the graph
-   size.
-
-   Here we flatten loader references directly into the task tuple::
-
-       (
-           func,
-           chunk_bounds,
-           dtype,
-           fill,
-           loader_key_0,
-           bounds_0,
-           loader_key_1,
-           bounds_1,
-           ...,
-       )
-
-   Dask resolves the ``loader_key_*`` entries (they are graph keys) and
-   passes the ``bounds_*`` entries through as-is (they are plain tuples of
-   ints, not graph keys).  This halves the number of graph entries for chunks
-   with loaders.
-
-5. **Graph-level fast paths**
-   - *Single loader, full coverage*: the chunk task is just
-     ``(operator.getitem, loader_key, slices)`` — no composite function
-     call, no fill allocation.  For well-tiled data this is the majority of
-     chunks.
-   - *No loaders*: a shared ``np.full`` fill key is reused across all empty
-     chunks with the same shape, avoiding redundant graph entries.
+      Dask resolves the `loader_key_*` entries (graph keys) and passes the
+      `bounds_*` entries through as-is (plain tuples of ints, not graph
+      keys), halving the number of graph entries for chunks with loaders.
+    - **Graph-level fast paths**: a chunk with a single, fully-covering loader
+      is just `(operator.getitem, loader_key, slices)` — no composite
+      function call, no fill allocation — which covers the majority of
+      chunks for well-tiled data. A chunk with no loaders reuses a shared
+      `np.full` fill key across all empty chunks of the same shape, avoiding
+      redundant graph entries.
 """
 
 import itertools
@@ -84,7 +72,7 @@ from dask.highlevelgraph import HighLevelGraph
 
 
 def _normalize_slice(s: slice, dim_size: int) -> tuple[int, int]:
-    """Convert a ``slice`` to an explicit ``(start, stop)`` pair."""
+    """Convert a `slice` to an explicit `(start, stop)` pair."""
     start, stop, _ = s.indices(dim_size)
     return start, stop
 
@@ -92,7 +80,7 @@ def _normalize_slice(s: slice, dim_size: int) -> tuple[int, int]:
 def _build_chunk_ranges(
     shape: tuple[int, ...], chunks: tuple[int, ...]
 ) -> list[list[tuple[int, int]]]:
-    """Return per-axis lists of ``(start, stop)`` for every chunk."""
+    """Return per-axis lists of `(start, stop)` for every chunk."""
     ranges = []
     for dim_size, chunk_size in zip(shape, chunks, strict=True):
         axis_ranges = []
@@ -108,14 +96,14 @@ def _build_chunk_to_loaders(
 ) -> dict[tuple[int, ...], list[int]]:
     """Map each chunk index to the loader indices that overlap it.
 
-    Uses an *inverted* approach: iterate over loaders (not chunks) and use
-    ``bisect`` on the sorted chunk-start coordinates to find the chunk index
-    range each loader spans per axis.  The Cartesian product of those per-axis
+    Uses an inverted approach: iterates over loaders (not chunks) and uses
+    `bisect` on the sorted chunk-start coordinates to find the chunk index
+    range each loader spans per axis. The Cartesian product of those per-axis
     ranges gives the set of chunks the loader overlaps.
 
-    Complexity: O(L * k) where L = number of loaders and k = average number
-    of chunks per loader (typically 1-4), instead of O(C * L) for the naive
-    "scan all loaders per chunk" approach.
+    Complexity: O(L * k) where L is the number of loaders and k is the
+    average number of chunks per loader (typically 1-4), instead of O(C * L)
+    for the naive "scan all loaders per chunk" approach.
     """
     ndim = len(chunk_ranges)
 
@@ -152,13 +140,13 @@ def _composite_chunk(
     """Composite multiple pre-loaded arrays into a single output chunk.
 
     Loader arguments are passed as a flat sequence of alternating
-    ``(array, bounds, array, bounds, ...)`` pairs via ``*loader_args``.
-    This flat layout avoids the need for intermediate graph keys to assemble
-    ``(array, bounds)`` tuples — dask resolves graph-key positional args but
+    `(array, bounds, array, bounds, ...)` pairs via `*loader_args`. This flat
+    layout avoids the need for intermediate graph keys to assemble
+    `(array, bounds)` tuples — dask resolves graph-key positional args but
     passes plain-data args through as-is.
 
     Compositing uses a last-writer-wins policy: loaders that appear later in
-    the *regions* list overwrite earlier ones in overlapping areas.
+    the `regions` list overwrite earlier ones in overlapping areas.
     """
     chunk_shape = tuple(stop - start for start, stop in chunk_bounds)
     n_loaders = len(loader_args) // 2
@@ -202,18 +190,18 @@ def lazy_array_from_regions(
     Each loader callable is invoked **at most once** during compute.
     Overlapping regions are composited with a last-writer-wins policy: for
     regions that cover the same output pixels, the region appearing later in
-    *regions* takes precedence.
+    `regions` takes precedence.
 
     Args:
-        regions: Each entry is ``(per_axis_slices, loader)`` where *loader* is
-            a zero-argument callable returning an ``np.ndarray``.
+        regions: Each entry is `(per_axis_slices, loader)` where `loader` is
+            a zero-argument callable returning an `np.ndarray`.
         shape: Output array shape.
         chunks: Chunk size per axis.
         dtype: Output dtype.
         fill_value: Value used for areas not covered by any loader.
 
     Returns:
-        A lazy ``dask.array.Array``.
+        A lazy `dask.array.Array`.
     """
     ndim = len(shape)
     if len(chunks) != ndim:

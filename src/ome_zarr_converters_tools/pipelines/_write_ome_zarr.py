@@ -91,8 +91,7 @@ def _attribute_to_condition_table(
         attributes: Dictionary of attribute names to lists of attribute values.
 
     Returns:
-        ConditionTable | None: Condition table as a ConditionTable or None
-            if no attributes are provided.
+        A `ConditionTable`, or `None` if no attributes are provided.
     """
     condition_table = {}
     num_rows_dict = {}
@@ -153,7 +152,7 @@ def write_tiled_image_as_zarr(
         resource: Optional resource to pass to the image loaders.
 
     Returns:
-        OmeZarrContainer: The written OME-Zarr container.
+        The written OME-Zarr container.
     """
     if overwrite_mode == OverwriteMode.NO_OVERWRITE:
         mode = "w-"
