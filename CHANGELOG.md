@@ -3,6 +3,7 @@
 ## [v0.10.4]
 
 ### Features
+- Add a shared `ome_zarr_converters_tools.testing` subpackage that centralizes the converter snapshot tests (previously copy-pasted into each `fractal-*-converters/tests/utils.py`). Exposes `run_converter_test` plus `build_snapshot`/`compare_snapshots` and the assertion models. Snapshots are now stored as **JSON** (was YAML): stdlib, no dependency, native `null`, and no YAML implicit-typing coercion of channel/well strings. Generation and validation share one code path (`build_snapshot`), fingerprint stats are compared with a tolerance while the sha256 pixel hash stays exact, and a mismatch raises a single `AssertionError` listing every differing field with its full path. A `pytest11` entry point ships the plugin providing `--update-snapshots`, `--extended`, the `extended` marker, and the `update_snapshots` fixture, so converters no longer duplicate that conftest wiring.
 - Add protocol-aware URL path helpers to `_url_utils`, exported from the package root and `ome_zarr_converters_tools.models`: `parent_url`, `basename_url`, `is_absolute_url`, and `glob_url_paths`. They are the URL equivalents of `os.path.dirname`/`basename`/`isabs`/`glob`, working transparently for local paths and `s3://` URLs and robust to Windows backslash separators.
 
 ### Fix

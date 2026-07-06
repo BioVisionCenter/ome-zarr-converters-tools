@@ -119,8 +119,10 @@ repository = "https://github.com/BioVisionCenter/ome-zarr-converters-tools"
 # [project.scripts]
 # ome-zarr-converters-tools-cli = "ome_zarr_converters_tools:main_cli"
 
-# [project.entry-points."some.group"]
-# tomatoes = "ome_zarr_converters_tools:main_tomatoes"
+# Ship the snapshot-testing pytest plugin (--update-snapshots / --extended,
+# the `extended` marker, and the `update_snapshots` fixture) to every consumer.
+[project.entry-points.pytest11]
+ome_zarr_converters_tools = "ome_zarr_converters_tools.testing.plugin"
 
 # https://docs.astral.sh/ruff
 [tool.ruff]
