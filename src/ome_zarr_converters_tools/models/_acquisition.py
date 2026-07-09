@@ -89,7 +89,11 @@ def _color_from_wavelength_id(wavelength_id: str | None) -> str | None:
     for upper_bound, color in _WAVELENGTH_COLOR_TABLE:
         if wavelength < upper_bound:
             return color
-    return "#FF00FF"  # >= 750 nm: far-red/IR → Magenta
+    # The final visible band (Red) is inclusive of its 750 nm upper edge;
+    # strictly-longer near-IR wavelengths fall back to magenta.
+    if wavelength == _WAVELENGTH_COLOR_TABLE[-1][0]:
+        return _WAVELENGTH_COLOR_TABLE[-1][1]
+    return "#FF00FF"  # > 750 nm: far-red/IR → Magenta
 
 
 def _color_from_channel_label(channel_label: str) -> str:
@@ -100,7 +104,7 @@ def _color_from_channel_label(channel_label: str) -> str:
     similarity = {
         key: SequenceMatcher(None, lower, key).ratio() for key in _LABEL_COLOR_MAP
     }
-    best = max(similarity, key=similarity.get)  # type: ignore
+    best = max(similarity, key=lambda key: similarity[key])
     return _LABEL_COLOR_MAP[best]
 
 

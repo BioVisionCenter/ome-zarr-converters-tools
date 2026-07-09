@@ -107,17 +107,23 @@ class Tile(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfaceType]
         origins = {}
         roi_slices = {}
         for ax in acquisition_details.axes:
-            if ax == "x" and stage_corrections.swap_xy:
-                ax = "y"
-            elif ax == "y" and stage_corrections.swap_xy:
-                ax = "x"
+            # `swap_xy` transposes the X and Y stage axes: the output x slice is
+            # built from this tile's y position and vice versa. The output axis
+            # label (`axis_name`) stays `ax`; only the source field is swapped.
+            source_ax = ax
+            if stage_corrections.swap_xy and ax == "x":
+                source_ax = "y"
+            elif stage_corrections.swap_xy and ax == "y":
+                source_ax = "x"
 
-            start_field = f"start_{ax}"
+            start_field = f"start_{source_ax}"
             start = getattr(self, start_field)
             start_coo_system = getattr(acquisition_details, f"{start_field}_coo", None)
             if start_coo_system is not None:
                 start = safe_to_world(
-                    start=start, spacing=spacing[ax], coo_system=start_coo_system
+                    start=start,
+                    spacing=spacing[source_ax],
+                    coo_system=start_coo_system,
                 )
 
             if ax == "x" and stage_corrections.flip_x:
@@ -125,14 +131,16 @@ class Tile(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfaceType]
             if ax == "y" and stage_corrections.flip_y:
                 start = -start
 
-            length_field = f"length_{ax}"
+            length_field = f"length_{source_ax}"
             length = getattr(self, length_field)
             length_coo_system = getattr(
                 acquisition_details, f"{length_field}_coo", None
             )
             if length_coo_system is not None:
                 length = safe_to_world(
-                    start=length, spacing=spacing[ax], coo_system=length_coo_system
+                    start=length,
+                    spacing=spacing[source_ax],
+                    coo_system=length_coo_system,
                 )
             roi_slices[ax] = RoiSlice(start=start, length=length, axis_name=ax)
             if ax in ["x", "y", "z"]:

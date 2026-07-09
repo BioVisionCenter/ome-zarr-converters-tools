@@ -43,7 +43,7 @@ license = { text = "BSD-3-Clause" }
 authors = [{ name = "Lorenzo Cerrone", email = "lorenzo.cerrone@uzh.ch" }]
 # https://pypi.org/classifiers/
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 5 - Production/Stable",
     "License :: OSI Approved :: BSD License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
@@ -55,13 +55,11 @@ classifiers = [
 # add your package dependencies here
 dependencies = [
     "ngio>=0.5.8,<0.6.0",
-    "tqdm",
-    "numpy",
-    "pillow",
-    "tifffile",
-    "toml",
-    "fsspec",
-    "s3fs",               # s3 support for fsspec
+    "numpy>=1.26",
+    "pillow>=10.0",
+    "tifffile>=2024.1.30",
+    "fsspec>=2024.2.0",
+    "s3fs>=2024.2.0",       # s3 support for fsspec
 ]
 
 # https://peps.python.org/pep-0621/#dependencies-optional-dependencies
@@ -112,6 +110,8 @@ docs = [
 [project.urls]
 homepage = "https://github.com/BioVisionCenter/ome-zarr-converters-tools"
 repository = "https://github.com/BioVisionCenter/ome-zarr-converters-tools"
+documentation = "https://BioVisionCenter.github.io/ome-zarr-converters-tools/"
+changelog = "https://github.com/BioVisionCenter/ome-zarr-converters-tools/blob/main/CHANGELOG.md"
 
 # Entry points
 # https://peps.python.org/pep-0621/#entry-points

@@ -97,12 +97,14 @@ class StagePositionCorrections(BaseModel):
     align_z: bool = Field(default=False, title="Align Z")
     """
     Whether to align the positions in the Z axis by FOV.
-    This addresses minor imprecision that often occurs during image acquisition.
+
+    Not yet implemented: setting this to `True` raises `NotImplementedError`.
     """
     align_t: bool = Field(default=False, title="Align T")
     """
     Whether to align the positions in the T axis by FOV.
-    This addresses minor imprecision that often occurs during image acquisition.
+
+    Not yet implemented: setting this to `True` raises `NotImplementedError`.
     """
     model_config = ConfigDict(extra="forbid")
 
@@ -116,7 +118,7 @@ class FovBasedChunking(BaseModel):
     """
     Scaling factor for XY chunk size. If set to 1, chunk size matches FOV size.
     If set to 0.5, chunk size is half the FOV size (smaller chunks, more files).
-    If set to 2, chunk size is double the FOV size (larger chunks, less files).
+    If set to 2, chunk size is double the FOV size (larger chunks, fewer files).
     """
     z_chunk: int = Field(default=10, ge=1, title="Chunk Size for Z")
     """Chunk size for Z dimension."""

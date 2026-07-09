@@ -70,10 +70,18 @@ def build_parallelization_list(
                 converter_options=converter_options,
                 overwrite_mode=overwrite_mode,
             )
+        # Exactly one JSON source is set; drop the unset one so the payload does
+        # not carry a redundant `null` key. Scoped to that field (not
+        # `exclude_none`) so nested `converter_options` is dumped in full.
+        unset_source = (
+            "tiled_image_json_str"
+            if init_args.tiled_image_json_str is None
+            else "tiled_image_json_dump_url"
+        )
         parallelization_list.append(
             {
                 "zarr_url": zarr_url,
-                "init_args": init_args.model_dump(exclude=None),
+                "init_args": init_args.model_dump(exclude={unset_source}),
             }
         )
     return parallelization_list

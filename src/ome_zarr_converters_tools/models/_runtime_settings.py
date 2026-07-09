@@ -85,8 +85,9 @@ class TempJsonOptions(BaseModel):
     - `"Memory"`: always keep data in-memory (skips all filesystem I/O).
     - `"JSON"`: always write to a temporary JSON file on disk (required for
       distributed Fractal runs where init and compute execute on different machines).
-    - `"Auto"`: use in-memory when the total serialized payload is ≤50 MB,
-      otherwise fall back to JSON files on disk.
+    - `"Auto"`: use in-memory when the total serialized payload is within
+      `max_in_memory_bytes` (default 10 MiB), otherwise fall back to JSON files
+      on disk.
     """
     max_in_memory_bytes: int = Field(
         default=10 * 1024 * 1024,

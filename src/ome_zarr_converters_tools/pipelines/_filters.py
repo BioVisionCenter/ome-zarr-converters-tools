@@ -67,7 +67,7 @@ class WellExcludeFilter(FilterModel):
 def apply_well_filter(tile: Tile, filter_params: WellExcludeFilter) -> bool:
     if not isinstance(tile.collection, ImageInPlate):
         raise ValueError(
-            "Well filter can only be applied to To tile with ImageInPlate collection."
+            "Well filter can only be applied to a tile with ImageInPlate collection."
         )
     if tile.collection.well in filter_params.wells_to_remove:
         return False

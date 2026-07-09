@@ -12,7 +12,7 @@ Key exports: `Tile`, `TiledImage`, `TileSlice`, `TileFOVGroup`, `hcs_images_from
 
 Configuration models, collection types, and image loaders. This module defines the Pydantic models used to configure the conversion pipeline (`ConverterOptions`, `AcquisitionDetails`), the collection types that determine output structure (`ImageInPlate`, `SingleImage`), and the image loader interface for custom formats.
 
-Key exports: `ConverterOptions`, `AcquisitionDetails`, `ChannelInfo`, `ImageInPlate`, `SingleImage`, `ImageLoaderInterface`, `DefaultImageLoader`, `TilingStrategy`, `AutoTiling`, `SnapToGridTiling`, `SnapToCornersTiling`, `InplaceTiling`, `NoTiling`, `WriterMode`, `OverwriteMode`, `AlignmentCorrections`, `OmeZarrOptions`.
+Key exports: `ConverterOptions`, `AcquisitionDetails`, `ChannelInfo`, `ImageInPlate`, `SingleImage`, `ImageLoaderInterface`, `DefaultImageLoader`, `TilingStrategy`, `AutoTiling`, `SnapToGridTiling`, `SnapToCornersTiling`, `InplaceTiling`, `NoTiling`, `WriterMode`, `OverwriteMode`, `StagePositionCorrections`, `OmeZarrOptions`.
 
 ::: ome_zarr_converters_tools.models
 
@@ -22,7 +22,7 @@ Protocol-aware path helpers that work transparently for local paths and remote `
 
 Key exports: `join_url_paths`, `parent_url`, `basename_url`, `is_absolute_url`, `glob_url_paths`, `filesystem_for_url`, `find_url_type`, `local_url_to_path`, `UrlType`.
 
-::: ome_zarr_converters_tools.models._url_utils
+::: ome_zarr_converters_tools.models
     options:
       members:
         - join_url_paths

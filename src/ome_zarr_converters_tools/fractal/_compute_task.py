@@ -1,7 +1,6 @@
 """Functions to write TiledImage models from Tile models."""
 
 import logging
-import time
 from typing import Any, TypedDict
 
 from ngio import OmeZarrContainer
@@ -79,7 +78,7 @@ def generic_compute_task(
     init_args: ConvertParallelInitArgs | dict,
     collection_type: type[CollectionInterfaceType],
     image_loader_type: type[ImageLoaderInterfaceType],
-    resource: Any = None,
+    resource: Any | None = None,
 ) -> ImageListUpdateDict:
     """Initialize the task to convert a LIF plate to OME-Zarr.
 
@@ -105,32 +104,17 @@ def generic_compute_task(
             image_loader_type=image_loader_type,
         )
     else:
-        for t in range(3):  # Retry up to 3 times
-            try:
-                json_url = parsed_args.tiled_image_json_dump_url
-                assert json_url is not None
-                tiled_image_loaded = tiled_image_from_json(
-                    tiled_image_json_dump_url=json_url,
-                    collection_type=collection_type,
-                    image_loader_type=image_loader_type,
-                )
-                logger.info(
-                    "Successfully loaded JSON file: "
-                    f"{parsed_args.tiled_image_json_dump_url}"
-                )
-                break  # Exit loop if successful
-            except FileNotFoundError:
-                logger.error(
-                    f"JSON file does not exist: "
-                    f"{parsed_args.tiled_image_json_dump_url}, retrying..."
-                )
-                sleep_time = 2 ** (t + 1)
-                time.sleep(sleep_time)
-        else:
-            raise FileNotFoundError(
-                f"JSON file does not exist after 3 retries: "
-                f"{parsed_args.tiled_image_json_dump_url}"
-            )
+        json_url = parsed_args.tiled_image_json_dump_url
+        assert json_url is not None
+        # `tiled_image_from_json` already retries with backoff (see
+        # CONVERTERS_TOOLS_NUM_RETRIES) and raises FileNotFoundError when the
+        # file never appears; no outer retry loop is needed.
+        tiled_image_loaded = tiled_image_from_json(
+            tiled_image_json_dump_url=json_url,
+            collection_type=collection_type,
+            image_loader_type=image_loader_type,
+        )
+        logger.info(f"Successfully loaded JSON file: {json_url}")
 
     registration_pipeline = build_default_registration_pipeline(
         alignment_corrections=parsed_args.converter_options.stage_position_corrections,

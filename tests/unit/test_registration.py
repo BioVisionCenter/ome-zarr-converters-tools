@@ -1,7 +1,5 @@
 """Unit tests for registration module (alignment, tiling, snap utils)."""
 
-import warnings
-
 import numpy as np
 import pytest
 from ngio import Roi, RoiSlice
@@ -111,23 +109,15 @@ class TestAlignment:
             assert y_slice is not None
             assert y_slice.start == 20.0
 
-    def test_align_z_warns(self) -> None:
+    def test_align_z_raises(self) -> None:
         regions = [_make_world_tile_slice(0.0, 0.0, 10.0, 10.0)]
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            result = _align_z_regions(regions)
-            assert len(w) == 1
-            assert "not implemented" in str(w[0].message).lower()
-        assert result == regions
+        with pytest.raises(NotImplementedError, match="not implemented"):
+            _align_z_regions(regions)
 
-    def test_align_t_warns(self) -> None:
+    def test_align_t_raises(self) -> None:
         regions = [_make_world_tile_slice(0.0, 0.0, 10.0, 10.0)]
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            result = _align_t_regions(regions)
-            assert len(w) == 1
-            assert "not implemented" in str(w[0].message).lower()
-        assert result == regions
+        with pytest.raises(NotImplementedError, match="not implemented"):
+            _align_t_regions(regions)
 
     def test_apply_fov_alignment_corrections(self) -> None:
         acq = AcquisitionDetails(

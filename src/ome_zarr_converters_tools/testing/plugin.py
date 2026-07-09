@@ -1,10 +1,12 @@
 """Pytest plugin shared by the OME-Zarr converter test suites.
 
-Registered as a `pytest11` entry point, so it loads automatically in any
-environment where `ome-zarr-converters-tools` is installed. It provides the
-`--update-snapshots` and `--extended` options, the `extended` marker and its
-skip behaviour, and the `update_snapshots` fixture consumed by
-`run_converter_test`.
+Loaded explicitly via `pytest_plugins = ["ome_zarr_converters_tools.testing.plugin"]`
+in each consumer's `tests/conftest.py` — deliberately NOT a `pytest11` entry
+point (an entry point imports the package during pytest's plugin bootstrap,
+before pytest-cov starts, which marks the whole package "module-not-measured"
+and deflates coverage). It provides the `--update-snapshots` and `--extended`
+options, the `extended` marker and its skip behaviour, and the
+`update_snapshots` fixture consumed by `run_converter_test`.
 """
 
 import pytest

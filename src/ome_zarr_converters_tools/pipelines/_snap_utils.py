@@ -27,7 +27,7 @@ class BBox(NamedTuple):
     y_len: float
 
 
-class GripPoint(NamedTuple):
+class GridPoint(NamedTuple):
     x: float
     y: float
 
@@ -165,7 +165,7 @@ def _get_start(tile: TileSlice, axis: str) -> float:
 
 
 def _match_to_perfect_grid(
-    x_grid: float, y_grid: float, perfect_grid_positions: list[GripPoint]
+    x_grid: float, y_grid: float, perfect_grid_positions: list[GridPoint]
 ) -> tuple[float, float]:
     """Find the closest perfect grid position to the given grid position."""
     min_distance = float("inf")
@@ -218,11 +218,11 @@ def _build_perfect_grid_points(
     num_y: int,
     origin_x: float = 0.0,
     origin_y: float = 0.0,
-) -> list[GripPoint]:
+) -> list[GridPoint]:
     """Build a grid of points given the grid size, number of points and origin."""
     grid_points = []
     for i, j in product(range(num_x), range(num_y)):
-        point = GripPoint(x=origin_x + i * length_x, y=origin_y + j * length_y)
+        point = GridPoint(x=origin_x + i * length_x, y=origin_y + j * length_y)
         grid_points.append(point)
     return grid_points
 

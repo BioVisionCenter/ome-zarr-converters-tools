@@ -86,16 +86,16 @@ class TestTile:
             acquisition_details=acq,
         )
         roi = tile.to_roi()
-        # swap_xy: when loop sees "y", it swaps to "x" and reads start_x;
-        # when loop sees "x", it swaps to "y" and reads start_y.
+        # swap_xy transposes X and Y: the output x axis is built from the tile's
+        # y position/length and vice versa.
         x_slice = roi.get("x")
         assert x_slice is not None
-        assert x_slice.start == 100.0
-        assert x_slice.length == 64.0
+        assert x_slice.start == 200.0
+        assert x_slice.length == 128.0
         y_slice = roi.get("y")
         assert y_slice is not None
-        assert y_slice.start == 200.0
-        assert y_slice.length == 128.0
+        assert y_slice.start == 100.0
+        assert y_slice.length == 64.0
 
     def test_tile_find_data_type(self, single_tile: Tile[Any, Any]) -> None:
         dtype = single_tile.find_data_type()
@@ -192,6 +192,45 @@ class TestTiledImage:
         assert data.dtype == np.uint8
         # DummyLoader fills with non-zero data
         assert data.sum() > 0
+
+    def test_load_data_non_zero_origin(
+        self,
+        default_acquisition_details: AcquisitionDetails,
+        default_collection: SingleImage,
+        default_converter_options: ConverterOptions,
+    ) -> None:
+        # Regions that do not start at pixel 0 must be zeroed to the union origin
+        # before slicing into the union-sized buffer; otherwise their data is
+        # dropped (or a broadcast error is raised). load_data must be
+        # translation-invariant: an offset grid yields identical pixels to the
+        # same grid at the origin.
+        def _build_grid(offset: int) -> TiledImage:
+            positions = [
+                ("FOV_0", StartPosition(x=offset, y=offset)),
+                ("FOV_1", StartPosition(x=offset + 256, y=offset)),
+                ("FOV_2", StartPosition(x=offset, y=offset + 256)),
+                ("FOV_3", StartPosition(x=offset + 256, y=offset + 256)),
+            ]
+            tiles = [
+                build_dummy_tile(
+                    fov_name=fov_name,
+                    start=start,
+                    shape=TileShape(x=256, y=256, z=1, c=2, t=1),
+                    collection=default_collection,
+                    acquisition_details=default_acquisition_details,
+                )
+                for fov_name, start in positions
+            ]
+            images = tiled_image_from_tiles(
+                tiles=tiles, converter_options=default_converter_options
+            )
+            assert len(images) == 1
+            return images[0]
+
+        at_origin = _build_grid(0).load_data()
+        offset = _build_grid(100).load_data()
+        assert offset.shape == at_origin.shape == (1, 2, 1, 512, 512)
+        np.testing.assert_array_equal(offset, at_origin)
 
 
 class TestTiledImageFromTiles:

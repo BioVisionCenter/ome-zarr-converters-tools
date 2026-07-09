@@ -122,15 +122,19 @@ class PlateAssertionModel(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def validate_images(cls, values):
-        """Deep-merge `images_common` into every image entry."""
+        """Deep-merge `images_common` into every image entry.
+
+        `images_common` provides shared defaults; per-image values override them.
+        """
         common_assertions = values.pop("images_common", {})
         images = values.get("images", {})
         updated_image_assertions = {}
         for image_path, image_assertions in images.items():
-            for key in image_assertions.keys():
-                if key in common_assertions:
-                    image_assertions = _deep_merge(image_assertions, common_assertions)
-            updated_image_assertions[image_path] = image_assertions
+            # Common first (base), image second (overrides), for every image —
+            # including keys the image does not itself specify.
+            updated_image_assertions[image_path] = _deep_merge(
+                common_assertions, image_assertions
+            )
         values["images"] = updated_image_assertions
         return values
 

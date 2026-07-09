@@ -13,10 +13,10 @@ def tiled_image_from_tiles(
     converter_options: ConverterOptions,
     resource: Any | None = None,
 ) -> list[TiledImage]:
-    """Create a TiledImage from a dictionary.
+    """Build a list of TiledImages from a list of Tiles.
 
     Args:
-        tiles: List of Tile models to build the TiledImage from.
+        tiles: List of Tile models to build the TiledImages from.
         converter_options: ConverterOptions model for the conversion.
         resource: Optional resource to assist in processing.
 
@@ -37,7 +37,7 @@ def tiled_image_from_tiles(
         else:
             suffix = f"_{tile.fov_name}"
             add_translation = True
-        tile.collection._suffix = suffix
+        tile.collection.set_suffix(suffix)
         path = tile.collection.path()
         if path not in tiled_images:
             acquisition_details = tile.acquisition_details

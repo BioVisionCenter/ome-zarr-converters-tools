@@ -17,14 +17,21 @@ from ome_zarr_converters_tools.models._url_utils import (
 
 
 class ImageLoaderInterface(BaseModel, ABC):
+    """Base class for image loaders; subclass it to support a custom format.
+
+    Implement `load_data` to return the tile pixels as a NumPy array. The
+    optional `resource` carries per-call context (e.g. a base directory or an
+    open handle) and is threaded through the conversion pipeline unchanged.
+    """
+
     model_config = ConfigDict(extra="ignore")
 
     @abstractmethod
-    def load_data(self, resource: Any = None) -> np.ndarray:
+    def load_data(self, resource: Any | None = None) -> np.ndarray:
         """Load the image data as a NumPy array."""
         pass
 
-    def find_data_type(self, resource: Any = None) -> str:
+    def find_data_type(self, resource: Any | None = None) -> str:
         """Find the data type of the image data."""
         return str(self.load_data(resource).dtype)
 
@@ -37,7 +44,7 @@ ImageLoaderInterfaceType = TypeVar(
 class DefaultImageLoader(ImageLoaderInterface):
     file_path: str
 
-    def load_data(self, resource: Any = None) -> np.ndarray:
+    def load_data(self, resource: Any | None = None) -> np.ndarray:
         """Load the image data as a NumPy array."""
         try:
             if resource is not None:

@@ -46,7 +46,6 @@ class TileSlice(BaseModel, Generic[ImageLoaderInterfaceType]):
         """Create a TileSlice from a Tile."""
         return cls(
             roi=tile.to_roi(),
-            # collection=tile.collection,
             image_loader=tile.image_loader,
         )
 
@@ -228,7 +227,6 @@ class TiledImage(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfac
         tile_region = TileSlice.from_tile(tile)
 
         if add_translation:
-            # This logic is a bit hacky to be improved
             roi_extra = tile_region.roi.model_extra or {}
             translation = []
             for ax in self.axes:
@@ -262,6 +260,18 @@ class TiledImage(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfac
         self, resource: Any | None = None
     ) -> list[tuple[tuple[slice, ...], Callable[[], np.ndarray]]]:
         """Prepare the TileSlices and their corresponding slicing tuples for loading."""
+        # Zero every region to the union origin so absolute stage coordinates map
+        # into the union-bounding-box buffer allocated by `load_data`/`shape()`.
+        # Without this, regions that do not start at pixel 0 index past the buffer
+        # and their data is silently dropped (or raises a broadcast error).
+        union_roi = self.roi()
+        offset = {}
+        for axis in self.axes:
+            union_axis = union_roi.get(axis)
+            assert union_axis is not None
+            start = union_axis.start
+            assert start is not None
+            offset[axis] = -start
 
         def make_loader(
             region: TileSlice, resource: Any | None
@@ -270,7 +280,8 @@ class TiledImage(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfac
 
         slices = []
         for region in self.regions:
-            roi_slice = region.roi.to_slicing_dict(pixel_size=self.pixel_size)
+            roi_zeroed = move_roi_by(region.roi, offset)  # type: ignore
+            roi_slice = roi_zeroed.to_slicing_dict(pixel_size=self.pixel_size)
             slicing = []
             for axis in self.axes:
                 _slice = roi_slice[axis]

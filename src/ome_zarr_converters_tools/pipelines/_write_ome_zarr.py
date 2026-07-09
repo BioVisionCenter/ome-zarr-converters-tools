@@ -24,6 +24,7 @@ from ome_zarr_converters_tools.models import (
     OverwriteMode,
     WriterMode,
 )
+from ome_zarr_converters_tools.models._url_utils import filesystem_for_url
 from ome_zarr_converters_tools.pipelines._to_zarr import write_to_zarr
 
 logger = getLogger(__name__)
@@ -57,7 +58,7 @@ def _region_to_pixel_coordinates(
     regions: list[TileSlice],
     pixel_size: PixelSize,
 ) -> list[TileSlice]:
-    """Convert TileRegion ROIs from pixel coordinates to world coordinates.
+    """Convert TileRegion ROIs to rounded (integer) pixel coordinates.
 
     This function modifies the TileRegions in place.
 
@@ -165,30 +166,33 @@ def write_tiled_image_as_zarr(
         tiled_image.regions,
         tiled_image.pixel_size,
     )
+    # Whether a store already exists must be checked before `zarr.open_group`,
+    # since mode "w" would truncate it and mode "a" would create it.
+    store_pre_exists = filesystem_for_url(zarr_url).exists(zarr_url)
     base_group = zarr.open_group(store=zarr_url, mode=mode, zarr_format=zarr_format)
     omezarr_options = converter_options.omezarr_options
-    try:
-        # This can only succeed in "extend" mode if the group already exists
-        ome_zarr = open_ome_zarr_container(base_group, cache=True)
-        return ome_zarr
+    if overwrite_mode == OverwriteMode.EXTEND and store_pre_exists:
+        # Reuse the existing container. A failure to open here (corrupt/partial
+        # store, version mismatch) is a real error that must surface, never be
+        # silently overwritten with a fresh, empty container.
+        return open_ome_zarr_container(base_group, cache=True)
 
-    except Exception:
-        channels_meta = build_channels_meta(tiled_image)
-        ome_zarr = create_empty_ome_zarr(
-            store=base_group,
-            axes_names=tiled_image.axes,
-            shape=tiled_image.shape(),
-            chunks=_compute_chunk_size(tiled_image, omezarr_options),
-            pixelsize=tiled_image.pixelsize,
-            z_spacing=tiled_image.z_spacing,
-            time_spacing=tiled_image.t_spacing,
-            levels=omezarr_options.num_levels,
-            channels_meta=channels_meta,
-            translation=tiled_image.translation,
-            overwrite=True,
-            ngff_version=omezarr_options.ngff_version,
-            dtype=tiled_image.data_type,
-        )
+    channels_meta = build_channels_meta(tiled_image)
+    ome_zarr = create_empty_ome_zarr(
+        store=base_group,
+        axes_names=tiled_image.axes,
+        shape=tiled_image.shape(),
+        chunks=_compute_chunk_size(tiled_image, omezarr_options),
+        pixelsize=tiled_image.pixelsize,
+        z_spacing=tiled_image.z_spacing,
+        time_spacing=tiled_image.t_spacing,
+        levels=omezarr_options.num_levels,
+        channels_meta=channels_meta,
+        translation=tiled_image.translation,
+        overwrite=True,
+        ngff_version=omezarr_options.ngff_version,
+        dtype=tiled_image.data_type,
+    )
     image = ome_zarr.get_image()
     write_to_zarr(
         image=image,

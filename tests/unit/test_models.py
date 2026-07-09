@@ -1,6 +1,7 @@
 """Unit tests for pydantic models."""
 
 import pytest
+from pydantic import ValidationError
 
 from ome_zarr_converters_tools import AcquisitionDetails, ChannelInfo
 from ome_zarr_converters_tools.models import (
@@ -276,6 +277,17 @@ class TestCollectionModels:
         assert plate.well_path() == "B/03"
         assert plate.path_in_well() == "0"
         assert plate.path() == "MyPlate.zarr/B/03/0"
+
+    def test_row_integer_index_converts_to_letter(self) -> None:
+        """Integer rows map 1->A ... 26->Z; 26 (Z) must not be rejected."""
+        assert ImageInPlate(plate_name="P", row=1, column=1, acquisition=0).row == "A"
+        assert ImageInPlate(plate_name="P", row=26, column=1, acquisition=0).row == "Z"
+
+    def test_row_integer_index_out_of_range_raises(self) -> None:
+        """Integer rows outside 1..26 are rejected."""
+        for bad_row in (0, 27):
+            with pytest.raises(ValidationError, match="out of range"):
+                ImageInPlate(plate_name="P", row=bad_row, column=1, acquisition=0)
 
     def test_validate_zarr_name_valid(self) -> None:
         """Test valid Zarr names are accepted."""

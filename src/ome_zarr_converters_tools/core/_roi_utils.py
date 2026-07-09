@@ -1,3 +1,5 @@
+"""Geometry helpers for ROIs: translation, distances, unions, and shapes."""
+
 import math
 from collections.abc import Sequence
 
@@ -159,9 +161,9 @@ def bulk_roi_union(
 ) -> Roi:
     """Calculate the union of multiple ROIs.
 
-    To avoit to build the union of all ROIs which can be computationally expensive,
-    this function find the min and max ROIs along each axis and builds the union from
-    them.
+    To avoid building the union of all ROIs, which can be computationally
+    expensive, this function finds the min and max ROIs along each axis and
+    builds the union from them.
 
     Args:
         rois: List of ROIs to union.

@@ -1,5 +1,84 @@
 # Changelog
 
+## [v1.0.0]
+
+First stable release. The public API is now considered frozen under semantic
+versioning.
+
+### Features
+- Promote the primary entry points to the package root so they are importable
+  from `ome_zarr_converters_tools` directly (in addition to their subpackages):
+  `hcs_images_from_dataframe`, `single_images_from_dataframe`,
+  `tiled_image_from_tiles`, `build_dummy_tile`, the `TilingStrategy` family
+  (`AutoTiling`, `SnapToGridTiling`, `SnapToCornersTiling`, `InplaceTiling`,
+  `NoTiling`), `StagePositionCorrections`, and `WriterMode`.
+- Export `ImageLoaderInterface` (the loader extension base class) from
+  `ome_zarr_converters_tools` and `...models`, and `build_dummy_tile` /
+  `UrlType` from their subpackages — previously documented as extension points
+  but not importably public.
+- Add `CollectionInterface.set_suffix` as the supported way to set the per-FOV
+  path suffix (replaces reaching into the private `_suffix` attribute).
+
+### Fix
+- `TiledImage.load_data` / `load_data_dask` now zero each region to the union
+  origin before slicing, fixing dropped tile data (or a broadcast error) for
+  images whose regions do not start at pixel 0.
+- `setup_plates` now builds each plate's `condition_table` from only that
+  plate's images, once per plate (previously it was populated from the full
+  cross-plate list and rebuilt once per image, O(N²)).
+- Integer plate row `26` now maps to `"Z"` instead of being rejected.
+- The dask lazy-loader graph token now includes loader identity, preventing
+  graph-key collisions (and silent data substitution) between arrays with
+  identical geometry but different source files.
+- `_color_from_wavelength_id` maps exactly `750` nm to Red instead of magenta.
+- The shared snapshot `images_common` block is now applied to every image, with
+  per-image values overriding the shared defaults (previously it was applied
+  under the wrong condition and merged in the wrong direction).
+- `build_parallelization_list` drops the unset JSON-source field from the
+  emitted `init_args` instead of relying on a no-op `model_dump(exclude=None)`.
+
+### API Breaking Changes
+- `StageOrientation.swap_xy=True` now actually transposes the X and Y stage
+  axes; previously it was a silent no-op (it only reordered the ROI slice list).
+  Before: `swap_xy=True` left tile positions unchanged. After: the x output is
+  built from the tile's y position/length and vice versa. Converters that set
+  `swap_xy=True` expecting the old (no-op) behaviour will now produce swapped
+  output.
+- Selecting `StagePositionCorrections.align_z` or `align_t` now raises
+  `NotImplementedError` instead of emitting a warning and returning the regions
+  unchanged. Set them to `False` (the default) until they are implemented.
+- EXTEND mode no longer overwrites an existing store when it fails to open: a
+  corrupt/partial store or a permission/version error now propagates instead of
+  being silently replaced with a fresh, empty store (in `setup_plates` and
+  `write_tiled_image_as_zarr`).
+
+### Chores
+- Bump the `Development Status` classifier from `3 - Alpha` to
+  `5 - Production/Stable`.
+- Remove the unused runtime dependencies `toml` and `tqdm`, and add minimum
+  version floors to `numpy`, `pillow`, `tifffile`, `fsspec`, and `s3fs`.
+- Remove the `src/debug/plotting.py` scratch module (tracked in git but never
+  shipped in the wheel and referenced nowhere).
+- Add a CI `lint` job running `ruff check`, `ruff format --check`, and
+  `ty check src`.
+- Collapse the redundant outer retry loop in `generic_compute_task` (retries are
+  already handled by `tiled_image_from_json`).
+- Replace `resource: Any = None` / `resource: None = None` with a consistent
+  `resource: Any | None = None` across the loader surface, and convert a
+  user-facing `assert` in `setup_plates` into an explicit `TypeError`.
+- Fix assorted typos (`plante_url`, `GripPoint`, "avoit", "less files").
+
+### Documentation
+- Correct `docs/api.md`: rename the stale `AlignmentCorrections` to
+  `StagePositionCorrections`, and document the URL helpers via the public
+  `models` module instead of the private `_url_utils` path.
+- Fix the false "loaded as a `pytest11` entry point" claim in the `testing`
+  plugin docstrings (it is loaded via `pytest_plugins` in each consumer's
+  conftest, by design).
+- Correct docstrings across `src/`: the inverted pixel/world description in
+  `_region_to_pixel_coordinates`, the stale "50 MB" `Auto` threshold, and a
+  missing module docstring in `core/_roi_utils.py`.
+
 ## [v0.10.4]
 
 ### Features

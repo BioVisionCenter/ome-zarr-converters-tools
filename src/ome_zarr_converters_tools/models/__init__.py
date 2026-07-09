@@ -34,6 +34,7 @@ from ome_zarr_converters_tools.models._converter_options import (
 )
 from ome_zarr_converters_tools.models._loader import (
     DefaultImageLoader,
+    ImageLoaderInterface,
     ImageLoaderInterfaceType,
 )
 from ome_zarr_converters_tools.models._runtime_settings import (
@@ -45,6 +46,7 @@ from ome_zarr_converters_tools.models._runtime_settings import (
     ThreadScheduler,
 )
 from ome_zarr_converters_tools.models._url_utils import (
+    UrlType,
     basename_url,
     filesystem_for_url,
     find_url_type,
@@ -72,6 +74,7 @@ __all__ = [
     "FixedSizeChunking",
     "FovBasedChunking",
     "ImageInPlate",
+    "ImageLoaderInterface",
     "ImageLoaderInterfaceType",
     "InplaceTiling",
     "NgffVersions",
@@ -88,6 +91,7 @@ __all__ = [
     "SynchronousScheduler",
     "ThreadScheduler",
     "TilingStrategy",
+    "UrlType",
     "WriterMode",
     "basename_url",
     "default_axes_builder",

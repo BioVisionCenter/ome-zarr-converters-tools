@@ -73,7 +73,11 @@ def setup_plates(
     overwrite_mode: OverwriteMode = OverwriteMode.NO_OVERWRITE,
 ) -> None:
     """Set up an ImageInPlate collection in the Zarr group."""
-    assert isinstance(tiled_images[0].collection, ImageInPlate)
+    if not isinstance(tiled_images[0].collection, ImageInPlate):
+        raise TypeError(
+            "setup_plates requires ImageInPlate collections, got "
+            f"{type(tiled_images[0].collection).__name__}."
+        )
     images_grouped_by_plate: dict[str, list[TiledImage]] = {}
     for tiled_image in tiled_images:
         plate_path = tiled_image.collection.plate_path()
@@ -82,12 +86,12 @@ def setup_plates(
         images_grouped_by_plate[plate_path].append(tiled_image)
 
     for plate_path, tile_images in images_grouped_by_plate.items():
-        plante_url = join_url_paths(zarr_dir, plate_path)
+        plate_url = join_url_paths(zarr_dir, plate_path)
         if overwrite_mode == OverwriteMode.NO_OVERWRITE:
-            fs = filesystem_for_url(plante_url)
-            if fs.exists(plante_url):
+            fs = filesystem_for_url(plate_url)
+            if fs.exists(plate_url):
                 raise FileExistsError(
-                    f"A Plate already exists at {plante_url} "
+                    f"A Plate already exists at {plate_url} "
                     f"(overwrite_mode={OverwriteMode.NO_OVERWRITE.value}). "
                     f"Set overwrite_mode={OverwriteMode.OVERWRITE.value} to "
                     f"replace it, or "
@@ -95,27 +99,30 @@ def setup_plates(
                 )
         if overwrite_mode == OverwriteMode.OVERWRITE:
             plate = create_empty_plate(
-                store=plante_url,
+                store=plate_url,
                 name=plate_path,
                 ngff_version=ngff_version,
                 overwrite=True,
                 cache=True,
             )
         elif overwrite_mode == OverwriteMode.EXTEND:
-            try:
-                plate = open_ome_zarr_plate(plante_url, cache=True)
-            except Exception:
+            # Distinguish "does not exist yet" from "exists but fails to open":
+            # only the former should create a fresh plate. A corrupt/unreadable
+            # existing store must raise from open, never be silently overwritten.
+            if filesystem_for_url(plate_url).exists(plate_url):
+                plate = open_ome_zarr_plate(plate_url, cache=True)
+            else:
                 plate = create_empty_plate(
-                    store=plante_url,
+                    store=plate_url,
                     name=plate_path,
                     ngff_version=ngff_version,
-                    overwrite=True,
+                    overwrite=False,
                     cache=True,
                 )
         else:
             # NO_OVERWRITE — pre-flight check above already raised if plate existed
             plate = create_empty_plate(
-                store=plante_url,
+                store=plate_url,
                 name=plate_path,
                 ngff_version=ngff_version,
                 overwrite=False,
@@ -148,12 +155,14 @@ def setup_plates(
                 acquisition_id=image_in_well.acquisition_id,
                 acquisition_name=image_in_well.acquisition_name,
             )
-            condition_table = _setup_condition_table(tiled_images)
-            if condition_table is not None:
-                condition_table = ConditionTable(table_data=condition_table)
-                plate.add_table(
-                    "condition_table", condition_table, backend="csv", overwrite=True
-                )
+
+        # Build the condition table once per plate, from this plate's images only.
+        condition_table = _setup_condition_table(tile_images)
+        if condition_table is not None:
+            condition_table = ConditionTable(table_data=condition_table)
+            plate.add_table(
+                "condition_table", condition_table, backend="csv", overwrite=True
+            )
 
 
 def setup_singleimage(
@@ -255,7 +264,6 @@ def setup_ome_zarr_collection(
         ngff_version: NGFF version to use for the collection setup.
         overwrite_mode: Overwrite mode to use for the collection setup.
     """
-    collection_type = collection_type
     setup_function = _collection_setup_registry.get(collection_type)
     if setup_function is None:
         raise ValueError(

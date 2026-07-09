@@ -1,6 +1,6 @@
 """Build a dummy tile for testing purposes."""
 
-from typing import NamedTuple
+from typing import Any, NamedTuple
 
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
@@ -57,10 +57,8 @@ class DummyLoader(ImageLoaderInterface):
     text: str
     font_scale: float = 0.22
 
-    def load_data(self, resource: None = None) -> np.ndarray:
+    def load_data(self, resource: Any | None = None) -> np.ndarray:
         """Load dummy image data as a NumPy array."""
-        # import time
-        # time.sleep(0.1)  # Simulate some loading time
         arr = rasterize_text_with_boundary(
             shape_x=self.shape.x,
             shape_y=self.shape.y,
@@ -71,7 +69,7 @@ class DummyLoader(ImageLoaderInterface):
         shape = tuple(int(s) for s in shape if s is not None)
         return np.broadcast_to(arr, shape)
 
-    def find_data_type(self, resource: None = None) -> str:
+    def find_data_type(self, resource: Any | None = None) -> str:
         """Find the data type of the image data."""
         return "uint8"
 

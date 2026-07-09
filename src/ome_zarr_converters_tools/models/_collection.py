@@ -25,10 +25,24 @@ def validate_zarr_name(name: str) -> str:
 
 
 class CollectionInterface(BaseModel):
+    """Base class defining how to build the output path(s) for a collection.
+
+    Subclasses implement `path` and inherit the tiling `_suffix` slot, which is
+    set via `set_suffix` during per-FOV splitting (do not set it manually).
+    """
+
     model_config = ConfigDict(extra="ignore")
 
+    # Auto-generated suffix used to disambiguate per-FOV output paths.
+    _suffix: str = PrivateAttr("")
+
     def path(self) -> str:
+        """Return the output path for this collection."""
         raise NotImplementedError("Subclasses must implement path method.")
+
+    def set_suffix(self, suffix: str) -> None:
+        """Set the per-FOV path suffix (used when splitting tiles per FOV)."""
+        self._suffix = suffix
 
 
 CollectionInterfaceType = TypeVar("CollectionInterfaceType", bound=CollectionInterface)
@@ -44,7 +58,6 @@ def sanitize_path(path: str) -> str:
 
 class SingleImage(CollectionInterface):
     image_path: str
-    _suffix: str = PrivateAttr("")
 
     def path(self) -> str:
         return sanitize_path(f"{self.image_path}{self._suffix}")
@@ -55,8 +68,6 @@ class ImageInPlate(CollectionInterface):
     row: str
     column: int = Field(ge=1)
     acquisition: int = Field(default=0, ge=0)
-    # Auto-generated suffix for tiling (do not set manually)
-    _suffix: str = PrivateAttr("")
 
     @property
     def well(self) -> str:
@@ -83,8 +94,8 @@ class ImageInPlate(CollectionInterface):
         if isinstance(v, str):
             return v
         v = int(v)
-        if v < 1 or v >= len(ALPHABET):
+        if v < 1 or v > len(ALPHABET):
             raise ValueError(
-                f"Row index {v} out of range. Must be between 1 and {len(ALPHABET) - 1}"
+                f"Row index {v} out of range. Must be between 1 and {len(ALPHABET)}"
             )
         return ALPHABET[v - 1]

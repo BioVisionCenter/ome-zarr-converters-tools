@@ -1,5 +1,6 @@
 """Core utility module for OME-Zarr converters tools."""
 
+from ome_zarr_converters_tools.core._dummy_tiles import build_dummy_tile
 from ome_zarr_converters_tools.core._table import (
     hcs_images_from_dataframe,
     single_images_from_dataframe,
@@ -23,6 +24,7 @@ __all__ = [
     "TileFOVGroup",
     "TileSlice",
     "TiledImage",
+    "build_dummy_tile",
     "find_url_type",
     "hcs_images_from_dataframe",
     "join_url_paths",

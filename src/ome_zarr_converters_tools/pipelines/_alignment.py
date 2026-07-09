@@ -1,5 +1,4 @@
 import math
-import warnings
 from typing import Literal
 
 from ngio import RoiSlice
@@ -27,21 +26,15 @@ def _align_xy_regions(regions: list[TileSlice]) -> list[TileSlice]:
 
 
 def _align_z_regions(regions: list[TileSlice]) -> list[TileSlice]:
-    warnings.warn(
-        "Z alignment is not implemented yet. Returning regions unchanged.",
-        UserWarning,
-        stacklevel=2,
+    raise NotImplementedError(
+        "Z alignment (align_z) is not implemented yet. Set align_z=False."
     )
-    return regions
 
 
 def _align_t_regions(regions: list[TileSlice]) -> list[TileSlice]:
-    warnings.warn(
-        "T alignment is not implemented yet. Returning regions unchanged.",
-        UserWarning,
-        stacklevel=2,
+    raise NotImplementedError(
+        "T alignment (align_t) is not implemented yet. Set align_t=False."
     )
-    return regions
 
 
 def _align_regions(

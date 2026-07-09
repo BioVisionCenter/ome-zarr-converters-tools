@@ -417,6 +417,42 @@ class TestSetupPlates:
         )
         assert (tmp_path / "TestPlate.zarr").exists()
 
+    def test_condition_table_isolated_per_plate(self, tmp_path: Path) -> None:
+        # Each plate's condition table must contain only that plate's rows, not
+        # every plate's rows (regression: the table was built from the full
+        # cross-plate list inside the per-image loop).
+        acq = AcquisitionDetails(
+            channels=[ChannelInfo(channel_label="DAPI")],
+            pixelsize=1.0,
+            z_spacing=1.0,
+            t_spacing=1.0,
+        )
+        tiles = []
+        for plate_name, drug in [("PlateA", "DrugA"), ("PlateB", "DrugB")]:
+            coll = ImageInPlate(plate_name=plate_name, row="A", column=1, acquisition=0)
+            tile = build_dummy_tile(
+                fov_name="FOV_0",
+                start=StartPosition(x=0, y=0),
+                shape=TileShape(x=64, y=64, z=1, c=1, t=1),
+                collection=coll,
+                acquisition_details=acq,
+            )
+            tile.attributes = {"drug": [drug]}
+            tiles.append(tile)
+        images = tiled_image_from_tiles(
+            tiles=tiles, converter_options=ConverterOptions()
+        )
+        setup_plates(
+            zarr_dir=str(tmp_path),
+            tiled_images=images,
+            overwrite_mode=OverwriteMode.OVERWRITE,
+        )
+        for plate_name, drug in [("PlateA", "DrugA"), ("PlateB", "DrugB")]:
+            plate = open_ome_zarr_plate(tmp_path / f"{plate_name}.zarr")
+            table = plate.get_table("condition_table").dataframe
+            assert table.shape[0] == 1
+            assert table["drug"].to_list() == [drug]
+
     def test_writes_condition_table(self, tmp_path: Path) -> None:
         images = _make_plate_tiled_images(attributes={"drug": ["DMSO"]})
         zarr_dir = str(tmp_path)

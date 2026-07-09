@@ -101,7 +101,8 @@ class TestBuildParallelizationList:
 
         init_args = result[0]["init_args"]
         assert init_args["tiled_image_json_str"] is not None
-        assert init_args["tiled_image_json_dump_url"] is None
+        # The unset source is dropped from the payload rather than serialized null.
+        assert "tiled_image_json_dump_url" not in init_args
 
     def test_init_args_has_json_dump_url_in_json_mode(self, tmp_path: Path) -> None:
         images = _make_tiled_images(1)
@@ -121,7 +122,8 @@ class TestBuildParallelizationList:
         init_args = result[0]["init_args"]
         assert init_args["tiled_image_json_dump_url"] is not None
         assert init_args["tiled_image_json_dump_url"].endswith(".json")
-        assert init_args["tiled_image_json_str"] is None
+        # The unset source is dropped from the payload rather than serialized null.
+        assert "tiled_image_json_str" not in init_args
 
     def test_init_args_contains_converter_options(self, tmp_path: Path) -> None:
         images = _make_tiled_images(1)
@@ -181,7 +183,7 @@ class TestBuildParallelizationList:
         )
 
         for entry in result:
-            assert entry["init_args"]["tiled_image_json_dump_url"] is None
+            assert "tiled_image_json_dump_url" not in entry["init_args"]
             assert entry["init_args"]["tiled_image_json_str"] is not None
 
     def test_auto_mode_uses_json_for_large_payload(self, tmp_path: Path) -> None:
@@ -202,7 +204,7 @@ class TestBuildParallelizationList:
 
         for entry in result:
             assert entry["init_args"]["tiled_image_json_dump_url"] is not None
-            assert entry["init_args"]["tiled_image_json_str"] is None
+            assert "tiled_image_json_str" not in entry["init_args"]
 
 
 class TestSetupImagesForConversion:

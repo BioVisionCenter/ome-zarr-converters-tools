@@ -220,10 +220,12 @@ class TestGenericComputeTask:
         mock_pipeline.assert_called_once()
 
     @patch("ome_zarr_converters_tools.fractal._compute_task.tiled_image_from_json")
-    def test_retries_on_file_not_found(
+    def test_propagates_file_not_found(
         self,
         mock_from_json: MagicMock,
     ) -> None:
+        # Retries live inside `tiled_image_from_json`; the compute task calls it
+        # once and propagates a FileNotFoundError once retries are exhausted.
         mock_from_json.side_effect = FileNotFoundError("not found")
 
         init_args = ConvertParallelInitArgs(
@@ -231,10 +233,7 @@ class TestGenericComputeTask:
             converter_options=ConverterOptions(),
         )
 
-        with (
-            patch("ome_zarr_converters_tools.fractal._compute_task.time.sleep"),
-            pytest.raises(FileNotFoundError, match="after 3 retries"),
-        ):
+        with pytest.raises(FileNotFoundError):
             generic_compute_task(
                 zarr_url="/tmp/test.zarr",
                 init_args=init_args,
@@ -242,7 +241,7 @@ class TestGenericComputeTask:
                 image_loader_type=MagicMock,
             )
 
-        assert mock_from_json.call_count == 3
+        assert mock_from_json.call_count == 1
 
     @patch(
         "ome_zarr_converters_tools.fractal._compute_task.tiled_image_creation_pipeline"
@@ -252,7 +251,7 @@ class TestGenericComputeTask:
     )
     @patch("ome_zarr_converters_tools.fractal._compute_task.remove_json")
     @patch("ome_zarr_converters_tools.fractal._compute_task.tiled_image_from_json")
-    def test_retry_succeeds_on_second_attempt(
+    def test_loads_from_json_dump_url(
         self,
         mock_from_json: MagicMock,
         mock_remove: MagicMock,
@@ -263,10 +262,7 @@ class TestGenericComputeTask:
         mock_tiled_image.collection = SingleImage(image_path="test")
         mock_tiled_image.attributes = {}
 
-        mock_from_json.side_effect = [
-            FileNotFoundError("not found"),
-            mock_tiled_image,
-        ]
+        mock_from_json.return_value = mock_tiled_image
 
         mock_ome_zarr = MagicMock()
         mock_ome_zarr.is_3d = False
@@ -279,13 +275,12 @@ class TestGenericComputeTask:
             converter_options=ConverterOptions(),
         )
 
-        with patch("ome_zarr_converters_tools.fractal._compute_task.time.sleep"):
-            result = generic_compute_task(
-                zarr_url="/tmp/test.zarr",
-                init_args=init_args,
-                collection_type=SingleImage,
-                image_loader_type=MagicMock,
-            )
+        result = generic_compute_task(
+            zarr_url="/tmp/test.zarr",
+            init_args=init_args,
+            collection_type=SingleImage,
+            image_loader_type=MagicMock,
+        )
 
         assert "image_list_updates" in result
-        assert mock_from_json.call_count == 2
+        assert mock_from_json.call_count == 1
