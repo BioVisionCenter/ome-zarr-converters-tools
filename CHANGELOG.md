@@ -18,6 +18,16 @@ versioning.
   but not importably public.
 - Add `CollectionInterface.set_suffix` as the supported way to set the per-FOV
   path suffix (replaces reaching into the private `_suffix` attribute).
+- Redesign `StagePositionCorrections` around per-axis stage-position handling:
+  - `remove_xy_offset` / `remove_z_offset` / `remove_t_offset` control offset
+    removal per axis. `"Global"` (default) translates the axis origin to 0;
+    `"False"` keeps absolute positions (raises on negatives, left-pads on
+    positives); `"Per-FOV"` (z only) zeros each FOV's z independently.
+  - `remove_xy_jitter` (default `True`) snaps a FOV's sub-tiles to a shared XY
+    origin (the former `align_xy`).
+  - `reindex_channels` (default `True`) compacts the channel indices actually
+    present to a dense `0, 1, 2, …` range (dropping filtered channels and
+    reconciling channel metadata); set `False` to keep gaps as empty channels.
 
 ### Fix
 - `TiledImage.load_data` / `load_data_dask` now zero each region to the union
@@ -44,9 +54,12 @@ versioning.
   built from the tile's y position/length and vice versa. Converters that set
   `swap_xy=True` expecting the old (no-op) behaviour will now produce swapped
   output.
-- Selecting `StagePositionCorrections.align_z` or `align_t` now raises
-  `NotImplementedError` instead of emitting a warning and returning the regions
-  unchanged. Set them to `False` (the default) until they are implemented.
+- `StagePositionCorrections` fields changed completely: `align_xy`, `align_z`,
+  and `align_t` are removed. Migrate `align_xy=True` → `remove_xy_jitter=True`
+  (now the default); `align_z`/`align_t` had no working behaviour and have no
+  replacement (z/t are handled by `remove_z_offset`/`remove_t_offset`). The new
+  fields are `remove_xy_offset`, `remove_z_offset`, `remove_t_offset`,
+  `remove_xy_jitter`, and `reindex_channels` (see Features).
 - EXTEND mode no longer overwrites an existing store when it fails to open: a
   corrupt/partial store or a permission/version error now propagates instead of
   being silently replaced with a fresh, empty store (in `setup_plates` and

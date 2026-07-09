@@ -5,8 +5,9 @@ from ome_zarr_converters_tools.core import TiledImage
 from ome_zarr_converters_tools.models import StagePositionCorrections, TilingStrategy
 from ome_zarr_converters_tools.pipelines._alignment import (
     apply_align_to_pixel_grid,
-    apply_fov_alignment_corrections,
-    apply_remove_offsets,
+    apply_offset_removal,
+    apply_reindex_channels,
+    apply_xy_jitter_correction,
 )
 from ome_zarr_converters_tools.pipelines._tiling import apply_mosaic_tiling
 
@@ -28,8 +29,9 @@ class RegistrationStep(TypedDict):
 
 _registration_registry: dict[str, Callable[..., TiledImage]] = {
     "align_to_pixel_grid": apply_align_to_pixel_grid,
-    "fov_alignment_corrections": apply_fov_alignment_corrections,
-    "remove_offsets": apply_remove_offsets,
+    "offset_removal": apply_offset_removal,
+    "xy_jitter_correction": apply_xy_jitter_correction,
+    "reindex_channels": apply_reindex_channels,
     "tile_regions": apply_mosaic_tiling,
 }
 
@@ -68,11 +70,17 @@ def build_default_registration_pipeline(
     alignment_corrections: StagePositionCorrections, tiling_strategy: TilingStrategy
 ) -> list[RegistrationStep]:
     return [
-        RegistrationStep(name="remove_offsets", params={}),
+        RegistrationStep(
+            name="offset_removal", params={"corrections": alignment_corrections}
+        ),
         RegistrationStep(name="align_to_pixel_grid", params={}),
         RegistrationStep(
-            name="fov_alignment_corrections",
-            params={"alignment_corrections": alignment_corrections},
+            name="xy_jitter_correction",
+            params={"corrections": alignment_corrections},
+        ),
+        RegistrationStep(
+            name="reindex_channels",
+            params={"corrections": alignment_corrections},
         ),
         RegistrationStep(
             name="tile_regions",

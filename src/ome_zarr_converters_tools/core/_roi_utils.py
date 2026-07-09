@@ -201,7 +201,10 @@ def bulk_roi_union(
 def shape_from_rois(
     rois: Sequence[Roi], axes: Sequence[str], pixel_size: PixelSize
 ) -> tuple[int, ...]:
-    """Get the shape from a list of ROIs."""
+    """Get the union-extent shape (max - min) from a list of ROIs.
+
+    This is the size of the data bounding box; used for in-memory load buffers.
+    """
     axes_shape = {}
     roi_union = bulk_roi_union(rois)
     roi_union = roi_union.to_pixel(pixel_size)
@@ -209,4 +212,23 @@ def shape_from_rois(
         length = roi_slice.length
         assert length is not None
         axes_shape[roi_slice.axis_name] = math.ceil(length)  # TODO remove ceil?
+    return tuple(axes_shape[ax] for ax in axes)
+
+
+def output_shape_from_rois(
+    rois: Sequence[Roi], axes: Sequence[str], pixel_size: PixelSize
+) -> tuple[int, ...]:
+    """Get the output-array shape anchored at pixel 0 (max stop, not extent).
+
+    Unlike `shape_from_rois` (the data bounding box), this spans from coordinate
+    0 to the largest stop, so a `remove_*_offset="False"` mosaic with a positive
+    origin yields a left-padded array. Identical to `shape_from_rois` when the
+    minimum start is already 0 (the default, after `Global` offset removal).
+    """
+    axes_shape = {}
+    roi_union = bulk_roi_union(rois).to_pixel(pixel_size)
+    for roi_slice in roi_union.slices:
+        assert roi_slice.start is not None and roi_slice.length is not None
+        end = roi_slice.start + roi_slice.length
+        axes_shape[roi_slice.axis_name] = math.ceil(end)
     return tuple(axes_shape[ax] for ax in axes)

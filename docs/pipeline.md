@@ -239,29 +239,33 @@ pipeline = build_default_registration_pipeline(
 
 This creates:
 
-1. **`remove_offsets`** -- Shifts all tile positions so the minimum position in each dimension is zero. This normalizes positions relative to the origin, e.g., if the leftmost tile starts at x=1000, all X positions are shifted by -1000.
+1. **`offset_removal`** -- Removes per-axis stage offsets according to `StagePositionCorrections` (see below). By default (`"Global"`) each axis is shifted so its minimum position is 0.
 
-2. **`align_to_pixel_grid`** -- Snaps start positions and lengths to integer pixel coordinates using floor rounding. After this step, all positions and sizes are exact pixel values (no sub-pixel offsets).
+2. **`align_to_pixel_grid`** -- Snaps start positions and lengths to integer pixel coordinates. After this step, all positions and sizes are exact pixel values (no sub-pixel offsets), including z/t which become integer plane/timepoint indices.
 
-3. **`fov_alignment_corrections`** -- Applies per-FOV alignment corrections to fix minor stage imprecisions. When `align_xy=True`, tiles within the same FOV that have slightly different XY positions (due to stage drift between Z-slices or channels) are aligned to the reference tile's position.
+3. **`xy_jitter_correction`** -- When `remove_xy_jitter=True` (default), tiles within the same FOV that have slightly different XY positions (due to stage drift between Z-slices or channels) are snapped to the FOV's reference position.
 
-4. **`tile_regions`** -- Applies tiling/snapping to remove overlaps between FOVs (see [Tiling Modes](#tiling-modes) below). This is the step that determines the final non-overlapping layout.
+4. **`reindex_channels`** -- When `reindex_channels=True` (default), the channel indices actually present are compacted to a dense `0, 1, 2, …` range and channel metadata is reconciled, so a filtered channel does not leave an empty channel in the output.
+
+5. **`tile_regions`** -- Applies tiling/snapping to remove overlaps between FOVs (see [Tiling Modes](#tiling-modes) below). This is the step that determines the final non-overlapping layout.
 
 ### StagePositionCorrections
 
-Controls which alignment corrections are applied in the `fov_alignment_corrections` step:
+Controls the per-axis position handling applied during registration:
 
 ```python
 from ome_zarr_converters_tools.models import StagePositionCorrections
 
 corrections = StagePositionCorrections(
-    align_xy=True,   # Align XY positions within each FOV (default: False)
-    align_z=False,    # Z alignment (not yet implemented)
-    align_t=False,    # T alignment (not yet implemented)
+    remove_xy_offset="Global",   # "Global" (zero origin) or "False" (keep absolute)
+    remove_z_offset="Global",    # "Global", "Per-FOV" (zero each FOV's z), or "False"
+    remove_t_offset="Global",    # "Global" or "False"
+    remove_xy_jitter=True,       # snap a FOV's sub-tiles to a shared XY origin
+    reindex_channels=True,       # compact present channels to a dense range
 )
 ```
 
-When `align_xy=True`, tiles within the same FOV that have slightly different XY positions (due to stage drift) are aligned to the reference tile's position. This is common in microscopy where the stage position drifts slightly between Z-slices or channels.
+Offset modes: `"Global"` translates the axis so its origin is 0; `"False"` keeps absolute positions (raising on negatives, left-padding on positives); `"Per-FOV"` (z only) zeros each FOV's z independently, useful when FOVs are focused independently. `remove_xy_jitter` corrects minor XY stage drift between the sub-acquisitions (Z-slices/channels) of a single FOV.
 
 ### Custom Registration Steps
 
@@ -289,7 +293,7 @@ Then include it in a pipeline using `RegistrationStep`:
 from ome_zarr_converters_tools.pipelines import RegistrationStep
 
 pipeline = [
-    RegistrationStep(name="remove_offsets", params={}),
+    RegistrationStep(name="offset_removal", params={"corrections": corrections}),
     RegistrationStep(name="my_step", params={"some_param": 42}),
     RegistrationStep(name="align_to_pixel_grid", params={}),
 ]

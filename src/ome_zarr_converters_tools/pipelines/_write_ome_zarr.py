@@ -181,7 +181,7 @@ def write_tiled_image_as_zarr(
     ome_zarr = create_empty_ome_zarr(
         store=base_group,
         axes_names=tiled_image.axes,
-        shape=tiled_image.shape(),
+        shape=tiled_image.output_shape(),
         chunks=_compute_chunk_size(tiled_image, omezarr_options),
         pixelsize=tiled_image.pixelsize,
         z_spacing=tiled_image.z_spacing,

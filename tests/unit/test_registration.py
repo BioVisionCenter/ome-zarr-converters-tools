@@ -24,12 +24,11 @@ from ome_zarr_converters_tools.models import (
     StagePositionCorrections,
 )
 from ome_zarr_converters_tools.pipelines._alignment import (
-    _align_t_regions,
     _align_xy_regions,
-    _align_z_regions,
     apply_align_to_pixel_grid,
-    apply_fov_alignment_corrections,
-    apply_remove_offsets,
+    apply_offset_removal,
+    apply_reindex_channels,
+    apply_xy_jitter_correction,
 )
 from ome_zarr_converters_tools.pipelines._snap_utils import (
     BBox,
@@ -109,17 +108,7 @@ class TestAlignment:
             assert y_slice is not None
             assert y_slice.start == 20.0
 
-    def test_align_z_raises(self) -> None:
-        regions = [_make_world_tile_slice(0.0, 0.0, 10.0, 10.0)]
-        with pytest.raises(NotImplementedError, match="not implemented"):
-            _align_z_regions(regions)
-
-    def test_align_t_raises(self) -> None:
-        regions = [_make_world_tile_slice(0.0, 0.0, 10.0, 10.0)]
-        with pytest.raises(NotImplementedError, match="not implemented"):
-            _align_t_regions(regions)
-
-    def test_apply_fov_alignment_corrections(self) -> None:
+    def test_apply_xy_jitter_correction(self) -> None:
         acq = AcquisitionDetails(
             channels=[ChannelInfo(channel_label="DAPI")],
             pixelsize=1.0,
@@ -146,8 +135,8 @@ class TestAlignment:
         images = tiled_image_from_tiles(
             tiles=tiles, converter_options=ConverterOptions()
         )
-        corrections = StagePositionCorrections(align_xy=True)
-        result = apply_fov_alignment_corrections(images[0], corrections)
+        corrections = StagePositionCorrections(remove_xy_jitter=True)
+        result = apply_xy_jitter_correction(images[0], corrections)
         x_slice = result.regions[0].roi.get("x")
         assert x_slice is not None
         first_x = x_slice.start
@@ -180,13 +169,13 @@ class TestAlignment:
         assert x_slice.start == 11.0
         assert y_slice.start == 21.0
 
-    def test_apply_remove_offsets(self) -> None:
+    def test_apply_offset_removal_global(self) -> None:
         regions = [
             _make_world_tile_slice(100.0, 200.0, 64.0, 64.0, "FOV_0"),
             _make_world_tile_slice(164.0, 200.0, 64.0, 64.0, "FOV_1"),
         ]
         img = _make_tiled_image(regions)
-        result = apply_remove_offsets(img)
+        result = apply_offset_removal(img, StagePositionCorrections())
         x_slice = result.regions[0].roi.get("x")
         assert x_slice is not None
         y_slice = result.regions[0].roi.get("y")
@@ -199,6 +188,99 @@ class TestAlignment:
         assert y_slice is not None
         assert x_slice.start == 64.0
         assert y_slice.start == 0.0
+
+
+def _multichannel_image(channel_positions: list[int], num_channels: int) -> TiledImage:
+    """Build a single-FOV TiledImage with one tile per given channel index."""
+    acq = AcquisitionDetails(
+        channels=[ChannelInfo(channel_label=f"CH{i}") for i in range(num_channels)],
+        pixelsize=1.0,
+        z_spacing=1.0,
+        t_spacing=1.0,
+    )
+    coll = SingleImage(image_path="img")
+    tiles = [
+        build_dummy_tile(
+            fov_name="FOV_0",
+            start=StartPosition(x=0, y=0, z=0, c=c, t=0),
+            shape=TileShape(x=32, y=32, z=1, c=1, t=1),
+            collection=coll,
+            acquisition_details=acq,
+        )
+        for c in channel_positions
+    ]
+    images = tiled_image_from_tiles(tiles=tiles, converter_options=ConverterOptions())
+    return images[0]
+
+
+class TestOffsetAndReindex:
+    def _z_image(self, z_by_fov: dict[str, float]) -> TiledImage:
+        acq = AcquisitionDetails(
+            channels=[ChannelInfo(channel_label="DAPI")],
+            pixelsize=1.0,
+            z_spacing=1.0,
+            t_spacing=1.0,
+        )
+        coll = SingleImage(image_path="img")
+        tiles = [
+            build_dummy_tile(
+                fov_name=fov,
+                start=StartPosition(x=0, y=0, z=z, c=0, t=0),
+                shape=TileShape(x=16, y=16, z=1, c=1, t=1),
+                collection=coll,
+                acquisition_details=acq,
+            )
+            for fov, z in z_by_fov.items()
+        ]
+        return tiled_image_from_tiles(
+            tiles=tiles, converter_options=ConverterOptions()
+        )[0]
+
+    def test_offset_false_keeps_positive(self) -> None:
+        img = self._z_image({"FOV_0": 10.0})
+        result = apply_offset_removal(
+            img, StagePositionCorrections(remove_z_offset="False")
+        )
+        z_slice = result.regions[0].roi.get("z")
+        assert z_slice is not None and z_slice.start == 10.0
+
+    def test_offset_false_negative_raises(self) -> None:
+        img = self._z_image({"FOV_0": -5.0})
+        with pytest.raises(ValueError, match="non-negative"):
+            apply_offset_removal(img, StagePositionCorrections(remove_z_offset="False"))
+
+    def test_offset_z_global_vs_per_fov(self) -> None:
+        # Two FOVs at absolute z 10 and 20.
+        img_global = self._z_image({"FOV_0": 10.0, "FOV_1": 20.0})
+        apply_offset_removal(
+            img_global, StagePositionCorrections(remove_z_offset="Global")
+        )
+        z = sorted(r.roi.get("z").start for r in img_global.regions)
+        assert z == [0.0, 10.0]  # global min removed; relative spacing preserved
+
+        img_perfov = self._z_image({"FOV_0": 10.0, "FOV_1": 20.0})
+        apply_offset_removal(
+            img_perfov, StagePositionCorrections(remove_z_offset="Per-FOV")
+        )
+        z = sorted(r.roi.get("z").start for r in img_perfov.regions)
+        assert z == [0.0, 0.0]  # each FOV zeroed independently
+
+    def test_reindex_channels_compacts_and_reconciles(self) -> None:
+        img = _multichannel_image(channel_positions=[0, 2], num_channels=3)
+        result = apply_reindex_channels(img, StagePositionCorrections())
+        c_starts = sorted(r.roi.get("c").start for r in result.regions)
+        assert c_starts == [0.0, 1.0]
+        assert result.channels is not None
+        assert [ch.channel_label for ch in result.channels] == ["CH0", "CH2"]
+
+    def test_reindex_channels_disabled_keeps_gaps(self) -> None:
+        img = _multichannel_image(channel_positions=[0, 2], num_channels=3)
+        result = apply_reindex_channels(
+            img, StagePositionCorrections(reindex_channels=False)
+        )
+        c_starts = sorted(r.roi.get("c").start for r in result.regions)
+        assert c_starts == [0.0, 2.0]  # gap preserved -> empty channel 1
+        assert result.channels is not None and len(result.channels) == 3
 
 
 # --- Snap utils tests ---

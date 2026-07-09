@@ -13,6 +13,7 @@ from ome_zarr_converters_tools.core._dask_lazy_loader import lazy_array_from_reg
 from ome_zarr_converters_tools.core._roi_utils import (
     bulk_roi_union,
     move_roi_by,
+    output_shape_from_rois,
     roi_to_point_distance,
     shape_from_rois,
 )
@@ -245,6 +246,18 @@ class TiledImage(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfac
     def shape(self) -> tuple[int, ...]:
         """Get the shape of the TiledImage by computing the union of all regions."""
         return shape_from_rois(
+            [region.roi for region in self.regions],
+            self.axes,
+            self.pixel_size,
+        )
+
+    def output_shape(self) -> tuple[int, ...]:
+        """Output-array shape anchored at pixel 0 (includes any left-padding).
+
+        Equals `shape()` when the mosaic origin is 0 (the default); larger when a
+        `remove_*_offset="False"` axis keeps a positive absolute origin.
+        """
+        return output_shape_from_rois(
             [region.roi for region in self.regions],
             self.axes,
             self.pixel_size,

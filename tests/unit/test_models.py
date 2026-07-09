@@ -216,9 +216,11 @@ class TestConverterOptions:
         opts = ConverterOptions()
         assert isinstance(opts.tiling_strategy, AutoTiling)
         assert opts.writer_mode == WriterMode.BY_FOV
-        assert opts.stage_position_corrections.align_xy is False
-        assert opts.stage_position_corrections.align_z is False
-        assert opts.stage_position_corrections.align_t is False
+        assert opts.stage_position_corrections.remove_xy_offset == "Global"
+        assert opts.stage_position_corrections.remove_z_offset == "Global"
+        assert opts.stage_position_corrections.remove_t_offset == "Global"
+        assert opts.stage_position_corrections.remove_xy_jitter is True
+        assert opts.stage_position_corrections.reindex_channels is True
         assert opts.omezarr_options.num_levels == 5
         assert isinstance(opts.omezarr_options.chunks, FovBasedChunking)
         assert (

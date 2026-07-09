@@ -74,11 +74,12 @@ class TestRegistrationPipeline:
     def test_build_default_registration_pipeline(self) -> None:
         corrections = StagePositionCorrections()
         pipeline = build_default_registration_pipeline(corrections, AutoTiling())
-        assert len(pipeline) == 4
+        assert len(pipeline) == 5
         names = [step["name"] for step in pipeline]
-        assert "remove_offsets" in names
+        assert "offset_removal" in names
         assert "align_to_pixel_grid" in names
-        assert "fov_alignment_corrections" in names
+        assert "xy_jitter_correction" in names
+        assert "reindex_channels" in names
         assert "tile_regions" in names
 
     def test_build_default_registration_pipeline_tolerance(self) -> None:

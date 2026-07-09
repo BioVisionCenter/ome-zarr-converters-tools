@@ -153,6 +153,78 @@ class TestTiledImageCreationPipeline:
         assert data.shape[-2:] == (128, 128)  # 2x2 grid of 64x64
         assert np.any(data > 0)
 
+    def test_false_xy_offset_left_pads_output(self, tmp_path: Path) -> None:
+        # remove_xy_offset="False" keeps absolute positions; a positive origin
+        # must yield a left-padded output anchored at pixel 0.
+        coll = SingleImage(image_path="pad")
+        tile = build_dummy_tile(
+            fov_name="FOV_0",
+            start=StartPosition(x=64, y=0),
+            shape=TileShape(x=64, y=64, z=1, c=1, t=1),
+            collection=coll,
+            acquisition_details=_acq(1),
+        )
+        opts = ConverterOptions(
+            stage_position_corrections=StagePositionCorrections(
+                remove_xy_offset="False"
+            )
+        )
+        tiled_image = tiles_aggregation_pipeline(tiles=[tile], converter_options=opts)[
+            0
+        ]
+        pipeline = build_default_registration_pipeline(
+            opts.stage_position_corrections, InplaceTiling()
+        )
+        omezarr = tiled_image_creation_pipeline(
+            zarr_url=str(tmp_path / "pad.zarr"),
+            tiled_image=tiled_image,
+            registration_pipeline=pipeline,
+            converter_options=opts,
+            writer_mode=WriterMode.BY_TILE,
+            overwrite_mode=OverwriteMode.OVERWRITE,
+        )
+        data = np.asarray(omezarr.get_image().get_array())
+        assert data.shape[-1] == 128  # 64 px padding + 64 px tile
+        assert not np.any(data[..., :64])  # left padding is empty
+        assert np.any(data[..., 64:])  # tile data present
+
+    def test_reindex_channels_produces_dense_output(self, tmp_path: Path) -> None:
+        # Channels 0 and 2 present (1 filtered out); reindex_channels=True (default)
+        # must compact them to a dense 2-channel output.
+        coll = SingleImage(image_path="reindex")
+        acq = AcquisitionDetails(
+            channels=[ChannelInfo(channel_label=f"CH{i}") for i in range(3)],
+            pixelsize=1.0,
+            z_spacing=1.0,
+            t_spacing=1.0,
+        )
+        tiles = [
+            build_dummy_tile(
+                fov_name="FOV_0",
+                start=StartPosition(x=0, y=0, c=c),
+                shape=TileShape(x=32, y=32, z=1, c=1, t=1),
+                collection=coll,
+                acquisition_details=acq,
+            )
+            for c in (0, 2)
+        ]
+        opts = ConverterOptions()
+        tiled_image = tiles_aggregation_pipeline(tiles=tiles, converter_options=opts)[0]
+        pipeline = build_default_registration_pipeline(
+            opts.stage_position_corrections, InplaceTiling()
+        )
+        omezarr = tiled_image_creation_pipeline(
+            zarr_url=str(tmp_path / "reindex.zarr"),
+            tiled_image=tiled_image,
+            registration_pipeline=pipeline,
+            converter_options=opts,
+            writer_mode=WriterMode.BY_TILE,
+            overwrite_mode=OverwriteMode.OVERWRITE,
+        )
+        data = np.asarray(omezarr.get_image().get_array())
+        c_idx = tiled_image.axes.index("c")
+        assert data.shape[c_idx] == 2  # dense: channels 0 and 2 -> 0 and 1
+
     def test_output_dtype_matches_source(self, tmp_path: Path) -> None:
         """The on-disk array preserves the source dtype (regression for #56).
 

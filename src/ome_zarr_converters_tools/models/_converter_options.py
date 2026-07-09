@@ -87,24 +87,51 @@ class WriterMode(StrEnum):
 
 
 class StagePositionCorrections(BaseModel):
-    """Stage position correction options."""
+    """Stage position corrections applied during registration."""
 
-    align_xy: bool = Field(default=False, title="Align XY")
+    remove_xy_offset: Literal["False", "Global"] = Field(
+        default="Global", title="Remove XY Offset"
+    )
     """
-    Whether to align the positions in the XY plane by FOV.
-    This addresses minor imprecision that often occurs during image acquisition.
+    Translate the mosaic so its XY origin is 0.
+    Cases:
+    - `False`: No translation is applied, failing if the stage
+    position are negative, if stage position are positive results
+    in left padded images.
+    - `Global`: The mosaic is translated so its XY origin is 0.
     """
-    align_z: bool = Field(default=False, title="Align Z")
+    remove_z_offset: Literal["False", "Per-FOV", "Global"] = Field(
+        default="Global", title="Remove Z Offset"
+    )
     """
-    Whether to align the positions in the Z axis by FOV.
-
-    Not yet implemented: setting this to `True` raises `NotImplementedError`.
+    Remove Z offset from the mosaic.
+    Cases:
+    - `False`: No Z offset is removed, failing if the stage
+    position are negative, if stage position are positive results
+    in left padded images.
+    - `Per-FOV`: The Z offset is removed per FOV.
+    - `Global`: The mosaic is translated so its Z origin is 0.
     """
-    align_t: bool = Field(default=False, title="Align T")
+    remove_t_offset: Literal["False", "Global"] = Field(
+        default="Global", title="Remove T Offset"
+    )
     """
-    Whether to align the positions in the T axis by FOV.
-
-    Not yet implemented: setting this to `True` raises `NotImplementedError`.
+    Remove T offset from the mosaic.
+    Cases:
+    - `False`: No T offset is removed, failing if the stage
+    position are negative, if stage position are positive results
+    in left padded images.
+    - `Global`: The mosaic is translated so its T origin is 0.
+    """
+    remove_xy_jitter: bool = Field(default=True, title="Remove XY Jitter")
+    """
+    Remove intra-FOV stage position inconsistencies (snap a FOV's sub-tiles to a
+    shared origin).
+    """
+    reindex_channels: bool = Field(default=True, title="Reindex Channels")
+    """
+    If True only existing channels will be converted, if False missing channels will
+    be stored as empty array.
     """
     model_config = ConfigDict(extra="forbid")
 
