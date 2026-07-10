@@ -6,6 +6,13 @@ First stable release. The public API is now considered frozen under semantic
 versioning.
 
 ### Features
+- The names of the OME-Zarr pyramid levels can now be chosen (closes
+  [#63](https://github.com/BioVisionCenter/ome-zarr-converters-tools/issues/63)):
+  `OmeZarrOptions.levels` is a discriminated union `PyramidLevels =
+  NumberOfLevels | NamedLevels`. The default (`NumberOfLevels`, 5 levels named
+  `0`, `1`, ...) is unchanged; `NamedLevels(level_names=["s0", "s1", "s2"])`
+  writes explicitly named levels (validated: unique, non-empty path segments).
+  New public exports: `PyramidLevels`, `NumberOfLevels`, `NamedLevels`.
 - User-facing pass over all Fractal UI schema text: every UI-exposed model and
   field now renders a complete description (previously e.g. the tiling
   strategies and the `OverwriteMode`/`WriterMode`/`BackendType`/`Scalings`/
@@ -121,6 +128,9 @@ versioning.
   emitted `init_args` instead of relying on a no-op `model_dump(exclude=None)`.
 
 ### API Breaking Changes
+- `OmeZarrOptions.num_levels: int` is replaced by the `levels` union field.
+  Before: `OmeZarrOptions(num_levels=3)`. After:
+  `OmeZarrOptions(levels=NumberOfLevels(num_levels=3))`.
 - All UI-exposed models now inherit from a shared `UserFacingModel` base
   (`models/_base.py`) with `extra="forbid"`: payloads containing unknown field
   names (e.g. typos in serialized parameter files) now raise a validation

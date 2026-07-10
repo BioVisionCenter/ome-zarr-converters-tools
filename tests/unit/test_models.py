@@ -17,6 +17,8 @@ from ome_zarr_converters_tools.models._converter_options import (
     FovBasedChunking,
     InplaceTiling,
     MosaicGrouping,
+    NamedLevels,
+    NumberOfLevels,
     PerFovGrouping,
     WriterMode,
 )
@@ -225,11 +227,36 @@ class TestConverterOptions:
         assert opts.stage_position_corrections.remove_t_offset == "Global"
         assert opts.stage_position_corrections.remove_xy_jitter is True
         assert opts.stage_position_corrections.reindex_channels is True
-        assert opts.omezarr_options.num_levels == 5
+        assert isinstance(opts.omezarr_options.levels, NumberOfLevels)
+        assert opts.omezarr_options.levels.num_levels == 5
         assert isinstance(opts.omezarr_options.chunks, FovBasedChunking)
         assert (
             opts.runtime_settings.temp_json_options.temp_url == "{zarr_dir}/_tmp_json"
         )
+
+
+class TestPyramidLevels:
+    """Tests for the PyramidLevels discriminated union."""
+
+    def test_number_of_levels_to_ngio(self) -> None:
+        assert NumberOfLevels(num_levels=3).to_ngio_levels() == 3
+
+    def test_named_levels_to_ngio(self) -> None:
+        levels = NamedLevels(level_names=["s0", "s1", "s2"])
+        assert levels.to_ngio_levels() == ["s0", "s1", "s2"]
+
+    def test_named_levels_rejects_empty_list(self) -> None:
+        with pytest.raises(ValidationError):
+            NamedLevels(level_names=[])
+
+    @pytest.mark.parametrize("bad_name", ["", "a/b", " s0", "s0 "])
+    def test_named_levels_rejects_invalid_segment(self, bad_name: str) -> None:
+        with pytest.raises(ValidationError, match="non-empty path segment"):
+            NamedLevels(level_names=["s0", bad_name])
+
+    def test_named_levels_rejects_duplicates(self) -> None:
+        with pytest.raises(ValidationError, match="unique name"):
+            NamedLevels(level_names=["s0", "s1", "s0"])
 
 
 class TestGrouping:

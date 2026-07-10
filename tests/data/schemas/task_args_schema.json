@@ -473,8 +473,11 @@
               "xy_scaling": "1",
               "z_chunk": 10
             },
+            "levels": {
+              "mode": "Number of Levels",
+              "num_levels": 5
+            },
             "ngff_version": "0.4",
-            "num_levels": 5,
             "table_backend": "csv"
           },
           "description": "Options specific to OME-Zarr writing.",
@@ -799,6 +802,55 @@
       "title": "Mosaic",
       "type": "object"
     },
+    "NamedLevels": {
+      "additionalProperties": false,
+      "description": "Name each resolution level explicitly, from highest to lowest resolution.",
+      "properties": {
+        "level_names": {
+          "description": "Names of the resolution levels, from highest to lowest resolution,\ne.g. `[\"s0\", \"s1\", \"s2\"]`. Each name becomes a path inside the OME-Zarr.",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Level Names",
+          "type": "array"
+        },
+        "mode": {
+          "const": "Custom Names",
+          "default": "Custom Names",
+          "description": "How the resolution levels of the pyramid are defined.",
+          "title": "Mode",
+          "type": "string"
+        }
+      },
+      "required": [
+        "level_names"
+      ],
+      "title": "Custom Names",
+      "type": "object"
+    },
+    "NumberOfLevels": {
+      "additionalProperties": false,
+      "description": "Create a number of resolution levels with default names (`0`, `1`, ...).",
+      "properties": {
+        "mode": {
+          "const": "Number of Levels",
+          "default": "Number of Levels",
+          "description": "How the resolution levels of the pyramid are defined.",
+          "title": "Mode",
+          "type": "string"
+        },
+        "num_levels": {
+          "default": 5,
+          "description": "Number of resolution levels in the pyramid of the output image.",
+          "minimum": 1,
+          "title": "Number of Resolution Levels",
+          "type": "integer"
+        }
+      },
+      "title": "Number of Levels",
+      "type": "object"
+    },
     "OmeZarrOptions": {
       "additionalProperties": false,
       "description": "Options controlling the layout of the output OME-Zarr.",
@@ -829,6 +881,29 @@
           ],
           "title": "Chunking Strategy"
         },
+        "levels": {
+          "default": {
+            "mode": "Number of Levels",
+            "num_levels": 5
+          },
+          "description": "How many resolution levels the output pyramid has and how they are named.\n\n- `Number of Levels`: a number of levels with the default names\n  (`0`, `1`, ...).\n- `Custom Names`: an explicit list of level names, e.g. `[\"s0\", \"s1\"]`.",
+          "discriminator": {
+            "mapping": {
+              "Custom Names": "#/$defs/NamedLevels",
+              "Number of Levels": "#/$defs/NumberOfLevels"
+            },
+            "propertyName": "mode"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/NumberOfLevels"
+            },
+            {
+              "$ref": "#/$defs/NamedLevels"
+            }
+          ],
+          "title": "Resolution Levels"
+        },
         "ngff_version": {
           "default": "0.4",
           "description": "Version of the OME-NGFF specification to target.",
@@ -838,13 +913,6 @@
           ],
           "title": "NGFF Version",
           "type": "string"
-        },
-        "num_levels": {
-          "default": 5,
-          "description": "Number of resolution levels in the pyramid of the output image.",
-          "minimum": 1,
-          "title": "Number of Resolution Levels",
-          "type": "integer"
         },
         "table_backend": {
           "$ref": "#/$defs/BackendType",
@@ -1395,8 +1463,11 @@
             "xy_scaling": "1",
             "z_chunk": 10
           },
+          "levels": {
+            "mode": "Number of Levels",
+            "num_levels": 5
+          },
           "ngff_version": "0.4",
-          "num_levels": 5,
           "table_backend": "csv"
         },
         "runtime_settings": {

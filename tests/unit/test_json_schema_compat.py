@@ -52,6 +52,8 @@ EXPECTED_DEFS = [
     "IsNoneValue",
     "IsNotNoneValue",
     "MosaicGrouping",
+    "NamedLevels",
+    "NumberOfLevels",
     "OmeZarrOptions",
     "OverwriteMode",
     "PerFovGrouping",

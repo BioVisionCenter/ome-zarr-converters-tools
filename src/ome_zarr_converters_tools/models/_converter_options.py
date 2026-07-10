@@ -5,6 +5,7 @@ from ngio import DefaultNgffVersion, NgffVersions
 from pydantic import (
     ConfigDict,
     Field,
+    field_validator,
 )
 
 from ome_zarr_converters_tools.models._base import UserFacingModel
@@ -271,11 +272,71 @@ ChunkingStrategy = Annotated[
 ]
 
 
+class NumberOfLevels(UserFacingModel):
+    """Create a number of resolution levels with default names (`0`, `1`, ...)."""
+
+    model_config = ConfigDict(title="Number of Levels")
+
+    mode: Literal["Number of Levels"] = "Number of Levels"
+    """How the resolution levels of the pyramid are defined."""
+    num_levels: int = Field(default=5, ge=1, title="Number of Resolution Levels")
+    """Number of resolution levels in the pyramid of the output image."""
+
+    def to_ngio_levels(self) -> int | list[str]:
+        """Levels in the form ngio's `create_empty_ome_zarr` accepts."""
+        return self.num_levels
+
+
+class NamedLevels(UserFacingModel):
+    """Name each resolution level explicitly, from highest to lowest resolution."""
+
+    model_config = ConfigDict(title="Custom Names")
+
+    mode: Literal["Custom Names"] = "Custom Names"
+    """How the resolution levels of the pyramid are defined."""
+    level_names: list[str] = Field(min_length=1, title="Level Names")
+    """Names of the resolution levels, from highest to lowest resolution,
+    e.g. `["s0", "s1", "s2"]`. Each name becomes a path inside the OME-Zarr."""
+
+    @field_validator("level_names")
+    @classmethod
+    def _validate_level_names(cls, level_names: list[str]) -> list[str]:
+        for name in level_names:
+            if not name or "/" in name or name != name.strip():
+                raise ValueError(
+                    f"Invalid level name {name!r}: each level name must be a "
+                    "non-empty path segment without '/' or leading/trailing "
+                    "whitespace, e.g. ['s0', 's1', 's2']."
+                )
+        duplicates = sorted({n for n in level_names if level_names.count(n) > 1})
+        if duplicates:
+            raise ValueError(
+                f"Duplicate level names {duplicates}: each resolution level "
+                "needs a unique name, e.g. ['s0', 's1', 's2']."
+            )
+        return level_names
+
+    def to_ngio_levels(self) -> int | list[str]:
+        """Levels in the form ngio's `create_empty_ome_zarr` accepts."""
+        return self.level_names
+
+
+PyramidLevels = Annotated[NumberOfLevels | NamedLevels, Field(discriminator="mode")]
+
+
 class OmeZarrOptions(UserFacingModel):
     """Options controlling the layout of the output OME-Zarr."""
 
-    num_levels: int = Field(default=5, ge=1, title="Number of Resolution Levels")
-    """Number of resolution levels in the pyramid of the output image."""
+    levels: PyramidLevels = Field(
+        default_factory=NumberOfLevels, title="Resolution Levels"
+    )
+    """
+    How many resolution levels the output pyramid has and how they are named.
+
+    - `Number of Levels`: a number of levels with the default names
+      (`0`, `1`, ...).
+    - `Custom Names`: an explicit list of level names, e.g. `["s0", "s1"]`.
+    """
     chunks: ChunkingStrategy = Field(
         default_factory=FovBasedChunking, title="Chunking Strategy"
     )

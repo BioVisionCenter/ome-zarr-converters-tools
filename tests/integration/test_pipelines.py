@@ -25,6 +25,8 @@ from ome_zarr_converters_tools.models import (
     ImageInPlate,
     InplaceTiling,
     MosaicGrouping,
+    NamedLevels,
+    OmeZarrOptions,
     OverwriteMode,
     PerFovGrouping,
     RuntimeSettings,
@@ -156,6 +158,30 @@ class TestTiledImageCreationPipeline:
         data = img.get_array()
         assert data.shape[-2:] == (128, 128)  # 2x2 grid of 64x64
         assert np.any(data > 0)
+
+    def test_write_with_named_levels(self, tmp_path: Path) -> None:
+        coll = SingleImage(image_path="test_named_levels")
+        tiles = _make_tiles(coll)
+        opts = ConverterOptions(
+            omezarr_options=OmeZarrOptions(
+                levels=NamedLevels(level_names=["s0", "s1", "s2"])
+            )
+        )
+        images = tiles_aggregation_pipeline(tiles=tiles, converter_options=opts)
+
+        pipeline = build_default_registration_pipeline(
+            StagePositionCorrections(), InplaceTiling()
+        )
+        omezarr = tiled_image_creation_pipeline(
+            zarr_url=str(tmp_path / "named_levels.zarr"),
+            tiled_image=images[0],
+            registration_pipeline=pipeline,
+            converter_options=opts,
+            writer_mode=WriterMode.BY_FOV,
+            overwrite_mode=OverwriteMode.OVERWRITE,
+        )
+        assert omezarr.level_paths == ["s0", "s1", "s2"]
+        assert np.any(omezarr.get_image(path="s2").get_array() > 0)
 
     def test_keep_xy_offset_left_pads_output(self, tmp_path: Path) -> None:
         # remove_xy_offset="Keep" keeps absolute positions; a positive origin
