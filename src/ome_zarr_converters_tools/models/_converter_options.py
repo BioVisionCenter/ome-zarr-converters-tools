@@ -195,7 +195,7 @@ class OmeZarrOptions(BaseModel):
     ngff_version: NgffVersions = DefaultNgffVersion
     """Version of the OME-NGFF specification to target."""
     table_backend: BackendType = Field(
-        default=BackendType.ANNDATA, title="Table Backend"
+        default=BackendType.CSV, title="Table Backend"
     )
     """Backend type for storing tables."""
     model_config = ConfigDict(extra="forbid")
