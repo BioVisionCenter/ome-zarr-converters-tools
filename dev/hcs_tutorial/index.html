@@ -1978,7 +1978,7 @@ tiles_table</div>
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <p>Each row represents one tile with its position, size, well location, and metadata.</p>
 <p>Next, define the acquisition details -- pixel sizes, channel info, and coordinate systems.</p>
-<p><strong>Coordinate systems</strong>: The <code>start_*_coo</code> parameters tell the library how to interpret position values.
+<p><strong>Coordinate systems</strong>: The <code>start_*_space</code> parameters tell the library how to interpret position values.
 Use <code>"world"</code> for physical units (micrometers) or <code>"pixel"</code> for pixel indices.
 In this example, <code>start_x</code> and <code>start_y</code> are in micrometers (world coordinates),
 while <code>start_z</code> and <code>start_t</code> are integer indices (pixel coordinates).
@@ -2009,16 +2009,16 @@ Lengths are always in pixels.</p>
 
 <span class="n">acq</span> <span class="o">=</span> <span class="n">AcquisitionDetails</span><span class="p">(</span>
     <span class="n">channels</span><span class="o">=</span><span class="p">[</span><span class="n">ChannelInfo</span><span class="p">(</span><span class="n">channel_label</span><span class="o">=</span><span class="s2">"DAPI"</span><span class="p">,</span> <span class="n">wavelength_id</span><span class="o">=</span><span class="s2">"405"</span><span class="p">)],</span>
-    <span class="n">pixelsize</span><span class="o">=</span><span class="mf">0.65</span><span class="p">,</span>  <span class="c1"># micrometers</span>
+    <span class="n">xy_pixel_size</span><span class="o">=</span><span class="mf">0.65</span><span class="p">,</span>  <span class="c1"># micrometers</span>
     <span class="n">z_spacing</span><span class="o">=</span><span class="mf">5.0</span><span class="p">,</span>  <span class="c1"># micrometers</span>
     <span class="n">t_spacing</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>  <span class="c1"># seconds</span>
     <span class="n">axes</span><span class="o">=</span><span class="p">[</span><span class="s2">"t"</span><span class="p">,</span> <span class="s2">"c"</span><span class="p">,</span> <span class="s2">"z"</span><span class="p">,</span> <span class="s2">"y"</span><span class="p">,</span> <span class="s2">"x"</span><span class="p">],</span>
     <span class="c1"># Coordinate systems: start positions are in world coordinates,</span>
     <span class="c1"># lengths are in pixel coordinates</span>
-    <span class="n">start_x_coo</span><span class="o">=</span><span class="s2">"world"</span><span class="p">,</span>
-    <span class="n">start_y_coo</span><span class="o">=</span><span class="s2">"world"</span><span class="p">,</span>
-    <span class="n">start_z_coo</span><span class="o">=</span><span class="s2">"pixel"</span><span class="p">,</span>
-    <span class="n">start_t_coo</span><span class="o">=</span><span class="s2">"pixel"</span><span class="p">,</span>
+    <span class="n">start_x_space</span><span class="o">=</span><span class="s2">"world"</span><span class="p">,</span>
+    <span class="n">start_y_space</span><span class="o">=</span><span class="s2">"world"</span><span class="p">,</span>
+    <span class="n">start_z_space</span><span class="o">=</span><span class="s2">"pixel"</span><span class="p">,</span>
+    <span class="n">start_t_space</span><span class="o">=</span><span class="s2">"pixel"</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="n">acq</span>
 </pre></div>
@@ -2026,16 +2026,16 @@ Lengths are always in pixels.</p>
 
 acq = AcquisitionDetails(
     channels=[ChannelInfo(channel_label="DAPI", wavelength_id="405")],
-    pixelsize=0.65,  # micrometers
+    xy_pixel_size=0.65,  # micrometers
     z_spacing=5.0,  # micrometers
     t_spacing=1.0,  # seconds
     axes=["t", "c", "z", "y", "x"],
     # Coordinate systems: start positions are in world coordinates,
     # lengths are in pixel coordinates
-    start_x_coo="world",
-    start_y_coo="world",
-    start_z_coo="pixel",
-    start_t_coo="pixel",
+    start_x_space="world",
+    start_y_space="world",
+    start_z_space="pixel",
+    start_t_space="pixel",
 )
 acq</div>
 </div>
@@ -2049,7 +2049,7 @@ acq</div>
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
 <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[2]:</div>
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
-<pre>AcquisitionDetails(start_x_coo='world', start_y_coo='world', start_z_coo='pixel', start_t_coo='pixel', length_x_coo='pixel', length_y_coo='pixel', length_z_coo='pixel', length_t_coo='pixel', pixelsize=0.65, z_spacing=5.0, t_spacing=1.0, channels=[ChannelInfo(channel_label='DAPI', wavelength_id='405', color='#0000FF')], axes=['t', 'c', 'z', 'y', 'x'], data_type=&lt;DataTypeEnum.AUTODETECT: 'autodetect'&gt;, condition_table_path=None, stage_orientation=StageOrientation(flip_x=False, flip_y=False, swap_xy=False))</pre>
+<pre>AcquisitionDetails(start_x_space='world', start_y_space='world', start_z_space='pixel', start_t_space='pixel', length_x_space='pixel', length_y_space='pixel', length_z_space='pixel', length_t_space='pixel', xy_pixel_size=0.65, z_spacing=5.0, t_spacing=1.0, channels=[ChannelInfo(channel_label='DAPI', wavelength_id='405', color='#0000FF')], axes=['t', 'c', 'z', 'y', 'x'], data_type=&lt;DataTypeEnum.AUTODETECT: 'autodetect'&gt;, condition_table_path=None, stage_orientation=StageOrientation(flip_x=False, flip_y=False, swap_xy=False))</pre>
 </div>
 </div>
 </div>
@@ -2128,7 +2128,7 @@ tiles[0]</div>
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>Number of tiles: 6
-FOV names: {'FOV_2', 'FOV_3', 'FOV_1'}
+FOV names: {'FOV_1', 'FOV_3', 'FOV_2'}
 Collection type: ImageInPlate
 </pre>
 </div>
@@ -2136,7 +2136,7 @@ Collection type: ImageInPlate
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
 <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[3]:</div>
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
-<pre>Tile(fov_name='FOV_1', start_x=10.0, start_y=10.0, start_z=0.0, start_c=0, start_t=0.0, length_x=2560.0, length_y=2160.0, length_z=1.0, length_c=1, length_t=1.0, attributes={'drug': ['DMSO']}, collection=ImageInPlate(plate_name='CardiomyocytePlate', row='A', column=1, acquisition=0), image_loader=DefaultImageLoader(file_path='20200812-CardiomyocyteDifferentiation14-Cycle1_B03_T0001F001L01A01Z01C01.png'), acquisition_details=AcquisitionDetails(start_x_coo='world', start_y_coo='world', start_z_coo='pixel', start_t_coo='pixel', length_x_coo='pixel', length_y_coo='pixel', length_z_coo='pixel', length_t_coo='pixel', pixelsize=0.65, z_spacing=5.0, t_spacing=1.0, channels=[ChannelInfo(channel_label='DAPI', wavelength_id='405', color='#0000FF')], axes=['t', 'c', 'z', 'y', 'x'], data_type=&lt;DataTypeEnum.AUTODETECT: 'autodetect'&gt;, condition_table_path=None, stage_orientation=StageOrientation(flip_x=False, flip_y=False, swap_xy=False)))</pre>
+<pre>Tile(fov_name='FOV_1', start_x=10.0, start_y=10.0, start_z=0.0, start_c=0, start_t=0.0, length_x=2560.0, length_y=2160.0, length_z=1.0, length_c=1, length_t=1.0, attributes={'drug': ['DMSO']}, collection=ImageInPlate(plate_name='CardiomyocytePlate', row='A', column=1, acquisition=0), image_loader=DefaultImageLoader(file_path='20200812-CardiomyocyteDifferentiation14-Cycle1_B03_T0001F001L01A01Z01C01.png'), acquisition_details=AcquisitionDetails(start_x_space='world', start_y_space='world', start_z_space='pixel', start_t_space='pixel', length_x_space='pixel', length_y_space='pixel', length_z_space='pixel', length_t_space='pixel', xy_pixel_size=0.65, z_spacing=5.0, t_spacing=1.0, channels=[ChannelInfo(channel_label='DAPI', wavelength_id='405', color='#0000FF')], axes=['t', 'c', 'z', 'y', 'x'], data_type=&lt;DataTypeEnum.AUTODETECT: 'autodetect'&gt;, condition_table_path=None, stage_orientation=StageOrientation(flip_x=False, flip_y=False, swap_xy=False)))</pre>
 </div>
 </div>
 </div>
@@ -2445,7 +2445,7 @@ for tiled_image in tiled_images:
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Written: /tmp/tutorial_hcs_bco5kcdr/CardiomyocytePlate.zarr/A/01/0
+<pre>Written: /tmp/tutorial_hcs_mwz_vqj3/CardiomyocytePlate.zarr/A/01/0
 </pre>
 </div>
 </div>
@@ -2611,7 +2611,7 @@ print("Cleaned up tutorial output.")</div>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 6, 2026 13:11:22 UTC">July 6, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 10, 2026 07:36:53 UTC">July 10, 2026</span>
   </span>
 
     

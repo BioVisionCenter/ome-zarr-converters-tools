@@ -878,7 +878,7 @@ deserialize and process them independently.</p>
 <a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>    <span class="c1"># Step 1: Build tiles from your data source</span>
 <a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>    <span class="n">acq</span> <span class="o">=</span> <span class="n">AcquisitionDetails</span><span class="p">(</span>
 <a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>        <span class="n">channels</span><span class="o">=</span><span class="p">[</span><span class="n">ChannelInfo</span><span class="p">(</span><span class="n">channel_label</span><span class="o">=</span><span class="s2">&quot;DAPI&quot;</span><span class="p">)],</span>
-<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>        <span class="n">pixelsize</span><span class="o">=</span><span class="mf">0.65</span><span class="p">,</span>
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>        <span class="n">xy_pixel_size</span><span class="o">=</span><span class="mf">0.65</span><span class="p">,</span>
 <a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>        <span class="n">z_spacing</span><span class="o">=</span><span class="mf">5.0</span><span class="p">,</span>
 <a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>    <span class="p">)</span>
 <a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>    <span class="n">tiles_table</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">tiles_csv_path</span><span class="p">)</span>
@@ -956,16 +956,17 @@ the concrete types must be specified when deserializing from JSON.</p>
 (e.g., pixel size, channels, filters) without modifying the init task.
 The <code>AcquisitionOptions</code> model provides this:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">AcquisitionOptions</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="c1"># User-provided overrides</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="n">acq_options</span> <span class="o">=</span> <span class="n">AcquisitionOptions</span><span class="p">(</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="n">channels</span><span class="o">=</span><span class="p">[</span><span class="n">ChannelInfo</span><span class="p">(</span><span class="n">channel_label</span><span class="o">=</span><span class="s2">&quot;GFP&quot;</span><span class="p">,</span> <span class="n">wavelength_id</span><span class="o">=</span><span class="s2">&quot;488&quot;</span><span class="p">)],</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    <span class="n">pixel_info</span><span class="o">=</span><span class="n">PixelSizeModel</span><span class="p">(</span><span class="n">pixelsize</span><span class="o">=</span><span class="mf">0.325</span><span class="p">,</span> <span class="n">z_spacing</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">t_spacing</span><span class="o">=</span><span class="mf">1.0</span><span class="p">),</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>    <span class="n">filters</span><span class="o">=</span><span class="p">[</span><span class="n">RegexIncludeFilter</span><span class="p">(</span><span class="n">field</span><span class="o">=</span><span class="s2">&quot;fov_name&quot;</span><span class="p">,</span> <span class="n">pattern</span><span class="o">=</span><span class="s2">&quot;FOV_[12]&quot;</span><span class="p">)],</span>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="p">)</span>
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>
-<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="c1"># Apply overrides to base acquisition details</span>
-<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="n">updated_acq</span> <span class="o">=</span> <span class="n">acq_options</span><span class="o">.</span><span class="n">update_acquisition_details</span><span class="p">(</span><span class="n">base_acquisition_details</span><span class="p">)</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.pipelines._filters</span><span class="w"> </span><span class="kn">import</span> <span class="n">FovNameFilter</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># User-provided overrides</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="n">acq_options</span> <span class="o">=</span> <span class="n">AcquisitionOptions</span><span class="p">(</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    <span class="n">channels</span><span class="o">=</span><span class="p">[</span><span class="n">ChannelInfo</span><span class="p">(</span><span class="n">channel_label</span><span class="o">=</span><span class="s2">&quot;GFP&quot;</span><span class="p">,</span> <span class="n">wavelength_id</span><span class="o">=</span><span class="s2">&quot;488&quot;</span><span class="p">)],</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>    <span class="n">pixel_info</span><span class="o">=</span><span class="n">PixelSizeModel</span><span class="p">(</span><span class="n">xy_pixel_size</span><span class="o">=</span><span class="mf">0.325</span><span class="p">,</span> <span class="n">z_spacing</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">t_spacing</span><span class="o">=</span><span class="mf">1.0</span><span class="p">),</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>    <span class="n">filters</span><span class="o">=</span><span class="p">[</span><span class="n">FovNameFilter</span><span class="p">(</span><span class="n">regex</span><span class="o">=</span><span class="s2">&quot;FOV_[12]&quot;</span><span class="p">)],</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="p">)</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="c1"># Apply overrides to base acquisition details</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="n">updated_acq</span> <span class="o">=</span> <span class="n">acq_options</span><span class="o">.</span><span class="n">update_acquisition_details</span><span class="p">(</span><span class="n">base_acquisition_details</span><span class="p">)</span>
 </code></pre></div>
 <h2 id="fractal-manifest-registering-input-models">Fractal Manifest: Registering Input Models</h2>
 <p>Fractal tasks need to declare their input models in the task manifest.
@@ -976,7 +977,7 @@ Use <code>converters_tools_models()</code> to get the list of models provided by
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="n">models</span> <span class="o">=</span> <span class="n">converters_tools_models</span><span class="p">()</span>
 <a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="c1"># [</span>
 <a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="c1">#     (&quot;ome_zarr_converters_tools&quot;, &quot;fractal/_models.py&quot;, &quot;AcquisitionOptions&quot;),</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="c1">#     (&quot;ome_zarr_converters_tools&quot;, &quot;pipelines/_filters.py&quot;, &quot;WellExcludeFilter&quot;),</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="c1">#     (&quot;ome_zarr_converters_tools&quot;, &quot;pipelines/_filters.py&quot;, &quot;WellFilter&quot;),</span>
 <a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="c1">#     (&quot;ome_zarr_converters_tools&quot;, &quot;models/_converter_options.py&quot;, &quot;ConverterOptions&quot;),</span>
 <a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="c1">#     ...</span>
 <a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="c1"># ]</span>
@@ -1010,7 +1011,7 @@ Which includes several fractal tasks built with <code>ome-zarr-converters-tools<
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="March 30, 2026 12:02:36 UTC">March 30, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 10, 2026 13:09:02 UTC">July 10, 2026</span>
   </span>
 
     
