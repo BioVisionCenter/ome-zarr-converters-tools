@@ -29,9 +29,11 @@ jobs:
           cache: "pip"
 
       - name: Install Dependencies
+        # `test` extra included so ty can resolve `pytest`, imported by the
+        # shipped pytest plugin (src/ome_zarr_converters_tools/testing/plugin.py)
         run: |
           python -m pip install -U pip
-          python -m pip install .[dev]
+          python -m pip install .[dev,test]
 
       - name: Ruff lint
         run: ruff check .

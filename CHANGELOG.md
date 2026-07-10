@@ -240,6 +240,9 @@ versioning.
 ### Chores
 - Fix a `ty` type error in `_expected_region_shape` (annotate the offset
   dict as `dict[str, float]`) that failed the CI lint job.
+- CI lint job installs the `test` extra alongside `dev` so `ty` can resolve
+  `pytest`, imported by the shipped pytest plugin
+  (`ome_zarr_converters_tools.testing.plugin`).
 - UI-exposed models set `use_attribute_docstrings=True` explicitly (via the
   `UserFacingModel` base) instead of relying on fractal-task-tools patching it
   into `BaseModel` at import time — schema output no longer depends on import
