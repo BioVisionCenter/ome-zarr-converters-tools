@@ -1,5 +1,14 @@
 # Changelog
 
+## [v1.0.1]
+
+Re-release of v1.0.0 with no changes of its own. The `v1.0.0` tag (and the
+PyPI `1.0.0` package) was accidentally created from a stale commit that
+predates the final pre-release fixes listed under v1.0.0 — notably the
+attribute-filter fix and the Fractal UI schema/manifest text pass, so manifest
+creation is broken in `1.0.0` (plain CLI usage is unaffected). `v1.0.1` is the
+release v1.0.0 was meant to be; depend on `>=1.0.1`.
+
 ## [v1.0.0]
 
 First stable release. The public API is now considered frozen under semantic
