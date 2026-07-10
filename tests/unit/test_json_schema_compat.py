@@ -19,7 +19,9 @@ from fractal_task_tools._specs import validate_schema
 
 from unit import _schema_surface_task
 
-SNAPSHOT_PATH = Path(__file__).parent.parent / "data" / "schemas" / "task_args_schema.json"
+SNAPSHOT_PATH = (
+    Path(__file__).parent.parent / "data" / "schemas" / "task_args_schema.json"
+)
 
 # Every model of this package that appears in the `$defs` of the downstream
 # task-argument schemas (source of truth: the $defs of
@@ -104,6 +106,43 @@ def test_schema_is_webui_renderable(surface_schema: dict) -> None:
         schema=surface_schema,
         path="schema_surface_task",
         root_schema=surface_schema,
+    )
+
+
+def test_schema_text_is_complete(surface_schema: dict) -> None:
+    """Every schema node users see in the Fractal UI carries a description.
+
+    Descriptions come from class docstrings and attribute docstrings; the
+    latter only reach the schema when a model sets
+    `use_attribute_docstrings=True`. A failure here usually means a new
+    model misses that config or a docstring.
+    """
+    problems = []
+    for name, d in sorted(surface_schema["$defs"].items()):
+        desc = d.get("description", "")
+        if not desc or desc.startswith("Missing description"):
+            problems.append(f"$defs.{name} has no class description")
+        elif not desc.rstrip().endswith((".", "!", "?")):
+            # fractal-task-tools keeps only the FIRST LINE of a class
+            # docstring, so a multi-line summary gets cut mid-sentence.
+            problems.append(
+                f"$defs.{name} class description is cut mid-sentence "
+                f"({desc!r}); make the docstring's first line a complete "
+                "one-line summary"
+            )
+        for pname, p in (d.get("properties") or {}).items():
+            if "$ref" in p:
+                continue  # description lives on the referenced definition
+            if not p.get("description"):
+                problems.append(f"$defs.{name}.{pname} has no description")
+    for pname, p in surface_schema["properties"].items():
+        if not p.get("description"):
+            problems.append(f"argument {pname} has no description")
+    assert not problems, (
+        "Schema nodes missing user-facing descriptions:\n- "
+        + "\n- ".join(problems)
+        + "\nAdd the missing class/attribute docstring (and make sure the "
+        "model sets `use_attribute_docstrings=True` in its model_config)."
     )
 
 

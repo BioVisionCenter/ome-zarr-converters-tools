@@ -6,6 +6,15 @@ First stable release. The public API is now considered frozen under semantic
 versioning.
 
 ### Features
+- User-facing pass over all Fractal UI schema text: every UI-exposed model and
+  field now renders a complete description (previously e.g. the tiling
+  strategies and the `OverwriteMode`/`WriterMode`/`BackendType`/`Scalings`/
+  `ColorMenu` enums showed a literal "Missing description for X."), texts are
+  written for task users instead of developers (e.g. `StagePositionCorrections`
+  cases, `RuntimeSettings`), class summaries are one line so fractal-task-tools
+  no longer cuts them mid-sentence, and union dropdowns show friendly titles
+  ("Well Filter", "Snap to Grid") instead of raw class names. Field titles with
+  wrong casing were fixed (`XY Pixel Size`, `NGFF Version`, `Wavelength ID`).
 - Snapshots now record an informational top-level `versions` block (this package,
   `ngio`, `zarr`, `numpy`, `dask`, `tifffile`, `pillow`, `pydantic`, and Python) captured
   at generation time. It is written to the snapshot JSON but never compared, so a
@@ -109,6 +118,11 @@ versioning.
   emitted `init_args` instead of relying on a no-op `model_dump(exclude=None)`.
 
 ### API Breaking Changes
+- All UI-exposed models now inherit from a shared `UserFacingModel` base
+  (`models/_base.py`) with `extra="forbid"`: payloads containing unknown field
+  names (e.g. typos in serialized parameter files) now raise a validation
+  error instead of being silently ignored. Models that already forbade extras
+  are unaffected.
 - The Include/Exclude filter class pairs are merged into single filters with a
   `mode: Literal["Include", "Exclude"]` field (default `"Include"`):
   `RegexIncludeFilter` / `RegexExcludeFilter` → `RegexFilter` and
@@ -211,6 +225,12 @@ versioning.
     `AcquisitionDetails(start_x_space="world")`.
 
 ### Chores
+- UI-exposed models set `use_attribute_docstrings=True` explicitly (via the
+  `UserFacingModel` base) instead of relying on fractal-task-tools patching it
+  into `BaseModel` at import time — schema output no longer depends on import
+  order, and the committed schema snapshot now shows the descriptions users
+  actually see. A new guard test (`test_schema_text_is_complete`) fails CI if
+  any schema node lacks a description or a class summary is cut mid-sentence.
 - Add a JSON-schema compatibility test (`tests/unit/test_json_schema_compat.py`):
   the full set of models that downstream converter packages expose to Fractal
   manifests is rendered with `fractal-task-tools`' schema builder and compared

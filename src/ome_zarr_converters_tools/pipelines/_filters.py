@@ -2,16 +2,17 @@ import re
 from collections.abc import Callable, Sequence
 from typing import Annotated, Any, Literal, ParamSpec, Protocol
 
-from pydantic import BaseModel, Field
+from pydantic import ConfigDict, Field
 
 from ome_zarr_converters_tools.core._tile import Tile
+from ome_zarr_converters_tools.models._base import UserFacingModel
 from ome_zarr_converters_tools.models._collection import ImageInPlate
 from ome_zarr_converters_tools.pipelines._registry import Registry
 
 FilterMode = Literal["Include", "Exclude"]
 
 
-class FilterModel(BaseModel):
+class FilterModel(UserFacingModel):
     name: Any
 
 
@@ -20,7 +21,9 @@ def _apply_mode(matched: bool, mode: FilterMode) -> bool:
 
 
 class RegexFilter(FilterModel):
-    """Path regex filter model."""
+    """Keep or remove tiles based on their output image path."""
+
+    model_config = ConfigDict(title="Path Regex Filter")
 
     name: Literal["Path Regex Filter"] = "Path Regex Filter"
     """Name of the filter."""
@@ -47,7 +50,9 @@ def apply_path_regex_filter(tile: Tile, filter_params: RegexFilter) -> bool:
 
 
 class WellFilter(FilterModel):
-    """Well filter model."""
+    """Keep or remove tiles based on the well they belong to (plates only)."""
+
+    model_config = ConfigDict(title="Well Filter")
 
     name: Literal["Well Filter"] = "Well Filter"
     """Name of the filter."""
@@ -68,7 +73,9 @@ def apply_well_filter(tile: Tile, filter_params: WellFilter) -> bool:
 
 
 class FovNameFilter(FilterModel):
-    """FOV name filter model."""
+    """Keep or remove tiles based on their field of view name."""
+
+    model_config = ConfigDict(title="FOV Name Filter")
 
     name: Literal["FOV Name Filter"] = "FOV Name Filter"
     """Name of the filter."""
@@ -96,7 +103,9 @@ def _plate_acquisition(tile: Tile, filter_name: str) -> int:
 
 
 class AcquisitionFilter(FilterModel):
-    """Acquisition filter model."""
+    """Keep or remove tiles based on their acquisition index (plates only)."""
+
+    model_config = ConfigDict(title="Acquisition Filter")
 
     name: Literal["Acquisition Filter"] = "Acquisition Filter"
     """Name of the filter."""
@@ -113,44 +122,66 @@ def apply_acquisition_filter(tile: Tile, filter_params: AcquisitionFilter) -> bo
     return _apply_mode(matched, filter_params.mode)
 
 
-class BoolValue(BaseModel):
-    """Bool value for attribute filters."""
+class BoolValue(UserFacingModel):
+    """Match attribute elements equal to a true/false value."""
+
+    model_config = ConfigDict(title="Boolean Value")
 
     type: Literal["Bool"] = "Bool"
+    """Type of the value to match."""
     value: bool = True
+    """The true/false value to match."""
 
 
-class StringValue(BaseModel):
-    """String value for attribute filters."""
+class StringValue(UserFacingModel):
+    """Match attribute elements equal to a text value."""
+
+    model_config = ConfigDict(title="String Value")
 
     type: Literal["String"] = "String"
+    """Type of the value to match."""
     value: str
+    """The text value to match."""
 
 
-class IntValue(BaseModel):
-    """Int value for attribute filters."""
+class IntValue(UserFacingModel):
+    """Match attribute elements equal to an integer value."""
+
+    model_config = ConfigDict(title="Integer Value")
 
     type: Literal["Integer"] = "Integer"
+    """Type of the value to match."""
     value: int
+    """The integer value to match."""
 
 
-class FloatValue(BaseModel):
-    """Float value for attribute filters."""
+class FloatValue(UserFacingModel):
+    """Match attribute elements equal to a decimal value."""
+
+    model_config = ConfigDict(title="Float Value")
 
     type: Literal["Float"] = "Float"
+    """Type of the value to match."""
     value: float
+    """The decimal value to match."""
 
 
-class IsNoneValue(BaseModel):
-    """Matches attribute elements that are `None`."""
+class IsNoneValue(UserFacingModel):
+    """Match attribute elements that have no value (are `None`)."""
+
+    model_config = ConfigDict(title="Is None")
 
     type: Literal["Is None"] = "Is None"
+    """Type of the value to match."""
 
 
-class IsNotNoneValue(BaseModel):
-    """Matches attribute elements that are not `None`."""
+class IsNotNoneValue(UserFacingModel):
+    """Match attribute elements that have any value (are not `None`)."""
+
+    model_config = ConfigDict(title="Is Not None")
 
     type: Literal["Is Not None"] = "Is Not None"
+    """Type of the value to match."""
 
 
 # Typed wrappers (instead of a bare `str | int | float | bool` union) so the
@@ -192,7 +223,9 @@ def _attribute_matches(
 
 
 class AttributeFilter(FilterModel):
-    """Attribute filter model."""
+    """Keep or remove tiles based on the value of one of their attributes."""
+
+    model_config = ConfigDict(title="Attribute Filter")
 
     name: Literal["Attribute Filter"] = "Attribute Filter"
     """Name of the filter."""
@@ -251,7 +284,9 @@ def _channel_labels_match(
 
 
 class ChannelFilter(FilterModel):
-    """Channel filter model."""
+    """Keep or remove tiles based on their channel labels."""
+
+    model_config = ConfigDict(title="Channel Filter")
 
     name: Literal["Channel Filter"] = "Channel Filter"
     """Name of the filter."""
@@ -271,22 +306,29 @@ def apply_channel_filter(tile: Tile, filter_params: ChannelFilter) -> bool:
 
 
 class ZRangeFilter(FilterModel):
-    """Z range filter model.
+    """Keep only tiles whose starting Z position lies within a range.
+
+    Tiles are kept or dropped whole (never cropped) based on their starting
+    Z position only, so a tile spanning the full Z stack passes whenever its
+    start is in range.
 
     Note:
-        A tile is judged by its `start_z` only: tiles are dropped whole,
-        never cropped, so a single tile spanning the full Z stack passes
-        whenever its start is in range. Bounds are compared in the same
-        coordinate space the tile's `start_z` is defined in
-        (`acquisition_details.start_z_space`).
+        Bounds are compared in the same coordinate space the tile's
+        `start_z` is defined in (`acquisition_details.start_z_space`).
     """
+
+    model_config = ConfigDict(title="Z Range Filter")
 
     name: Literal["Z Range Filter"] = "Z Range Filter"
     """Name of the filter."""
     min_z: float | None = None
-    """Minimum `start_z` (inclusive). `None` means unbounded."""
+    """Minimum starting Z position (inclusive). Leave empty for no lower
+    bound. Tiles are kept or dropped whole, judged by their starting Z
+    position only."""
     max_z: float | None = None
-    """Maximum `start_z` (inclusive). `None` means unbounded."""
+    """Maximum starting Z position (inclusive). Leave empty for no upper
+    bound. Tiles are kept or dropped whole, judged by their starting Z
+    position only."""
 
 
 def apply_z_range_filter(tile: Tile, filter_params: ZRangeFilter) -> bool:
@@ -298,22 +340,29 @@ def apply_z_range_filter(tile: Tile, filter_params: ZRangeFilter) -> bool:
 
 
 class TRangeFilter(FilterModel):
-    """Time range filter model.
+    """Keep only tiles whose starting time point lies within a range.
+
+    Tiles are kept or dropped whole (never cropped) based on their starting
+    time point only, so a tile spanning the full time series passes whenever
+    its start is in range.
 
     Note:
-        A tile is judged by its `start_t` only: tiles are dropped whole,
-        never cropped, so a single tile spanning the full time series passes
-        whenever its start is in range. Bounds are compared in the same
-        coordinate space the tile's `start_t` is defined in
-        (`acquisition_details.start_t_space`).
+        Bounds are compared in the same coordinate space the tile's
+        `start_t` is defined in (`acquisition_details.start_t_space`).
     """
+
+    model_config = ConfigDict(title="Time Range Filter")
 
     name: Literal["Time Range Filter"] = "Time Range Filter"
     """Name of the filter."""
     min_t: float | None = None
-    """Minimum `start_t` (inclusive). `None` means unbounded."""
+    """Minimum starting time point (inclusive). Leave empty for no lower
+    bound. Tiles are kept or dropped whole, judged by their starting time
+    point only."""
     max_t: float | None = None
-    """Maximum `start_t` (inclusive). `None` means unbounded."""
+    """Maximum starting time point (inclusive). Leave empty for no upper
+    bound. Tiles are kept or dropped whole, judged by their starting time
+    point only."""
 
 
 def apply_t_range_filter(tile: Tile, filter_params: TRangeFilter) -> bool:

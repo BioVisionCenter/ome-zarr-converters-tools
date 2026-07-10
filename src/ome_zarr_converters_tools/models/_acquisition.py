@@ -13,6 +13,8 @@ from pydantic import (
     model_validator,
 )
 
+from ome_zarr_converters_tools.models._base import UserFacingModel
+
 CANONICAL_AXES_TYPE = Literal["t", "c", "z", "y", "x"]
 canonical_axes: list[CANONICAL_AXES_TYPE] = ["t", "c", "z", "y", "x"]
 SPACE_TYPE = Literal["world", "pixel"]
@@ -20,7 +22,7 @@ ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 
 class DataTypeEnum(StrEnum):
-    """Data type enumeration."""
+    """Pixel data type of the output image; `autodetect` infers it."""
 
     AUTODETECT = "autodetect"
     UINT8 = "uint8"
@@ -108,8 +110,8 @@ def _color_from_channel_label(channel_label: str) -> str:
     return _LABEL_COLOR_MAP[best]
 
 
-class ChannelInfo(BaseModel):
-    """Channel information."""
+class ChannelInfo(UserFacingModel):
+    """Name, wavelength, and display color of a channel."""
 
     channel_label: str
     """Label of the channel."""
@@ -140,8 +142,12 @@ class ChannelInfo(BaseModel):
         return self
 
 
-class StageOrientation(BaseModel):
-    """Stage orientation corrections."""
+class StageOrientation(UserFacingModel):
+    """Corrections for the stage orientation relative to the image axes.
+
+    Use these when the fields of view appear mirrored or arranged wrongly
+    in the output image.
+    """
 
     flip_x: bool = Field(default=False, title="Flip X")
     """Whether to flip the position along the X axis."""
@@ -149,7 +155,6 @@ class StageOrientation(BaseModel):
     """Whether to flip the position along the Y axis."""
     swap_xy: bool = Field(default=False, title="Swap XY")
     """Whether to swap the positions along the X and Y axes."""
-    model_config = ConfigDict(extra="forbid")
 
 
 class AcquisitionDetails(BaseModel):

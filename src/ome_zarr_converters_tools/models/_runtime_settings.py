@@ -7,62 +7,61 @@ from typing import Annotated, Literal
 
 import dask
 import zarr
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import ConfigDict, Field, model_validator
 
+from ome_zarr_converters_tools.models._base import UserFacingModel
 from ome_zarr_converters_tools.models._url_utils import join_url_paths
 
 
-class ThreadScheduler(BaseModel):
-    """Use Dask's threaded scheduler for parallelism."""
+class ThreadScheduler(UserFacingModel):
+    """Parallelize the conversion using multiple threads."""
 
     mode: Literal["Threads"] = "Threads"
-    """The dask scheduler will be set to "threads" when this scheduler is selected."""
+    """How the conversion work is parallelized."""
 
     num_workers: int = Field(default=8, ge=1, title="Number of Threads")
     """Number of worker threads to use. Must be at least 1."""
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(title="Threads")
 
     def get_config(self) -> dict[str, object]:
         return {"scheduler": "threads", "num_workers": self.num_workers}
 
 
-class ProcessScheduler(BaseModel):
-    """Use Dask's multiprocessing scheduler for parallelism."""
+class ProcessScheduler(UserFacingModel):
+    """Parallelize the conversion using multiple processes."""
 
     mode: Literal["Processes"] = "Processes"
-    """The dask scheduler will be set to "processes" when this scheduler is selected."""
+    """How the conversion work is parallelized."""
 
     num_workers: int = Field(default=8, ge=1, title="Number of Processes")
     """Number of worker processes to use. Must be at least 1."""
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(title="Processes")
 
     def get_config(self) -> dict[str, object]:
         return {"scheduler": "processes", "num_workers": self.num_workers}
 
 
-class SynchronousScheduler(BaseModel):
-    """Use Dask's synchronous scheduler (no parallelism)."""
+class SynchronousScheduler(UserFacingModel):
+    """Run the conversion sequentially, without parallelism."""
 
     mode: Literal["Synchronous"] = "Synchronous"
-    """
-    The dask scheduler will be set to "synchronous" when this scheduler is selected.
-    """
+    """How the conversion work is parallelized."""
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(title="Synchronous")
 
     def get_config(self) -> dict[str, object]:
         return {"scheduler": "synchronous"}
 
 
-class DefaultScheduler(BaseModel):
-    """Do not set a Dask scheduler; leave it up to the caller."""
+class DefaultScheduler(UserFacingModel):
+    """Keep the environment's default parallelism settings unchanged."""
 
     mode: Literal["Default"] = "Default"
-    """The dask scheduler will not be modified when this scheduler is selected."""
+    """How the conversion work is parallelized."""
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(title="Default")
 
     def get_config(self) -> dict[str, object]:
         return {}
@@ -74,11 +73,15 @@ DaskScheduler = Annotated[
 ]
 
 
-class TempJsonOptions(BaseModel):
-    """Options for temporary JSON storage during conversion."""
+class TempJsonOptions(UserFacingModel):
+    """Where and when intermediate conversion data is stored on disk.
 
-    temp_url: str = "{zarr_dir}/_tmp_json"
-    """Template for the temporary JSON URL."""
+    The data is handed over between the init and compute phases of the task.
+    """
+
+    temp_url: str = Field(default="{zarr_dir}/_tmp_json", title="Temporary Storage URL")
+    """Where intermediate JSON files are written. The `{zarr_dir}`
+    placeholder is replaced by the task's output directory."""
     serialization: Literal["Auto", "Memory", "JSON"] = "Auto"
     """Serialization mode for tiled image data between init and compute phases.
 
@@ -114,30 +117,27 @@ class TempJsonOptions(BaseModel):
         return total_bytes <= self.max_in_memory_bytes
 
 
-class RuntimeSettings(BaseModel):
-    """Runtime knobs applied during conversion via a scoped context manager.
+class RuntimeSettings(UserFacingModel):
+    """Advanced performance settings; the defaults suit most conversions.
 
-    Defaults are no-ops: callers that don't construct a RuntimeSettings
-    explicitly get unchanged behavior.
+    Covers parallelism, the storage codec, and temporary storage.
     """
 
     use_zarrs_codec: bool = Field(default=False, title="Use Zarrs Codec Pipeline")
-    """Use the `zarrs.ZarrsCodecPipeline` Rust codec backend.
-
-    Requires the optional `zarrs` dependency.
+    """Read and write image data with the `zarrs` Rust backend, which is
+    usually faster. Requires the optional `zarrs` dependency to be installed.
     """
     dask_scheduler: DaskScheduler = Field(
         default_factory=DefaultScheduler, title="Dask Scheduler"
     )
-    """Dask scheduler to set via `dask.config.set` for the conversion call.
-    If set to `DefaultScheduler`, the scheduler will not be modified.
+    """How the conversion work is parallelized: `Threads`, `Processes`,
+    `Synchronous` (no parallelism), or `Default` (keep the environment's
+    settings unchanged).
     """
     temp_json_options: TempJsonOptions = Field(
         default_factory=TempJsonOptions, title="Temporary JSON Options"
     )
-    """Options for temporary JSON storage."""
-
-    model_config = ConfigDict(extra="forbid")
+    """Where and when intermediate conversion data is stored on disk."""
 
     @model_validator(mode="after")
     def _validate(self) -> "RuntimeSettings":
