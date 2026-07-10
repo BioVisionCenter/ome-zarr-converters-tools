@@ -4,39 +4,38 @@ from typing import Any
 
 from ome_zarr_converters_tools.core._tile import Tile
 from ome_zarr_converters_tools.core._tile_region import TiledImage
-from ome_zarr_converters_tools.models import ConverterOptions, NoTiling
 
 
 def tiled_image_from_tiles(
     *,
     tiles: list[Tile],
-    converter_options: ConverterOptions,
+    split_per_fov: bool = False,
     resource: Any | None = None,
 ) -> list[TiledImage]:
     """Build a list of TiledImages from a list of Tiles.
 
     Args:
         tiles: List of Tile models to build the TiledImages from.
-        converter_options: ConverterOptions model for the conversion.
+        split_per_fov: If True, each field of view becomes its own TiledImage;
+            if False, all fields of view are aggregated into one mosaic image.
         resource: Optional resource to assist in processing.
 
     Returns:
         A list of TiledImage models created from the tiles.
 
     """
-    split_tiles = isinstance(converter_options.tiling_strategy, NoTiling)
     tiled_images = {}
 
     if len(tiles) == 0:
         raise ValueError("No tiles provided to build TiledImage.")
     data_type = tiles[0].find_data_type(resource=resource)
     for tile in tiles:
-        if not split_tiles:
-            suffix = ""
-            add_translation = False
-        else:
+        if split_per_fov:
             suffix = f"_{tile.fov_name}"
             add_translation = True
+        else:
+            suffix = ""
+            add_translation = False
         tile.collection.set_suffix(suffix)
         path = tile.collection.path()
         if path not in tiled_images:

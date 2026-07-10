@@ -45,7 +45,7 @@ def _make_tiled_images(num: int = 1) -> list:
         )
         tiles.append(tile)
 
-    return tiled_image_from_tiles(tiles=tiles, converter_options=ConverterOptions())
+    return tiled_image_from_tiles(tiles=tiles, split_per_fov=False)
 
 
 class TestBuildParallelizationList:

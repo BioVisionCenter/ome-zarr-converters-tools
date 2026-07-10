@@ -71,6 +71,27 @@ versioning.
   emitted `init_args` instead of relying on a no-op `model_dump(exclude=None)`.
 
 ### API Breaking Changes
+- Image grouping is now separated from the tiling strategy. `ConverterOptions.tiling_strategy`
+  is replaced by `ConverterOptions.grouping`, a discriminated union
+  `Grouping = MosaicGrouping | PerFovGrouping`. `MosaicGrouping` carries the
+  `tiling_strategy` (only the mosaic case has an arrangement); `PerFovGrouping` has none.
+  Before: `ConverterOptions(tiling_strategy=AutoTiling())`. After:
+  `ConverterOptions(grouping=MosaicGrouping(tiling_strategy=AutoTiling()))`. Before:
+  `ConverterOptions(tiling_strategy=NoTiling())`. After:
+  `ConverterOptions(grouping=PerFovGrouping())`. New public exports: `Grouping`,
+  `MosaicGrouping`, `PerFovGrouping`.
+- `NoTiling` is removed from the `TilingStrategy` union and from public exports; its
+  "one OME-Zarr per field of view" behavior is now `PerFovGrouping`. `TilingStrategy` now
+  only covers within-mosaic arrangement (`AutoTiling`, `SnapToGridTiling`,
+  `SnapToCornersTiling`, `InplaceTiling`).
+- `tiled_image_from_tiles` takes `split_per_fov: bool` instead of `converter_options`
+  (`core/` no longer depends on the `models` config). Callers using
+  `tiles_aggregation_pipeline` are unaffected; direct callers pass
+  `split_per_fov=options.grouping.split_per_fov`.
+- Wire-format note: the `ConverterOptions` JSON key `tiling_strategy` becomes `grouping`
+  (with the tiling strategy nested under the `Mosaic` variant); with `extra="forbid"`,
+  older serialized `init_args` payloads carrying `tiling_strategy` are rejected (acceptable
+  pre-v1, no on-disk fixtures affected).
 - `s3fs` is no longer a hard dependency; `s3://` support moved to an optional
   `s3` extra. Install `ome-zarr-converters-tools[s3]` for object-storage
   access. Using an `s3://` URL without it now raises an `ImportError` naming the

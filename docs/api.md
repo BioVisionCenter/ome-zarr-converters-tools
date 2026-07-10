@@ -12,7 +12,7 @@ Key exports: `Tile`, `TiledImage`, `TileSlice`, `TileFOVGroup`, `hcs_images_from
 
 Configuration models, collection types, and image loaders. This module defines the Pydantic models used to configure the conversion pipeline (`ConverterOptions`, `AcquisitionDetails`), the collection types that determine output structure (`ImageInPlate`, `SingleImage`), and the image loader interface for custom formats.
 
-Key exports: `ConverterOptions`, `AcquisitionDetails`, `ChannelInfo`, `ImageInPlate`, `SingleImage`, `ImageLoaderInterface`, `DefaultImageLoader`, `TilingStrategy`, `AutoTiling`, `SnapToGridTiling`, `SnapToCornersTiling`, `InplaceTiling`, `NoTiling`, `WriterMode`, `OverwriteMode`, `StagePositionCorrections`, `OmeZarrOptions`.
+Key exports: `ConverterOptions`, `AcquisitionDetails`, `ChannelInfo`, `ImageInPlate`, `SingleImage`, `ImageLoaderInterface`, `DefaultImageLoader`, `Grouping`, `MosaicGrouping`, `PerFovGrouping`, `TilingStrategy`, `AutoTiling`, `SnapToGridTiling`, `SnapToCornersTiling`, `InplaceTiling`, `WriterMode`, `OverwriteMode`, `StagePositionCorrections`, `OmeZarrOptions`.
 
 ::: ome_zarr_converters_tools.models
 

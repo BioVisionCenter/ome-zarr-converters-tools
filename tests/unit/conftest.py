@@ -122,7 +122,7 @@ def tiled_image_from_grid(
     """A TiledImage built from the 2x2 grid tiles."""
     images = tiled_image_from_tiles(
         tiles=grid_2x2_tiles,
-        converter_options=default_converter_options,
+        split_per_fov=default_converter_options.grouping.split_per_fov,
     )
     assert len(images) == 1
     return images[0]

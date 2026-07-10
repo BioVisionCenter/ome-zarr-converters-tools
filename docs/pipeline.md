@@ -7,17 +7,17 @@ The conversion pipeline processes tiles through several stages before writing th
 `ConverterOptions` is the central configuration object that bundles the most common settings:
 
 ```python
-from ome_zarr_converters_tools import ConverterOptions
+from ome_zarr_converters_tools import ConverterOptions, MosaicGrouping
 
 opts = ConverterOptions(
-    tiling_strategy=AutoTiling(),         # How overlapping FOVs are arranged
-    writer_mode=WriterMode.BY_FOV,        # How data is loaded and written
+    grouping=MosaicGrouping(),             # How FOVs are grouped into images
+    writer_mode=WriterMode.BY_FOV,         # How data is loaded and written
     stage_position_corrections=StagePositionCorrections(),  # Stage position corrections
-    omezarr_options=OmeZarrOptions(),     # OME-Zarr writing options (levels, chunks, etc.)
+    omezarr_options=OmeZarrOptions(),      # OME-Zarr writing options (levels, chunks, etc.)
 )
 ```
 
-When passed to `tiles_aggregation_pipeline()` and `tiled_image_creation_pipeline()`, its fields are used as defaults. You can also override specific settings (like `writer_mode` or `tiling_strategy`) by passing them directly to the pipeline functions.
+When passed to `tiles_aggregation_pipeline()` and `tiled_image_creation_pipeline()`, its fields are used as defaults. You can also override specific settings (like `writer_mode` or `grouping`) by passing them directly to the pipeline functions.
 
 ## AcquisitionDetails
 
@@ -299,9 +299,33 @@ pipeline = [
 ]
 ```
 
+## Grouping
+
+Grouping (`ConverterOptions.grouping`) is the topology decision: how the fields of view of an acquisition map to output images. It is a discriminated union with two variants.
+
+| Grouping | Description |
+|----------|-------------|
+| `MosaicGrouping(tiling_strategy=...)` | Aggregate all FOVs of an acquisition into a single mosaic OME-Zarr, arranged by the nested `tiling_strategy` (see below). This is the default. |
+| `PerFovGrouping()` | Write each FOV as its own OME-Zarr image. There is no tiling strategy -- a single-FOV image has nothing to arrange. |
+
+```python
+from ome_zarr_converters_tools import (
+    ConverterOptions,
+    MosaicGrouping,
+    PerFovGrouping,
+    SnapToGridTiling,
+)
+
+# One mosaic image per acquisition (default), snapped to a grid
+ConverterOptions(grouping=MosaicGrouping(tiling_strategy=SnapToGridTiling()))
+
+# One OME-Zarr per field of view
+ConverterOptions(grouping=PerFovGrouping())
+```
+
 ## Tiling Strategies
 
-Tiling controls how overlapping FOVs are arranged relative to each other. This is the last step in the default registration pipeline. Each strategy is a Pydantic model, so tolerance and other parameters are passed directly on construction.
+Tiling controls how overlapping FOVs are arranged relative to each other *within a mosaic*. It lives on `MosaicGrouping.tiling_strategy` and is applied as the last step in the default registration pipeline. Each strategy is a Pydantic model, so tolerance and other parameters are passed directly on construction.
 
 | Strategy | Description |
 |----------|-------------|
@@ -309,7 +333,6 @@ Tiling controls how overlapping FOVs are arranged relative to each other. This i
 | `SnapToGridTiling(tolerance=0)` | Snaps FOV positions to a regular grid, removing overlaps. Requires tiles to be arranged in a grid pattern |
 | `SnapToCornersTiling()` | Snaps each FOV to the nearest corner, removing overlaps without requiring a grid structure |
 | `InplaceTiling()` | No tiling -- keeps original positions as-is |
-| `NoTiling()` | Each FOV is written as a separate OME-Zarr |
 
 ```python
 from ome_zarr_converters_tools.models import (

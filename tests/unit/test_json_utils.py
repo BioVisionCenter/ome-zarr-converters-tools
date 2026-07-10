@@ -26,7 +26,6 @@ from ome_zarr_converters_tools.fractal._json_utils import (
 from ome_zarr_converters_tools.models import (
     AcquisitionDetails,
     ChannelInfo,
-    ConverterOptions,
     SingleImage,
 )
 
@@ -49,7 +48,7 @@ def sample_tiled_image() -> TiledImage:
             acquisition_details=acq,
         ),
     ]
-    return tiled_image_from_tiles(tiles=tiles, converter_options=ConverterOptions())[0]
+    return tiled_image_from_tiles(tiles=tiles, split_per_fov=False)[0]
 
 
 @pytest.fixture(scope="function")

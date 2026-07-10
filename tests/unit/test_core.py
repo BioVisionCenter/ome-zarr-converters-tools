@@ -186,9 +186,7 @@ class TestTileChannelValidation:
             )
             for c in range(2)
         ]
-        img = tiled_image_from_tiles(tiles=tiles, converter_options=ConverterOptions())[
-            0
-        ]
+        img = tiled_image_from_tiles(tiles=tiles, split_per_fov=False)[0]
         payload = img.model_dump(mode="json")
         payload["channels"] = payload["channels"][:1]
         with pytest.raises(ValidationError, match="references channel range"):
@@ -283,7 +281,8 @@ class TestTiledImage:
                 for fov_name, start in positions
             ]
             images = tiled_image_from_tiles(
-                tiles=tiles, converter_options=default_converter_options
+                tiles=tiles,
+                split_per_fov=default_converter_options.grouping.split_per_fov,
             )
             assert len(images) == 1
             return images[0]
@@ -302,7 +301,7 @@ class TestTiledImageFromTiles:
     ) -> None:
         images = tiled_image_from_tiles(
             tiles=grid_2x2_tiles,
-            converter_options=default_converter_options,
+            split_per_fov=default_converter_options.grouping.split_per_fov,
         )
         # All tiles share the same collection path -> 1 TiledImage
         assert len(images) == 1
@@ -331,7 +330,7 @@ class TestTiledImageFromTiles:
         ]
         images = tiled_image_from_tiles(
             tiles=tiles,
-            converter_options=ConverterOptions(),
+            split_per_fov=False,
         )
         assert len(images) == 2
 
@@ -339,5 +338,5 @@ class TestTiledImageFromTiles:
         with pytest.raises(ValueError, match="No tiles"):
             tiled_image_from_tiles(
                 tiles=[],
-                converter_options=ConverterOptions(),
+                split_per_fov=False,
             )

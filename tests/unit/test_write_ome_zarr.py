@@ -15,7 +15,6 @@ from ome_zarr_converters_tools.core._tile_to_tiled_images import tiled_image_fro
 from ome_zarr_converters_tools.models import (
     AcquisitionDetails,
     ChannelInfo,
-    ConverterOptions,
     FixedSizeChunking,
     FovBasedChunking,
     OmeZarrOptions,
@@ -50,7 +49,7 @@ def _make_tiled_image_with_channels(
             acquisition_details=acq,
         ),
     ]
-    images = tiled_image_from_tiles(tiles=tiles, converter_options=ConverterOptions())
+    images = tiled_image_from_tiles(tiles=tiles, split_per_fov=False)
     return images[0]
 
 
@@ -110,9 +109,7 @@ class TestComputeChunkSize:
                 acquisition_details=acq,
             ),
         ]
-        images = tiled_image_from_tiles(
-            tiles=tiles, converter_options=ConverterOptions()
-        )
+        images = tiled_image_from_tiles(tiles=tiles, split_per_fov=False)
         options = OmeZarrOptions(chunks=FovBasedChunking(t_chunk=3))
         chunks = _compute_chunk_size(images[0], options)
         t_idx = images[0].axes.index("t")

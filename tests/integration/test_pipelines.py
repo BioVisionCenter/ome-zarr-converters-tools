@@ -24,8 +24,9 @@ from ome_zarr_converters_tools.models import (
     ConverterOptions,
     ImageInPlate,
     InplaceTiling,
-    NoTiling,
+    MosaicGrouping,
     OverwriteMode,
+    PerFovGrouping,
     RuntimeSettings,
     SingleImage,
     StagePositionCorrections,
@@ -614,24 +615,24 @@ class TestPlateEndToEndNoOverwrite:
             )
 
 
-class TestNoTilingTranslation:
-    """Tests that NO_TILING mode sets a non-zero translation on OME-Zarr images."""
+class TestPerFovTranslation:
+    """Tests that Per-FOV grouping sets a non-zero translation on OME-Zarr images."""
 
-    def test_no_tiling_translation_is_set(self, tmp_path: Path) -> None:
+    def test_per_fov_translation_is_set(self, tmp_path: Path) -> None:
         df = pd.read_csv(_HCS_EXAMPLE_DIR / "tiles.csv")
         acq = _example_acq_details()
         tiles = hcs_images_from_dataframe(
             tiles_table=df, acquisition_details=acq, plate_name="TestPlate"
         )
-        opts = ConverterOptions(tiling_strategy=NoTiling())
+        opts = ConverterOptions(grouping=PerFovGrouping())
         images = tiles_aggregation_pipeline(
             tiles=tiles, converter_options=opts, resource=str(_HCS_DATA_DIR)
         )
-        # NO_TILING splits into one TiledImage per FOV
+        # Per-FOV grouping splits into one TiledImage per FOV
         assert len(images) == 3
 
         pipeline = build_default_registration_pipeline(
-            StagePositionCorrections(), NoTiling()
+            StagePositionCorrections(), opts.grouping.tiling_for_registration()
         )
         for i, tiled_image in enumerate(images):
             zarr_url = str(tmp_path / f"output_{i}.zarr")
@@ -646,7 +647,7 @@ class TestNoTilingTranslation:
             )
             translation = omezarr.get_image().dataset.translation
             assert any(v != 0.0 for v in translation), (
-                f"Expected non-zero translation for NO_TILING image {i}, "
+                f"Expected non-zero translation for Per-FOV image {i}, "
                 f"got {translation}"
             )
 
@@ -656,7 +657,7 @@ class TestNoTilingTranslation:
         tiles = hcs_images_from_dataframe(
             tiles_table=df, acquisition_details=acq, plate_name="TestPlate"
         )
-        opts = ConverterOptions(tiling_strategy=AutoTiling())
+        opts = ConverterOptions(grouping=MosaicGrouping(tiling_strategy=AutoTiling()))
         images = tiles_aggregation_pipeline(
             tiles=tiles, converter_options=opts, resource=str(_HCS_DATA_DIR)
         )

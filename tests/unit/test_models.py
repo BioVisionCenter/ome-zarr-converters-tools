@@ -15,6 +15,9 @@ from ome_zarr_converters_tools.models._collection import validate_zarr_name
 from ome_zarr_converters_tools.models._converter_options import (
     AutoTiling,
     FovBasedChunking,
+    InplaceTiling,
+    MosaicGrouping,
+    PerFovGrouping,
     WriterMode,
 )
 
@@ -214,7 +217,8 @@ class TestConverterOptions:
     def test_converter_options_defaults(self) -> None:
         """Test default values."""
         opts = ConverterOptions()
-        assert isinstance(opts.tiling_strategy, AutoTiling)
+        assert isinstance(opts.grouping, MosaicGrouping)
+        assert isinstance(opts.grouping.tiling_strategy, AutoTiling)
         assert opts.writer_mode == WriterMode.BY_FOV
         assert opts.stage_position_corrections.remove_xy_offset == "Global"
         assert opts.stage_position_corrections.remove_z_offset == "Global"
@@ -226,6 +230,33 @@ class TestConverterOptions:
         assert (
             opts.runtime_settings.temp_json_options.temp_url == "{zarr_dir}/_tmp_json"
         )
+
+
+class TestGrouping:
+    """Tests for the Grouping discriminated union."""
+
+    def test_mosaic_holds_tiling_strategy(self) -> None:
+        grouping = MosaicGrouping(tiling_strategy=InplaceTiling())
+        assert grouping.split_per_fov is False
+        assert isinstance(grouping.tiling_for_registration(), InplaceTiling)
+
+    def test_mosaic_defaults_to_auto(self) -> None:
+        assert isinstance(MosaicGrouping().tiling_strategy, AutoTiling)
+
+    def test_per_fov_has_no_tiling_field(self) -> None:
+        with pytest.raises(ValidationError):
+            PerFovGrouping(tiling_strategy=AutoTiling())
+
+    def test_per_fov_resolves_to_inplace(self) -> None:
+        grouping = PerFovGrouping()
+        assert grouping.split_per_fov is True
+        assert isinstance(grouping.tiling_for_registration(), InplaceTiling)
+
+    def test_grouping_discriminator_round_trips(self) -> None:
+        for grouping in (MosaicGrouping(), PerFovGrouping()):
+            opts = ConverterOptions(grouping=grouping)
+            restored = ConverterOptions.model_validate(opts.model_dump())
+            assert type(restored.grouping) is type(grouping)
 
 
 class TestStageOrientation:

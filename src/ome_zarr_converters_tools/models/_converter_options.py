@@ -49,13 +49,66 @@ class InplaceTiling(BaseModel):
     """
 
 
-class NoTiling(BaseModel):
-    mode: Literal["No Tiling"] = "No Tiling"
-    """Each field of view is written as a single OME-Zarr."""
-
-
 TilingStrategy = Annotated[
-    AutoTiling | SnapToGridTiling | SnapToCornersTiling | InplaceTiling | NoTiling,
+    AutoTiling | SnapToGridTiling | SnapToCornersTiling | InplaceTiling,
+    Field(discriminator="mode"),
+]
+
+
+class MosaicGrouping(BaseModel):
+    """Aggregate all fields of view of an acquisition into one mosaic OME-Zarr."""
+
+    mode: Literal["Mosaic"] = "Mosaic"
+    tiling_strategy: TilingStrategy = Field(
+        default_factory=AutoTiling, title="Tiling Strategy"
+    )
+    """
+    How the fields of view are arranged within the mosaic.
+
+    - Auto: Automatically determine if Snap to Grid is possible, otherwise use Snap to
+      Corners. Accepts an optional tolerance (in pixels) for grid alignment.
+    - Snap to Grid: Tile images to fit a regular grid. This is only possible if image
+      positions align to a grid (potentially with overlap). Accepts an optional
+      tolerance (in pixels).
+    - Snap to Corners: Tile images to fit a grid defined by the corner positions.
+    - Inplace: Write tiles in their original positions without tiling. This may lead to
+      artifacts if microscope stage positions are not precise.
+    """
+    model_config = ConfigDict(extra="forbid")
+
+    @property
+    def split_per_fov(self) -> bool:
+        """Whether each field of view becomes its own OME-Zarr image."""
+        return False
+
+    def tiling_for_registration(self) -> TilingStrategy:
+        """Within-image arrangement strategy for the registration pipeline."""
+        return self.tiling_strategy
+
+
+class PerFovGrouping(BaseModel):
+    """Write each field of view as its own OME-Zarr image (no mosaic)."""
+
+    mode: Literal["Per-FOV"] = "Per-FOV"
+    model_config = ConfigDict(extra="forbid")
+
+    @property
+    def split_per_fov(self) -> bool:
+        """Whether each field of view becomes its own OME-Zarr image."""
+        return True
+
+    def tiling_for_registration(self) -> TilingStrategy:
+        """Within-image arrangement strategy for the registration pipeline.
+
+        Per-FOV images contain a single field of view, so there is nothing to
+        arrange; `InplaceTiling` is a no-op here (identical to the removed
+        `NoTiling` path in the tiling step).
+        """
+        return InplaceTiling()
+
+
+Grouping = Annotated[
+    MosaicGrouping | PerFovGrouping,
     Field(discriminator="mode"),
 ]
 
@@ -194,9 +247,7 @@ class OmeZarrOptions(BaseModel):
     """Chunking strategy to use."""
     ngff_version: NgffVersions = DefaultNgffVersion
     """Version of the OME-NGFF specification to target."""
-    table_backend: BackendType = Field(
-        default=BackendType.CSV, title="Table Backend"
-    )
+    table_backend: BackendType = Field(default=BackendType.CSV, title="Table Backend")
     """Backend type for storing tables."""
     model_config = ConfigDict(extra="forbid")
 
@@ -218,21 +269,14 @@ class ConverterOptions(BaseModel):
       faster than writing by FOV sequentially, but may consume more memory.
     - In Memory: Load all data into memory before writing.
     """
-    tiling_strategy: TilingStrategy = Field(
-        default_factory=AutoTiling, title="Tiling Strategy"
-    )
+    grouping: Grouping = Field(default_factory=MosaicGrouping, title="Grouping")
     """
-    Tiling strategy to use during conversion.
+    How fields of view are grouped into output images.
 
-    - Auto: Automatically determine if Snap to Grid is possible, otherwise use Snap to
-      Corners. Accepts an optional tolerance (in pixels) for grid alignment.
-    - Snap to Grid: Tile images to fit a regular grid. This is only possible if image
-      positions align to a grid (potentially with overlap). Accepts an optional
-      tolerance (in pixels).
-    - Snap to Corners: Tile images to fit a grid defined by the corner positions.
-    - Inplace: Write tiles in their original positions without tiling. This may lead to
-      artifacts if microscope stage positions are not precise.
-    - No Tiling: Each field of view is written as a single OME-Zarr.
+    - Mosaic: Aggregate all fields of view of an acquisition into one OME-Zarr,
+      arranged by the nested `tiling_strategy`.
+    - Per-FOV: Write each field of view as its own OME-Zarr image (no mosaic,
+      no tiling strategy).
     """
     stage_position_corrections: StagePositionCorrections = Field(
         default_factory=StagePositionCorrections,

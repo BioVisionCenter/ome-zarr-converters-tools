@@ -118,7 +118,7 @@ def generic_compute_task(
 
     registration_pipeline = build_default_registration_pipeline(
         alignment_corrections=parsed_args.converter_options.stage_position_corrections,
-        tiling_strategy=parsed_args.converter_options.tiling_strategy,
+        tiling_strategy=parsed_args.converter_options.grouping.tiling_for_registration(),
     )
     ome_zarr = tiled_image_creation_pipeline(
         zarr_url=zarr_url,

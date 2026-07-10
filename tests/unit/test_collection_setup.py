@@ -15,7 +15,6 @@ from ome_zarr_converters_tools.core._tile_to_tiled_images import tiled_image_fro
 from ome_zarr_converters_tools.models import (
     AcquisitionDetails,
     ChannelInfo,
-    ConverterOptions,
     ImageInPlate,
     OverwriteMode,
     SingleImage,
@@ -57,9 +56,7 @@ def _make_plate_tiled_images(
             tile.attributes = attributes
         all_tiles.append(tile)
 
-    images = tiled_image_from_tiles(
-        tiles=all_tiles, converter_options=ConverterOptions()
-    )
+    images = tiled_image_from_tiles(tiles=all_tiles, split_per_fov=False)
     return images
 
 
@@ -82,7 +79,7 @@ def _make_single_tiled_images(num_images: int = 1) -> list:
             acquisition_details=acq,
         )
         tiles.append(tile)
-    return tiled_image_from_tiles(tiles=tiles, converter_options=ConverterOptions())
+    return tiled_image_from_tiles(tiles=tiles, split_per_fov=False)
 
 
 class TestSetupConditionTable:
@@ -130,9 +127,7 @@ class TestSetupConditionTable:
             tile.attributes = {"drug": [drug]}
             tiles.append(tile)
 
-        images = tiled_image_from_tiles(
-            tiles=tiles, converter_options=ConverterOptions()
-        )
+        images = tiled_image_from_tiles(tiles=tiles, split_per_fov=False)
         result = _setup_condition_table(images)
         assert result is not None
         assert result.shape[0] == 2  # two rows
@@ -320,9 +315,7 @@ class TestSetupPlates:
             collection=coll,
             acquisition_details=acq,
         )
-        images2 = tiled_image_from_tiles(
-            tiles=[tile], converter_options=ConverterOptions()
-        )
+        images2 = tiled_image_from_tiles(tiles=[tile], split_per_fov=False)
         setup_plates(
             zarr_dir=zarr_dir,
             tiled_images=images2,
@@ -371,9 +364,7 @@ class TestSetupPlates:
                 acquisition_details=acq,
             )
             tiles.append(tile)
-        images = tiled_image_from_tiles(
-            tiles=tiles, converter_options=ConverterOptions()
-        )
+        images = tiled_image_from_tiles(tiles=tiles, split_per_fov=False)
         setup_plates(
             zarr_dir=str(tmp_path),
             tiled_images=images,
@@ -421,9 +412,7 @@ class TestSetupPlates:
             collection=coll,
             acquisition_details=acq,
         )
-        images_b = tiled_image_from_tiles(
-            tiles=[tile], converter_options=ConverterOptions()
-        )
+        images_b = tiled_image_from_tiles(tiles=[tile], split_per_fov=False)
         setup_plates(
             zarr_dir=zarr_dir,
             tiled_images=images_b,
@@ -468,9 +457,7 @@ class TestSetupPlates:
             )
             tile.attributes = {"drug": [drug]}
             tiles.append(tile)
-        images = tiled_image_from_tiles(
-            tiles=tiles, converter_options=ConverterOptions()
-        )
+        images = tiled_image_from_tiles(tiles=tiles, split_per_fov=False)
         setup_plates(
             zarr_dir=str(tmp_path),
             tiled_images=images,

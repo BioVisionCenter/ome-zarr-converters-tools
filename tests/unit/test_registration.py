@@ -16,9 +16,7 @@ from ome_zarr_converters_tools.models import (
     AcquisitionDetails,
     AutoTiling,
     ChannelInfo,
-    ConverterOptions,
     InplaceTiling,
-    NoTiling,
     SingleImage,
     SnapToGridTiling,
     StagePositionCorrections,
@@ -134,9 +132,7 @@ class TestAlignment:
                 acquisition_details=acq,
             ),
         ]
-        images = tiled_image_from_tiles(
-            tiles=tiles, converter_options=ConverterOptions()
-        )
+        images = tiled_image_from_tiles(tiles=tiles, split_per_fov=False)
         corrections = StagePositionCorrections(remove_xy_jitter=True)
         result = apply_xy_jitter_correction(images[0], corrections)
         x_slice = result.regions[0].roi.get("x")
@@ -227,7 +223,7 @@ def _multichannel_image(channel_positions: list[int], num_channels: int) -> Tile
         )
         for c in channel_positions
     ]
-    images = tiled_image_from_tiles(tiles=tiles, converter_options=ConverterOptions())
+    images = tiled_image_from_tiles(tiles=tiles, split_per_fov=False)
     return images[0]
 
 
@@ -250,9 +246,7 @@ class TestOffsetAndReindex:
             )
             for fov, z in z_by_fov.items()
         ]
-        return tiled_image_from_tiles(
-            tiles=tiles, converter_options=ConverterOptions()
-        )[0]
+        return tiled_image_from_tiles(tiles=tiles, split_per_fov=False)[0]
 
     def test_offset_keep_keeps_positive(self) -> None:
         img = self._z_image({"FOV_0": 10.0})
@@ -566,15 +560,6 @@ class TestSnapUtils:
 
 
 class TestTiling:
-    def test_no_tiling_returns_zero_offsets(self) -> None:
-        tiles = {
-            "A": _make_pixel_tile_slice(10.0, 20.0, 100.0, 100.0, "A"),
-            "B": _make_pixel_tile_slice(200.0, 300.0, 100.0, 100.0, "B"),
-        }
-        offsets = _find_tiling(tiles, NoTiling())
-        for offset in offsets.values():
-            assert offset == {"x": 0.0, "y": 0.0}
-
     def test_snap_to_grid_regular(self) -> None:
         tiles = {
             "A": _make_pixel_tile_slice(0.0, 0.0, 100.0, 100.0, "A"),
@@ -608,9 +593,15 @@ class TestTiling:
         assert np.isclose(offsets["B"]["y"], 0.0)
 
     def test_inplace_returns_zero_offsets(self) -> None:
-        tiles = {"A": _make_pixel_tile_slice(50.0, 50.0, 100.0, 100.0, "A")}
+        # Inplace never moves a tile, regardless of how many or where they are
+        # (this is also the arrangement Per-FOV grouping resolves to).
+        tiles = {
+            "A": _make_pixel_tile_slice(50.0, 50.0, 100.0, 100.0, "A"),
+            "B": _make_pixel_tile_slice(200.0, 300.0, 100.0, 100.0, "B"),
+        }
         offsets = _find_tiling(tiles, InplaceTiling())
-        assert offsets["A"] == {"x": 0.0, "y": 0.0}
+        for offset in offsets.values():
+            assert offset == {"x": 0.0, "y": 0.0}
 
     def test_auto_tiling_falls_back_to_corners(self) -> None:
         tiles = {
@@ -640,8 +631,6 @@ class TestTiling:
             )
             for i, (x, y) in enumerate([(0, 0), (100, 0), (0, 100), (100, 100)])
         ]
-        images = tiled_image_from_tiles(
-            tiles=tiles, converter_options=ConverterOptions()
-        )
+        images = tiled_image_from_tiles(tiles=tiles, split_per_fov=False)
         result = apply_mosaic_tiling(images[0], InplaceTiling())
         assert len(result.regions) == 4

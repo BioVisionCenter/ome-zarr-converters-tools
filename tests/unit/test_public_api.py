@@ -18,7 +18,9 @@ _ROOT_ENTRY_POINTS = [
     "SnapToGridTiling",
     "SnapToCornersTiling",
     "InplaceTiling",
-    "NoTiling",
+    "MosaicGrouping",
+    "PerFovGrouping",
+    "Grouping",
     "StagePositionCorrections",
     "WriterMode",
     # Types of public model fields must be importable from the root.

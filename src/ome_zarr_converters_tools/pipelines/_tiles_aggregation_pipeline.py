@@ -44,7 +44,7 @@ def tiles_aggregation_pipeline(
         tiles = apply_filter_pipeline(tiles, filters_config=filters)
     tiled_images = tiled_image_from_tiles(
         tiles=tiles,
-        converter_options=converter_options,
+        split_per_fov=converter_options.grouping.split_per_fov,
         resource=resource,
     )
     if validators is not None:
