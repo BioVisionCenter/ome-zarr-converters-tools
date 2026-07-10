@@ -21,6 +21,12 @@ _ROOT_ENTRY_POINTS = [
     "NoTiling",
     "StagePositionCorrections",
     "WriterMode",
+    # Types of public model fields must be importable from the root.
+    "Scalings",
+    "TempJsonOptions",
+    "TileSlice",
+    "TileFOVGroup",
+    "UrlType",
 ]
 
 
@@ -44,3 +50,13 @@ def test_subpackage_all_names_resolve() -> None:
         module = importlib.import_module(f"ome_zarr_converters_tools.{sub}")
         for name in module.__all__:
             assert hasattr(module, name), f"{sub}.{name} in __all__ but missing"
+
+
+def test_root_all_is_union_of_subpackage_exports() -> None:
+    # Canonical rule: everything public in core/models/pipelines is importable
+    # from the package root. `fractal` (task-author plumbing) and `testing`
+    # (pytest plugin) stay namespaced.
+    for sub in ("core", "models", "pipelines"):
+        module = importlib.import_module(f"ome_zarr_converters_tools.{sub}")
+        missing = set(module.__all__) - set(pkg.__all__)
+        assert not missing, f"{sub} exports missing from root __all__: {missing}"

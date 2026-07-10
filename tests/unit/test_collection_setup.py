@@ -137,6 +137,35 @@ class TestSetupConditionTable:
         assert result is not None
         assert result.shape[0] == 2  # two rows
 
+    def test_heterogeneous_attribute_keys_raises(self) -> None:
+        # Images with different attribute key sets would produce unequal-length
+        # columns; a clear error must name the offending images and keys.
+        image_a = _make_plate_tiled_images(attributes={"drug": ["DMSO"]})[0]
+        image_b = _make_plate_tiled_images(
+            attributes={"drug": ["CompA"], "dose": [1.0]}
+        )[0]
+        with pytest.raises(ValueError, match="same attribute keys"):
+            _setup_condition_table([image_a, image_b])
+
+    def test_attribute_key_first_appearing_on_later_image_raises(self) -> None:
+        image_a = _make_plate_tiled_images(attributes={"drug": ["DMSO"]})[0]
+        image_b = _make_plate_tiled_images(attributes={"dose": [1.0]})[0]
+        with pytest.raises(ValueError, match="same attribute keys"):
+            _setup_condition_table([image_a, image_b])
+
+    def test_image_without_attributes_is_skipped(self) -> None:
+        # An image with no attributes at all contributes no rows but is legal.
+        with_attrs = _make_plate_tiled_images(attributes={"drug": ["DMSO"]})[0]
+        without_attrs = _make_plate_tiled_images()[0]
+        result = _setup_condition_table([with_attrs, without_attrs])
+        assert result is not None
+        assert result.shape[0] == 1
+
+    def test_reserved_attribute_key_raises(self) -> None:
+        images = _make_plate_tiled_images(attributes={"row": ["oops"]})
+        with pytest.raises(ValueError, match="reserved columns"):
+            _setup_condition_table(images)
+
 
 class TestSetupSingleimage:
     def test_no_overwrite_succeeds_when_zarr_absent(self, tmp_path: Path) -> None:
@@ -209,7 +238,7 @@ class TestCollectionSetupRegistry:
         )
         assert "DummyCollection" in _collection_setup_registry
         # Clean up
-        del _collection_setup_registry["DummyCollection"]
+        _collection_setup_registry.pop("DummyCollection")
 
     def test_add_handler_duplicate_raises(self) -> None:
         def another_handler(
@@ -240,7 +269,7 @@ class TestCollectionSetupRegistry:
         add_collection_handler(function=my_custom_setup, overwrite=True)
         assert "my_custom_setup" in _collection_setup_registry
         # Clean up
-        del _collection_setup_registry["my_custom_setup"]
+        _collection_setup_registry.pop("my_custom_setup")
 
 
 class TestSetupPlates:

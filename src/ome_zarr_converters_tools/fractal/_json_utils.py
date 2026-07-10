@@ -75,11 +75,12 @@ def tiled_image_from_json(
             return tiled_image
 
         except FileNotFoundError:
+            if t == num_retries - 1:
+                break  # Last attempt failed; don't sleep before raising.
             logger.error(
                 f"JSON file does not exist: {tiled_image_json_dump_url}, retrying..."
             )
-            sleep_time = 2 ** (t + 1)
-            time.sleep(sleep_time)
+            time.sleep(2 ** (t + 1))
 
     raise FileNotFoundError(
         f"JSON file does not exist after {num_retries} "

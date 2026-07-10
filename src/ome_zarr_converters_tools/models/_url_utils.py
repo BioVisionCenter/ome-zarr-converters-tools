@@ -136,7 +136,14 @@ def filesystem_for_url(
             f"{error_msg_prefix} for URL {url} "
             f"with detected type {url_type} is not implemented yet."
         )
-    return fsspec.filesystem(url_type.value)
+    try:
+        return fsspec.filesystem(url_type.value)
+    except ImportError as e:
+        raise ImportError(
+            f"Accessing {url} requires the '{url_type.value}' fsspec backend, "
+            "which is not installed. Install it with: "
+            "pip install 'ome-zarr-converters-tools[s3]'"
+        ) from e
 
 
 def glob_url_paths(*, base_url: str | None, pattern: str) -> list[str]:

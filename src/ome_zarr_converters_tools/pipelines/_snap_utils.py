@@ -1,5 +1,6 @@
 """Utilities to validate a regular grid of tiles."""
 
+import math
 from itertools import product
 from typing import Literal, NamedTuple
 
@@ -233,24 +234,33 @@ def calculate_snap_to_corner_offset(
     """Remove overlap from a list of tiles by snapping them to a regular grid."""
     boxes = tiles_to_boxes(list(tiles.values()))
     len_x, len_y = boxes[0].x_len, boxes[0].y_len  # Length consistency already checked
-    num_x, num_y = len(tiles), len(tiles)  # Upper bound to the number of tiles
     origin_x = min(b.x for b in boxes)
     origin_y = min(b.y for b in boxes)
-    perfect_grid = _build_perfect_grid_points(
-        len_x, len_y, num_x, num_y, origin_x, origin_y
+    # Size the candidate grid from the tiles' bounding box (plus one cell of
+    # slack per axis) rather than num_tiles x num_tiles points: a tile's
+    # nearest free corner is always within a cell of its own position.
+    num_x = math.ceil((max(b.x for b in boxes) - origin_x) / len_x) + 2
+    num_y = math.ceil((max(b.y for b in boxes) - origin_y) / len_y) + 2
+    # Each tile consumes one grid point, so the grid must hold at least one
+    # point per tile even when tiles overlap heavily.
+    while num_x * num_y < len(boxes):
+        num_x += 1
+        num_y += 1
+    grid = np.array(
+        [
+            (origin_x + i * len_x, origin_y + j * len_y)
+            for i, j in product(range(num_x), range(num_y))
+        ]
     )
+    available = np.ones(len(grid), dtype=bool)
     offsets = {}
     for name, box in zip(tiles.keys(), boxes, strict=True):
-        min_distance = float("inf")
-        min_id = -1
-        for i, point in enumerate(perfect_grid):
-            distance = np.sqrt((box.x - point.x) ** 2 + (box.y - point.y) ** 2)
-            if distance < min_distance:
-                min_distance = distance
-                min_id = i
-                offsets[name] = {"x": point.x - box.x, "y": point.y - box.y}
-        # remove the used point from the perfect grid
-        if min_id == -1:
-            raise ValueError("Could not find a matching point in the perfect grid.")
-        perfect_grid.pop(min_id)
+        distances = (grid[:, 0] - box.x) ** 2 + (grid[:, 1] - box.y) ** 2
+        distances[~available] = np.inf
+        idx = int(np.argmin(distances))
+        available[idx] = False
+        offsets[name] = {
+            "x": float(grid[idx, 0] - box.x),
+            "y": float(grid[idx, 1] - box.y),
+        }
     return offsets

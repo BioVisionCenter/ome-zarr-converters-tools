@@ -59,18 +59,21 @@ dependencies = [
     "pillow>=10.0",
     "tifffile>=2024.1.30",
     "fsspec>=2024.2.0",
-    "s3fs>=2024.2.0",       # s3 support for fsspec
 ]
 
 # https://peps.python.org/pep-0621/#dependencies-optional-dependencies
 # "extras" (e.g. for `pip install .[test]`)
 [project.optional-dependencies]
+# s3:// URL support for fsspec
+s3 = ["s3fs>=2024.2.0"]
 # add dependencies used for testing here
 test = [
     "pytest",
     "pytest-cov",
     "devtools",
-    "aiomoto",    # mocking AWS s3 for testing
+    "pandas",          # used directly by the integration tests
+    "s3fs>=2024.2.0",
+    "aiomoto",         # mocking AWS s3 for testing
 ]
 # add anything else you like to have in your dev environment here
 dev = [

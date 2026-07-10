@@ -42,7 +42,15 @@ ImageLoaderInterfaceType = TypeVar(
 
 
 class DefaultImageLoader(ImageLoaderInterface):
+    """File-based image loader for common formats (TIFF, PNG/JPEG/BMP, NPY).
+
+    The file type is inferred from the extension; unrecognized extensions are
+    attempted as TIFF with a warning.
+    """
+
     file_path: str
+    """Path to the image file. If relative, it is resolved against the
+    `resource` passed to `load_data` (usually the acquisition base directory)."""
 
     def load_data(self, resource: Any | None = None) -> np.ndarray:
         """Load the image data as a NumPy array."""

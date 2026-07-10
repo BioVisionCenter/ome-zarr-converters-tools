@@ -16,6 +16,17 @@ versioning.
   `ome_zarr_converters_tools` and `...models`, and `build_dummy_tile` /
   `UrlType` from their subpackages — previously documented as extension points
   but not importably public.
+- Complete the "one canonical import location" rule: the package root now
+  re-exports every public name from `core`, `models`, and `pipelines`,
+  including `TileSlice`, `TileFOVGroup`, the pipeline extension points
+  (`add_filter`, `add_registration_func`, `add_validator`,
+  `add_collection_handler`, `setup_ome_zarr_collection`,
+  `write_tiled_image_as_zarr`, `FilterModel`, `ImplementedFilters`,
+  `RegistrationStep`, `ValidatorStep`), and the enums that appear as public
+  model-field types (`Scalings` for `FovBasedChunking.xy_scaling`,
+  `TempJsonOptions` for `RuntimeSettings.temp_json_options`), plus
+  `BackendType`, `find_url_type`, and `local_url_to_path`. A regression test
+  asserts the root `__all__` is a superset of each subpackage's `__all__`.
 - Add `CollectionInterface.set_suffix` as the supported way to set the per-FOV
   path suffix (replaces reaching into the private `_suffix` attribute).
 - Redesign `StagePositionCorrections` around per-axis stage-position handling:
@@ -30,6 +41,18 @@ versioning.
     reconciling channel metadata); set `False` to keep gaps as empty channels.
 
 ### Fix
+- Pixel-grid rounding no longer opens 1-pixel gaps/overlaps at tile boundaries:
+  `_region_to_pixel_coordinates` and `apply_align_to_pixel_grid` now round the
+  interval endpoints together (`round(start+length) - round(start)`) instead of
+  rounding `start` and `length` independently.
+- `reindex_channels` no longer silently truncates channel metadata when a tile
+  references a channel index beyond the provided `channels` list; the mismatch
+  is now caught at tile construction (see API Breaking Changes) so it can no
+  longer surface as a confusing `NgioValueError` at write time.
+- `setup_plates` now raises a clear error naming the offending images when tiles
+  carry heterogeneous attribute key sets (or an attribute key collides with a
+  reserved condition-table column), instead of failing with an opaque polars
+  shape error while building the condition table.
 - `TiledImage.load_data` / `load_data_dask` now zero each region to the union
   origin before slicing, fixing dropped tile data (or a broadcast error) for
   images whose regions do not start at pixel 0.
@@ -48,6 +71,28 @@ versioning.
   emitted `init_args` instead of relying on a no-op `model_dump(exclude=None)`.
 
 ### API Breaking Changes
+- `s3fs` is no longer a hard dependency; `s3://` support moved to an optional
+  `s3` extra. Install `ome-zarr-converters-tools[s3]` for object-storage
+  access. Using an `s3://` URL without it now raises an `ImportError` naming the
+  extra. Before: `pip install ome-zarr-converters-tools`. After (for s3):
+  `pip install "ome-zarr-converters-tools[s3]"`.
+- `Tile` now validates at construction that `start_c + length_c` fits within
+  `acquisition_details.channels` (when channels are provided) and that
+  `start_c >= 0`; `TiledImage` enforces the same coverage when rebuilt from JSON
+  at the fractal init/compute boundary. Supply one `ChannelInfo` per instrument
+  channel index (padding unused slots) or set `channels=None`. Previously an
+  out-of-range channel index was accepted and failed later inside ngio.
+- `build_dummy_tile` is now keyword-only, matching the other tile/image
+  builders. Before: `build_dummy_tile("FOV_0", start, shape, coll, acq)`. After:
+  `build_dummy_tile(fov_name="FOV_0", start=start, shape=shape, collection=coll,
+  acquisition_details=acq)`.
+- `add_registration_func` and `add_validator` are now keyword-only with an
+  optional `name` (defaulting to `function.__name__`), matching `add_filter` and
+  `add_collection_handler`. Before: `add_validator(fn, "my_step")`. After:
+  `add_validator(function=fn, name="my_step")`.
+- `CollectionInterface` is now an abstract base class (`abc.ABC` with an
+  `@abstractmethod path()`); instantiating it directly, or a subclass that does
+  not implement `path`, now raises `TypeError` instead of failing at call time.
 - `StageOrientation.swap_xy=True` now actually transposes the X and Y stage
   axes; previously it was a silent no-op (it only reordered the ROI slice list).
   Before: `swap_xy=True` left tile positions unchanged. After: the x output is
@@ -92,7 +137,26 @@ versioning.
 - Bump the `Development Status` classifier from `3 - Alpha` to
   `5 - Production/Stable`.
 - Remove the unused runtime dependencies `toml` and `tqdm`, and add minimum
-  version floors to `numpy`, `pillow`, `tifffile`, `fsspec`, and `s3fs`.
+  version floors to `numpy`, `pillow`, `tifffile`, and `fsspec` (the `s3fs`
+  floor now lives in the optional `s3` extra).
+- Add `pandas` to the `test` extra (used directly by the integration tests,
+  previously only resolved transitively via `ngio`).
+- Consolidate the four near-identical filter/validator/registration/collection
+  registries behind a shared generic `Registry` helper
+  (`pipelines/_registry.py`), aligning their `add_*` signatures and giving all
+  four registries error messages that list the available names and note the
+  multiprocessing-visibility requirement.
+- Rewrite `calculate_snap_to_corner_offset` to size its candidate grid from the
+  tiles' bounding box and vectorize the nearest-corner search, replacing the
+  previous O(n³)/O(n²) all-pairs scan that degraded on images with many FOVs.
+- `exec_compound_task` now raises on an unrecognized runner instead of falling
+  through the `match` and returning `None`.
+- `tiled_image_from_json` no longer sleeps after its final retry attempt before
+  raising `FileNotFoundError`.
+- Add `permissions: contents: write` to the docs workflow so `mike` can push to
+  the `gh-pages` branch on main/tag builds.
+- Update the LICENSE copyright to `2023-2026, BioVisionCenter, University of
+  Zurich`.
 - Remove the `src/debug/plotting.py` scratch module (tracked in git but never
   shipped in the wheel and referenced nowhere).
 - Add a CI `lint` job running `ruff check`, `ruff format --check`, and
@@ -105,6 +169,10 @@ versioning.
 - Fix assorted typos (`plante_url`, `GripPoint`, "avoit", "less files").
 
 ### Documentation
+- Add a README quickstart and an S3-extra install note.
+- Document the `testing` snapshot-plugin module, the `url` vs `path` field
+  naming convention, and the intentionally `fractal`-namespaced JSON plumbing in
+  `docs/api.md`.
 - Correct `docs/api.md`: rename the stale `AlignmentCorrections` to
   `StagePositionCorrections`, and document the URL helpers via the public
   `models` module instead of the private `_url_utils` path.

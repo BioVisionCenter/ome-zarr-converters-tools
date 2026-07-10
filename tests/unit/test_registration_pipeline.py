@@ -20,7 +20,7 @@ class TestRegistrationRegistry:
 
         name = "test_reg_step_unique"
         try:
-            add_registration_func(my_step, name=name)
+            add_registration_func(function=my_step, name=name)
             assert name in _registration_registry
         finally:
             _registration_registry.pop(name, None)
@@ -31,9 +31,9 @@ class TestRegistrationRegistry:
 
         name = "test_dup_reg_step"
         try:
-            add_registration_func(my_step, name=name)
+            add_registration_func(function=my_step, name=name)
             with pytest.raises(ValueError, match="already registered"):
-                add_registration_func(my_step, name=name)
+                add_registration_func(function=my_step, name=name)
         finally:
             _registration_registry.pop(name, None)
 
@@ -53,8 +53,8 @@ class TestRegistrationPipeline:
             return tiled_image
 
         try:
-            add_registration_func(step_a, name="test_step_a")
-            add_registration_func(step_b, name="test_step_b")
+            add_registration_func(function=step_a, name="test_step_a")
+            add_registration_func(function=step_b, name="test_step_b")
             config = [
                 RegistrationStep(name="test_step_a", params={}),
                 RegistrationStep(name="test_step_b", params={}),

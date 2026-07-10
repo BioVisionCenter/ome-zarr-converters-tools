@@ -138,14 +138,20 @@ def apply_reindex_channels(
     if present == list(range(len(present))):
         return tiled_image  # already dense
 
+    if tiled_image.channels is not None:
+        if present[-1] >= len(tiled_image.channels):
+            # Unreachable: Tile/TiledImage validators enforce this at construction.
+            raise ValueError(
+                f"Internal error: TiledImage '{tiled_image.path}' references "
+                f"channel index {present[-1]} but channels has "
+                f"{len(tiled_image.channels)} entries; this should have been "
+                "rejected at tile building. Please report this as a bug."
+            )
+        tiled_image.channels = [tiled_image.channels[c] for c in present]
+
     remap = {old: new for new, old in enumerate(present)}
     for region in tiled_image.regions:
         region.roi = move_to(region.roi, {"c": float(remap[_channel_start(region)])})
-
-    if tiled_image.channels is not None:
-        tiled_image.channels = [
-            tiled_image.channels[c] for c in present if c < len(tiled_image.channels)
-        ]
     return tiled_image
 
 
@@ -173,8 +179,11 @@ def apply_align_to_pixel_grid(
             start = roi_slice.start
             length = roi_slice.length
             assert start is not None and length is not None
+            # Snap the interval endpoints, not start and length independently:
+            # op(start) + op(length) can differ from op(start + length) by one
+            # pixel, creating gaps/overlaps at tile boundaries.
             new_start = op(start)
-            new_length = op(length)
+            new_length = op(start + length) - new_start
             adjusted_slices.append(
                 RoiSlice(
                     axis_name=roi_slice.axis_name,

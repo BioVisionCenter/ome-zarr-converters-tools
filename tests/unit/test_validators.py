@@ -27,7 +27,7 @@ class TestValidatorRegistry:
 
         name = "test_validator_unique"
         try:
-            add_validator(my_validator, name=name)
+            add_validator(function=my_validator, name=name)
             assert name in _validator_registry
         finally:
             _validator_registry.pop(name, None)
@@ -38,9 +38,9 @@ class TestValidatorRegistry:
 
         name = "test_dup_validator"
         try:
-            add_validator(my_validator, name=name)
+            add_validator(function=my_validator, name=name)
             with pytest.raises(ValueError, match="already registered"):
-                add_validator(my_validator, name=name)
+                add_validator(function=my_validator, name=name)
         finally:
             _validator_registry.pop(name, None)
 
@@ -50,8 +50,8 @@ class TestValidatorRegistry:
 
         name = "test_overwrite_validator"
         try:
-            add_validator(my_validator, name=name)
-            add_validator(my_validator, name=name, overwrite=True)
+            add_validator(function=my_validator, name=name)
+            add_validator(function=my_validator, name=name, overwrite=True)
             assert name in _validator_registry
         finally:
             _validator_registry.pop(name, None)
@@ -72,7 +72,7 @@ class TestValidatorPipeline:
 
         name = "test_tracking_validator"
         try:
-            add_validator(tracking_validator, name=name)
+            add_validator(function=tracking_validator, name=name)
             step = ValidatorStep(name=name, params={})
             apply_validator_pipeline([tiled_image_from_grid], [step])
             assert len(called) == 1

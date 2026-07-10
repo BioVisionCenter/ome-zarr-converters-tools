@@ -135,3 +135,9 @@ def exec_compound_task(
                 compute_task_kwargs=compute_task_kwargs,
                 num_processes=n,
             )
+        case _:
+            raise ValueError(
+                f"Unsupported runner {runner!r}. Use one of SequentialRunner, "
+                "ThreadedRunner, MultiprocessingRunner, or None for sequential "
+                "execution."
+            )

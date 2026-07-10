@@ -33,6 +33,7 @@ from ome_zarr_converters_tools.models import (
     WriterMode,
 )
 from ome_zarr_converters_tools.pipelines import (
+    setup_ome_zarr_collection,
     tiled_image_creation_pipeline,
     tiles_aggregation_pipeline,
 )
@@ -41,6 +42,8 @@ from ome_zarr_converters_tools.pipelines._registration_pipeline import (
     apply_registration_pipeline,
     build_default_registration_pipeline,
 )
+
+pytestmark = pytest.mark.integration
 
 # ---------------------------------------------------------------------------
 # Project root / example paths
@@ -549,6 +552,66 @@ class TestHCSPlateWithAttributes:
 
         table_names = omezarr.list_tables()
         assert "condition_table" in table_names
+
+
+class TestPlateEndToEndNoOverwrite:
+    """Full init→compute plate flow with the default NO_OVERWRITE mode.
+
+    Every other end-to-end test uses OVERWRITE; this guards the default path:
+    the init task materializes the plate skeleton (`setup_ome_zarr_collection`)
+    and the compute task must then be able to create each image with
+    `mode="w-"` inside it.
+    """
+
+    def test_full_plate_flow_no_overwrite(self, tmp_path: Path) -> None:
+        from ngio.hcs import open_ome_zarr_plate
+
+        df = pd.read_csv(_HCS_EXAMPLE_DIR / "tiles.csv")
+        acq = _example_acq_details()
+        tiles = hcs_images_from_dataframe(
+            tiles_table=df, acquisition_details=acq, plate_name="NoOverwritePlate"
+        )
+        opts = ConverterOptions()
+        images = tiles_aggregation_pipeline(
+            tiles=tiles, converter_options=opts, resource=str(_HCS_DATA_DIR)
+        )
+        zarr_dir = str(tmp_path)
+
+        # Init task: create the plate skeleton.
+        setup_ome_zarr_collection(
+            tiled_images=images,
+            collection_type="ImageInPlate",
+            zarr_dir=zarr_dir,
+            overwrite_mode=OverwriteMode.NO_OVERWRITE,
+        )
+        # Compute task: write each image into the pre-created plate.
+        pipeline = build_default_registration_pipeline(
+            StagePositionCorrections(), AutoTiling()
+        )
+        for tiled_image in images:
+            omezarr = tiled_image_creation_pipeline(
+                zarr_url=str(tmp_path / tiled_image.path),
+                tiled_image=tiled_image,
+                registration_pipeline=pipeline,
+                converter_options=opts,
+                writer_mode=WriterMode.BY_FOV,
+                overwrite_mode=OverwriteMode.NO_OVERWRITE,
+                resource=str(_HCS_DATA_DIR),
+            )
+            data = np.asarray(omezarr.get_image().get_array())
+            assert np.any(data > 0)
+
+        plate = open_ome_zarr_plate(str(tmp_path / "NoOverwritePlate.zarr"))
+        assert len(plate.images_paths()) == len(images)
+
+        # Running the init task again in NO_OVERWRITE mode must refuse.
+        with pytest.raises(FileExistsError):
+            setup_ome_zarr_collection(
+                tiled_images=images,
+                collection_type="ImageInPlate",
+                zarr_dir=zarr_dir,
+                overwrite_mode=OverwriteMode.NO_OVERWRITE,
+            )
 
 
 class TestNoTilingTranslation:

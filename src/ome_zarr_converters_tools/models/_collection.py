@@ -1,6 +1,7 @@
 """Models for defining regions to be converted into OME-Zarr format."""
 
 import re
+from abc import ABC, abstractmethod
 from typing import Any, TypeVar
 
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, field_validator
@@ -24,7 +25,7 @@ def validate_zarr_name(name: str) -> str:
     return name
 
 
-class CollectionInterface(BaseModel):
+class CollectionInterface(BaseModel, ABC):
     """Base class defining how to build the output path(s) for a collection.
 
     Subclasses implement `path` and inherit the tiling `_suffix` slot, which is
@@ -36,9 +37,10 @@ class CollectionInterface(BaseModel):
     # Auto-generated suffix used to disambiguate per-FOV output paths.
     _suffix: str = PrivateAttr("")
 
+    @abstractmethod
     def path(self) -> str:
         """Return the output path for this collection."""
-        raise NotImplementedError("Subclasses must implement path method.")
+        ...
 
     def set_suffix(self, suffix: str) -> None:
         """Set the per-FOV path suffix (used when splitting tiles per FOV)."""
@@ -57,17 +59,28 @@ def sanitize_path(path: str) -> str:
 
 
 class SingleImage(CollectionInterface):
+    """Collection for a stand-alone OME-Zarr image (not part of a plate)."""
+
     image_path: str
+    """Output path of the image, relative to the zarr directory
+    (`.zarr` is appended if missing)."""
 
     def path(self) -> str:
+        """Return the output path for this image."""
         return sanitize_path(f"{self.image_path}{self._suffix}")
 
 
 class ImageInPlate(CollectionInterface):
+    """Collection for an image inside an HCS plate (plate/row/column layout)."""
+
     plate_name: str
+    """Name of the plate (`.zarr` is appended if missing)."""
     row: str
+    """Well row label, e.g. `"A"`. Integer input is converted (1 → `"A"`)."""
     column: int = Field(ge=1)
+    """Well column number, 1-based."""
     acquisition: int = Field(default=0, ge=0)
+    """Acquisition index (used as the image path inside the well)."""
 
     @property
     def well(self) -> str:

@@ -28,6 +28,7 @@ from ngio import (
     open_ome_zarr_container,
     open_ome_zarr_plate,
 )
+from ngio.utils import NgioValueError
 from pydantic import BaseModel, Field, model_validator
 
 from ome_zarr_converters_tools.models._converter_options import (
@@ -177,7 +178,10 @@ def _build_image_entry(*, ome_zarr_image: OmeZarrContainer, upd: dict | None) ->
         for table_name in sorted(table_names):
             try:
                 roi_table = ome_zarr_image.get_roi_table(table_name)
-            except Exception:
+            except NgioValueError:
+                # Not a ROI table (e.g. a condition table) — recorded as None.
+                # Anything else (corrupt store, validation failure) propagates
+                # so a broken table can't silently pass snapshot validation.
                 tables_dict[table_name] = None
                 continue
             rois_dict = {}

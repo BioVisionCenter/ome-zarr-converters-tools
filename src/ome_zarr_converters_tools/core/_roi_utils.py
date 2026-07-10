@@ -211,7 +211,10 @@ def shape_from_rois(
     for roi_slice in roi_union.slices:
         length = roi_slice.length
         assert length is not None
-        axes_shape[roi_slice.axis_name] = math.ceil(length)  # TODO remove ceil?
+        # ceil, not round: this sizes load buffers, and ROIs may still have
+        # fractional lengths here. A buffer one pixel too large is harmless;
+        # one too small truncates data.
+        axes_shape[roi_slice.axis_name] = math.ceil(length)
     return tuple(axes_shape[ax] for ax in axes)
 
 

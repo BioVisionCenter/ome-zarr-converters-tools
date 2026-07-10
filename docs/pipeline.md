@@ -247,7 +247,7 @@ This creates:
 
 4. **`reindex_channels`** -- When `reindex_channels=True` (default), the channel indices actually present are compacted to a dense `0, 1, 2, …` range and channel metadata is reconciled, so a filtered channel does not leave an empty channel in the output.
 
-5. **`tile_regions`** -- Applies tiling/snapping to remove overlaps between FOVs (see [Tiling Modes](#tiling-modes) below). This is the step that determines the final non-overlapping layout.
+5. **`tile_regions`** -- Applies tiling/snapping to remove overlaps between FOVs (see [Tiling Strategies](#tiling-strategies) below). This is the step that determines the final non-overlapping layout.
 
 ### StagePositionCorrections
 

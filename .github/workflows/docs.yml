@@ -7,10 +7,16 @@ on:
     tags:
       - "v*"
 
+# mike pushes the built docs to the gh-pages branch.
+permissions:
+  contents: write
+
 jobs:
   deploy:
     name: Deploy Docs
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # mike pushes the built docs to the gh-pages branch
 
     steps:
       - uses: actions/checkout@v7

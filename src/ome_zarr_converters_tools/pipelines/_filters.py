@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 
 from ome_zarr_converters_tools.core._tile import Tile
 from ome_zarr_converters_tools.models._collection import ImageInPlate
+from ome_zarr_converters_tools.pipelines._registry import Registry
 
 
 class FilterModel(BaseModel):
@@ -101,12 +102,16 @@ class FilterFunctionProtocol(Protocol[P]):
     def __call__(self, tile: Tile, *args: P.args, **kwargs: P.kwargs) -> bool: ...
 
 
-_filter_registry: dict[str, Callable[..., bool]] = {
-    "Path Regex Include Filter": apply_path_include_regex_filter,
-    "Path Regex Exclude Filter": apply_path_exclude_regex_filter,
-    "Well Exclude Filter": apply_well_filter,
-    "Well Include Filter": apply_well_include_filter,
-}
+_filter_registry: Registry[Callable[..., bool]] = Registry(
+    "Filter step",
+    "add_filter",
+    {
+        "Path Regex Include Filter": apply_path_include_regex_filter,
+        "Path Regex Exclude Filter": apply_path_exclude_regex_filter,
+        "Well Exclude Filter": apply_well_filter,
+        "Well Include Filter": apply_well_include_filter,
+    },
+)
 
 
 def add_filter(
@@ -117,27 +122,26 @@ def add_filter(
 ) -> None:
     """Register a new filter.
 
+    Note:
+        Registrations are process-global: under `MultiprocessingRunner`,
+        worker processes re-import the consumer's modules, so custom filters
+        must be registered at import time of the module that defines them to
+        be visible in workers.
+
     Args:
-        name: Name of the registration step.
-        function: Function that performs the registration step.
-        overwrite: Whether to overwrite an existing registration step
+        function: Function that performs the filter step.
+        name: Name of the filter step. Defaults to `function.__name__`.
+        overwrite: Whether to overwrite an existing filter step
             with the same name.
     """
-    if name is None:
-        name = function.__name__
-    if not overwrite and name in _filter_registry:
-        raise ValueError(f"Filter step '{name}' is already registered.")
-    _filter_registry[name] = function
+    _filter_registry.add(function=function, name=name, overwrite=overwrite)
 
 
 def apply_filter_pipeline(
     tiles: list[Tile], *, filters_config: Sequence[FilterModel]
 ) -> list[Tile]:
     for step in filters_config:
-        step_name = step.name
-        if step_name not in _filter_registry:
-            raise ValueError(f"Filter step '{step_name}' is not registered.")
-        step_function = _filter_registry[step_name]
+        step_function = _filter_registry.get(step.name)
         tiles = [tile for tile in tiles if step_function(tile, filter_params=step)]
     return tiles
 

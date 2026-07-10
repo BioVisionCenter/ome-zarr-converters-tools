@@ -171,6 +171,22 @@ class TestAlignment:
         assert x_slice.start == 11.0
         assert y_slice.start == 21.0
 
+    def test_apply_align_to_pixel_grid_no_boundary_gap(self) -> None:
+        # Adjacent tiles sharing a fractional boundary must stay adjacent after
+        # rounding: snapping the interval endpoints (not start and length
+        # independently) prevents 1-px gaps/overlaps at tile boundaries.
+        regions = [
+            _make_world_tile_slice(0.0, 0.0, 10.6, 10.6, "FOV_0"),
+            _make_world_tile_slice(10.6, 0.0, 10.6, 10.6, "FOV_1"),
+        ]
+        img = _make_tiled_image(regions, xy_pixel_size=1.0)
+        result = apply_align_to_pixel_grid(img, mode="round")
+        first_x = result.regions[0].roi.get("x")
+        second_x = result.regions[1].roi.get("x")
+        assert first_x is not None and second_x is not None
+        assert first_x.start + first_x.length == second_x.start
+        assert second_x.start + second_x.length == round(10.6 + 10.6)
+
     def test_apply_offset_removal_global(self) -> None:
         regions = [
             _make_world_tile_slice(100.0, 200.0, 64.0, 64.0, "FOV_0"),
@@ -377,6 +393,38 @@ class TestSnapUtils:
         assert np.isclose(offsets["A"]["y"], 0.0)
         assert np.isclose(offsets["B"]["x"], 5.0)  # 295 → 300
         assert np.isclose(offsets["B"]["y"], 0.0)
+
+    def test_snap_to_corner_many_tiles_unique_corners(self) -> None:
+        # Regression: the candidate grid is sized from the tiles' bounding box
+        # (not num_tiles² points); a jittered 20x20 mosaic must snap every tile
+        # to its own grid corner.
+        rng = np.random.default_rng(42)
+        tiles = {}
+        for i in range(20):
+            for j in range(20):
+                name = f"FOV_{i}_{j}"
+                tiles[name] = _make_pixel_tile_slice(
+                    i * 64.0 + rng.uniform(-3, 3),
+                    j * 64.0 + rng.uniform(-3, 3),
+                    64.0,
+                    64.0,
+                    name,
+                )
+        offsets = calculate_snap_to_corner_offset(tiles)
+        origin_x = min(t.roi.get("x").start for t in tiles.values())
+        origin_y = min(t.roi.get("y").start for t in tiles.values())
+        cells = set()
+        for name, tile in tiles.items():
+            x = tile.roi.get("x").start + offsets[name]["x"]
+            y = tile.roi.get("y").start + offsets[name]["y"]
+            cell_x = (x - origin_x) / 64.0
+            cell_y = (y - origin_y) / 64.0
+            # Snapped positions sit exactly on the grid...
+            assert abs(cell_x - round(cell_x)) < 1e-9
+            assert abs(cell_y - round(cell_y)) < 1e-9
+            cells.add((round(cell_x), round(cell_y)))
+        # ...and each tile occupies its own cell.
+        assert len(cells) == len(tiles)
 
     def test_tiles_to_boxes_raises_value_error_missing_y(self) -> None:
         # Regression: missing y-axis should raise ValueError, not AssertionError.

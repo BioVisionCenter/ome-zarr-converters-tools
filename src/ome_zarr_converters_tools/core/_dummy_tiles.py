@@ -10,7 +10,9 @@ from ome_zarr_converters_tools.models import AcquisitionDetails, CollectionInter
 from ome_zarr_converters_tools.models._loader import ImageLoaderInterface
 
 
-def rasterize_text_with_boundary(shape_x, shape_y, text, font_scale=0.34):
+def rasterize_text_with_boundary(
+    shape_x: int, shape_y: int, text: str, font_scale: float = 0.34
+) -> np.ndarray:
     """Create a uint8 array with text rasterized and boundaries set to 255.
 
     Args:
@@ -75,12 +77,13 @@ class DummyLoader(ImageLoaderInterface):
 
 
 def build_dummy_tile(
+    *,
     fov_name: str,
     start: StartPosition,
     shape: TileShape,
     collection: CollectionInterface,
     acquisition_details: AcquisitionDetails,
-    font_scale=0.22,
+    font_scale: float = 0.22,
 ) -> Tile:
     """Build a dummy tile with default parameters, allowing overrides."""
     return Tile(

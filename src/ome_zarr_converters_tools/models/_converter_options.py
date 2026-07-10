@@ -174,7 +174,7 @@ class FixedSizeChunking(BaseModel):
     t_chunk: int = Field(default=1, ge=1, title="Chunk Size for T")
     """Chunk size for T dimension."""
 
-    def get_xy_chunk(self, fov_shape: int) -> int:
+    def get_xy_chunk(self, fov_xy_shape: int) -> int:
         return self.xy_chunk
 
 

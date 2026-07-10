@@ -7,7 +7,7 @@ from typing import Any, Generic, Self
 import dask.array as da
 import numpy as np
 from ngio import PixelSize, Roi
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from ome_zarr_converters_tools.core._dask_lazy_loader import lazy_array_from_regions
 from ome_zarr_converters_tools.core._roi_utils import (
@@ -182,6 +182,32 @@ class TiledImage(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfac
 
     model_config = ConfigDict(extra="forbid")
 
+    @model_validator(mode="after")
+    def _validate_channel_coverage(self) -> "TiledImage":
+        """Enforce that every region's channel range fits the channel metadata.
+
+        Tiles are validated at construction, but a TiledImage is also rebuilt
+        from JSON at the fractal init/compute task boundary; this guards that
+        path with the same contract.
+        """
+        if self.channels is None:
+            return self
+        num_channels = len(self.channels)
+        for region in self.regions:
+            c_slice = region.roi.get("c")
+            if c_slice is None or c_slice.start is None:
+                continue
+            length = c_slice.length if c_slice.length is not None else 1
+            if c_slice.start < 0 or c_slice.start + length > num_channels:
+                raise ValueError(
+                    f"TiledImage '{self.path}' region '{region.roi.name}' "
+                    f"references channel range [{c_slice.start}, "
+                    f"{c_slice.start + length}) but channels has {num_channels} "
+                    "entries. Provide one ChannelInfo per channel index, or set "
+                    "channels=None to use auto-generated channel names."
+                )
+        return self
+
     def group_by_fov(self) -> list[TileFOVGroup[ImageLoaderInterfaceType]]:
         """Group TileSlices by field of view name."""
         fov_dict: dict[str, list[TileSlice]] = {}
@@ -214,7 +240,7 @@ class TiledImage(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfac
         )
 
     def add_tile(self, tile: Tile, add_translation: bool = False) -> None:
-        """Add a Tile to the TiledImage as a TileRegion."""
+        """Add a Tile to the TiledImage as a TileSlice."""
         if self.channels != tile.acquisition_details.channels:
             raise ValueError("Tile channels do not match TiledImage channels.")
         if self.axes != tile.acquisition_details.axes:
@@ -227,10 +253,10 @@ class TiledImage(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfac
             raise ValueError("Tile z_spacing does not match TiledImage z_spacing.")
         if self.t_spacing != tile.acquisition_details.t_spacing:
             raise ValueError("Tile t_spacing does not match TiledImage t_spacing.")
-        tile_region = TileSlice.from_tile(tile)
+        tile_slice = TileSlice.from_tile(tile)
 
         if add_translation:
-            roi_extra = tile_region.roi.model_extra or {}
+            roi_extra = tile_slice.roi.model_extra or {}
             translation = []
             for ax in self.axes:
                 o_ax = roi_extra.get(f"{ax}_micrometer_original")
@@ -243,7 +269,7 @@ class TiledImage(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfac
                     min(t, tr)
                     for t, tr in zip(translation, self.translation, strict=True)
                 ]
-        self.regions.append(tile_region)
+        self.regions.append(tile_slice)
 
     def shape(self) -> tuple[int, ...]:
         """Get the shape of the TiledImage by computing the union of all regions."""

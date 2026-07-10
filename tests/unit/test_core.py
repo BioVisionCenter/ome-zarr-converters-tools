@@ -4,8 +4,10 @@ from typing import Any
 
 import numpy as np
 import pytest
+from pydantic import ValidationError
 
 from ome_zarr_converters_tools.core._dummy_tiles import (
+    DummyLoader,
     StartPosition,
     TileShape,
     build_dummy_tile,
@@ -132,6 +134,65 @@ class TestTile:
         x_slice = roi.get("x")
         assert x_slice is not None
         assert x_slice.start is not None
+
+
+class TestTileChannelValidation:
+    """`start_c` indexes into `acquisition_details.channels` (enforced at build)."""
+
+    def _acq(self, n_channels: int | None) -> AcquisitionDetails:
+        channels = None
+        if n_channels is not None:
+            channels = [ChannelInfo(channel_label=f"CH{i}") for i in range(n_channels)]
+        return AcquisitionDetails(channels=channels)
+
+    def _tile(self, start_c: int, acq: AcquisitionDetails) -> Tile:
+        return build_dummy_tile(
+            fov_name="FOV_0",
+            start=StartPosition(c=start_c),
+            shape=TileShape(x=16, y=16),
+            collection=SingleImage(image_path="img"),
+            acquisition_details=acq,
+        )
+
+    def test_start_c_beyond_channels_raises_at_build(self) -> None:
+        with pytest.raises(ValidationError, match="references channel index 3"):
+            self._tile(start_c=3, acq=self._acq(2))
+
+    def test_negative_start_c_raises(self) -> None:
+        with pytest.raises(ValidationError, match="must be >= 0"):
+            self._tile(start_c=-1, acq=self._acq(2))
+
+    def test_channels_none_skips_validation(self) -> None:
+        tile = self._tile(start_c=3, acq=self._acq(None))
+        assert tile.start_c == 3
+
+    def test_padded_channels_recovery(self) -> None:
+        # Recovery path: one ChannelInfo per instrument slot, unused slots padded.
+        tile = self._tile(start_c=3, acq=self._acq(4))
+        assert tile.start_c == 3
+
+    def test_tiled_image_channel_coverage_validated_on_load(self) -> None:
+        # TiledImage is rebuilt from JSON at the fractal init/compute boundary;
+        # the mirror validator must reject inconsistent payloads there too.
+        acq = self._acq(2)
+        coll = SingleImage(image_path="img")
+        tiles = [
+            build_dummy_tile(
+                fov_name="FOV_0",
+                start=StartPosition(c=c),
+                shape=TileShape(x=16, y=16),
+                collection=coll,
+                acquisition_details=acq,
+            )
+            for c in range(2)
+        ]
+        img = tiled_image_from_tiles(tiles=tiles, converter_options=ConverterOptions())[
+            0
+        ]
+        payload = img.model_dump(mode="json")
+        payload["channels"] = payload["channels"][:1]
+        with pytest.raises(ValidationError, match="references channel range"):
+            TiledImage[SingleImage, DummyLoader].model_validate(payload)
 
 
 class TestTileSlice:

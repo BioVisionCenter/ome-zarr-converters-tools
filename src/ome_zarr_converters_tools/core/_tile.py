@@ -3,7 +3,7 @@
 from typing import Any, Generic, TypeAlias
 
 from ngio.common._roi import Roi, RoiSlice, pixel_to_world, world_to_pixel
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from ome_zarr_converters_tools.models._acquisition import (
     SPACE_TYPE,
@@ -48,7 +48,9 @@ class Tile(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfaceType]
         start_x: Starting position in the X dimension.
         start_y: Starting position in the Y dimension.
         start_z: Starting position in the Z dimension.
-        start_c: Starting position in the C (channel) dimension.
+        start_c: Starting position in the C (channel) dimension. Channel indices
+            index into `acquisition_details.channels` when channel metadata is
+            provided, so `start_c + length_c` must not exceed its length.
         start_t: Starting position in the T (time) dimension.
         length_x: Length of the tile in the X dimension.
         length_y: Length of the tile in the Y dimension.
@@ -93,6 +95,26 @@ class Tile(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfaceType]
 
     # Pydantic configuration
     model_config = ConfigDict(extra="forbid")
+
+    @model_validator(mode="after")
+    def _validate_channel_range(self) -> "Tile":
+        """Enforce that channel indices resolve into `acquisition_details.channels`."""
+        if self.start_c < 0:
+            raise ValueError(
+                f"Tile '{self.fov_name}' has start_c={self.start_c}; "
+                "channel indices must be >= 0."
+            )
+        channels = self.acquisition_details.channels
+        if channels is not None and self.start_c + self.length_c > len(channels):
+            max_index = self.start_c + self.length_c - 1
+            raise ValueError(
+                f"Tile '{self.fov_name}' references channel index {max_index} but "
+                f"acquisition_details.channels has {len(channels)} entries. Provide "
+                "one ChannelInfo per channel index (padding unused instrument slots "
+                'with e.g. ChannelInfo(channel_label="unused_1")), or set '
+                "channels=None to use auto-generated channel names."
+            )
+        return self
 
     def to_roi(self) -> Roi:
         """Convert the Tile to a Roi."""

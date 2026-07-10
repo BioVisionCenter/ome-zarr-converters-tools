@@ -58,12 +58,12 @@ def _region_to_pixel_coordinates(
     regions: list[TileSlice],
     pixel_size: PixelSize,
 ) -> list[TileSlice]:
-    """Convert TileRegion ROIs to rounded (integer) pixel coordinates.
+    """Convert TileSlice ROIs to rounded (integer) pixel coordinates.
 
-    This function modifies the TileRegions in place.
+    This function modifies the TileSlices in place.
 
     Args:
-        regions: List of TileRegion models to convert.
+        regions: List of TileSlice models to convert.
         pixel_size: PixelSize model to use for conversion.
     """
     for region in regions:
@@ -73,10 +73,14 @@ def _region_to_pixel_coordinates(
             start = ax_slice.start
             length = ax_slice.length
             assert start is not None and length is not None
+            # Round the interval endpoints, not start and length independently:
+            # round(start) + round(length) can differ from round(start + length)
+            # by one pixel, creating gaps/overlaps at tile boundaries.
+            rounded_start = round(start)
             rounded_slice = RoiSlice(
                 axis_name=ax_slice.axis_name,
-                start=round(start),
-                length=round(length),
+                start=rounded_start,
+                length=round(start + length) - rounded_start,
             )
             rounded_slices.append(rounded_slice)
         region.roi = roi.model_copy(update={"slices": rounded_slices})
@@ -162,10 +166,6 @@ def write_tiled_image_as_zarr(
     else:  # extend
         mode = "a"
     zarr_format = 2 if converter_options.omezarr_options.ngff_version == "0.4" else 3
-    tiled_image.regions = _region_to_pixel_coordinates(
-        tiled_image.regions,
-        tiled_image.pixel_size,
-    )
     # Whether a store already exists must be checked before `zarr.open_group`,
     # since mode "w" would truncate it and mode "a" would create it.
     store_pre_exists = filesystem_for_url(zarr_url).exists(zarr_url)
@@ -177,6 +177,10 @@ def write_tiled_image_as_zarr(
         # silently overwritten with a fresh, empty container.
         return open_ome_zarr_container(base_group, cache=True)
 
+    tiled_image.regions = _region_to_pixel_coordinates(
+        tiled_image.regions,
+        tiled_image.pixel_size,
+    )
     channels_meta = build_channels_meta(tiled_image)
     ome_zarr = create_empty_ome_zarr(
         store=base_group,
@@ -207,7 +211,7 @@ def write_tiled_image_as_zarr(
     fov_tiles = tiled_image.group_by_fov()
     if len(fov_tiles) > 1:
         rois = []
-        for fov_tile in tiled_image.group_by_fov():
+        for fov_tile in fov_tiles:
             roi_union = fov_tile.roi().to_world(pixel_size=tiled_image.pixel_size)
             rois.append(roi_union)
 
