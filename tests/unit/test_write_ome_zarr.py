@@ -15,7 +15,6 @@ from ome_zarr_converters_tools.core._tile_to_tiled_images import tiled_image_fro
 from ome_zarr_converters_tools.models import (
     AcquisitionDetails,
     ChannelInfo,
-    ConverterOptions,
     FixedSizeChunking,
     FovBasedChunking,
     OmeZarrOptions,
@@ -31,12 +30,12 @@ from ome_zarr_converters_tools.pipelines._write_ome_zarr import (
 
 def _make_tiled_image_with_channels(
     channels: list[ChannelInfo] | None = None,
-    pixelsize: float = 1.0,
+    xy_pixel_size: float = 1.0,
 ) -> TiledImage:
     """Build a simple TiledImage for testing."""
     acq = AcquisitionDetails(
         channels=channels,
-        pixelsize=pixelsize,
+        xy_pixel_size=xy_pixel_size,
         z_spacing=1.0,
         t_spacing=1.0,
     )
@@ -50,7 +49,7 @@ def _make_tiled_image_with_channels(
             acquisition_details=acq,
         ),
     ]
-    images = tiled_image_from_tiles(tiles=tiles, converter_options=ConverterOptions())
+    images = tiled_image_from_tiles(tiles=tiles, split_per_fov=False)
     return images[0]
 
 
@@ -95,7 +94,7 @@ class TestComputeChunkSize:
     def test_with_time_axis(self) -> None:
         acq = AcquisitionDetails(
             channels=[ChannelInfo(channel_label="DAPI")],
-            pixelsize=1.0,
+            xy_pixel_size=1.0,
             z_spacing=1.0,
             t_spacing=1.0,
             axes=["t", "c", "z", "y", "x"],
@@ -110,9 +109,7 @@ class TestComputeChunkSize:
                 acquisition_details=acq,
             ),
         ]
-        images = tiled_image_from_tiles(
-            tiles=tiles, converter_options=ConverterOptions()
-        )
+        images = tiled_image_from_tiles(tiles=tiles, split_per_fov=False)
         options = OmeZarrOptions(chunks=FovBasedChunking(t_chunk=3))
         chunks = _compute_chunk_size(images[0], options)
         t_idx = images[0].axes.index("t")

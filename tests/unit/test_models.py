@@ -1,6 +1,7 @@
 """Unit tests for pydantic models."""
 
 import pytest
+from pydantic import ValidationError
 
 from ome_zarr_converters_tools import AcquisitionDetails, ChannelInfo
 from ome_zarr_converters_tools.models import (
@@ -14,6 +15,11 @@ from ome_zarr_converters_tools.models._collection import validate_zarr_name
 from ome_zarr_converters_tools.models._converter_options import (
     AutoTiling,
     FovBasedChunking,
+    InplaceTiling,
+    MosaicGrouping,
+    NamedLevels,
+    NumberOfLevels,
+    PerFovGrouping,
     WriterMode,
 )
 
@@ -26,7 +32,7 @@ class TestAcquisitionDetails:
     ) -> None:
         """Test basic acquisition details creation."""
         assert sample_acquisition_details is not None
-        assert sample_acquisition_details.pixelsize == 0.65
+        assert sample_acquisition_details.xy_pixel_size == 0.65
         assert sample_acquisition_details.channels == [
             ChannelInfo(channel_label="Channel 1"),
             ChannelInfo(channel_label="Channel 2"),
@@ -37,14 +43,14 @@ class TestAcquisitionDetails:
         with pytest.raises(ValueError):
             AcquisitionDetails(
                 channels=[ChannelInfo(channel_label="DAPI")],
-                pixelsize=-1.0,
+                xy_pixel_size=-1.0,
                 z_spacing=1.0,
                 t_spacing=1.0,
             )
         with pytest.raises(ValueError):
             AcquisitionDetails(
                 channels=[ChannelInfo(channel_label="DAPI")],
-                pixelsize=1.0,
+                xy_pixel_size=1.0,
                 z_spacing=0.0,
                 t_spacing=1.0,
             )
@@ -52,7 +58,7 @@ class TestAcquisitionDetails:
         with pytest.raises(ValueError):
             AcquisitionDetails(
                 channels=[ChannelInfo(channel_label="DAPI")],
-                pixelsize=1.0,
+                xy_pixel_size=1.0,
                 z_spacing=1.0,
                 t_spacing=1.0,
                 unknown_field="value",  # type: ignore
@@ -63,7 +69,7 @@ class TestAcquisitionDetails:
         # Valid order: subset of t, c, z, y, x in canonical order
         acq = AcquisitionDetails(
             channels=[ChannelInfo(channel_label="DAPI")],
-            pixelsize=1.0,
+            xy_pixel_size=1.0,
             z_spacing=1.0,
             t_spacing=1.0,
             axes=["c", "z", "y", "x"],
@@ -74,7 +80,7 @@ class TestAcquisitionDetails:
         with pytest.raises(ValueError, match="canonical order"):
             AcquisitionDetails(
                 channels=[ChannelInfo(channel_label="DAPI")],
-                pixelsize=1.0,
+                xy_pixel_size=1.0,
                 z_spacing=1.0,
                 t_spacing=1.0,
                 axes=["x", "y"],
@@ -84,7 +90,7 @@ class TestAcquisitionDetails:
         with pytest.raises(ValueError, match="canonical order"):
             AcquisitionDetails(
                 channels=[ChannelInfo(channel_label="DAPI")],
-                pixelsize=1.0,
+                xy_pixel_size=1.0,
                 z_spacing=1.0,
                 t_spacing=1.0,
                 axes=["y", "y", "x"],
@@ -94,7 +100,7 @@ class TestAcquisitionDetails:
         with pytest.raises(ValueError):
             AcquisitionDetails(
                 channels=[ChannelInfo(channel_label="DAPI")],
-                pixelsize=1.0,
+                xy_pixel_size=1.0,
                 z_spacing=1.0,
                 t_spacing=1.0,
                 axes=["x"],
@@ -213,16 +219,71 @@ class TestConverterOptions:
     def test_converter_options_defaults(self) -> None:
         """Test default values."""
         opts = ConverterOptions()
-        assert isinstance(opts.tiling_strategy, AutoTiling)
+        assert isinstance(opts.grouping, MosaicGrouping)
+        assert isinstance(opts.grouping.tiling_strategy, AutoTiling)
         assert opts.writer_mode == WriterMode.BY_FOV
-        assert opts.stage_position_corrections.align_xy is False
-        assert opts.stage_position_corrections.align_z is False
-        assert opts.stage_position_corrections.align_t is False
-        assert opts.omezarr_options.num_levels == 5
+        assert opts.stage_position_corrections.remove_xy_offset == "Global"
+        assert opts.stage_position_corrections.remove_z_offset == "Global"
+        assert opts.stage_position_corrections.remove_t_offset == "Global"
+        assert opts.stage_position_corrections.remove_xy_jitter is True
+        assert opts.stage_position_corrections.reindex_channels is True
+        assert isinstance(opts.omezarr_options.levels, NumberOfLevels)
+        assert opts.omezarr_options.levels.num_levels == 5
         assert isinstance(opts.omezarr_options.chunks, FovBasedChunking)
         assert (
             opts.runtime_settings.temp_json_options.temp_url == "{zarr_dir}/_tmp_json"
         )
+
+
+class TestPyramidLevels:
+    """Tests for the PyramidLevels discriminated union."""
+
+    def test_number_of_levels_to_ngio(self) -> None:
+        assert NumberOfLevels(num_levels=3).to_ngio_levels() == 3
+
+    def test_named_levels_to_ngio(self) -> None:
+        levels = NamedLevels(level_names=["s0", "s1", "s2"])
+        assert levels.to_ngio_levels() == ["s0", "s1", "s2"]
+
+    def test_named_levels_rejects_empty_list(self) -> None:
+        with pytest.raises(ValidationError):
+            NamedLevels(level_names=[])
+
+    @pytest.mark.parametrize("bad_name", ["", "a/b", " s0", "s0 "])
+    def test_named_levels_rejects_invalid_segment(self, bad_name: str) -> None:
+        with pytest.raises(ValidationError, match="non-empty path segment"):
+            NamedLevels(level_names=["s0", bad_name])
+
+    def test_named_levels_rejects_duplicates(self) -> None:
+        with pytest.raises(ValidationError, match="unique name"):
+            NamedLevels(level_names=["s0", "s1", "s0"])
+
+
+class TestGrouping:
+    """Tests for the Grouping discriminated union."""
+
+    def test_mosaic_holds_tiling_strategy(self) -> None:
+        grouping = MosaicGrouping(tiling_strategy=InplaceTiling())
+        assert grouping.split_per_fov is False
+        assert isinstance(grouping.tiling_for_registration(), InplaceTiling)
+
+    def test_mosaic_defaults_to_auto(self) -> None:
+        assert isinstance(MosaicGrouping().tiling_strategy, AutoTiling)
+
+    def test_per_fov_has_no_tiling_field(self) -> None:
+        with pytest.raises(ValidationError):
+            PerFovGrouping(tiling_strategy=AutoTiling())
+
+    def test_per_fov_resolves_to_inplace(self) -> None:
+        grouping = PerFovGrouping()
+        assert grouping.split_per_fov is True
+        assert isinstance(grouping.tiling_for_registration(), InplaceTiling)
+
+    def test_grouping_discriminator_round_trips(self) -> None:
+        for grouping in (MosaicGrouping(), PerFovGrouping()):
+            opts = ConverterOptions(grouping=grouping)
+            restored = ConverterOptions.model_validate(opts.model_dump())
+            assert type(restored.grouping) is type(grouping)
 
 
 class TestStageOrientation:
@@ -276,6 +337,17 @@ class TestCollectionModels:
         assert plate.well_path() == "B/03"
         assert plate.path_in_well() == "0"
         assert plate.path() == "MyPlate.zarr/B/03/0"
+
+    def test_row_integer_index_converts_to_letter(self) -> None:
+        """Integer rows map 1->A ... 26->Z; 26 (Z) must not be rejected."""
+        assert ImageInPlate(plate_name="P", row=1, column=1, acquisition=0).row == "A"
+        assert ImageInPlate(plate_name="P", row=26, column=1, acquisition=0).row == "Z"
+
+    def test_row_integer_index_out_of_range_raises(self) -> None:
+        """Integer rows outside 1..26 are rejected."""
+        for bad_row in (0, 27):
+            with pytest.raises(ValidationError, match="out of range"):
+                ImageInPlate(plate_name="P", row=bad_row, column=1, acquisition=0)
 
     def test_validate_zarr_name_valid(self) -> None:
         """Test valid Zarr names are accepted."""

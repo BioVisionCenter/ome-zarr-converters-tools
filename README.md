@@ -27,6 +27,61 @@ Install via pip:
 pip install ome-zarr-converters-tools
 ```
 
+For converting data stored on S3 (`s3://` URLs), install the `s3` extra:
+
+```bash
+pip install "ome-zarr-converters-tools[s3]"
+```
+
+### Quickstart
+
+Convert a tiles table (one row per tile: stage position, size, and image file)
+into a single OME-Zarr image:
+
+```python
+import pandas as pd
+
+from ome_zarr_converters_tools import (
+    AcquisitionDetails,
+    AutoTiling,
+    ChannelInfo,
+    ConverterOptions,
+    OverwriteMode,
+    StagePositionCorrections,
+    WriterMode,
+    build_default_registration_pipeline,
+    single_images_from_dataframe,
+    tiled_image_creation_pipeline,
+    tiles_aggregation_pipeline,
+)
+
+acq = AcquisitionDetails(
+    channels=[ChannelInfo(channel_label="DAPI")],
+    xy_pixel_size=0.65,  # micrometers
+    z_spacing=1.0,
+)
+tiles = single_images_from_dataframe(
+    tiles_table=pd.read_csv("tiles.csv"), acquisition_details=acq
+)
+options = ConverterOptions()
+tiled_image = tiles_aggregation_pipeline(
+    tiles=tiles, converter_options=options, resource="/path/to/image/files"
+)[0]
+tiled_image_creation_pipeline(
+    zarr_url="/path/to/output.zarr",
+    tiled_image=tiled_image,
+    registration_pipeline=build_default_registration_pipeline(
+        StagePositionCorrections(), AutoTiling()
+    ),
+    converter_options=options,
+    writer_mode=WriterMode.BY_FOV,
+    overwrite_mode=OverwriteMode.NO_OVERWRITE,
+    resource="/path/to/image/files",
+)
+```
+
+See the [tutorials](https://BioVisionCenter.github.io/ome-zarr-converters-tools/) for HCS plates, custom image loaders, and Fractal tasks.
+
 ## Documentation
 
 For detailed documentation, tutorials, and API reference, visit the [official documentation](https://BioVisionCenter.github.io/ome-zarr-converters-tools/).

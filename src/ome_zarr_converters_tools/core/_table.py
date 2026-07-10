@@ -85,13 +85,16 @@ def hcs_images_from_dataframe(
     plate_name: str | None = None,
     acquisition_id: int = 0,
 ) -> list[Tile]:
-    """Build a list of TiledImages belonging to an HCS acquisition.
+    """Build a list of Tiles belonging to an HCS plate acquisition.
 
     Args:
         tiles_table: DataFrame containing the tiles table.
         acquisition_details: AcquisitionDetails model for the acquisition.
         plate_name: Optional name of the plate.
         acquisition_id: Acquisition index.
+
+    Returns:
+        One Tile per row of the tiles table, with `ImageInPlate` collections.
     """
     plate_name = plate_name or "Plate"
     tiles = []
@@ -122,11 +125,14 @@ def single_images_from_dataframe(
     tiles_table: pd.DataFrame,
     acquisition_details: AcquisitionDetails,
 ) -> list[Tile]:
-    """Build a list of TiledImages belonging to an HCS acquisition.
+    """Build a list of Tiles belonging to stand-alone (non-plate) images.
 
     Args:
         tiles_table: DataFrame containing the tiles table.
         acquisition_details: AcquisitionDetails model for the acquisition.
+
+    Returns:
+        One Tile per row of the tiles table, with `SingleImage` collections.
     """
     tiles = []
     for _, row in tiles_table.iterrows():

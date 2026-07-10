@@ -1,6 +1,6 @@
 """Build a dummy tile for testing purposes."""
 
-from typing import NamedTuple
+from typing import Any, NamedTuple
 
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
@@ -10,7 +10,9 @@ from ome_zarr_converters_tools.models import AcquisitionDetails, CollectionInter
 from ome_zarr_converters_tools.models._loader import ImageLoaderInterface
 
 
-def rasterize_text_with_boundary(shape_x, shape_y, text, font_scale=0.34):
+def rasterize_text_with_boundary(
+    shape_x: int, shape_y: int, text: str, font_scale: float = 0.34
+) -> np.ndarray:
     """Create a uint8 array with text rasterized and boundaries set to 255.
 
     Args:
@@ -57,10 +59,8 @@ class DummyLoader(ImageLoaderInterface):
     text: str
     font_scale: float = 0.22
 
-    def load_data(self, resource: None = None) -> np.ndarray:
+    def load_data(self, resource: Any | None = None) -> np.ndarray:
         """Load dummy image data as a NumPy array."""
-        # import time
-        # time.sleep(0.1)  # Simulate some loading time
         arr = rasterize_text_with_boundary(
             shape_x=self.shape.x,
             shape_y=self.shape.y,
@@ -71,18 +71,19 @@ class DummyLoader(ImageLoaderInterface):
         shape = tuple(int(s) for s in shape if s is not None)
         return np.broadcast_to(arr, shape)
 
-    def find_data_type(self, resource: None = None) -> str:
+    def find_data_type(self, resource: Any | None = None) -> str:
         """Find the data type of the image data."""
         return "uint8"
 
 
 def build_dummy_tile(
+    *,
     fov_name: str,
     start: StartPosition,
     shape: TileShape,
     collection: CollectionInterface,
     acquisition_details: AcquisitionDetails,
-    font_scale=0.22,
+    font_scale: float = 0.22,
 ) -> Tile:
     """Build a dummy tile with default parameters, allowing overrides."""
     return Tile(

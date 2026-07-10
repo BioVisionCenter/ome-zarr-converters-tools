@@ -12,7 +12,7 @@ from ome_zarr_converters_tools.pipelines._filters import (
     apply_filter_pipeline,
 )
 from ome_zarr_converters_tools.pipelines._validators import (
-    ValidatorStep,
+    ValidatorModel,
     apply_validator_pipeline,
 )
 
@@ -22,7 +22,7 @@ def tiles_aggregation_pipeline(
     *,
     converter_options: ConverterOptions,
     filters: Sequence[FilterModel] | None = None,
-    validators: Sequence[ValidatorStep] | None = None,
+    validators: Sequence[ValidatorModel] | None = None,
     resource: Any | None = None,
 ) -> list[TiledImage]:
     """Process tiles and aggregates them into TiledImages.
@@ -44,11 +44,11 @@ def tiles_aggregation_pipeline(
         tiles = apply_filter_pipeline(tiles, filters_config=filters)
     tiled_images = tiled_image_from_tiles(
         tiles=tiles,
-        converter_options=converter_options,
+        split_per_fov=converter_options.grouping.split_per_fov,
         resource=resource,
     )
     if validators is not None:
         tiled_images = apply_validator_pipeline(
-            tiled_images, validators_config=validators
+            tiled_images, validators_config=validators, resource=resource
         )
     return tiled_images

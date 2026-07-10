@@ -10,7 +10,7 @@ The table should contain the following columns:
 - `fov_name`: (Optional) Name of the field of view.
 - `start_x`, `start_y`, `start_z`, `start_c`, `start_t`: Starting positions for each dimension. Only `start_x` and `start_y` are required; others default to 0 if not provided.
 - `length_x`, `length_y`, `length_z`, `length_c`, `length_t`: Size of each dimension. Only `length_x` and `length_y` are required; others default to 1 if not provided.
-- `pixelsize`: (Optional) Pixel size in micrometers. This can be alternatively specified in the companion `acquisition_details.toml` file.
+- `xy_pixel_size`: (Optional) Pixel size in micrometers. This can be alternatively specified in the companion `acquisition_details.toml` file.
 - `z_spacing`: (Optional) Spacing between Z slices in micrometers. This can be alternatively specified in the companion `acquisition_details.toml` file.
 - `t_spacing`: (Optional) Spacing between time points in seconds. This can be alternatively specified in the companion `acquisition_details.toml` file.
 - `channel_names`: (Optional) Slash-separated names of the channels. These can be alternatively specified in the companion `acquisition_details.toml` file.
@@ -24,15 +24,15 @@ For example, see the [`tiles.csv`](./tiles.csv) file.
 
 ## Companion `acquisition_details.toml` File
 In addition to the CSV table, you can provide a `acquisition_details.toml` file to specify default acquisition parameters that apply to all images. This file can include:
-- `pixelsize`: (Optional) Default pixel size in micrometers. If specified in both places, the table value takes precedence. If neither is specified, a default of 1.0 micrometers is used.
+- `xy_pixel_size`: (Optional) Default pixel size in micrometers. If specified in both places, the table value takes precedence. If neither is specified, a default of 1.0 micrometers is used.
 - `z_spacing`: (Optional) Default spacing between Z slices in micrometers. If specified in both places, the table value takes precedence. If neither is specified, a default of 1.0 micrometers is used.
 - `t_spacing`: (Optional) Default spacing between time points in seconds. If specified in both places, the table value takes precedence. If neither is specified, a default of 1.0 seconds is used.
 - `channel_names`: (Optional) Default list of the channels. If specified in both places, the table value takes precedence. If neither is specified, default names like "channel_0", "channel_1", etc. are used.
 - `wavelengths`: (Optional) Default list of wavelengths for each channel in nanometers. If specified in both places, the table value takes precedence. If neither is specified, the channel names are used as default.
-- Coordinate space options (`start_x_coo`, `start_y_coo`, etc.): Sometimes it might be useful to define the coordinate space of the acquisition differently for the start positions and the lengths. For example, the start positions might be given in world coordinates (micrometers), while the lengths are given in pixel coordinates.
+- Coordinate space options (`start_x_space`, `start_y_space`, etc.): Sometimes it might be useful to define the coordinate space of the acquisition differently for the start positions and the lengths. For example, the start positions might be given in world coordinates (micrometers), while the lengths are given in pixel coordinates.
   Implicit casting rules:
-  - all `start_*_coo` fields default to `"world"` if not specified
-  - all `length_*_coo` fields default to `"pixel"` if not specified
+  - all `start_*_space` fields default to `"world"` if not specified
+  - all `length_*_space` fields default to `"pixel"` if not specified
   - `start_c` and `length_c` are always in pixel coordinates and do not need to be specified here.
 - `axes`: (Optional) List of strings defining the order of axes in the images. The elements should be an ordered subset of ["t", "c", "z", "y", "x"]. If not specified, the default order is assumed to be ["c", "z", "y", "x"] or if length_t > 1 then ["t", "c", "z", "y", "x"].
 
@@ -47,17 +47,17 @@ See the [`acquisition_details.toml`](./acquisition_details.toml) file, or the ex
 # - all length_* fields default to "pixel" if not specified
 # start_c and length_c are always in pixel coordinates
 # and do not need to be specified here.
-start_x_coo = "world"  # can either be "world" or "pixel"
-start_y_coo = "world"  # can either be "world" or "pixel"
-start_z_coo = "pixel"  # can either be "world" or "pixel"
-start_t_coo = "pixel"  # can either be "world" or "pixel"
-length_x_coo = "pixel" # can either be "world" or "pixel"
-length_y_coo = "pixel" # can either be "world" or "pixel"
-length_z_coo = "pixel" # can either be "world" or "pixel"
-length_t_coo = "pixel" # can either be "world" or "pixel"
+start_x_space = "world"  # can either be "world" or "pixel"
+start_y_space = "world"  # can either be "world" or "pixel"
+start_z_space = "pixel"  # can either be "world" or "pixel"
+start_t_space = "pixel"  # can either be "world" or "pixel"
+length_x_space = "pixel" # can either be "world" or "pixel"
+length_y_space = "pixel" # can either be "world" or "pixel"
+length_z_space = "pixel" # can either be "world" or "pixel"
+length_t_space = "pixel" # can either be "world" or "pixel"
 
 # Pixel size in micrometers
-pixelsize = 0.65
+xy_pixel_size = 0.65
 # Z spacing in micrometers
 z_spacing = 5.0
 # T spacing in seconds

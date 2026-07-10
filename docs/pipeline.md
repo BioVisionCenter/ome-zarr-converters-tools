@@ -7,17 +7,17 @@ The conversion pipeline processes tiles through several stages before writing th
 `ConverterOptions` is the central configuration object that bundles the most common settings:
 
 ```python
-from ome_zarr_converters_tools import ConverterOptions
+from ome_zarr_converters_tools import ConverterOptions, MosaicGrouping
 
 opts = ConverterOptions(
-    tiling_strategy=AutoTiling(),         # How overlapping FOVs are arranged
-    writer_mode=WriterMode.BY_FOV,        # How data is loaded and written
+    grouping=MosaicGrouping(),             # How FOVs are grouped into images
+    writer_mode=WriterMode.BY_FOV,         # How data is loaded and written
     stage_position_corrections=StagePositionCorrections(),  # Stage position corrections
-    omezarr_options=OmeZarrOptions(),     # OME-Zarr writing options (levels, chunks, etc.)
+    omezarr_options=OmeZarrOptions(),      # OME-Zarr writing options (levels, chunks, etc.)
 )
 ```
 
-When passed to `tiles_aggregation_pipeline()` and `tiled_image_creation_pipeline()`, its fields are used as defaults. You can also override specific settings (like `writer_mode` or `tiling_strategy`) by passing them directly to the pipeline functions.
+When passed to `tiles_aggregation_pipeline()` and `tiled_image_creation_pipeline()`, its fields are used as defaults. You can also override specific settings (like `writer_mode` or `grouping`) by passing them directly to the pipeline functions.
 
 ## AcquisitionDetails
 
@@ -27,7 +27,7 @@ When passed to `tiles_aggregation_pipeline()` and `tiled_image_creation_pipeline
 from ome_zarr_converters_tools import AcquisitionDetails, ChannelInfo
 
 acq = AcquisitionDetails(
-    pixelsize=0.65,          # XY pixel size in micrometers
+    xy_pixel_size=0.65,          # XY pixel size in micrometers
     z_spacing=5.0,           # Z-step size in micrometers
     t_spacing=1.0,           # Time interval in seconds
     channels=[
@@ -35,10 +35,10 @@ acq = AcquisitionDetails(
         ChannelInfo(channel_label="GFP", wavelength_id="488"),
     ],
     axes=["c", "z", "y", "x"],  # Subset of t, c, z, y, x in canonical order
-    start_x_coo="world",    # How to interpret start_x values
-    start_y_coo="world",
-    start_z_coo="pixel",
-    start_t_coo="pixel",
+    start_x_space="world",    # How to interpret start_x values
+    start_y_space="world",
+    start_z_space="pixel",
+    start_t_space="pixel",
 )
 ```
 
@@ -48,15 +48,15 @@ Each `start_*` and `length_*` dimension has a coordinate system setting (`"world
 
 | Parameter | Default | Meaning |
 |-----------|---------|---------|
-| `start_x_coo`, `start_y_coo` | `"world"` | Interpret start positions as physical units (micrometers). The library divides by `pixelsize` to convert to pixels. |
-| `start_z_coo` | `"world"` | Interpret Z start as physical units. Divided by `z_spacing` to convert to pixels. |
-| `start_t_coo` | `"world"` | Interpret T start as physical units (seconds). Divided by `t_spacing`. |
-| `length_x_coo`, `length_y_coo` | `"pixel"` | Interpret lengths as pixel counts (no conversion). |
-| `length_z_coo` | `"pixel"` | Interpret Z length as number of slices. |
-| `length_t_coo` | `"pixel"` | Interpret T length as number of time points. |
+| `start_x_space`, `start_y_space` | `"world"` | Interpret start positions as physical units (micrometers). The library divides by `xy_pixel_size` to convert to pixels. |
+| `start_z_space` | `"world"` | Interpret Z start as physical units. Divided by `z_spacing` to convert to pixels. |
+| `start_t_space` | `"world"` | Interpret T start as physical units (seconds). Divided by `t_spacing`. |
+| `length_x_space`, `length_y_space` | `"pixel"` | Interpret lengths as pixel counts (no conversion). |
+| `length_z_space` | `"pixel"` | Interpret Z length as number of slices. |
+| `length_t_space` | `"pixel"` | Interpret T length as number of time points. |
 
 !!! tip
-    Most microscopes report stage positions in physical units (micrometers) and image dimensions in pixels. The defaults (`start_*_coo="world"`, `length_*_coo="pixel"`) match this convention. If your metadata already provides pixel coordinates for positions, set `start_x_coo="pixel"` etc.
+    Most microscopes report stage positions in physical units (micrometers) and image dimensions in pixels. The defaults (`start_*_space="world"`, `length_*_space="pixel"`) match this convention. If your metadata already provides pixel coordinates for positions, set `start_x_space="pixel"` etc.
 
 ### Channels
 
@@ -96,7 +96,7 @@ Some microscopes have inverted or swapped stage axes. Use `StageOrientation` to 
 from ome_zarr_converters_tools import AcquisitionDetails, StageOrientation
 
 acq = AcquisitionDetails(
-    pixelsize=0.65,
+    xy_pixel_size=0.65,
     stage_orientation=StageOrientation(
         flip_x=True,    # Invert X positions
         flip_y=False,   # Keep Y as-is
@@ -122,55 +122,45 @@ Filters match against the tile's **collection path** -- the output path derived 
 
 ### Built-in Filters
 
-#### RegexIncludeFilter
+Every matching filter carries a `mode` field (`"Include"` or `"Exclude"`, default `"Include"`): in `Include` mode, matching tiles are kept and all others discarded; in `Exclude` mode, matching tiles are discarded and all others kept.
 
-Keeps only tiles whose collection path matches a regex pattern. All non-matching tiles are discarded.
+#### RegexFilter
+
+Matches tiles whose collection path matches a regex pattern.
 
 ```python
 from ome_zarr_converters_tools.pipelines import apply_filter_pipeline, FilterModel
 
 # Import the specific filter from the internal module
-from ome_zarr_converters_tools.pipelines._filters import RegexIncludeFilter
+from ome_zarr_converters_tools.pipelines._filters import RegexFilter
 
-f = RegexIncludeFilter(regex=".*PlateA.*")
+# Keep only tiles from PlateA
+f = RegexFilter(regex=".*PlateA.*")
+filtered_tiles = apply_filter_pipeline(tiles, filters_config=[f])
+
+# Remove control tiles
+f = RegexFilter(regex=".*control.*", mode="Exclude")
 filtered_tiles = apply_filter_pipeline(tiles, filters_config=[f])
 ```
 
-#### RegexExcludeFilter
+#### WellFilter
 
-Removes tiles whose collection path matches a regex pattern. All non-matching tiles are kept.
+Matches tiles belonging to specific wells. Only works with `ImageInPlate` collections.
 
 ```python
-from ome_zarr_converters_tools.pipelines._filters import RegexExcludeFilter
+from ome_zarr_converters_tools.pipelines._filters import WellFilter
 
-f = RegexExcludeFilter(regex=".*control.*")
+# Keep only wells A1 and B2
+f = WellFilter(wells=["A1", "B2"])
 filtered_tiles = apply_filter_pipeline(tiles, filters_config=[f])
-```
 
-#### WellExcludeFilter
-
-Removes tiles belonging to specific wells. Only works with `ImageInPlate` collections.
-
-```python
-from ome_zarr_converters_tools.pipelines._filters import WellExcludeFilter
-
-f = WellExcludeFilter(wells_to_remove=["A1", "B2"])
-filtered_tiles = apply_filter_pipeline(tiles, filters_config=[f])
-```
-
-#### WellIncludeFilter
-
-Keeps only tiles belonging to specific wells, removing all others. Only works with `ImageInPlate` collections.
-
-```python
-from ome_zarr_converters_tools.pipelines._filters import WellIncludeFilter
-
-f = WellIncludeFilter(wells_to_include=["A1", "B2"])
+# Remove wells A1 and B2
+f = WellFilter(wells=["A1", "B2"], mode="Exclude")
 filtered_tiles = apply_filter_pipeline(tiles, filters_config=[f])
 ```
 
 !!! note
-    The individual filter classes (`RegexIncludeFilter`, `RegexExcludeFilter`, `WellExcludeFilter`, `WellIncludeFilter`) are imported from `ome_zarr_converters_tools.pipelines._filters`. The public API exports `FilterModel` (the base class), `ImplementedFilters` (the union type), `apply_filter_pipeline`, and `add_filter`.
+    The individual filter classes (`RegexFilter`, `WellFilter`, ...) are imported from `ome_zarr_converters_tools.pipelines._filters`. The public API exports `FilterModel` (the base class), `ImplementedFilters` (the union type), `apply_filter_pipeline`, and `add_filter`.
 
 ### Using Filters in the Pipeline
 
@@ -178,12 +168,12 @@ Filters can be passed directly to `tiles_aggregation_pipeline()`:
 
 ```python
 from ome_zarr_converters_tools import tiles_aggregation_pipeline, ConverterOptions
-from ome_zarr_converters_tools.pipelines._filters import RegexIncludeFilter
+from ome_zarr_converters_tools.pipelines._filters import RegexFilter
 
 images = tiles_aggregation_pipeline(
     tiles=tiles,
     converter_options=ConverterOptions(),
-    filters=[RegexIncludeFilter(regex=".*keep.*")],
+    filters=[RegexFilter(regex=".*keep.*")],
 )
 ```
 
@@ -239,29 +229,33 @@ pipeline = build_default_registration_pipeline(
 
 This creates:
 
-1. **`remove_offsets`** -- Shifts all tile positions so the minimum position in each dimension is zero. This normalizes positions relative to the origin, e.g., if the leftmost tile starts at x=1000, all X positions are shifted by -1000.
+1. **`offset_removal`** -- Removes per-axis stage offsets according to `StagePositionCorrections` (see below). By default (`"Global"`) each axis is shifted so its minimum position is 0.
 
-2. **`align_to_pixel_grid`** -- Snaps start positions and lengths to integer pixel coordinates using floor rounding. After this step, all positions and sizes are exact pixel values (no sub-pixel offsets).
+2. **`align_to_pixel_grid`** -- Snaps start positions and lengths to integer pixel coordinates. After this step, all positions and sizes are exact pixel values (no sub-pixel offsets), including z/t which become integer plane/timepoint indices.
 
-3. **`fov_alignment_corrections`** -- Applies per-FOV alignment corrections to fix minor stage imprecisions. When `align_xy=True`, tiles within the same FOV that have slightly different XY positions (due to stage drift between Z-slices or channels) are aligned to the reference tile's position.
+3. **`xy_jitter_correction`** -- When `remove_xy_jitter=True` (default), tiles within the same FOV that have slightly different XY positions (due to stage drift between Z-slices or channels) are snapped to the FOV's reference position.
 
-4. **`tile_regions`** -- Applies tiling/snapping to remove overlaps between FOVs (see [Tiling Modes](#tiling-modes) below). This is the step that determines the final non-overlapping layout.
+4. **`reindex_channels`** -- When `reindex_channels=True` (default), the channel indices actually present are compacted to a dense `0, 1, 2, …` range and channel metadata is reconciled, so a filtered channel does not leave an empty channel in the output.
+
+5. **`tile_regions`** -- Applies tiling/snapping to remove overlaps between FOVs (see [Tiling Strategies](#tiling-strategies) below). This is the step that determines the final non-overlapping layout.
 
 ### StagePositionCorrections
 
-Controls which alignment corrections are applied in the `fov_alignment_corrections` step:
+Controls the per-axis position handling applied during registration:
 
 ```python
 from ome_zarr_converters_tools.models import StagePositionCorrections
 
 corrections = StagePositionCorrections(
-    align_xy=True,   # Align XY positions within each FOV (default: False)
-    align_z=False,    # Z alignment (not yet implemented)
-    align_t=False,    # T alignment (not yet implemented)
+    remove_xy_offset="Global",   # "Global" (zero origin) or "Keep" (keep absolute)
+    remove_z_offset="Global",    # "Global", "Per-FOV" (zero each FOV's z), or "Keep"
+    remove_t_offset="Global",    # "Global" or "Keep"
+    remove_xy_jitter=True,       # snap a FOV's sub-tiles to a shared XY origin
+    reindex_channels=True,       # compact present channels to a dense range
 )
 ```
 
-When `align_xy=True`, tiles within the same FOV that have slightly different XY positions (due to stage drift) are aligned to the reference tile's position. This is common in microscopy where the stage position drifts slightly between Z-slices or channels.
+Offset modes: `"Global"` translates the axis so its origin is 0; `"Keep"` keeps absolute positions (raising on negatives, left-padding on positives); `"Per-FOV"` (z only) zeros each FOV's z independently, useful when FOVs are focused independently. `remove_xy_jitter` corrects minor XY stage drift between the sub-acquisitions (Z-slices/channels) of a single FOV.
 
 ### Custom Registration Steps
 
@@ -289,15 +283,39 @@ Then include it in a pipeline using `RegistrationStep`:
 from ome_zarr_converters_tools.pipelines import RegistrationStep
 
 pipeline = [
-    RegistrationStep(name="remove_offsets", params={}),
+    RegistrationStep(name="offset_removal", params={"corrections": corrections}),
     RegistrationStep(name="my_step", params={"some_param": 42}),
     RegistrationStep(name="align_to_pixel_grid", params={}),
 ]
 ```
 
+## Grouping
+
+Grouping (`ConverterOptions.grouping`) is the topology decision: how the fields of view of an acquisition map to output images. It is a discriminated union with two variants.
+
+| Grouping | Description |
+|----------|-------------|
+| `MosaicGrouping(tiling_strategy=...)` | Aggregate all FOVs of an acquisition into a single mosaic OME-Zarr, arranged by the nested `tiling_strategy` (see below). This is the default. |
+| `PerFovGrouping()` | Write each FOV as its own OME-Zarr image. There is no tiling strategy -- a single-FOV image has nothing to arrange. |
+
+```python
+from ome_zarr_converters_tools import (
+    ConverterOptions,
+    MosaicGrouping,
+    PerFovGrouping,
+    SnapToGridTiling,
+)
+
+# One mosaic image per acquisition (default), snapped to a grid
+ConverterOptions(grouping=MosaicGrouping(tiling_strategy=SnapToGridTiling()))
+
+# One OME-Zarr per field of view
+ConverterOptions(grouping=PerFovGrouping())
+```
+
 ## Tiling Strategies
 
-Tiling controls how overlapping FOVs are arranged relative to each other. This is the last step in the default registration pipeline. Each strategy is a Pydantic model, so tolerance and other parameters are passed directly on construction.
+Tiling controls how overlapping FOVs are arranged relative to each other *within a mosaic*. It lives on `MosaicGrouping.tiling_strategy` and is applied as the last step in the default registration pipeline. Each strategy is a Pydantic model, so tolerance and other parameters are passed directly on construction.
 
 | Strategy | Description |
 |----------|-------------|
@@ -305,7 +323,6 @@ Tiling controls how overlapping FOVs are arranged relative to each other. This i
 | `SnapToGridTiling(tolerance=0)` | Snaps FOV positions to a regular grid, removing overlaps. Requires tiles to be arranged in a grid pattern |
 | `SnapToCornersTiling()` | Snaps each FOV to the nearest corner, removing overlaps without requiring a grid structure |
 | `InplaceTiling()` | No tiling -- keeps original positions as-is |
-| `NoTiling()` | Each FOV is written as a separate OME-Zarr |
 
 ```python
 from ome_zarr_converters_tools.models import (

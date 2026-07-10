@@ -1,5 +1,4 @@
 import math
-import warnings
 from typing import Literal
 
 from ngio import RoiSlice
@@ -26,60 +25,133 @@ def _align_xy_regions(regions: list[TileSlice]) -> list[TileSlice]:
     return update_regions
 
 
-def _align_z_regions(regions: list[TileSlice]) -> list[TileSlice]:
-    warnings.warn(
-        "Z alignment is not implemented yet. Returning regions unchanged.",
-        UserWarning,
-        stacklevel=2,
-    )
-    return regions
-
-
-def _align_t_regions(regions: list[TileSlice]) -> list[TileSlice]:
-    warnings.warn(
-        "T alignment is not implemented yet. Returning regions unchanged.",
-        UserWarning,
-        stacklevel=2,
-    )
-    return regions
-
-
-def _align_regions(
-    regions: list[TileSlice],
-    alignment_corrections: StagePositionCorrections,
-) -> list[TileSlice]:
-    if alignment_corrections.align_xy:
-        regions = _align_xy_regions(regions)
-    if alignment_corrections.align_z:
-        regions = _align_z_regions(regions)
-    if alignment_corrections.align_t:
-        regions = _align_t_regions(regions)
-    return regions
-
-
-def apply_fov_alignment_corrections(
-    tiled_image: TiledImage, alignment_corrections: StagePositionCorrections
+def apply_xy_jitter_correction(
+    tiled_image: TiledImage, corrections: StagePositionCorrections
 ) -> TiledImage:
-    """Align all the regions in a TiledImage to be consistent.
+    """Remove intra-FOV XY stage-position jitter.
 
-    The function:
-
-    - Groups regions by their field of view (FOV).
-    - Applies alignment corrections to each group.
-    - Updates the TiledImage with the aligned regions.
-
-    Args:
-        tiled_image: TiledImage model to align.
-        alignment_corrections: StagePositionCorrections model specifying which
-            corrections to apply.
-
+    Groups regions by FOV and snaps each group's sub-tiles to a shared XY origin
+    (the group's reference region). No-op when `remove_xy_jitter` is False.
     """
-    fov_tiles = tiled_image.group_by_fov()
+    if not corrections.remove_xy_jitter:
+        return tiled_image
     aligned_regions = []
-    for fov_tile in fov_tiles:
-        aligned = _align_regions(fov_tile.regions, alignment_corrections)
-        aligned_regions.extend(aligned)
+    for fov_tile in tiled_image.group_by_fov():
+        aligned_regions.extend(_align_xy_regions(fov_tile.regions))
     tiled_image.regions = aligned_regions
+    return tiled_image
+
+
+def _axis_min(regions: list[TileSlice], axis: str) -> float | None:
+    """Minimum start of `axis` across `regions`, or None if the axis is absent."""
+    starts = [
+        s.start
+        for region in regions
+        if (s := region.roi.get(axis)) is not None and s.start is not None
+    ]
+    return min(starts) if starts else None
+
+
+def _shift_axes_to_zero(regions: list[TileSlice], axes: list[str]) -> None:
+    """Translate `regions` in place so each axis's minimum start becomes 0."""
+    shifts = {}
+    for axis in axes:
+        axis_min = _axis_min(regions, axis)
+        if axis_min is not None:
+            shifts[axis] = -axis_min
+    for region in regions:
+        region.roi = move_roi_by(region.roi, shifts)
+
+
+def _validate_non_negative(regions: list[TileSlice], axes: list[str]) -> None:
+    """Raise if any region has a negative start on one of `axes` (Keep mode)."""
+    field = {"x": "xy", "y": "xy", "z": "z", "t": "t"}
+    for region in regions:
+        for axis in axes:
+            slice_ = region.roi.get(axis)
+            if slice_ is not None and slice_.start is not None and slice_.start < 0:
+                raise ValueError(
+                    f"remove_{field[axis]}_offset='Keep' requires non-negative "
+                    f"{axis} positions, got {slice_.start}."
+                )
+
+
+def apply_offset_removal(
+    tiled_image: TiledImage, corrections: StagePositionCorrections
+) -> TiledImage:
+    """Remove per-axis stage offsets according to the correction modes.
+
+    - `Global`: translate so the axis's global minimum start is 0.
+    - `Per-FOV` (z only): translate each FOV group's z independently to 0.
+    - `Keep`: keep absolute positions (raise on negatives; positives left-pad).
+    """
+    if corrections.remove_xy_offset == "Global":
+        _shift_axes_to_zero(tiled_image.regions, ["x", "y"])
+    else:
+        _validate_non_negative(tiled_image.regions, ["x", "y"])
+
+    if corrections.remove_z_offset == "Global":
+        _shift_axes_to_zero(tiled_image.regions, ["z"])
+    elif corrections.remove_z_offset == "Per-FOV":
+        new_regions = []
+        for fov_tile in tiled_image.group_by_fov():
+            _shift_axes_to_zero(fov_tile.regions, ["z"])
+            new_regions.extend(fov_tile.regions)
+        tiled_image.regions = new_regions
+    else:
+        _validate_non_negative(tiled_image.regions, ["z"])
+
+    if corrections.remove_t_offset == "Global":
+        _shift_axes_to_zero(tiled_image.regions, ["t"])
+    else:
+        _validate_non_negative(tiled_image.regions, ["t"])
+
+    return tiled_image
+
+
+def _channel_start(region: TileSlice) -> int:
+    """Return a region's integer channel index (assumes a single-channel tile)."""
+    slice_ = region.roi.get("c")
+    if slice_ is None or slice_.start is None:
+        raise ValueError("Tile ROI is missing the 'c' axis slice.")
+    if slice_.length is not None and round(slice_.length) != 1:
+        raise ValueError(
+            "reindex_channels requires single-channel tiles "
+            f"(length_c == 1), got length {slice_.length}."
+        )
+    return round(slice_.start)
+
+
+def apply_reindex_channels(
+    tiled_image: TiledImage, corrections: StagePositionCorrections
+) -> TiledImage:
+    """Compact channel indices to consecutive integers (drop filtered channels).
+
+    When `reindex_channels` is True, the distinct channel indices present across
+    the tiles are mapped to `0, 1, 2, …` and the channel metadata is compacted to
+    match. When False, gaps are preserved so missing channels become empty arrays.
+    """
+    if not corrections.reindex_channels:
+        return tiled_image
+
+    present = sorted({_channel_start(region) for region in tiled_image.regions})
+    if present == list(range(len(present))):
+        return tiled_image  # already dense
+
+    if tiled_image.channels is not None:
+        if present[-1] >= len(tiled_image.channels):
+            # Unreachable: Tile/TiledImage validators enforce this at construction.
+            raise ValueError(
+                f"Internal error: TiledImage '{tiled_image.path}' references "
+                f"channel index {present[-1]} but channels has "
+                f"{len(tiled_image.channels)} entries; this should have been "
+                "rejected at tile building. Please report this as a bug."
+            )
+        tiled_image.channels = [tiled_image.channels[c] for c in present]
+
+    remap = {old: new for new, old in enumerate(present)}
+    for region in tiled_image.regions:
+        region.roi = move_to(region.roi, {"c": float(remap[_channel_start(region)])})
     return tiled_image
 
 
@@ -107,8 +179,11 @@ def apply_align_to_pixel_grid(
             start = roi_slice.start
             length = roi_slice.length
             assert start is not None and length is not None
+            # Snap the interval endpoints, not start and length independently:
+            # op(start) + op(length) can differ from op(start + length) by one
+            # pixel, creating gaps/overlaps at tile boundaries.
             new_start = op(start)
-            new_length = op(length)
+            new_length = op(start + length) - new_start
             adjusted_slices.append(
                 RoiSlice(
                     axis_name=roi_slice.axis_name,
@@ -118,33 +193,4 @@ def apply_align_to_pixel_grid(
             )
         updated_roi = roi.model_copy(update={"slices": adjusted_slices})
         region.roi = updated_roi
-    return tiled_image
-
-
-def apply_remove_offsets(tiled_image: TiledImage) -> TiledImage:
-    """Remove any offsets from the tile positions.
-
-    This will find the minimum position in each dimension and
-        subtract it from all tiles.
-    """
-    tile_slices = tiled_image.regions
-
-    # Find the minimum start position for each axis
-    min_starts = {}
-    for tile in tile_slices:
-        for roi_slice in tile.roi.slices:
-            axis = roi_slice.axis_name
-            start = roi_slice.start or 0.0
-            if axis not in min_starts:
-                min_starts[axis] = start
-            else:
-                min_starts[axis] = min(min_starts[axis], start)
-
-    # Compute the vector shifts to move the minimum to zero
-    offset_shifts = {axis: -min_start for axis, min_start in min_starts.items()}
-
-    # Apply the shifts to each tile's ROI
-    for tile in tile_slices:
-        tile.roi = move_roi_by(tile.roi, offset_shifts)
-    tiled_image = tiled_image.model_copy(update={"regions": tile_slices})
     return tiled_image

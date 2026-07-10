@@ -15,7 +15,6 @@ from ome_zarr_converters_tools.core._tile_to_tiled_images import tiled_image_fro
 from ome_zarr_converters_tools.models import (
     AcquisitionDetails,
     ChannelInfo,
-    ConverterOptions,
     ImageInPlate,
     OverwriteMode,
     SingleImage,
@@ -37,7 +36,7 @@ def _make_plate_tiled_images(
     """Build TiledImages with ImageInPlate collections."""
     acq = AcquisitionDetails(
         channels=[ChannelInfo(channel_label="DAPI")],
-        pixelsize=1.0,
+        xy_pixel_size=1.0,
         z_spacing=1.0,
         t_spacing=1.0,
     )
@@ -57,9 +56,7 @@ def _make_plate_tiled_images(
             tile.attributes = attributes
         all_tiles.append(tile)
 
-    images = tiled_image_from_tiles(
-        tiles=all_tiles, converter_options=ConverterOptions()
-    )
+    images = tiled_image_from_tiles(tiles=all_tiles, split_per_fov=False)
     return images
 
 
@@ -67,7 +64,7 @@ def _make_single_tiled_images(num_images: int = 1) -> list:
     """Build TiledImages with SingleImage collections."""
     acq = AcquisitionDetails(
         channels=[ChannelInfo(channel_label="DAPI")],
-        pixelsize=1.0,
+        xy_pixel_size=1.0,
         z_spacing=1.0,
         t_spacing=1.0,
     )
@@ -82,7 +79,7 @@ def _make_single_tiled_images(num_images: int = 1) -> list:
             acquisition_details=acq,
         )
         tiles.append(tile)
-    return tiled_image_from_tiles(tiles=tiles, converter_options=ConverterOptions())
+    return tiled_image_from_tiles(tiles=tiles, split_per_fov=False)
 
 
 class TestSetupConditionTable:
@@ -111,7 +108,7 @@ class TestSetupConditionTable:
     def test_multiple_images_with_attributes(self) -> None:
         acq = AcquisitionDetails(
             channels=[ChannelInfo(channel_label="DAPI")],
-            pixelsize=1.0,
+            xy_pixel_size=1.0,
             z_spacing=1.0,
             t_spacing=1.0,
         )
@@ -130,12 +127,39 @@ class TestSetupConditionTable:
             tile.attributes = {"drug": [drug]}
             tiles.append(tile)
 
-        images = tiled_image_from_tiles(
-            tiles=tiles, converter_options=ConverterOptions()
-        )
+        images = tiled_image_from_tiles(tiles=tiles, split_per_fov=False)
         result = _setup_condition_table(images)
         assert result is not None
         assert result.shape[0] == 2  # two rows
+
+    def test_heterogeneous_attribute_keys_raises(self) -> None:
+        # Images with different attribute key sets would produce unequal-length
+        # columns; a clear error must name the offending images and keys.
+        image_a = _make_plate_tiled_images(attributes={"drug": ["DMSO"]})[0]
+        image_b = _make_plate_tiled_images(
+            attributes={"drug": ["CompA"], "dose": [1.0]}
+        )[0]
+        with pytest.raises(ValueError, match="same attribute keys"):
+            _setup_condition_table([image_a, image_b])
+
+    def test_attribute_key_first_appearing_on_later_image_raises(self) -> None:
+        image_a = _make_plate_tiled_images(attributes={"drug": ["DMSO"]})[0]
+        image_b = _make_plate_tiled_images(attributes={"dose": [1.0]})[0]
+        with pytest.raises(ValueError, match="same attribute keys"):
+            _setup_condition_table([image_a, image_b])
+
+    def test_image_without_attributes_is_skipped(self) -> None:
+        # An image with no attributes at all contributes no rows but is legal.
+        with_attrs = _make_plate_tiled_images(attributes={"drug": ["DMSO"]})[0]
+        without_attrs = _make_plate_tiled_images()[0]
+        result = _setup_condition_table([with_attrs, without_attrs])
+        assert result is not None
+        assert result.shape[0] == 1
+
+    def test_reserved_attribute_key_raises(self) -> None:
+        images = _make_plate_tiled_images(attributes={"row": ["oops"]})
+        with pytest.raises(ValueError, match="reserved columns"):
+            _setup_condition_table(images)
 
 
 class TestSetupSingleimage:
@@ -209,7 +233,7 @@ class TestCollectionSetupRegistry:
         )
         assert "DummyCollection" in _collection_setup_registry
         # Clean up
-        del _collection_setup_registry["DummyCollection"]
+        _collection_setup_registry.pop("DummyCollection")
 
     def test_add_handler_duplicate_raises(self) -> None:
         def another_handler(
@@ -240,7 +264,7 @@ class TestCollectionSetupRegistry:
         add_collection_handler(function=my_custom_setup, overwrite=True)
         assert "my_custom_setup" in _collection_setup_registry
         # Clean up
-        del _collection_setup_registry["my_custom_setup"]
+        _collection_setup_registry.pop("my_custom_setup")
 
 
 class TestSetupPlates:
@@ -279,7 +303,7 @@ class TestSetupPlates:
         # Extend with a second image in a different well
         acq = AcquisitionDetails(
             channels=[ChannelInfo(channel_label="DAPI")],
-            pixelsize=1.0,
+            xy_pixel_size=1.0,
             z_spacing=1.0,
             t_spacing=1.0,
         )
@@ -291,9 +315,7 @@ class TestSetupPlates:
             collection=coll,
             acquisition_details=acq,
         )
-        images2 = tiled_image_from_tiles(
-            tiles=[tile], converter_options=ConverterOptions()
-        )
+        images2 = tiled_image_from_tiles(tiles=[tile], split_per_fov=False)
         setup_plates(
             zarr_dir=zarr_dir,
             tiled_images=images2,
@@ -322,7 +344,7 @@ class TestSetupPlates:
     def test_multiple_plates(self, tmp_path: Path) -> None:
         acq = AcquisitionDetails(
             channels=[ChannelInfo(channel_label="DAPI")],
-            pixelsize=1.0,
+            xy_pixel_size=1.0,
             z_spacing=1.0,
             t_spacing=1.0,
         )
@@ -342,9 +364,7 @@ class TestSetupPlates:
                 acquisition_details=acq,
             )
             tiles.append(tile)
-        images = tiled_image_from_tiles(
-            tiles=tiles, converter_options=ConverterOptions()
-        )
+        images = tiled_image_from_tiles(tiles=tiles, split_per_fov=False)
         setup_plates(
             zarr_dir=str(tmp_path),
             tiled_images=images,
@@ -380,7 +400,7 @@ class TestSetupPlates:
         # Overwrite with a different image in well B/2
         acq = AcquisitionDetails(
             channels=[ChannelInfo(channel_label="DAPI")],
-            pixelsize=1.0,
+            xy_pixel_size=1.0,
             z_spacing=1.0,
             t_spacing=1.0,
         )
@@ -392,9 +412,7 @@ class TestSetupPlates:
             collection=coll,
             acquisition_details=acq,
         )
-        images_b = tiled_image_from_tiles(
-            tiles=[tile], converter_options=ConverterOptions()
-        )
+        images_b = tiled_image_from_tiles(tiles=[tile], split_per_fov=False)
         setup_plates(
             zarr_dir=zarr_dir,
             tiled_images=images_b,
@@ -416,6 +434,40 @@ class TestSetupPlates:
             overwrite_mode=OverwriteMode.NO_OVERWRITE,
         )
         assert (tmp_path / "TestPlate.zarr").exists()
+
+    def test_condition_table_isolated_per_plate(self, tmp_path: Path) -> None:
+        # Each plate's condition table must contain only that plate's rows, not
+        # every plate's rows (regression: the table was built from the full
+        # cross-plate list inside the per-image loop).
+        acq = AcquisitionDetails(
+            channels=[ChannelInfo(channel_label="DAPI")],
+            xy_pixel_size=1.0,
+            z_spacing=1.0,
+            t_spacing=1.0,
+        )
+        tiles = []
+        for plate_name, drug in [("PlateA", "DrugA"), ("PlateB", "DrugB")]:
+            coll = ImageInPlate(plate_name=plate_name, row="A", column=1, acquisition=0)
+            tile = build_dummy_tile(
+                fov_name="FOV_0",
+                start=StartPosition(x=0, y=0),
+                shape=TileShape(x=64, y=64, z=1, c=1, t=1),
+                collection=coll,
+                acquisition_details=acq,
+            )
+            tile.attributes = {"drug": [drug]}
+            tiles.append(tile)
+        images = tiled_image_from_tiles(tiles=tiles, split_per_fov=False)
+        setup_plates(
+            zarr_dir=str(tmp_path),
+            tiled_images=images,
+            overwrite_mode=OverwriteMode.OVERWRITE,
+        )
+        for plate_name, drug in [("PlateA", "DrugA"), ("PlateB", "DrugB")]:
+            plate = open_ome_zarr_plate(tmp_path / f"{plate_name}.zarr")
+            table = plate.get_table("condition_table").dataframe
+            assert table.shape[0] == 1
+            assert table["drug"].to_list() == [drug]
 
     def test_writes_condition_table(self, tmp_path: Path) -> None:
         images = _make_plate_tiled_images(attributes={"drug": ["DMSO"]})

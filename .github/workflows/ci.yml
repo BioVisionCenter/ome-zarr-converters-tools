@@ -15,6 +15,39 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  lint:
+    name: Lint & type-check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache-dependency-path: "pyproject.toml"
+          cache: "pip"
+
+      - name: Install Dependencies
+        # `test` extra included so ty can resolve `pytest`, imported by the
+        # shipped pytest plugin (src/ome_zarr_converters_tools/testing/plugin.py)
+        run: |
+          python -m pip install -U pip
+          python -m pip install .[dev,test]
+
+      - name: Ruff lint
+        run: ruff check .
+
+      - name: Ruff format check
+        run: ruff format --check .
+
+      - name: Type check
+        # Scope to `src` (the shipped package); tests use intentionally loose
+        # typing (MagicMock, untyped fixtures). Override the pixi-specific
+        # [tool.ty.environment] python path with the CI virtualenv so ty
+        # resolves imports against the installed packages.
+        run: ty check src --python "$(python -c 'import sys; print(sys.prefix)')"
+
   test:
     name: ${{ matrix.platform }} (${{ matrix.python-version }})
     runs-on: ${{ matrix.platform }}

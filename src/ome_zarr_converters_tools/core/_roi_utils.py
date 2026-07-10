@@ -1,3 +1,5 @@
+"""Geometry helpers for ROIs: translation, distances, unions, and shapes."""
+
 import math
 from collections.abc import Sequence
 
@@ -159,9 +161,9 @@ def bulk_roi_union(
 ) -> Roi:
     """Calculate the union of multiple ROIs.
 
-    To avoit to build the union of all ROIs which can be computationally expensive,
-    this function find the min and max ROIs along each axis and builds the union from
-    them.
+    To avoid building the union of all ROIs, which can be computationally
+    expensive, this function finds the min and max ROIs along each axis and
+    builds the union from them.
 
     Args:
         rois: List of ROIs to union.
@@ -199,12 +201,37 @@ def bulk_roi_union(
 def shape_from_rois(
     rois: Sequence[Roi], axes: Sequence[str], pixel_size: PixelSize
 ) -> tuple[int, ...]:
-    """Get the shape from a list of ROIs."""
+    """Get the union-extent shape (max - min) from a list of ROIs.
+
+    This is the size of the data bounding box; used for in-memory load buffers.
+    """
     axes_shape = {}
     roi_union = bulk_roi_union(rois)
     roi_union = roi_union.to_pixel(pixel_size)
     for roi_slice in roi_union.slices:
         length = roi_slice.length
         assert length is not None
-        axes_shape[roi_slice.axis_name] = math.ceil(length)  # TODO remove ceil?
+        # ceil, not round: this sizes load buffers, and ROIs may still have
+        # fractional lengths here. A buffer one pixel too large is harmless;
+        # one too small truncates data.
+        axes_shape[roi_slice.axis_name] = math.ceil(length)
+    return tuple(axes_shape[ax] for ax in axes)
+
+
+def output_shape_from_rois(
+    rois: Sequence[Roi], axes: Sequence[str], pixel_size: PixelSize
+) -> tuple[int, ...]:
+    """Get the output-array shape anchored at pixel 0 (max stop, not extent).
+
+    Unlike `shape_from_rois` (the data bounding box), this spans from coordinate
+    0 to the largest stop, so a `remove_*_offset="Keep"` mosaic with a positive
+    origin yields a left-padded array. Identical to `shape_from_rois` when the
+    minimum start is already 0 (the default, after `Global` offset removal).
+    """
+    axes_shape = {}
+    roi_union = bulk_roi_union(rois).to_pixel(pixel_size)
+    for roi_slice in roi_union.slices:
+        assert roi_slice.start is not None and roi_slice.length is not None
+        end = roi_slice.start + roi_slice.length
+        axes_shape[roi_slice.axis_name] = math.ceil(end)
     return tuple(axes_shape[ax] for ax in axes)

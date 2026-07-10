@@ -3,7 +3,6 @@ from ome_zarr_converters_tools.core._tile_region import TiledImage, TileSlice
 from ome_zarr_converters_tools.models import (
     AutoTiling,
     InplaceTiling,
-    NoTiling,
     SnapToCornersTiling,
     SnapToGridTiling,
     TilingStrategy,
@@ -49,7 +48,7 @@ def _find_tiling(
     strategy: TilingStrategy,
 ) -> dict[str, dict[str, float]]:
     match strategy:
-        case InplaceTiling() | NoTiling():
+        case InplaceTiling():
             return _no_tiling(regions)
         case AutoTiling():
             return _auto_tiling(regions, strategy.tolerance)

@@ -24,8 +24,11 @@ from ome_zarr_converters_tools.models import (
     ConverterOptions,
     ImageInPlate,
     InplaceTiling,
-    NoTiling,
+    MosaicGrouping,
+    NamedLevels,
+    OmeZarrOptions,
     OverwriteMode,
+    PerFovGrouping,
     RuntimeSettings,
     SingleImage,
     StagePositionCorrections,
@@ -33,14 +36,17 @@ from ome_zarr_converters_tools.models import (
     WriterMode,
 )
 from ome_zarr_converters_tools.pipelines import (
+    setup_ome_zarr_collection,
     tiled_image_creation_pipeline,
     tiles_aggregation_pipeline,
 )
-from ome_zarr_converters_tools.pipelines._filters import RegexIncludeFilter
+from ome_zarr_converters_tools.pipelines._filters import RegexFilter
 from ome_zarr_converters_tools.pipelines._registration_pipeline import (
     apply_registration_pipeline,
     build_default_registration_pipeline,
 )
+
+pytestmark = pytest.mark.integration
 
 # ---------------------------------------------------------------------------
 # Project root / example paths
@@ -56,14 +62,14 @@ def _example_acq_details() -> AcquisitionDetails:
     """AcquisitionDetails matching the example TOML files."""
     return AcquisitionDetails(
         channels=[ChannelInfo(channel_label="DAPI", wavelength_id="405")],
-        pixelsize=0.65,
+        xy_pixel_size=0.65,
         z_spacing=5.0,
         t_spacing=1.0,
         axes=["t", "c", "z", "y", "x"],
-        start_x_coo="world",
-        start_y_coo="world",
-        start_z_coo="pixel",
-        start_t_coo="pixel",
+        start_x_space="world",
+        start_y_space="world",
+        start_z_space="pixel",
+        start_t_space="pixel",
     )
 
 
@@ -75,7 +81,7 @@ def _example_acq_details() -> AcquisitionDetails:
 def _acq(n_channels: int = 1) -> AcquisitionDetails:
     return AcquisitionDetails(
         channels=[ChannelInfo(channel_label=f"CH{i}") for i in range(n_channels)],
-        pixelsize=1.0,
+        xy_pixel_size=1.0,
         z_spacing=1.0,
         t_spacing=1.0,
     )
@@ -118,7 +124,7 @@ class TestTilesAggregationPipeline:
         tiles_drop = _make_tiles(coll2)[2:]
         all_tiles = tiles_keep + tiles_drop
         opts = ConverterOptions()
-        f = RegexIncludeFilter(regex=".*keep.*")
+        f = RegexFilter(regex=".*keep.*")
         images = tiles_aggregation_pipeline(
             tiles=all_tiles, converter_options=opts, filters=[f]
         )
@@ -152,6 +158,100 @@ class TestTiledImageCreationPipeline:
         data = img.get_array()
         assert data.shape[-2:] == (128, 128)  # 2x2 grid of 64x64
         assert np.any(data > 0)
+
+    def test_write_with_named_levels(self, tmp_path: Path) -> None:
+        coll = SingleImage(image_path="test_named_levels")
+        tiles = _make_tiles(coll)
+        opts = ConverterOptions(
+            omezarr_options=OmeZarrOptions(
+                levels=NamedLevels(level_names=["s0", "s1", "s2"])
+            )
+        )
+        images = tiles_aggregation_pipeline(tiles=tiles, converter_options=opts)
+
+        pipeline = build_default_registration_pipeline(
+            StagePositionCorrections(), InplaceTiling()
+        )
+        omezarr = tiled_image_creation_pipeline(
+            zarr_url=str(tmp_path / "named_levels.zarr"),
+            tiled_image=images[0],
+            registration_pipeline=pipeline,
+            converter_options=opts,
+            writer_mode=WriterMode.BY_FOV,
+            overwrite_mode=OverwriteMode.OVERWRITE,
+        )
+        assert omezarr.level_paths == ["s0", "s1", "s2"]
+        assert np.any(omezarr.get_image(path="s2").get_array() > 0)
+
+    def test_keep_xy_offset_left_pads_output(self, tmp_path: Path) -> None:
+        # remove_xy_offset="Keep" keeps absolute positions; a positive origin
+        # must yield a left-padded output anchored at pixel 0.
+        coll = SingleImage(image_path="pad")
+        tile = build_dummy_tile(
+            fov_name="FOV_0",
+            start=StartPosition(x=64, y=0),
+            shape=TileShape(x=64, y=64, z=1, c=1, t=1),
+            collection=coll,
+            acquisition_details=_acq(1),
+        )
+        opts = ConverterOptions(
+            stage_position_corrections=StagePositionCorrections(remove_xy_offset="Keep")
+        )
+        tiled_image = tiles_aggregation_pipeline(tiles=[tile], converter_options=opts)[
+            0
+        ]
+        pipeline = build_default_registration_pipeline(
+            opts.stage_position_corrections, InplaceTiling()
+        )
+        omezarr = tiled_image_creation_pipeline(
+            zarr_url=str(tmp_path / "pad.zarr"),
+            tiled_image=tiled_image,
+            registration_pipeline=pipeline,
+            converter_options=opts,
+            writer_mode=WriterMode.BY_TILE,
+            overwrite_mode=OverwriteMode.OVERWRITE,
+        )
+        data = np.asarray(omezarr.get_image().get_array())
+        assert data.shape[-1] == 128  # 64 px padding + 64 px tile
+        assert not np.any(data[..., :64])  # left padding is empty
+        assert np.any(data[..., 64:])  # tile data present
+
+    def test_reindex_channels_produces_dense_output(self, tmp_path: Path) -> None:
+        # Channels 0 and 2 present (1 filtered out); reindex_channels=True (default)
+        # must compact them to a dense 2-channel output.
+        coll = SingleImage(image_path="reindex")
+        acq = AcquisitionDetails(
+            channels=[ChannelInfo(channel_label=f"CH{i}") for i in range(3)],
+            xy_pixel_size=1.0,
+            z_spacing=1.0,
+            t_spacing=1.0,
+        )
+        tiles = [
+            build_dummy_tile(
+                fov_name="FOV_0",
+                start=StartPosition(x=0, y=0, c=c),
+                shape=TileShape(x=32, y=32, z=1, c=1, t=1),
+                collection=coll,
+                acquisition_details=acq,
+            )
+            for c in (0, 2)
+        ]
+        opts = ConverterOptions()
+        tiled_image = tiles_aggregation_pipeline(tiles=tiles, converter_options=opts)[0]
+        pipeline = build_default_registration_pipeline(
+            opts.stage_position_corrections, InplaceTiling()
+        )
+        omezarr = tiled_image_creation_pipeline(
+            zarr_url=str(tmp_path / "reindex.zarr"),
+            tiled_image=tiled_image,
+            registration_pipeline=pipeline,
+            converter_options=opts,
+            writer_mode=WriterMode.BY_TILE,
+            overwrite_mode=OverwriteMode.OVERWRITE,
+        )
+        data = np.asarray(omezarr.get_image().get_array())
+        c_idx = tiled_image.axes.index("c")
+        assert data.shape[c_idx] == 2  # dense: channels 0 and 2 -> 0 and 1
 
     def test_output_dtype_matches_source(self, tmp_path: Path) -> None:
         """The on-disk array preserves the source dtype (regression for #56).
@@ -481,24 +581,84 @@ class TestHCSPlateWithAttributes:
         assert "condition_table" in table_names
 
 
-class TestNoTilingTranslation:
-    """Tests that NO_TILING mode sets a non-zero translation on OME-Zarr images."""
+class TestPlateEndToEndNoOverwrite:
+    """Full init→compute plate flow with the default NO_OVERWRITE mode.
 
-    def test_no_tiling_translation_is_set(self, tmp_path: Path) -> None:
+    Every other end-to-end test uses OVERWRITE; this guards the default path:
+    the init task materializes the plate skeleton (`setup_ome_zarr_collection`)
+    and the compute task must then be able to create each image with
+    `mode="w-"` inside it.
+    """
+
+    def test_full_plate_flow_no_overwrite(self, tmp_path: Path) -> None:
+        from ngio.hcs import open_ome_zarr_plate
+
+        df = pd.read_csv(_HCS_EXAMPLE_DIR / "tiles.csv")
+        acq = _example_acq_details()
+        tiles = hcs_images_from_dataframe(
+            tiles_table=df, acquisition_details=acq, plate_name="NoOverwritePlate"
+        )
+        opts = ConverterOptions()
+        images = tiles_aggregation_pipeline(
+            tiles=tiles, converter_options=opts, resource=str(_HCS_DATA_DIR)
+        )
+        zarr_dir = str(tmp_path)
+
+        # Init task: create the plate skeleton.
+        setup_ome_zarr_collection(
+            tiled_images=images,
+            collection_type="ImageInPlate",
+            zarr_dir=zarr_dir,
+            overwrite_mode=OverwriteMode.NO_OVERWRITE,
+        )
+        # Compute task: write each image into the pre-created plate.
+        pipeline = build_default_registration_pipeline(
+            StagePositionCorrections(), AutoTiling()
+        )
+        for tiled_image in images:
+            omezarr = tiled_image_creation_pipeline(
+                zarr_url=str(tmp_path / tiled_image.path),
+                tiled_image=tiled_image,
+                registration_pipeline=pipeline,
+                converter_options=opts,
+                writer_mode=WriterMode.BY_FOV,
+                overwrite_mode=OverwriteMode.NO_OVERWRITE,
+                resource=str(_HCS_DATA_DIR),
+            )
+            data = np.asarray(omezarr.get_image().get_array())
+            assert np.any(data > 0)
+
+        plate = open_ome_zarr_plate(str(tmp_path / "NoOverwritePlate.zarr"))
+        assert len(plate.images_paths()) == len(images)
+
+        # Running the init task again in NO_OVERWRITE mode must refuse.
+        with pytest.raises(FileExistsError):
+            setup_ome_zarr_collection(
+                tiled_images=images,
+                collection_type="ImageInPlate",
+                zarr_dir=zarr_dir,
+                overwrite_mode=OverwriteMode.NO_OVERWRITE,
+            )
+
+
+class TestPerFovTranslation:
+    """Tests that Per-FOV grouping sets a non-zero translation on OME-Zarr images."""
+
+    def test_per_fov_translation_is_set(self, tmp_path: Path) -> None:
         df = pd.read_csv(_HCS_EXAMPLE_DIR / "tiles.csv")
         acq = _example_acq_details()
         tiles = hcs_images_from_dataframe(
             tiles_table=df, acquisition_details=acq, plate_name="TestPlate"
         )
-        opts = ConverterOptions(tiling_strategy=NoTiling())
+        opts = ConverterOptions(grouping=PerFovGrouping())
         images = tiles_aggregation_pipeline(
             tiles=tiles, converter_options=opts, resource=str(_HCS_DATA_DIR)
         )
-        # NO_TILING splits into one TiledImage per FOV
+        # Per-FOV grouping splits into one TiledImage per FOV
         assert len(images) == 3
 
         pipeline = build_default_registration_pipeline(
-            StagePositionCorrections(), NoTiling()
+            StagePositionCorrections(), opts.grouping.tiling_for_registration()
         )
         for i, tiled_image in enumerate(images):
             zarr_url = str(tmp_path / f"output_{i}.zarr")
@@ -513,9 +673,49 @@ class TestNoTilingTranslation:
             )
             translation = omezarr.get_image().dataset.translation
             assert any(v != 0.0 for v in translation), (
-                f"Expected non-zero translation for NO_TILING image {i}, "
+                f"Expected non-zero translation for Per-FOV image {i}, "
                 f"got {translation}"
             )
+
+    def test_per_fov_translation_matches_origin(self, tmp_path: Path) -> None:
+        # Pin the exact translation value, not just "non-zero": a known,
+        # non-symmetric stage origin (x != y catches an axis transposition) with
+        # a non-unit pixel size (catches a micrometer-vs-pixel unit slip) must
+        # land verbatim in the OME-Zarr translation metadata, in axis order.
+        origin_x_um, origin_y_um, pixel_size_um = 100.0, 50.0, 0.5
+        acq = AcquisitionDetails(
+            channels=[ChannelInfo(channel_label="DAPI")],
+            xy_pixel_size=pixel_size_um,
+            z_spacing=1.0,
+            t_spacing=1.0,
+            start_x_space="world",
+            start_y_space="world",
+        )
+        tile = build_dummy_tile(
+            fov_name="FOV_0",
+            start=StartPosition(x=origin_x_um, y=origin_y_um),
+            shape=TileShape(x=64, y=64, z=1, c=1, t=1),
+            collection=SingleImage(image_path="origin_img"),
+            acquisition_details=acq,
+        )
+        opts = ConverterOptions(grouping=PerFovGrouping())
+        images = tiles_aggregation_pipeline(tiles=[tile], converter_options=opts)
+        assert len(images) == 1
+
+        pipeline = build_default_registration_pipeline(
+            StagePositionCorrections(), opts.grouping.tiling_for_registration()
+        )
+        omezarr = tiled_image_creation_pipeline(
+            zarr_url=str(tmp_path / "origin.zarr"),
+            tiled_image=images[0],
+            registration_pipeline=pipeline,
+            converter_options=opts,
+            writer_mode=WriterMode.BY_FOV,
+            overwrite_mode=OverwriteMode.OVERWRITE,
+        )
+        translation = tuple(omezarr.get_image().dataset.translation)
+        # axes order is (t, c, z, y, x); translation is in physical micrometers.
+        assert translation == (0.0, 0.0, 0.0, origin_y_um, origin_x_um), translation
 
     def test_tiling_strategy_auto_has_no_translation(self, tmp_path: Path) -> None:
         df = pd.read_csv(_HCS_EXAMPLE_DIR / "tiles.csv")
@@ -523,7 +723,7 @@ class TestNoTilingTranslation:
         tiles = hcs_images_from_dataframe(
             tiles_table=df, acquisition_details=acq, plate_name="TestPlate"
         )
-        opts = ConverterOptions(tiling_strategy=AutoTiling())
+        opts = ConverterOptions(grouping=MosaicGrouping(tiling_strategy=AutoTiling()))
         images = tiles_aggregation_pipeline(
             tiles=tiles, converter_options=opts, resource=str(_HCS_DATA_DIR)
         )

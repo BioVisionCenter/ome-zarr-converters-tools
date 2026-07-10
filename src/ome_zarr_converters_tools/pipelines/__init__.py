@@ -24,7 +24,8 @@ from ome_zarr_converters_tools.pipelines._tiles_aggregation_pipeline import (
     tiles_aggregation_pipeline,
 )
 from ome_zarr_converters_tools.pipelines._validators import (
-    ValidatorStep,
+    ImplementedValidators,
+    ValidatorModel,
     add_validator,
     apply_validator_pipeline,
 )
@@ -35,8 +36,9 @@ from ome_zarr_converters_tools.pipelines._write_ome_zarr import (
 __all__ = [
     "FilterModel",
     "ImplementedFilters",
+    "ImplementedValidators",
     "RegistrationStep",
-    "ValidatorStep",
+    "ValidatorModel",
     "add_collection_handler",
     "add_filter",
     "add_registration_func",

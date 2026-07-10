@@ -27,13 +27,13 @@ from ome_zarr_converters_tools.models import (
 
 @pytest.fixture
 def default_acquisition_details() -> AcquisitionDetails:
-    """AcquisitionDetails with 2 channels and pixelsize=1.0."""
+    """AcquisitionDetails with 2 channels and xy_pixel_size=1.0."""
     return AcquisitionDetails(
         channels=[
             ChannelInfo(channel_label="DAPI"),
             ChannelInfo(channel_label="GFP"),
         ],
-        pixelsize=1.0,
+        xy_pixel_size=1.0,
         z_spacing=1.0,
         t_spacing=1.0,
     )
@@ -122,7 +122,7 @@ def tiled_image_from_grid(
     """A TiledImage built from the 2x2 grid tiles."""
     images = tiled_image_from_tiles(
         tiles=grid_2x2_tiles,
-        converter_options=default_converter_options,
+        split_per_fov=default_converter_options.grouping.split_per_fov,
     )
     assert len(images) == 1
     return images[0]
@@ -158,7 +158,7 @@ def sample_acquisition_details() -> AcquisitionDetails:
             ChannelInfo(channel_label="Channel 1"),
             ChannelInfo(channel_label="Channel 2"),
         ],
-        pixelsize=0.65,
+        xy_pixel_size=0.65,
         z_spacing=1.0,
         t_spacing=1.0,
     )

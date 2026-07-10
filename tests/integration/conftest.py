@@ -19,9 +19,3 @@ def tmp_plate_path(tmp_path: Path) -> Path:
     plate_path = tmp_path / "test_plate.zarr"
     plate_path.mkdir()
     return plate_path
-
-
-@pytest.fixture
-def sample_data_path() -> Path:
-    """Provide path to the sample test data directory."""
-    return Path(__file__).parent.parent / "data" / "hiPSC_Tiny" / "data"

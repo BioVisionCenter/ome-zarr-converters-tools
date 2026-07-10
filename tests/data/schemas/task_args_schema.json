@@ -1,0 +1,1520 @@
+{
+  "$defs": {
+    "AcquisitionFilter": {
+      "additionalProperties": false,
+      "description": "Keep or remove tiles based on their acquisition index (plates only).",
+      "properties": {
+        "acquisitions": {
+          "description": "List of acquisition indices to keep (`Include` mode) or remove\n(`Exclude` mode), e.g. `[0, 1]`.",
+          "items": {
+            "type": "integer"
+          },
+          "title": "Acquisitions",
+          "type": "array"
+        },
+        "mode": {
+          "default": "Include",
+          "description": "Whether matching tiles are **included** (kept) or **excluded** (removed).",
+          "enum": [
+            "Include",
+            "Exclude"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "name": {
+          "const": "Acquisition Filter",
+          "default": "Acquisition Filter",
+          "description": "Name of the filter.",
+          "title": "Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "acquisitions"
+      ],
+      "title": "Acquisition Filter",
+      "type": "object"
+    },
+    "AcquisitionOptions": {
+      "additionalProperties": false,
+      "description": "Per-acquisition settings: channels, pixel sizes, axes, and filters.",
+      "properties": {
+        "axes": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Axes of the image data, e.g. `czyx`. If left empty, the axes parsed\nfrom the raw metadata are used.",
+          "title": "Axes"
+        },
+        "channels": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/ChannelInfoUI"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Names, wavelengths, and display colors of the channels. If left\nempty, the channel information parsed from the raw metadata is used.",
+          "title": "Channels"
+        },
+        "condition_table_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional path to a condition table CSV file to store in the plate\nmetadata.",
+          "title": "Condition Table Path"
+        },
+        "data_type": {
+          "$ref": "#/$defs/DataTypeEnum",
+          "default": "autodetect",
+          "description": "Pixel data type of the output image. `autodetect` infers it from the\ninput images.",
+          "title": "Data Type"
+        },
+        "filters": {
+          "default": [],
+          "description": "Filters selecting which tiles of the acquisition are converted.",
+          "items": {
+            "discriminator": {
+              "mapping": {
+                "Acquisition Filter": "#/$defs/AcquisitionFilter",
+                "Attribute Filter": "#/$defs/AttributeFilter",
+                "Channel Filter": "#/$defs/ChannelFilter",
+                "FOV Name Filter": "#/$defs/FovNameFilter",
+                "Path Regex Filter": "#/$defs/RegexFilter",
+                "Time Range Filter": "#/$defs/TRangeFilter",
+                "Well Filter": "#/$defs/WellFilter",
+                "Z Range Filter": "#/$defs/ZRangeFilter"
+              },
+              "propertyName": "name"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/RegexFilter"
+              },
+              {
+                "$ref": "#/$defs/WellFilter"
+              },
+              {
+                "$ref": "#/$defs/FovNameFilter"
+              },
+              {
+                "$ref": "#/$defs/AcquisitionFilter"
+              },
+              {
+                "$ref": "#/$defs/AttributeFilter"
+              },
+              {
+                "$ref": "#/$defs/ChannelFilter"
+              },
+              {
+                "$ref": "#/$defs/ZRangeFilter"
+              },
+              {
+                "$ref": "#/$defs/TRangeFilter"
+              }
+            ]
+          },
+          "title": "Filters",
+          "type": "array"
+        },
+        "pixel_info": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PixelSizeModel"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Override the pixel size and the Z/time spacing of the images. If left\nempty, the values parsed from the raw metadata are used.",
+          "title": "Pixel Size Information"
+        },
+        "stage_orientation": {
+          "$ref": "#/$defs/StageOrientation",
+          "default": {
+            "flip_x": false,
+            "flip_y": false,
+            "swap_xy": false
+          },
+          "description": "Corrections for the orientation of the microscope stage relative to\nthe image axes.",
+          "title": "Stage Orientation"
+        }
+      },
+      "title": "AcquisitionOptions",
+      "type": "object"
+    },
+    "AttributeFilter": {
+      "additionalProperties": false,
+      "description": "Keep or remove tiles based on the value of one of their attributes.",
+      "properties": {
+        "key": {
+          "description": "Attribute key to match. The attribute must be present on every tile.",
+          "title": "Key",
+          "type": "string"
+        },
+        "mode": {
+          "default": "Include",
+          "description": "Whether matching tiles are **included** (kept) or **excluded** (removed).",
+          "enum": [
+            "Include",
+            "Exclude"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "name": {
+          "const": "Attribute Filter",
+          "default": "Attribute Filter",
+          "description": "Name of the filter.",
+          "title": "Name",
+          "type": "string"
+        },
+        "values": {
+          "description": "Values to match against. A tile matches if *any* element of its\nattribute value matches one of these; matching tiles are kept in\n`Include` mode and removed in `Exclude` mode.",
+          "items": {
+            "discriminator": {
+              "mapping": {
+                "Bool": "#/$defs/BoolValue",
+                "Float": "#/$defs/FloatValue",
+                "Integer": "#/$defs/IntValue",
+                "Is None": "#/$defs/IsNoneValue",
+                "Is Not None": "#/$defs/IsNotNoneValue",
+                "String": "#/$defs/StringValue"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/BoolValue"
+              },
+              {
+                "$ref": "#/$defs/StringValue"
+              },
+              {
+                "$ref": "#/$defs/IntValue"
+              },
+              {
+                "$ref": "#/$defs/FloatValue"
+              },
+              {
+                "$ref": "#/$defs/IsNoneValue"
+              },
+              {
+                "$ref": "#/$defs/IsNotNoneValue"
+              }
+            ]
+          },
+          "title": "Values",
+          "type": "array"
+        }
+      },
+      "required": [
+        "key",
+        "values"
+      ],
+      "title": "Attribute Filter",
+      "type": "object"
+    },
+    "AutoTiling": {
+      "additionalProperties": false,
+      "description": "Automatically pick between `Snap to Grid` and `Snap to Corners`.",
+      "properties": {
+        "mode": {
+          "const": "Auto",
+          "default": "Auto",
+          "description": "Automatically use `Snap to Grid` when the field of view positions\nalign to a regular grid, `Snap to Corners` otherwise.",
+          "title": "Mode",
+          "type": "string"
+        },
+        "tolerance": {
+          "default": 1,
+          "description": "Maximum misalignment (in pixels) tolerated when checking whether the\nfield of view positions fit a regular grid.",
+          "minimum": 0,
+          "title": "Tiling Tolerance (in pixels)",
+          "type": "number"
+        }
+      },
+      "title": "Auto",
+      "type": "object"
+    },
+    "BackendType": {
+      "description": "File format used to store tables (e.g. ROI tables) in the OME-Zarr.",
+      "enum": [
+        "anndata",
+        "json",
+        "csv",
+        "parquet"
+      ],
+      "title": "BackendType",
+      "type": "string"
+    },
+    "BoolValue": {
+      "additionalProperties": false,
+      "description": "Match attribute elements equal to a true/false value.",
+      "properties": {
+        "type": {
+          "const": "Bool",
+          "default": "Bool",
+          "description": "Type of the value to match.",
+          "title": "Type",
+          "type": "string"
+        },
+        "value": {
+          "default": true,
+          "description": "The true/false value to match.",
+          "title": "Value",
+          "type": "boolean"
+        }
+      },
+      "title": "Boolean Value",
+      "type": "object"
+    },
+    "ChannelFilter": {
+      "additionalProperties": false,
+      "description": "Keep or remove tiles based on their channel labels.",
+      "properties": {
+        "channel_labels": {
+          "description": "Channel labels to keep (`Include` mode) or remove (`Exclude` mode),\ne.g. `[\"DAPI\", \"GFP\"]`. A tile matches only if *all* of its channels are\nin this list; a partial match **fails the conversion**.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Channel Labels",
+          "type": "array"
+        },
+        "mode": {
+          "default": "Include",
+          "description": "Whether matching tiles are **included** (kept) or **excluded** (removed).",
+          "enum": [
+            "Include",
+            "Exclude"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "name": {
+          "const": "Channel Filter",
+          "default": "Channel Filter",
+          "description": "Name of the filter.",
+          "title": "Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "channel_labels"
+      ],
+      "title": "Channel Filter",
+      "type": "object"
+    },
+    "ChannelInfoUI": {
+      "additionalProperties": false,
+      "description": "Set the name, wavelength, and display color of a channel.",
+      "properties": {
+        "channel_label": {
+          "description": "Name of the channel, e.g. `DAPI` or `GFP`.",
+          "title": "Channel Label",
+          "type": "string"
+        },
+        "color": {
+          "$ref": "#/$defs/ColorMenu",
+          "default": "Auto",
+          "description": "Display color of the channel, e.g. for visualization purposes.",
+          "title": "Color"
+        },
+        "wavelength_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The wavelength ID of the channel.\nSome tasks can use it instead of the channel name, e.g. to apply\nillumination correction per wavelength in multiplexed acquisitions.",
+          "title": "Wavelength ID"
+        }
+      },
+      "required": [
+        "channel_label"
+      ],
+      "title": "ChannelInfoUI",
+      "type": "object"
+    },
+    "ColorMenu": {
+      "description": "Display color of the channel. `Auto` picks a color based on the channel name or wavelength.",
+      "enum": [
+        "Auto",
+        "Blue (#0000FF)",
+        "Red (#FF0000)",
+        "Yellow (#FFFF00)",
+        "Magenta (#FF00FF)",
+        "Cyan (#00FFFF)",
+        "Gray (#808080)",
+        "Green (#00FF00)",
+        "Orange (#FF8000)",
+        "Purple (#8000FF)",
+        "Teal (#008080)",
+        "Lime (#00FF80)",
+        "Amber (#FFBF00)",
+        "Pink (#FF0080)",
+        "Navy (#000080)",
+        "Maroon (#800000)",
+        "Olive (#808000)",
+        "Coral (#FF7F50)",
+        "Violet (#EE82EE)"
+      ],
+      "title": "ColorMenu",
+      "type": "string"
+    },
+    "ConvertParallelInitArgs": {
+      "additionalProperties": false,
+      "description": "Internal data handed from the init phase to compute; *filled automatically*.",
+      "properties": {
+        "converter_options": {
+          "$ref": "#/$defs/ConverterOptions",
+          "description": "Converter options forwarded from the init phase.",
+          "title": "Converter_Options"
+        },
+        "overwrite_mode": {
+          "$ref": "#/$defs/OverwriteMode",
+          "default": "No Overwrite",
+          "description": "Overwrite mode forwarded from the init phase.",
+          "title": "Overwrite_Mode"
+        },
+        "tiled_image_json_dump_url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Location of the temporary file describing the image to convert.",
+          "title": "Tiled Image Json Dump Url"
+        },
+        "tiled_image_json_str": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Inline description of the image to convert (used instead of a\ntemporary file for small conversions).",
+          "title": "Tiled Image Json Str"
+        }
+      },
+      "required": [
+        "converter_options"
+      ],
+      "title": "ConvertParallelInitArgs",
+      "type": "object"
+    },
+    "ConverterOptions": {
+      "additionalProperties": false,
+      "description": "Options for the OME-Zarr conversion process.",
+      "properties": {
+        "grouping": {
+          "default": {
+            "mode": "Mosaic",
+            "tiling_strategy": {
+              "mode": "Auto",
+              "tolerance": 1.0
+            }
+          },
+          "description": "How fields of view are grouped into output images.\n\n- `Mosaic`: Aggregate all fields of view of an acquisition into one OME-Zarr,\n  arranged by the nested `tiling_strategy`.\n- `Per-FOV`: Write each field of view as its own OME-Zarr image (no mosaic,\n  no tiling strategy).",
+          "discriminator": {
+            "mapping": {
+              "Mosaic": "#/$defs/MosaicGrouping",
+              "Per-FOV": "#/$defs/PerFovGrouping"
+            },
+            "propertyName": "mode"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/MosaicGrouping"
+            },
+            {
+              "$ref": "#/$defs/PerFovGrouping"
+            }
+          ],
+          "title": "Grouping"
+        },
+        "omezarr_options": {
+          "$ref": "#/$defs/OmeZarrOptions",
+          "default": {
+            "chunks": {
+              "c_chunk": 1,
+              "mode": "Same as FOV",
+              "t_chunk": 1,
+              "xy_scaling": "1",
+              "z_chunk": 10
+            },
+            "levels": {
+              "mode": "Number of Levels",
+              "num_levels": 5
+            },
+            "ngff_version": "0.4",
+            "table_backend": "csv"
+          },
+          "description": "Options specific to OME-Zarr writing.",
+          "title": "OME-Zarr Options"
+        },
+        "runtime_settings": {
+          "$ref": "#/$defs/RuntimeSettings",
+          "default": {
+            "dask_scheduler": {
+              "mode": "Default"
+            },
+            "temp_json_options": {
+              "max_in_memory_bytes": 10485760,
+              "serialization": "Auto",
+              "temp_url": "{zarr_dir}/_tmp_json"
+            },
+            "use_zarrs_codec": false
+          },
+          "description": "Advanced performance settings: parallelism, storage codec, and\ntemporary storage. The defaults are safe for most conversions.",
+          "title": "Runtime Settings"
+        },
+        "stage_position_corrections": {
+          "$ref": "#/$defs/StagePositionCorrections",
+          "default": {
+            "reindex_channels": true,
+            "remove_t_offset": "Global",
+            "remove_xy_jitter": true,
+            "remove_xy_offset": "Global",
+            "remove_z_offset": "Global"
+          },
+          "description": "Stage position correction options.",
+          "title": "Stage Position Corrections"
+        },
+        "writer_mode": {
+          "$ref": "#/$defs/WriterMode",
+          "default": "By FOV",
+          "description": "Mode for writing data during conversion.\n\n- `By Tile`: Write data one tile at a time. This consumes less memory, but may be\n  slower.\n- `By Tile (Using Dask)`: Write tiles in parallel using Dask. This is\n  usually faster than writing by tile sequentially, but may consume more\n  memory.\n- `By FOV`: Write data one field of view at a time. Often the best compromise\n  between speed and memory usage in most cases.\n- `By FOV (Using Dask)`: Write fields of view in parallel using Dask.\n  This is usually faster than writing by FOV sequentially, but may consume\n  more memory.\n- `In Memory`: Load all data into memory before writing.",
+          "title": "Writer Mode"
+        }
+      },
+      "title": "ConverterOptions",
+      "type": "object"
+    },
+    "DataTypeEnum": {
+      "description": "Pixel data type of the output image; `autodetect` infers it.",
+      "enum": [
+        "autodetect",
+        "uint8",
+        "uint16",
+        "uint32"
+      ],
+      "title": "DataTypeEnum",
+      "type": "string"
+    },
+    "DefaultScheduler": {
+      "additionalProperties": false,
+      "description": "Keep the environment's default parallelism settings unchanged.",
+      "properties": {
+        "mode": {
+          "const": "Default",
+          "default": "Default",
+          "description": "How the conversion work is parallelized.",
+          "title": "Mode",
+          "type": "string"
+        }
+      },
+      "title": "Default",
+      "type": "object"
+    },
+    "FixedSizeChunking": {
+      "additionalProperties": false,
+      "description": "Store the image in chunks of a fixed size.",
+      "properties": {
+        "c_chunk": {
+          "default": 1,
+          "description": "Chunk size for C dimension.",
+          "minimum": 1,
+          "title": "Chunk Size for C",
+          "type": "integer"
+        },
+        "mode": {
+          "const": "Fixed Size",
+          "default": "Fixed Size",
+          "description": "How the image is split into storage chunks.",
+          "title": "Mode",
+          "type": "string"
+        },
+        "t_chunk": {
+          "default": 1,
+          "description": "Chunk size for T dimension.",
+          "minimum": 1,
+          "title": "Chunk Size for T",
+          "type": "integer"
+        },
+        "xy_chunk": {
+          "default": 4096,
+          "description": "Chunk size for XY dimensions.",
+          "minimum": 1,
+          "title": "Chunk Size for XY",
+          "type": "integer"
+        },
+        "z_chunk": {
+          "default": 10,
+          "description": "Chunk size for Z dimension.",
+          "minimum": 1,
+          "title": "Chunk Size for Z",
+          "type": "integer"
+        }
+      },
+      "title": "Fixed Size",
+      "type": "object"
+    },
+    "FloatValue": {
+      "additionalProperties": false,
+      "description": "Match attribute elements equal to a decimal value.",
+      "properties": {
+        "type": {
+          "const": "Float",
+          "default": "Float",
+          "description": "Type of the value to match.",
+          "title": "Type",
+          "type": "string"
+        },
+        "value": {
+          "description": "The decimal value to match.",
+          "title": "Value",
+          "type": "number"
+        }
+      },
+      "required": [
+        "value"
+      ],
+      "title": "Float Value",
+      "type": "object"
+    },
+    "FovBasedChunking": {
+      "additionalProperties": false,
+      "description": "Store the image in chunks sized like the fields of view.",
+      "properties": {
+        "c_chunk": {
+          "default": 1,
+          "description": "Chunk size for C dimension.",
+          "minimum": 1,
+          "title": "Chunk Size for C",
+          "type": "integer"
+        },
+        "mode": {
+          "const": "Same as FOV",
+          "default": "Same as FOV",
+          "description": "How the image is split into storage chunks.",
+          "title": "Mode",
+          "type": "string"
+        },
+        "t_chunk": {
+          "default": 1,
+          "description": "Chunk size for T dimension.",
+          "minimum": 1,
+          "title": "Chunk Size for T",
+          "type": "integer"
+        },
+        "xy_scaling": {
+          "$ref": "#/$defs/Scalings",
+          "default": "1",
+          "description": "Scaling factor for the XY chunk size, relative to the field of view size.\n\n- `1`: chunks match the field of view size.\n- `0.5`: chunks are half the field of view (smaller chunks, more files).\n- `2`: chunks are double the field of view (larger chunks, fewer files).",
+          "title": "XY Scaling Factor"
+        },
+        "z_chunk": {
+          "default": 10,
+          "description": "Chunk size for Z dimension.",
+          "minimum": 1,
+          "title": "Chunk Size for Z",
+          "type": "integer"
+        }
+      },
+      "title": "Same as FOV",
+      "type": "object"
+    },
+    "FovNameFilter": {
+      "additionalProperties": false,
+      "description": "Keep or remove tiles based on their field of view name.",
+      "properties": {
+        "mode": {
+          "default": "Include",
+          "description": "Whether matching tiles are **included** (kept) or **excluded** (removed).",
+          "enum": [
+            "Include",
+            "Exclude"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "name": {
+          "const": "FOV Name Filter",
+          "default": "FOV Name Filter",
+          "description": "Name of the filter.",
+          "title": "Name",
+          "type": "string"
+        },
+        "regex": {
+          "description": "Regex pattern matched against the tile's `fov_name`.\n\n- `Include`: matching tiles are kept, all others removed.\n- `Exclude`: matching tiles are removed, all others kept.",
+          "title": "Regex",
+          "type": "string"
+        }
+      },
+      "required": [
+        "regex"
+      ],
+      "title": "FOV Name Filter",
+      "type": "object"
+    },
+    "InplaceTiling": {
+      "additionalProperties": false,
+      "description": "Keep every field of view at its original stage position.",
+      "properties": {
+        "mode": {
+          "const": "Inplace",
+          "default": "Inplace",
+          "description": "Keep every field of view at its original stage position. Imprecise\nstage positions **may produce artifacts**: where tiles overlap, the last\nwritten tile wins.",
+          "title": "Mode",
+          "type": "string"
+        }
+      },
+      "title": "Inplace",
+      "type": "object"
+    },
+    "IntValue": {
+      "additionalProperties": false,
+      "description": "Match attribute elements equal to an integer value.",
+      "properties": {
+        "type": {
+          "const": "Integer",
+          "default": "Integer",
+          "description": "Type of the value to match.",
+          "title": "Type",
+          "type": "string"
+        },
+        "value": {
+          "description": "The integer value to match.",
+          "title": "Value",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "value"
+      ],
+      "title": "Integer Value",
+      "type": "object"
+    },
+    "IsNoneValue": {
+      "additionalProperties": false,
+      "description": "Match attribute elements that have no value (are `None`).",
+      "properties": {
+        "type": {
+          "const": "Is None",
+          "default": "Is None",
+          "description": "Type of the value to match.",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "Is None",
+      "type": "object"
+    },
+    "IsNotNoneValue": {
+      "additionalProperties": false,
+      "description": "Match attribute elements that have any value (are not `None`).",
+      "properties": {
+        "type": {
+          "const": "Is Not None",
+          "default": "Is Not None",
+          "description": "Type of the value to match.",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "Is Not None",
+      "type": "object"
+    },
+    "MosaicGrouping": {
+      "additionalProperties": false,
+      "description": "Aggregate all fields of view of an acquisition into one mosaic OME-Zarr.",
+      "properties": {
+        "mode": {
+          "const": "Mosaic",
+          "default": "Mosaic",
+          "description": "How fields of view are grouped into output images.",
+          "title": "Mode",
+          "type": "string"
+        },
+        "tiling_strategy": {
+          "default": {
+            "mode": "Auto",
+            "tolerance": 1.0
+          },
+          "description": "How the fields of view are arranged within the mosaic.\n\n- `Auto`: Automatically determine if `Snap to Grid` is possible,\n  otherwise use `Snap to Corners`. Accepts an optional tolerance\n  (in pixels) for grid alignment.\n- `Snap to Grid`: Tile images to fit a regular grid. This is only\n  possible if image positions align to a grid (potentially with\n  overlap). Accepts an optional tolerance (in pixels).\n- `Snap to Corners`: Tile images to fit a grid defined by the corner\n  positions.\n- `Inplace`: Write tiles in their original positions without tiling.\n  This may lead to artifacts if microscope stage positions are not\n  precise.",
+          "discriminator": {
+            "mapping": {
+              "Auto": "#/$defs/AutoTiling",
+              "Inplace": "#/$defs/InplaceTiling",
+              "Snap to Corners": "#/$defs/SnapToCornersTiling",
+              "Snap to Grid": "#/$defs/SnapToGridTiling"
+            },
+            "propertyName": "mode"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/AutoTiling"
+            },
+            {
+              "$ref": "#/$defs/SnapToGridTiling"
+            },
+            {
+              "$ref": "#/$defs/SnapToCornersTiling"
+            },
+            {
+              "$ref": "#/$defs/InplaceTiling"
+            }
+          ],
+          "title": "Tiling Strategy"
+        }
+      },
+      "title": "Mosaic",
+      "type": "object"
+    },
+    "NamedLevels": {
+      "additionalProperties": false,
+      "description": "Name each resolution level explicitly, from highest to lowest resolution.",
+      "properties": {
+        "level_names": {
+          "description": "Names of the resolution levels, from highest to lowest resolution,\ne.g. `[\"s0\", \"s1\", \"s2\"]`. Each name becomes a path inside the OME-Zarr.",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Level Names",
+          "type": "array"
+        },
+        "mode": {
+          "const": "Custom Names",
+          "default": "Custom Names",
+          "description": "How the resolution levels of the pyramid are defined.",
+          "title": "Mode",
+          "type": "string"
+        }
+      },
+      "required": [
+        "level_names"
+      ],
+      "title": "Custom Names",
+      "type": "object"
+    },
+    "NumberOfLevels": {
+      "additionalProperties": false,
+      "description": "Create a number of resolution levels with default names (`0`, `1`, ...).",
+      "properties": {
+        "mode": {
+          "const": "Number of Levels",
+          "default": "Number of Levels",
+          "description": "How the resolution levels of the pyramid are defined.",
+          "title": "Mode",
+          "type": "string"
+        },
+        "num_levels": {
+          "default": 5,
+          "description": "Number of resolution levels in the pyramid of the output image.",
+          "minimum": 1,
+          "title": "Number of Resolution Levels",
+          "type": "integer"
+        }
+      },
+      "title": "Number of Levels",
+      "type": "object"
+    },
+    "OmeZarrOptions": {
+      "additionalProperties": false,
+      "description": "Options controlling the layout of the output OME-Zarr.",
+      "properties": {
+        "chunks": {
+          "default": {
+            "c_chunk": 1,
+            "mode": "Same as FOV",
+            "t_chunk": 1,
+            "xy_scaling": "1",
+            "z_chunk": 10
+          },
+          "description": "How the image is split into storage chunks: sized like the fields of\nview (`Same as FOV`) or with fixed sizes (`Fixed Size`).",
+          "discriminator": {
+            "mapping": {
+              "Fixed Size": "#/$defs/FixedSizeChunking",
+              "Same as FOV": "#/$defs/FovBasedChunking"
+            },
+            "propertyName": "mode"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/FovBasedChunking"
+            },
+            {
+              "$ref": "#/$defs/FixedSizeChunking"
+            }
+          ],
+          "title": "Chunking Strategy"
+        },
+        "levels": {
+          "default": {
+            "mode": "Number of Levels",
+            "num_levels": 5
+          },
+          "description": "How many resolution levels the output pyramid has and how they are named.\n\n- `Number of Levels`: a number of levels with the default names\n  (`0`, `1`, ...).\n- `Custom Names`: an explicit list of level names, e.g. `[\"s0\", \"s1\"]`.",
+          "discriminator": {
+            "mapping": {
+              "Custom Names": "#/$defs/NamedLevels",
+              "Number of Levels": "#/$defs/NumberOfLevels"
+            },
+            "propertyName": "mode"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/NumberOfLevels"
+            },
+            {
+              "$ref": "#/$defs/NamedLevels"
+            }
+          ],
+          "title": "Resolution Levels"
+        },
+        "ngff_version": {
+          "default": "0.4",
+          "description": "Version of the OME-NGFF specification to target.",
+          "enum": [
+            "0.4",
+            "0.5"
+          ],
+          "title": "NGFF Version",
+          "type": "string"
+        },
+        "table_backend": {
+          "$ref": "#/$defs/BackendType",
+          "default": "csv",
+          "description": "File format used to store tables (e.g. ROI tables) inside the\nOME-Zarr.",
+          "title": "Table Backend"
+        }
+      },
+      "title": "OmeZarrOptions",
+      "type": "object"
+    },
+    "OverwriteMode": {
+      "description": "How to handle existing output data: fail, replace, or extend it.",
+      "enum": [
+        "No Overwrite",
+        "Overwrite",
+        "Extend"
+      ],
+      "title": "OverwriteMode",
+      "type": "string"
+    },
+    "PerFovGrouping": {
+      "additionalProperties": false,
+      "description": "Write each field of view as its own OME-Zarr image (no mosaic).",
+      "properties": {
+        "mode": {
+          "const": "Per-FOV",
+          "default": "Per-FOV",
+          "description": "How fields of view are grouped into output images.",
+          "title": "Mode",
+          "type": "string"
+        }
+      },
+      "title": "Per-FOV",
+      "type": "object"
+    },
+    "PixelSizeModel": {
+      "additionalProperties": false,
+      "description": "Override the pixel size and the Z/time spacing of the images.",
+      "properties": {
+        "t_spacing": {
+          "description": "Time spacing in seconds.",
+          "title": "Time Spacing",
+          "type": "number"
+        },
+        "xy_pixel_size": {
+          "description": "XY pixel size in micrometers.",
+          "title": "XY Pixel Size",
+          "type": "number"
+        },
+        "z_spacing": {
+          "description": "Z spacing in micrometers.",
+          "title": "Z Spacing",
+          "type": "number"
+        }
+      },
+      "required": [
+        "xy_pixel_size",
+        "z_spacing",
+        "t_spacing"
+      ],
+      "title": "PixelSizeModel",
+      "type": "object"
+    },
+    "ProcessScheduler": {
+      "additionalProperties": false,
+      "description": "Parallelize the conversion using multiple processes.",
+      "properties": {
+        "mode": {
+          "const": "Processes",
+          "default": "Processes",
+          "description": "How the conversion work is parallelized.",
+          "title": "Mode",
+          "type": "string"
+        },
+        "num_workers": {
+          "default": 8,
+          "description": "Number of worker processes to use. Must be at least 1.",
+          "minimum": 1,
+          "title": "Number of Processes",
+          "type": "integer"
+        }
+      },
+      "title": "Processes",
+      "type": "object"
+    },
+    "RegexFilter": {
+      "additionalProperties": false,
+      "description": "Keep or remove tiles based on their output image path.",
+      "properties": {
+        "mode": {
+          "default": "Include",
+          "description": "Whether matching tiles are **included** (kept) or **excluded** (removed).",
+          "enum": [
+            "Include",
+            "Exclude"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "name": {
+          "const": "Path Regex Filter",
+          "default": "Path Regex Filter",
+          "description": "Name of the filter.",
+          "title": "Name",
+          "type": "string"
+        },
+        "regex": {
+          "description": "Regex pattern matched against the tile's base path.\n\n- `Include`: matching tiles are kept, all others removed.\n- `Exclude`: matching tiles are removed, all others kept.",
+          "title": "Regex",
+          "type": "string"
+        }
+      },
+      "required": [
+        "regex"
+      ],
+      "title": "Path Regex Filter",
+      "type": "object"
+    },
+    "RuntimeSettings": {
+      "additionalProperties": false,
+      "description": "Advanced performance settings; the defaults suit most conversions.",
+      "properties": {
+        "dask_scheduler": {
+          "default": {
+            "mode": "Default"
+          },
+          "description": "How the conversion work is parallelized.\n\n- `Threads`: parallelize using multiple threads.\n- `Processes`: parallelize using multiple processes.\n- `Synchronous`: run sequentially, without parallelism.\n- `Default`: keep the environment's parallelism settings unchanged.",
+          "discriminator": {
+            "mapping": {
+              "Default": "#/$defs/DefaultScheduler",
+              "Processes": "#/$defs/ProcessScheduler",
+              "Synchronous": "#/$defs/SynchronousScheduler",
+              "Threads": "#/$defs/ThreadScheduler"
+            },
+            "propertyName": "mode"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/ThreadScheduler"
+            },
+            {
+              "$ref": "#/$defs/ProcessScheduler"
+            },
+            {
+              "$ref": "#/$defs/SynchronousScheduler"
+            },
+            {
+              "$ref": "#/$defs/DefaultScheduler"
+            }
+          ],
+          "title": "Dask Scheduler"
+        },
+        "temp_json_options": {
+          "$ref": "#/$defs/TempJsonOptions",
+          "default": {
+            "max_in_memory_bytes": 10485760,
+            "serialization": "Auto",
+            "temp_url": "{zarr_dir}/_tmp_json"
+          },
+          "description": "Where and when intermediate conversion data is stored on disk.",
+          "title": "Temporary JSON Options"
+        },
+        "use_zarrs_codec": {
+          "default": false,
+          "description": "Read and write image data with the `zarrs` Rust backend, which is\nusually faster. **Requires** the optional `zarrs` dependency to be\ninstalled.",
+          "title": "Use Zarrs Codec Pipeline",
+          "type": "boolean"
+        }
+      },
+      "title": "RuntimeSettings",
+      "type": "object"
+    },
+    "Scalings": {
+      "description": "Scaling factor applied to the field of view size to get the chunk size.",
+      "enum": [
+        "0.25",
+        "0.5",
+        "1",
+        "2",
+        "4"
+      ],
+      "title": "Scalings",
+      "type": "string"
+    },
+    "SnapToCornersTiling": {
+      "additionalProperties": false,
+      "description": "Arrange the fields of view on a grid defined by their corners.",
+      "properties": {
+        "mode": {
+          "const": "Snap to Corners",
+          "default": "Snap to Corners",
+          "description": "Arrange the fields of view on a grid defined by their corner\npositions.",
+          "title": "Mode",
+          "type": "string"
+        }
+      },
+      "title": "Snap to Corners",
+      "type": "object"
+    },
+    "SnapToGridTiling": {
+      "additionalProperties": false,
+      "description": "Arrange the fields of view on a regular grid.",
+      "properties": {
+        "mode": {
+          "const": "Snap to Grid",
+          "default": "Snap to Grid",
+          "description": "Arrange the fields of view on a regular grid. Only possible when\ntheir positions already align to a grid (potentially with overlap).",
+          "title": "Mode",
+          "type": "string"
+        },
+        "tolerance": {
+          "default": 1,
+          "description": "Maximum misalignment (in pixels) tolerated when checking whether the\nfield of view positions fit a regular grid.",
+          "minimum": 0,
+          "title": "Tiling Tolerance (in pixels)",
+          "type": "number"
+        }
+      },
+      "title": "Snap to Grid",
+      "type": "object"
+    },
+    "StageOrientation": {
+      "additionalProperties": false,
+      "description": "Corrections for the stage orientation relative to the image axes.",
+      "properties": {
+        "flip_x": {
+          "default": false,
+          "description": "Whether to flip the position along the X axis.",
+          "title": "Flip X",
+          "type": "boolean"
+        },
+        "flip_y": {
+          "default": false,
+          "description": "Whether to flip the position along the Y axis.",
+          "title": "Flip Y",
+          "type": "boolean"
+        },
+        "swap_xy": {
+          "default": false,
+          "description": "Whether to swap the positions along the X and Y axes.",
+          "title": "Swap XY",
+          "type": "boolean"
+        }
+      },
+      "title": "StageOrientation",
+      "type": "object"
+    },
+    "StagePositionCorrections": {
+      "additionalProperties": false,
+      "description": "Corrections applied to the stage positions before writing the image.",
+      "properties": {
+        "reindex_channels": {
+          "default": true,
+          "description": "If enabled, only the channels actually present are converted; if\ndisabled, missing channels are stored as empty images.",
+          "title": "Reindex Channels",
+          "type": "boolean"
+        },
+        "remove_t_offset": {
+          "default": "Global",
+          "description": "Whether to shift the image so its time origin is 0.\n\n- `Global`: Shift all positions together so the time origin is 0.\n- `Keep`: Use the stage positions as-is. **Fails** if any position is\n  negative; positive positions produce empty padding at the image origin.",
+          "enum": [
+            "Keep",
+            "Global"
+          ],
+          "title": "Remove T Offset",
+          "type": "string"
+        },
+        "remove_xy_jitter": {
+          "default": true,
+          "description": "Remove small stage position inconsistencies within a field of view by\nsnapping its sub-tiles to a shared origin.",
+          "title": "Remove XY Jitter",
+          "type": "boolean"
+        },
+        "remove_xy_offset": {
+          "default": "Global",
+          "description": "Whether to shift the image so its XY origin is 0.\n\n- `Global`: Shift all positions together so the image origin is 0.\n- `Keep`: Use the stage positions as-is. **Fails** if any position is\n  negative; positive positions produce empty padding at the image origin.",
+          "enum": [
+            "Keep",
+            "Global"
+          ],
+          "title": "Remove XY Offset",
+          "type": "string"
+        },
+        "remove_z_offset": {
+          "default": "Global",
+          "description": "Whether to shift the image so its Z origin is 0.\n\n- `Global`: Shift all positions together so the Z origin is 0.\n- `Per-FOV`: Shift each field of view independently to Z origin 0.\n- `Keep`: Use the stage positions as-is. **Fails** if any position is\n  negative; positive positions produce empty padding at the image origin.",
+          "enum": [
+            "Keep",
+            "Per-FOV",
+            "Global"
+          ],
+          "title": "Remove Z Offset",
+          "type": "string"
+        }
+      },
+      "title": "StagePositionCorrections",
+      "type": "object"
+    },
+    "StringValue": {
+      "additionalProperties": false,
+      "description": "Match attribute elements equal to a text value.",
+      "properties": {
+        "type": {
+          "const": "String",
+          "default": "String",
+          "description": "Type of the value to match.",
+          "title": "Type",
+          "type": "string"
+        },
+        "value": {
+          "description": "The text value to match.",
+          "title": "Value",
+          "type": "string"
+        }
+      },
+      "required": [
+        "value"
+      ],
+      "title": "String Value",
+      "type": "object"
+    },
+    "SynchronousScheduler": {
+      "additionalProperties": false,
+      "description": "Run the conversion sequentially, without parallelism.",
+      "properties": {
+        "mode": {
+          "const": "Synchronous",
+          "default": "Synchronous",
+          "description": "How the conversion work is parallelized.",
+          "title": "Mode",
+          "type": "string"
+        }
+      },
+      "title": "Synchronous",
+      "type": "object"
+    },
+    "TRangeFilter": {
+      "additionalProperties": false,
+      "description": "Keep only tiles whose starting time point lies within a range.",
+      "properties": {
+        "max_t": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Maximum starting time point (inclusive). Leave empty for no upper\nbound. Tiles are kept or dropped **whole**, judged by their starting time\npoint only.",
+          "title": "Max T"
+        },
+        "min_t": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Minimum starting time point (inclusive). Leave empty for no lower\nbound. Tiles are kept or dropped **whole**, judged by their starting time\npoint only.",
+          "title": "Min T"
+        },
+        "name": {
+          "const": "Time Range Filter",
+          "default": "Time Range Filter",
+          "description": "Name of the filter.",
+          "title": "Name",
+          "type": "string"
+        }
+      },
+      "title": "Time Range Filter",
+      "type": "object"
+    },
+    "TempJsonOptions": {
+      "additionalProperties": false,
+      "description": "Where and when intermediate conversion data is stored on disk.",
+      "properties": {
+        "max_in_memory_bytes": {
+          "default": 10485760,
+          "description": "Maximum total size of serialized tiled image data to keep in-memory\nbetween init and compute phases when `serialization` is `Auto`.\nIf the total size exceeds this threshold, data will be written to temporary\nJSON files on disk instead. Default is 10 MiB.",
+          "minimum": 1,
+          "title": "Max In-Memory Bytes",
+          "type": "integer"
+        },
+        "serialization": {
+          "default": "Auto",
+          "description": "Serialization mode for tiled image data between init and compute phases.\n\n- `Memory`: always keep data in-memory (skips all filesystem I/O).\n- `JSON`: always write to a temporary JSON file on disk (**required** for\n  distributed Fractal runs where init and compute execute on different\n  machines).\n- `Auto`: use in-memory when the total serialized payload is within\n  `max_in_memory_bytes` (default 10 MiB), otherwise fall back to JSON files\n  on disk.",
+          "enum": [
+            "Auto",
+            "Memory",
+            "JSON"
+          ],
+          "title": "Serialization",
+          "type": "string"
+        },
+        "temp_url": {
+          "default": "{zarr_dir}/_tmp_json",
+          "description": "Where intermediate JSON files are written. The `{zarr_dir}`\nplaceholder is replaced by the task's output directory.",
+          "title": "Temporary Storage URL",
+          "type": "string"
+        }
+      },
+      "title": "TempJsonOptions",
+      "type": "object"
+    },
+    "ThreadScheduler": {
+      "additionalProperties": false,
+      "description": "Parallelize the conversion using multiple threads.",
+      "properties": {
+        "mode": {
+          "const": "Threads",
+          "default": "Threads",
+          "description": "How the conversion work is parallelized.",
+          "title": "Mode",
+          "type": "string"
+        },
+        "num_workers": {
+          "default": 8,
+          "description": "Number of worker threads to use. Must be at least 1.",
+          "minimum": 1,
+          "title": "Number of Threads",
+          "type": "integer"
+        }
+      },
+      "title": "Threads",
+      "type": "object"
+    },
+    "WellFilter": {
+      "additionalProperties": false,
+      "description": "Keep or remove tiles based on the well they belong to (plates only).",
+      "properties": {
+        "mode": {
+          "default": "Include",
+          "description": "Whether matching tiles are **included** (kept) or **excluded** (removed).",
+          "enum": [
+            "Include",
+            "Exclude"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "name": {
+          "const": "Well Filter",
+          "default": "Well Filter",
+          "description": "Name of the filter.",
+          "title": "Name",
+          "type": "string"
+        },
+        "wells": {
+          "description": "List of well identifiers to keep (`Include` mode) or remove\n(`Exclude` mode), e.g. `[\"A01\", \"B02\"]`.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Wells",
+          "type": "array"
+        }
+      },
+      "required": [
+        "wells"
+      ],
+      "title": "Well Filter",
+      "type": "object"
+    },
+    "WriterMode": {
+      "description": "How image data is written, trading off speed against memory usage.",
+      "enum": [
+        "By Tile",
+        "By FOV",
+        "By FOV (Using Dask)",
+        "By Tile (Using Dask)",
+        "In Memory"
+      ],
+      "title": "WriterMode",
+      "type": "string"
+    },
+    "ZRangeFilter": {
+      "additionalProperties": false,
+      "description": "Keep only tiles whose starting Z position lies within a range.",
+      "properties": {
+        "max_z": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Maximum starting Z position (inclusive). Leave empty for no upper\nbound. Tiles are kept or dropped **whole**, judged by their starting Z\nposition only.",
+          "title": "Max Z"
+        },
+        "min_z": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Minimum starting Z position (inclusive). Leave empty for no lower\nbound. Tiles are kept or dropped **whole**, judged by their starting Z\nposition only.",
+          "title": "Min Z"
+        },
+        "name": {
+          "const": "Z Range Filter",
+          "default": "Z Range Filter",
+          "description": "Name of the filter.",
+          "title": "Name",
+          "type": "string"
+        }
+      },
+      "title": "Z Range Filter",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "acquisitions": {
+      "description": "List of raw acquisitions to convert to OME-Zarr.",
+      "items": {
+        "$ref": "#/$defs/AcquisitionOptions"
+      },
+      "title": "Acquisitions",
+      "type": "array"
+    },
+    "converter_options": {
+      "$ref": "#/$defs/ConverterOptions",
+      "default": {
+        "grouping": {
+          "mode": "Mosaic",
+          "tiling_strategy": {
+            "mode": "Auto",
+            "tolerance": 1.0
+          }
+        },
+        "omezarr_options": {
+          "chunks": {
+            "c_chunk": 1,
+            "mode": "Same as FOV",
+            "t_chunk": 1,
+            "xy_scaling": "1",
+            "z_chunk": 10
+          },
+          "levels": {
+            "mode": "Number of Levels",
+            "num_levels": 5
+          },
+          "ngff_version": "0.4",
+          "table_backend": "csv"
+        },
+        "runtime_settings": {
+          "dask_scheduler": {
+            "mode": "Default"
+          },
+          "temp_json_options": {
+            "max_in_memory_bytes": 10485760,
+            "serialization": "Auto",
+            "temp_url": "{zarr_dir}/_tmp_json"
+          },
+          "use_zarrs_codec": false
+        },
+        "stage_position_corrections": {
+          "reindex_channels": true,
+          "remove_t_offset": "Global",
+          "remove_xy_jitter": true,
+          "remove_xy_offset": "Global",
+          "remove_z_offset": "Global"
+        },
+        "writer_mode": "By FOV"
+      },
+      "description": "Advanced converter options.",
+      "title": "Converter Options"
+    },
+    "init_args": {
+      "$ref": "#/$defs/ConvertParallelInitArgs",
+      "description": "Arguments forwarded from the init task to the compute task.",
+      "title": "Init Args"
+    },
+    "overwrite": {
+      "$ref": "#/$defs/OverwriteMode",
+      "default": "No Overwrite",
+      "description": "Overwrite mode for existing data.",
+      "title": "Overwrite"
+    },
+    "zarr_dir": {
+      "description": "Directory to store the Zarr files.",
+      "title": "Zarr Dir",
+      "type": "string"
+    }
+  },
+  "required": [
+    "zarr_dir",
+    "acquisitions",
+    "init_args"
+  ],
+  "title": "SchemaSurfaceTask",
+  "type": "object"
+}

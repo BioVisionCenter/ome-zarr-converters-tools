@@ -13,12 +13,20 @@ sha256 hash of the rounded array). Generation and validation share a single code
 path: `build_snapshot` reads the converted output into a model, which is either
 written to disk (update mode) or compared field-by-field against the on-disk
 model (`compare_snapshots`).
+
+Each snapshot also carries a top-level `versions` block recording the versions of
+key dependencies (this package, ngio, zarr, numpy, dask, tifffile, pillow,
+pydantic, and Python) at generation time. It is informational only and is never
+compared -- a version drift must not fail a test; it exists to help diagnose a
+snapshot discrepancy caused by an upstream change.
 """
 
 import hashlib
 import json
 import math
+import platform
 from collections.abc import Callable
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Literal
 
@@ -28,6 +36,7 @@ from ngio import (
     open_ome_zarr_container,
     open_ome_zarr_plate,
 )
+from ngio.utils import NgioValueError
 from pydantic import BaseModel, Field, model_validator
 
 from ome_zarr_converters_tools.models._converter_options import (
@@ -41,6 +50,34 @@ from ome_zarr_converters_tools.models._converter_options import (
 _FINGERPRINT_DECIMALS = 6
 _STAT_REL_TOL = 1e-6
 _STAT_ABS_TOL = 1e-6
+
+# Dependencies whose versions are recorded in each snapshot's informational
+# `versions` block (never compared). Covers the full write/read stack that can
+# shift metadata or pixel hashes between environments.
+_VERSIONED_PACKAGES = (
+    "ome-zarr-converters-tools",
+    "ngio",
+    "zarr",
+    "numpy",
+    "dask",
+    "tifffile",
+    "pillow",
+    "pydantic",
+)
+
+
+def _collect_versions() -> dict[str, str | None]:
+    """Collect versions of key dependencies for the informational snapshot block.
+
+    A package that is not installed is recorded as `None` rather than raising.
+    """
+    versions: dict[str, str | None] = {"python": platform.python_version()}
+    for pkg in _VERSIONED_PACKAGES:
+        try:
+            versions[pkg] = version(pkg)
+        except PackageNotFoundError:
+            versions[pkg] = None
+    return versions
 
 
 class FingerprintModel(BaseModel):
@@ -122,15 +159,19 @@ class PlateAssertionModel(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def validate_images(cls, values):
-        """Deep-merge `images_common` into every image entry."""
+        """Deep-merge `images_common` into every image entry.
+
+        `images_common` provides shared defaults; per-image values override them.
+        """
         common_assertions = values.pop("images_common", {})
         images = values.get("images", {})
         updated_image_assertions = {}
         for image_path, image_assertions in images.items():
-            for key in image_assertions.keys():
-                if key in common_assertions:
-                    image_assertions = _deep_merge(image_assertions, common_assertions)
-            updated_image_assertions[image_path] = image_assertions
+            # Common first (base), image second (overrides), for every image —
+            # including keys the image does not itself specify.
+            updated_image_assertions[image_path] = _deep_merge(
+                common_assertions, image_assertions
+            )
         values["images"] = updated_image_assertions
         return values
 
@@ -138,12 +179,16 @@ class PlateAssertionModel(BaseModel):
 class MultiPlateAssertionModel(BaseModel):
     """Snapshot for HCS plate output: one or more plates keyed by zarr name."""
 
+    # Informational only; recorded at generation time, never compared.
+    versions: dict[str, str | None] = Field(default_factory=dict)
     plates: dict[str, PlateAssertionModel]
 
 
 class MultiSingleImageAssertionModel(BaseModel):
     """Snapshot for single-image output: images keyed by zarr name."""
 
+    # Informational only; recorded at generation time, never compared.
+    versions: dict[str, str | None] = Field(default_factory=dict)
     images: dict[str, ImageAssertionModel]
 
 
@@ -173,7 +218,10 @@ def _build_image_entry(*, ome_zarr_image: OmeZarrContainer, upd: dict | None) ->
         for table_name in sorted(table_names):
             try:
                 roi_table = ome_zarr_image.get_roi_table(table_name)
-            except Exception:
+            except NgioValueError:
+                # Not a ROI table (e.g. a condition table) — recorded as None.
+                # Anything else (corrupt store, validation failure) propagates
+                # so a broken table can't silently pass snapshot validation.
                 tables_dict[table_name] = None
                 continue
             rois_dict = {}
@@ -261,7 +309,9 @@ def build_snapshot(
 
     This is the single source of truth for both snapshot generation and
     validation: the returned model is either written to disk or compared against
-    the on-disk expectation.
+    the on-disk expectation. The returned model also carries an informational
+    `versions` block (dependency versions at generation time), which is never
+    compared.
 
     Args:
         zarr_dir: Directory the converter wrote its output into.
@@ -270,12 +320,17 @@ def build_snapshot(
             individual containers at the top level of `zarr_dir`.
     """
     if output_type == "plate":
-        return _build_plate_snapshot(
+        model: MultiPlateAssertionModel | MultiSingleImageAssertionModel = (
+            _build_plate_snapshot(
+                zarr_dir=zarr_dir, image_list_updates=image_list_updates
+            )
+        )
+    else:
+        model = _build_single_image_snapshot(
             zarr_dir=zarr_dir, image_list_updates=image_list_updates
         )
-    return _build_single_image_snapshot(
-        zarr_dir=zarr_dir, image_list_updates=image_list_updates
-    )
+    model.versions = _collect_versions()
+    return model
 
 
 # --------------------------------------------------------------------------- #
@@ -387,6 +442,9 @@ def compare_snapshots(
     Returns a list of human-readable, fully-pathed difference messages (empty
     when the snapshots match). Floating-point stats use a tolerance; the sha256
     pixel hash and structural fields are compared exactly.
+
+    The `versions` block is deliberately not compared: it is informational only
+    (a dependency version drift must never fail a snapshot test).
     """
     diffs: list[str] = []
     if isinstance(expected, MultiPlateAssertionModel) and isinstance(

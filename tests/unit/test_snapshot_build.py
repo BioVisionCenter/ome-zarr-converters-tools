@@ -19,7 +19,10 @@ from ome_zarr_converters_tools.testing import (
     build_snapshot,
     run_converter_test,
 )
-from ome_zarr_converters_tools.testing._snapshot import _load_snapshot
+from ome_zarr_converters_tools.testing._snapshot import (
+    _load_snapshot,
+    compare_snapshots,
+)
 
 
 def _make_container(
@@ -126,6 +129,36 @@ def test_build_snapshot_plate(tmp_path):
     plate = model.plates["plate.zarr"]
     assert set(plate.wells) == {"B/03"}
     assert "B/03/0" in plate.images
+
+
+def test_build_snapshot_records_versions(tmp_path):
+    out = tmp_path / "output"
+    out.mkdir()
+    _make_container(str(out / "img.zarr"))
+    updates = [
+        {"image_list_updates": [{"zarr_url": str(out / "img.zarr"), "types": {}}]}
+    ]
+    model = build_snapshot(
+        zarr_dir=out, image_list_updates=updates, output_type="single_image"
+    )
+    for key in ("python", "ome-zarr-converters-tools", "ngio", "zarr"):
+        assert model.versions.get(key), f"missing version for {key}"
+
+
+def test_compare_snapshots_ignores_versions(tmp_path):
+    out = tmp_path / "output"
+    out.mkdir()
+    _make_container(str(out / "img.zarr"))
+    updates = [
+        {"image_list_updates": [{"zarr_url": str(out / "img.zarr"), "types": {}}]}
+    ]
+    expected = build_snapshot(
+        zarr_dir=out, image_list_updates=updates, output_type="single_image"
+    )
+    actual = expected.model_copy(deep=True)
+    # A dependency version drift must never produce a comparison difference.
+    actual.versions = {"ngio": "0.0.0-fake", "zarr": None}
+    assert compare_snapshots(expected, actual) == []
 
 
 # --------------------------------------------------------------------------- #

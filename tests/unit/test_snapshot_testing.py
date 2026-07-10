@@ -149,6 +149,33 @@ def test_images_common_is_deep_merged():
     assert plate.images["B/03/0"].types == {"is_3D": True}
 
 
+def test_images_common_applies_key_absent_from_image():
+    # A key present only in `images_common` is applied to every image, even one
+    # that does not itself declare it.
+    img = _image()
+    img.pop("attributes")
+    plate = PlateAssertionModel(
+        **{
+            "wells": ["B/03"],
+            "images_common": {"attributes": {"drug": "DMSO"}},
+            "images": {"B/03/0": img},
+        }
+    )
+    assert plate.images["B/03/0"].attributes == {"drug": "DMSO"}
+
+
+def test_images_common_is_overridden_by_image():
+    # Per-image values win over shared defaults (common is the base).
+    plate = PlateAssertionModel(
+        **{
+            "wells": ["B/03"],
+            "images_common": {"channel_labels": ["COMMON"]},
+            "images": {"B/03/0": _image(channel_labels=["IMAGE"])},
+        }
+    )
+    assert plate.images["B/03/0"].channel_labels == ["IMAGE"]
+
+
 # --------------------------------------------------------------------------- #
 # Comparison branches
 # --------------------------------------------------------------------------- #

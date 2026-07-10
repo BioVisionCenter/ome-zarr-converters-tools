@@ -7,12 +7,13 @@ from typing import Any, Generic, Self
 import dask.array as da
 import numpy as np
 from ngio import PixelSize, Roi
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from ome_zarr_converters_tools.core._dask_lazy_loader import lazy_array_from_regions
 from ome_zarr_converters_tools.core._roi_utils import (
     bulk_roi_union,
     move_roi_by,
+    output_shape_from_rois,
     roi_to_point_distance,
     shape_from_rois,
 )
@@ -46,7 +47,6 @@ class TileSlice(BaseModel, Generic[ImageLoaderInterfaceType]):
         """Create a TileSlice from a Tile."""
         return cls(
             roi=tile.to_roi(),
-            # collection=tile.collection,
             image_loader=tile.image_loader,
         )
 
@@ -170,7 +170,7 @@ class TiledImage(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfac
     regions: list[TileSlice[ImageLoaderInterfaceType]] = Field(default_factory=list)
     path: str
     name: str | None = None
-    pixelsize: float = 1.0
+    xy_pixel_size: float = 1.0
     z_spacing: float = 1.0
     t_spacing: float = 1.0
     data_type: str
@@ -181,6 +181,32 @@ class TiledImage(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfac
     attributes: dict[str, AttributeType] = Field(default_factory=dict)
 
     model_config = ConfigDict(extra="forbid")
+
+    @model_validator(mode="after")
+    def _validate_channel_coverage(self) -> "TiledImage":
+        """Enforce that every region's channel range fits the channel metadata.
+
+        Tiles are validated at construction, but a TiledImage is also rebuilt
+        from JSON at the fractal init/compute task boundary; this guards that
+        path with the same contract.
+        """
+        if self.channels is None:
+            return self
+        num_channels = len(self.channels)
+        for region in self.regions:
+            c_slice = region.roi.get("c")
+            if c_slice is None or c_slice.start is None:
+                continue
+            length = c_slice.length if c_slice.length is not None else 1
+            if c_slice.start < 0 or c_slice.start + length > num_channels:
+                raise ValueError(
+                    f"TiledImage '{self.path}' region '{region.roi.name}' "
+                    f"references channel range [{c_slice.start}, "
+                    f"{c_slice.start + length}) but channels has {num_channels} "
+                    "entries. Provide one ChannelInfo per channel index, or set "
+                    "channels=None to use auto-generated channel names."
+                )
+        return self
 
     def group_by_fov(self) -> list[TileFOVGroup[ImageLoaderInterfaceType]]:
         """Group TileSlices by field of view name."""
@@ -207,29 +233,30 @@ class TiledImage(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfac
     def pixel_size(self) -> PixelSize:
         """Return the PixelSize of the TiledImage."""
         return PixelSize(
-            x=self.pixelsize,
-            y=self.pixelsize,
+            x=self.xy_pixel_size,
+            y=self.xy_pixel_size,
             z=self.z_spacing,
             t=self.t_spacing,
         )
 
     def add_tile(self, tile: Tile, add_translation: bool = False) -> None:
-        """Add a Tile to the TiledImage as a TileRegion."""
+        """Add a Tile to the TiledImage as a TileSlice."""
         if self.channels != tile.acquisition_details.channels:
             raise ValueError("Tile channels do not match TiledImage channels.")
         if self.axes != tile.acquisition_details.axes:
             raise ValueError("Tile axes do not match TiledImage axes.")
-        if self.pixelsize != tile.acquisition_details.pixelsize:
-            raise ValueError("Tile pixelsize does not match TiledImage pixelsize.")
+        if self.xy_pixel_size != tile.acquisition_details.xy_pixel_size:
+            raise ValueError(
+                "Tile xy_pixel_size does not match TiledImage xy_pixel_size."
+            )
         if self.z_spacing != tile.acquisition_details.z_spacing:
             raise ValueError("Tile z_spacing does not match TiledImage z_spacing.")
         if self.t_spacing != tile.acquisition_details.t_spacing:
             raise ValueError("Tile t_spacing does not match TiledImage t_spacing.")
-        tile_region = TileSlice.from_tile(tile)
+        tile_slice = TileSlice.from_tile(tile)
 
         if add_translation:
-            # This logic is a bit hacky to be improved
-            roi_extra = tile_region.roi.model_extra or {}
+            roi_extra = tile_slice.roi.model_extra or {}
             translation = []
             for ax in self.axes:
                 o_ax = roi_extra.get(f"{ax}_micrometer_original")
@@ -242,11 +269,23 @@ class TiledImage(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfac
                     min(t, tr)
                     for t, tr in zip(translation, self.translation, strict=True)
                 ]
-        self.regions.append(tile_region)
+        self.regions.append(tile_slice)
 
     def shape(self) -> tuple[int, ...]:
         """Get the shape of the TiledImage by computing the union of all regions."""
         return shape_from_rois(
+            [region.roi for region in self.regions],
+            self.axes,
+            self.pixel_size,
+        )
+
+    def output_shape(self) -> tuple[int, ...]:
+        """Output-array shape anchored at pixel 0 (includes any left-padding).
+
+        Equals `shape()` when the mosaic origin is 0 (the default); larger when a
+        `remove_*_offset="Keep"` axis keeps a positive absolute origin.
+        """
+        return output_shape_from_rois(
             [region.roi for region in self.regions],
             self.axes,
             self.pixel_size,
@@ -262,6 +301,18 @@ class TiledImage(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfac
         self, resource: Any | None = None
     ) -> list[tuple[tuple[slice, ...], Callable[[], np.ndarray]]]:
         """Prepare the TileSlices and their corresponding slicing tuples for loading."""
+        # Zero every region to the union origin so absolute stage coordinates map
+        # into the union-bounding-box buffer allocated by `load_data`/`shape()`.
+        # Without this, regions that do not start at pixel 0 index past the buffer
+        # and their data is silently dropped (or raises a broadcast error).
+        union_roi = self.roi()
+        offset = {}
+        for axis in self.axes:
+            union_axis = union_roi.get(axis)
+            assert union_axis is not None
+            start = union_axis.start
+            assert start is not None
+            offset[axis] = -start
 
         def make_loader(
             region: TileSlice, resource: Any | None
@@ -270,7 +321,8 @@ class TiledImage(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfac
 
         slices = []
         for region in self.regions:
-            roi_slice = region.roi.to_slicing_dict(pixel_size=self.pixel_size)
+            roi_zeroed = move_roi_by(region.roi, offset)  # type: ignore
+            roi_slice = roi_zeroed.to_slicing_dict(pixel_size=self.pixel_size)
             slicing = []
             for axis in self.axes:
                 _slice = roi_slice[axis]

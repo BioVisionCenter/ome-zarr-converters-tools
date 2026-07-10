@@ -18,51 +18,59 @@ from ome_zarr_converters_tools.models._url_utils import (
     filesystem_for_url,
     join_url_paths,
 )
+from ome_zarr_converters_tools.pipelines._registry import Registry
+
+_RESERVED_CONDITION_COLUMNS = ("row", "column", "acquisition", "path_in_well")
 
 
 def _setup_condition_table(
     tiled_images: list[TiledImage],
 ) -> pl.DataFrame | None:
     """Set up the condition table."""
-    condition_table = {
-        "row": [],
-        "column": [],
-        "acquisition": [],
-        "path_in_well": [],
-    }
-    for tile in tiled_images:
-        row = tile.collection.row
-        col = tile.collection.column
-        acq = tile.collection.acquisition
-        _num_rows_dict = {}
-        for attr_name, attr_value in tile.attributes.items():
-            if attr_name not in condition_table:
-                condition_table[attr_name] = []
-            condition_table[attr_name].extend(attr_value)
-            _num_rows_dict[attr_name] = len(attr_value)
-
-        if len(set(_num_rows_dict.values())) > 1:
-            raise ValueError(
-                "All attributes must have the same number of values. "
-                f"Got attributes {tile.attributes}."
-            )
-        if len(_num_rows_dict) == 0:
-            # No additional attributes, no need to create a condition table entry
-            continue
-        _num_rows = next(iter(_num_rows_dict.values()))
-        assert isinstance(tile.collection, ImageInPlate)
-        row = tile.collection.row
-        col = tile.collection.column
-        acq = tile.collection.acquisition
-        path_in_well = tile.collection.path_in_well()
-        condition_table["row"].extend([row] * _num_rows)
-        condition_table["column"].extend([col] * _num_rows)
-        condition_table["acquisition"].extend([acq] * _num_rows)
-        condition_table["path_in_well"].extend([path_in_well] * _num_rows)
-
-    if set(condition_table.keys()) == {"row", "column", "acquisition", "path_in_well"}:
+    with_attributes = [tile for tile in tiled_images if tile.attributes]
+    if not with_attributes:
         # No additional attributes, no need to create a condition table
         return None
+
+    key_sets = {tuple(sorted(tile.attributes.keys())) for tile in with_attributes}
+    if len(key_sets) > 1:
+        keys_by_image = {
+            tile.path: sorted(tile.attributes.keys()) for tile in with_attributes
+        }
+        raise ValueError(
+            "All images with attributes must define the same attribute keys to "
+            f"build a condition table; got {keys_by_image}. Add the missing "
+            "attribute columns to the tiles table (None values are allowed) or "
+            "remove the extra ones."
+        )
+    reserved = set(next(iter(key_sets))) & set(_RESERVED_CONDITION_COLUMNS)
+    if reserved:
+        raise ValueError(
+            f"Attribute keys {sorted(reserved)} collide with the condition "
+            f"table's reserved columns {_RESERVED_CONDITION_COLUMNS}. Rename "
+            "these columns in the tiles table."
+        )
+
+    condition_table: dict[str, list] = {col: [] for col in _RESERVED_CONDITION_COLUMNS}
+    for tile in with_attributes:
+        num_rows_by_key = {key: len(values) for key, values in tile.attributes.items()}
+        if len(set(num_rows_by_key.values())) > 1:
+            raise ValueError(
+                f"All attributes of image '{tile.path}' must have the same "
+                f"number of values; got {num_rows_by_key}. Pad the shorter "
+                "attributes with None values."
+            )
+        for attr_name, attr_value in tile.attributes.items():
+            condition_table.setdefault(attr_name, []).extend(attr_value)
+
+        num_rows = next(iter(num_rows_by_key.values()))
+        assert isinstance(tile.collection, ImageInPlate)
+        condition_table["row"].extend([tile.collection.row] * num_rows)
+        condition_table["column"].extend([tile.collection.column] * num_rows)
+        condition_table["acquisition"].extend([tile.collection.acquisition] * num_rows)
+        condition_table["path_in_well"].extend(
+            [tile.collection.path_in_well()] * num_rows
+        )
     return pl.DataFrame(condition_table)
 
 
@@ -73,7 +81,11 @@ def setup_plates(
     overwrite_mode: OverwriteMode = OverwriteMode.NO_OVERWRITE,
 ) -> None:
     """Set up an ImageInPlate collection in the Zarr group."""
-    assert isinstance(tiled_images[0].collection, ImageInPlate)
+    if not isinstance(tiled_images[0].collection, ImageInPlate):
+        raise TypeError(
+            "setup_plates requires ImageInPlate collections, got "
+            f"{type(tiled_images[0].collection).__name__}."
+        )
     images_grouped_by_plate: dict[str, list[TiledImage]] = {}
     for tiled_image in tiled_images:
         plate_path = tiled_image.collection.plate_path()
@@ -82,12 +94,12 @@ def setup_plates(
         images_grouped_by_plate[plate_path].append(tiled_image)
 
     for plate_path, tile_images in images_grouped_by_plate.items():
-        plante_url = join_url_paths(zarr_dir, plate_path)
+        plate_url = join_url_paths(zarr_dir, plate_path)
         if overwrite_mode == OverwriteMode.NO_OVERWRITE:
-            fs = filesystem_for_url(plante_url)
-            if fs.exists(plante_url):
+            fs = filesystem_for_url(plate_url)
+            if fs.exists(plate_url):
                 raise FileExistsError(
-                    f"A Plate already exists at {plante_url} "
+                    f"A Plate already exists at {plate_url} "
                     f"(overwrite_mode={OverwriteMode.NO_OVERWRITE.value}). "
                     f"Set overwrite_mode={OverwriteMode.OVERWRITE.value} to "
                     f"replace it, or "
@@ -95,27 +107,30 @@ def setup_plates(
                 )
         if overwrite_mode == OverwriteMode.OVERWRITE:
             plate = create_empty_plate(
-                store=plante_url,
+                store=plate_url,
                 name=plate_path,
                 ngff_version=ngff_version,
                 overwrite=True,
                 cache=True,
             )
         elif overwrite_mode == OverwriteMode.EXTEND:
-            try:
-                plate = open_ome_zarr_plate(plante_url, cache=True)
-            except Exception:
+            # Distinguish "does not exist yet" from "exists but fails to open":
+            # only the former should create a fresh plate. A corrupt/unreadable
+            # existing store must raise from open, never be silently overwritten.
+            if filesystem_for_url(plate_url).exists(plate_url):
+                plate = open_ome_zarr_plate(plate_url, cache=True)
+            else:
                 plate = create_empty_plate(
-                    store=plante_url,
+                    store=plate_url,
                     name=plate_path,
                     ngff_version=ngff_version,
-                    overwrite=True,
+                    overwrite=False,
                     cache=True,
                 )
         else:
             # NO_OVERWRITE — pre-flight check above already raised if plate existed
             plate = create_empty_plate(
-                store=plante_url,
+                store=plate_url,
                 name=plate_path,
                 ngff_version=ngff_version,
                 overwrite=False,
@@ -148,12 +163,14 @@ def setup_plates(
                 acquisition_id=image_in_well.acquisition_id,
                 acquisition_name=image_in_well.acquisition_name,
             )
-            condition_table = _setup_condition_table(tiled_images)
-            if condition_table is not None:
-                condition_table = ConditionTable(table_data=condition_table)
-                plate.add_table(
-                    "condition_table", condition_table, backend="csv", overwrite=True
-                )
+
+        # Build the condition table once per plate, from this plate's images only.
+        condition_table = _setup_condition_table(tile_images)
+        if condition_table is not None:
+            condition_table = ConditionTable(table_data=condition_table)
+            plate.add_table(
+                "condition_table", condition_table, backend="csv", overwrite=True
+            )
 
 
 def setup_singleimage(
@@ -204,10 +221,14 @@ class SetupCollectionFunction(Protocol):
         ...
 
 
-_collection_setup_registry: dict[str, SetupCollectionFunction] = {
-    "ImageInPlate": setup_plates,
-    "SingleImage": setup_singleimage,
-}
+_collection_setup_registry: Registry[SetupCollectionFunction] = Registry(
+    "Collection setup handler",
+    "add_collection_handler",
+    {
+        "ImageInPlate": setup_plates,
+        "SingleImage": setup_singleimage,
+    },
+)
 
 
 def add_collection_handler(
@@ -221,21 +242,23 @@ def add_collection_handler(
     The collection setup handler is responsible for setting up the
     collection structure and metadata in the Zarr group.
 
+    Note:
+        Registrations are process-global: under `MultiprocessingRunner`,
+        worker processes re-import the consumer's modules, so custom handlers
+        must be registered at import time of the module that defines them to
+        be visible in workers.
+
     Args:
         collection_type: Name of the collection setup handler. By convention,
             the name of the CollectionInterfaceType, e.g., 'SingleImage'
-            or 'ImageInPlate'.
+            or 'ImageInPlate'. Defaults to `function.__name__`.
         function: Function that performs the collection setup step.
         overwrite: Whether to overwrite an existing collection setup step
             with the same name.
     """
-    if collection_type is None:
-        collection_type = function.__name__
-    if not overwrite and collection_type in _collection_setup_registry:
-        raise ValueError(
-            f"Collection setup handler '{collection_type}' is already registered."
-        )
-    _collection_setup_registry[collection_type] = function
+    _collection_setup_registry.add(
+        function=function, name=collection_type, overwrite=overwrite
+    )
 
 
 def setup_ome_zarr_collection(
@@ -255,12 +278,7 @@ def setup_ome_zarr_collection(
         ngff_version: NGFF version to use for the collection setup.
         overwrite_mode: Overwrite mode to use for the collection setup.
     """
-    collection_type = collection_type
     setup_function = _collection_setup_registry.get(collection_type)
-    if setup_function is None:
-        raise ValueError(
-            f"Collection setup handler '{collection_type}' is not registered."
-        )
     return setup_function(
         tiled_images=tiled_images,
         zarr_dir=zarr_dir,

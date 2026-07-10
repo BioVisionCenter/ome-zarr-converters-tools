@@ -208,6 +208,27 @@ class TestDaskLazyLoader:
         np.testing.assert_array_equal(result[:5], 1)
         np.testing.assert_array_equal(result[5:], 2)
 
+    def test_same_geometry_different_loaders_no_key_collision(self) -> None:
+        # Two arrays with identical geometry but different source data must not
+        # share graph keys; computing them together must keep their data
+        # distinct (regression for a loader-independent tokenize).
+        import dask
+
+        data_a = np.ones((10, 10), dtype="uint8") * 1
+        data_b = np.ones((10, 10), dtype="uint8") * 2
+        geometry = {"shape": (10, 10), "chunks": (10, 10), "dtype": "uint8"}
+        arr_a = lazy_array_from_regions(
+            [((slice(0, 10), slice(0, 10)), lambda: data_a)],
+            **geometry,  # type: ignore[arg-type]
+        )
+        arr_b = lazy_array_from_regions(
+            [((slice(0, 10), slice(0, 10)), lambda: data_b)],
+            **geometry,  # type: ignore[arg-type]
+        )
+        result_a, result_b = dask.compute(arr_a, arr_b)  # type: ignore[attr-defined]
+        np.testing.assert_array_equal(result_a, 1)
+        np.testing.assert_array_equal(result_b, 2)
+
     def test_lazy_array_fill_value(self) -> None:
         data = np.ones((5, 5), dtype="float32") * 99
         regions = [

@@ -223,8 +223,14 @@ def lazy_array_from_regions(
 
     # Deterministic token — same inputs produce the same graph keys, enabling
     # dask-level caching.  (Earlier versions used ``tokenize(id(...))`` which
-    # changed every run.)
-    token = dask_base.tokenize(shape, chunks, dtype, fill_value, all_loader_bounds)
+    # changed every run.)  The loaders MUST be part of the token: two arrays with
+    # identical geometry but different source data (the HCS norm — same tile
+    # shape, different files) would otherwise share graph keys and silently
+    # substitute one image's data for the other when combined into one graph.
+    loaders = [loader for _, loader in regions]
+    token = dask_base.tokenize(
+        shape, chunks, dtype, fill_value, all_loader_bounds, loaders
+    )
     output_name = f"lazy-regions-{token}"
 
     # --- Inverted overlap index -----------------------------------------

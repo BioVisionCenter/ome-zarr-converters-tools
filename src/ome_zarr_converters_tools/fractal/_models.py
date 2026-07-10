@@ -2,7 +2,7 @@
 
 from enum import StrEnum
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import Field, model_validator
 
 from ome_zarr_converters_tools.models._acquisition import (
     CANONICAL_AXES_TYPE,
@@ -12,6 +12,7 @@ from ome_zarr_converters_tools.models._acquisition import (
     StageOrientation,
     canonical_axes,
 )
+from ome_zarr_converters_tools.models._base import UserFacingModel
 from ome_zarr_converters_tools.models._converter_options import (
     ConverterOptions,
     OverwriteMode,
@@ -19,13 +20,18 @@ from ome_zarr_converters_tools.models._converter_options import (
 from ome_zarr_converters_tools.pipelines._filters import ImplementedFilters
 
 
-class ConvertParallelInitArgs(BaseModel):
-    """Arguments for the compute task."""
+class ConvertParallelInitArgs(UserFacingModel):
+    """Internal data handed from the init phase to compute; *filled automatically*."""
 
     tiled_image_json_dump_url: str | None = None
+    """Location of the temporary file describing the image to convert."""
     tiled_image_json_str: str | None = None
+    """Inline description of the image to convert (used instead of a
+    temporary file for small conversions)."""
     converter_options: ConverterOptions
+    """Converter options forwarded from the init phase."""
     overwrite_mode: OverwriteMode = OverwriteMode.NO_OVERWRITE
+    """Overwrite mode forwarded from the init phase."""
 
     @model_validator(mode="after")
     def _validate_exactly_one_source(self) -> "ConvertParallelInitArgs":
@@ -39,18 +45,18 @@ class ConvertParallelInitArgs(BaseModel):
         return self
 
 
-class PixelSizeModel(BaseModel):
-    """Pixel size model."""
+class PixelSizeModel(UserFacingModel):
+    """Override the pixel size and the Z/time spacing of the images."""
 
-    pixelsize: float
+    xy_pixel_size: float = Field(title="XY Pixel Size")
     """
-    Pixel size in micrometers.
+    XY pixel size in micrometers.
     """
-    z_spacing: float
+    z_spacing: float = Field(title="Z Spacing")
     """
     Z spacing in micrometers.
     """
-    t_spacing: float
+    t_spacing: float = Field(title="Time Spacing")
     """
     Time spacing in seconds.
     """
@@ -102,52 +108,58 @@ ColorMenu = StrEnum(
     _color_menu,
     type=ColorMenuBase,
 )
+ColorMenu.__doc__ = (
+    "Display color of the channel. `Auto` picks a color based on the "
+    "channel name or wavelength."
+)
 
 
-class ChannelInfoUI(BaseModel):
-    """Channel information."""
+class ChannelInfoUI(UserFacingModel):
+    """Set the name, wavelength, and display color of a channel."""
 
     channel_label: str
-    """Label of the channel."""
-    wavelength_id: str | None = None
+    """Name of the channel, e.g. `DAPI` or `GFP`."""
+    wavelength_id: str | None = Field(default=None, title="Wavelength ID")
     """
     The wavelength ID of the channel.
-    This field can be used in some tasks as alternative to channel_label,
-    e.g. for multiplexed acquisitions it can be used for applying illumination
-    correction based on wavelength ID instead of channel name.
+    Some tasks can use it instead of the channel name, e.g. to apply
+    illumination correction per wavelength in multiplexed acquisitions.
     """
     color: ColorMenu = ColorMenu.Auto
-    """The color associated with the channel, e.g. for visualization purposes."""
+    """Display color of the channel, e.g. for visualization purposes."""
 
 
-class AcquisitionOptions(BaseModel):
-    """Acquisition options for conversion.
+class AcquisitionOptions(UserFacingModel):
+    """Per-acquisition settings: channels, pixel sizes, axes, and filters.
 
-    These are option that can be specified per acquisition.
-    by the user at conversion time.
-    This is not to be confused with AcquisitionDetails,
-    this model is used in fractal tasks to override/update
-    details from AcquisitionDetails model.
+    In Fractal tasks these settings override/update the acquisition details
+    parsed from the raw metadata (`AcquisitionDetails`).
     """
 
     channels: list[ChannelInfoUI] | None = None
-    """List of channel information."""
+    """Names, wavelengths, and display colors of the channels. If left
+    empty, the channel information parsed from the raw metadata is used."""
     pixel_info: PixelSizeModel | None = Field(
         default=None, title="Pixel Size Information"
     )
-    """Pixel size information."""
+    """Override the pixel size and the Z/time spacing of the images. If left
+    empty, the values parsed from the raw metadata are used."""
     condition_table_path: str | None = None
-    """Optional path to a condition table CSV file."""
+    """Optional path to a condition table CSV file to store in the plate
+    metadata."""
     axes: str | None = None
-    """Axes to use for the image data, e.g. "czyx"."""
+    """Axes of the image data, e.g. `czyx`. If left empty, the axes parsed
+    from the raw metadata are used."""
     data_type: DataTypeEnum = Field(default=DataTypeEnum.AUTODETECT, title="Data Type")
-    """Data type of the image data."""
+    """Pixel data type of the output image. `autodetect` infers it from the
+    input images."""
     stage_orientation: StageOrientation = Field(
         default_factory=StageOrientation, title="Stage Orientation"
     )
-    """Stage orientation corrections."""
+    """Corrections for the orientation of the microscope stage relative to
+    the image axes."""
     filters: list[ImplementedFilters] = Field(default_factory=list)
-    """List of filters to apply."""
+    """Filters selecting which tiles of the acquisition are converted."""
 
     def to_axes_list(self) -> list[CANONICAL_AXES_TYPE] | None:
         """Convert axes string to list of axes."""
@@ -186,7 +198,7 @@ class AcquisitionOptions(BaseModel):
                 )
             updated_details.channels = _updated_channels
         if self.pixel_info is not None:
-            updated_details.pixelsize = self.pixel_info.pixelsize
+            updated_details.xy_pixel_size = self.pixel_info.xy_pixel_size
             updated_details.z_spacing = self.pixel_info.z_spacing
             updated_details.t_spacing = self.pixel_info.t_spacing
         axes = self.to_axes_list()
@@ -216,22 +228,12 @@ def converters_tools_models(
         (
             base,
             "pipelines/_filters.py",
-            "WellExcludeFilter",
+            "WellFilter",
         ),
         (
             base,
             "pipelines/_filters.py",
-            "WellIncludeFilter",
-        ),
-        (
-            base,
-            "pipelines/_filters.py",
-            "RegexIncludeFilter",
-        ),
-        (
-            base,
-            "pipelines/_filters.py",
-            "RegexExcludeFilter",
+            "RegexFilter",
         ),
         (
             base,

@@ -1,7 +1,5 @@
 """Unit tests for registration module (alignment, tiling, snap utils)."""
 
-import warnings
-
 import numpy as np
 import pytest
 from ngio import Roi, RoiSlice
@@ -18,20 +16,17 @@ from ome_zarr_converters_tools.models import (
     AcquisitionDetails,
     AutoTiling,
     ChannelInfo,
-    ConverterOptions,
     InplaceTiling,
-    NoTiling,
     SingleImage,
     SnapToGridTiling,
     StagePositionCorrections,
 )
 from ome_zarr_converters_tools.pipelines._alignment import (
-    _align_t_regions,
     _align_xy_regions,
-    _align_z_regions,
     apply_align_to_pixel_grid,
-    apply_fov_alignment_corrections,
-    apply_remove_offsets,
+    apply_offset_removal,
+    apply_reindex_channels,
+    apply_xy_jitter_correction,
 )
 from ome_zarr_converters_tools.pipelines._snap_utils import (
     BBox,
@@ -79,7 +74,9 @@ def _make_world_tile_slice(
     return TileSlice(roi=roi, image_loader=loader)
 
 
-def _make_tiled_image(regions: list[TileSlice], pixelsize: float = 1.0) -> TiledImage:
+def _make_tiled_image(
+    regions: list[TileSlice], xy_pixel_size: float = 1.0
+) -> TiledImage:
     """Helper: build a TiledImage from TileSlices."""
     collection = SingleImage(image_path="test_image")
     return TiledImage(
@@ -88,7 +85,7 @@ def _make_tiled_image(regions: list[TileSlice], pixelsize: float = 1.0) -> Tiled
         data_type="uint8",
         axes=["x", "y"],
         collection=collection,
-        pixelsize=pixelsize,
+        xy_pixel_size=xy_pixel_size,
     )
 
 
@@ -111,28 +108,10 @@ class TestAlignment:
             assert y_slice is not None
             assert y_slice.start == 20.0
 
-    def test_align_z_warns(self) -> None:
-        regions = [_make_world_tile_slice(0.0, 0.0, 10.0, 10.0)]
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            result = _align_z_regions(regions)
-            assert len(w) == 1
-            assert "not implemented" in str(w[0].message).lower()
-        assert result == regions
-
-    def test_align_t_warns(self) -> None:
-        regions = [_make_world_tile_slice(0.0, 0.0, 10.0, 10.0)]
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            result = _align_t_regions(regions)
-            assert len(w) == 1
-            assert "not implemented" in str(w[0].message).lower()
-        assert result == regions
-
-    def test_apply_fov_alignment_corrections(self) -> None:
+    def test_apply_xy_jitter_correction(self) -> None:
         acq = AcquisitionDetails(
             channels=[ChannelInfo(channel_label="DAPI")],
-            pixelsize=1.0,
+            xy_pixel_size=1.0,
             z_spacing=1.0,
             t_spacing=1.0,
         )
@@ -153,11 +132,9 @@ class TestAlignment:
                 acquisition_details=acq,
             ),
         ]
-        images = tiled_image_from_tiles(
-            tiles=tiles, converter_options=ConverterOptions()
-        )
-        corrections = StagePositionCorrections(align_xy=True)
-        result = apply_fov_alignment_corrections(images[0], corrections)
+        images = tiled_image_from_tiles(tiles=tiles, split_per_fov=False)
+        corrections = StagePositionCorrections(remove_xy_jitter=True)
+        result = apply_xy_jitter_correction(images[0], corrections)
         x_slice = result.regions[0].roi.get("x")
         assert x_slice is not None
         first_x = x_slice.start
@@ -168,7 +145,7 @@ class TestAlignment:
 
     def test_apply_align_to_pixel_grid_floor(self) -> None:
         regions = [_make_world_tile_slice(10.7, 20.3, 100.0, 100.0, "FOV")]
-        img = _make_tiled_image(regions, pixelsize=1.0)
+        img = _make_tiled_image(regions, xy_pixel_size=1.0)
         result = apply_align_to_pixel_grid(img, mode="floor")
         roi = result.regions[0].roi
         x_slice = roi.get("x")
@@ -180,7 +157,7 @@ class TestAlignment:
 
     def test_apply_align_to_pixel_grid_ceil(self) -> None:
         regions = [_make_world_tile_slice(10.1, 20.1, 100.0, 100.0, "FOV")]
-        img = _make_tiled_image(regions, pixelsize=1.0)
+        img = _make_tiled_image(regions, xy_pixel_size=1.0)
         result = apply_align_to_pixel_grid(img, mode="ceil")
         roi = result.regions[0].roi
         x_slice = roi.get("x")
@@ -190,13 +167,29 @@ class TestAlignment:
         assert x_slice.start == 11.0
         assert y_slice.start == 21.0
 
-    def test_apply_remove_offsets(self) -> None:
+    def test_apply_align_to_pixel_grid_no_boundary_gap(self) -> None:
+        # Adjacent tiles sharing a fractional boundary must stay adjacent after
+        # rounding: snapping the interval endpoints (not start and length
+        # independently) prevents 1-px gaps/overlaps at tile boundaries.
+        regions = [
+            _make_world_tile_slice(0.0, 0.0, 10.6, 10.6, "FOV_0"),
+            _make_world_tile_slice(10.6, 0.0, 10.6, 10.6, "FOV_1"),
+        ]
+        img = _make_tiled_image(regions, xy_pixel_size=1.0)
+        result = apply_align_to_pixel_grid(img, mode="round")
+        first_x = result.regions[0].roi.get("x")
+        second_x = result.regions[1].roi.get("x")
+        assert first_x is not None and second_x is not None
+        assert first_x.start + first_x.length == second_x.start
+        assert second_x.start + second_x.length == round(10.6 + 10.6)
+
+    def test_apply_offset_removal_global(self) -> None:
         regions = [
             _make_world_tile_slice(100.0, 200.0, 64.0, 64.0, "FOV_0"),
             _make_world_tile_slice(164.0, 200.0, 64.0, 64.0, "FOV_1"),
         ]
         img = _make_tiled_image(regions)
-        result = apply_remove_offsets(img)
+        result = apply_offset_removal(img, StagePositionCorrections())
         x_slice = result.regions[0].roi.get("x")
         assert x_slice is not None
         y_slice = result.regions[0].roi.get("y")
@@ -209,6 +202,97 @@ class TestAlignment:
         assert y_slice is not None
         assert x_slice.start == 64.0
         assert y_slice.start == 0.0
+
+
+def _multichannel_image(channel_positions: list[int], num_channels: int) -> TiledImage:
+    """Build a single-FOV TiledImage with one tile per given channel index."""
+    acq = AcquisitionDetails(
+        channels=[ChannelInfo(channel_label=f"CH{i}") for i in range(num_channels)],
+        xy_pixel_size=1.0,
+        z_spacing=1.0,
+        t_spacing=1.0,
+    )
+    coll = SingleImage(image_path="img")
+    tiles = [
+        build_dummy_tile(
+            fov_name="FOV_0",
+            start=StartPosition(x=0, y=0, z=0, c=c, t=0),
+            shape=TileShape(x=32, y=32, z=1, c=1, t=1),
+            collection=coll,
+            acquisition_details=acq,
+        )
+        for c in channel_positions
+    ]
+    images = tiled_image_from_tiles(tiles=tiles, split_per_fov=False)
+    return images[0]
+
+
+class TestOffsetAndReindex:
+    def _z_image(self, z_by_fov: dict[str, float]) -> TiledImage:
+        acq = AcquisitionDetails(
+            channels=[ChannelInfo(channel_label="DAPI")],
+            xy_pixel_size=1.0,
+            z_spacing=1.0,
+            t_spacing=1.0,
+        )
+        coll = SingleImage(image_path="img")
+        tiles = [
+            build_dummy_tile(
+                fov_name=fov,
+                start=StartPosition(x=0, y=0, z=z, c=0, t=0),
+                shape=TileShape(x=16, y=16, z=1, c=1, t=1),
+                collection=coll,
+                acquisition_details=acq,
+            )
+            for fov, z in z_by_fov.items()
+        ]
+        return tiled_image_from_tiles(tiles=tiles, split_per_fov=False)[0]
+
+    def test_offset_keep_keeps_positive(self) -> None:
+        img = self._z_image({"FOV_0": 10.0})
+        result = apply_offset_removal(
+            img, StagePositionCorrections(remove_z_offset="Keep")
+        )
+        z_slice = result.regions[0].roi.get("z")
+        assert z_slice is not None and z_slice.start == 10.0
+
+    def test_offset_keep_negative_raises(self) -> None:
+        img = self._z_image({"FOV_0": -5.0})
+        with pytest.raises(ValueError, match="non-negative"):
+            apply_offset_removal(img, StagePositionCorrections(remove_z_offset="Keep"))
+
+    def test_offset_z_global_vs_per_fov(self) -> None:
+        # Two FOVs at absolute z 10 and 20.
+        img_global = self._z_image({"FOV_0": 10.0, "FOV_1": 20.0})
+        apply_offset_removal(
+            img_global, StagePositionCorrections(remove_z_offset="Global")
+        )
+        z = sorted(r.roi.get("z").start for r in img_global.regions)
+        assert z == [0.0, 10.0]  # global min removed; relative spacing preserved
+
+        img_perfov = self._z_image({"FOV_0": 10.0, "FOV_1": 20.0})
+        apply_offset_removal(
+            img_perfov, StagePositionCorrections(remove_z_offset="Per-FOV")
+        )
+        z = sorted(r.roi.get("z").start for r in img_perfov.regions)
+        assert z == [0.0, 0.0]  # each FOV zeroed independently
+
+    def test_reindex_channels_compacts_and_reconciles(self) -> None:
+        img = _multichannel_image(channel_positions=[0, 2], num_channels=3)
+        result = apply_reindex_channels(img, StagePositionCorrections())
+        c_starts = sorted(r.roi.get("c").start for r in result.regions)
+        assert c_starts == [0.0, 1.0]
+        assert result.channels is not None
+        assert [ch.channel_label for ch in result.channels] == ["CH0", "CH2"]
+
+    def test_reindex_channels_disabled_keeps_gaps(self) -> None:
+        img = _multichannel_image(channel_positions=[0, 2], num_channels=3)
+        result = apply_reindex_channels(
+            img, StagePositionCorrections(reindex_channels=False)
+        )
+        c_starts = sorted(r.roi.get("c").start for r in result.regions)
+        assert c_starts == [0.0, 2.0]  # gap preserved -> empty channel 1
+        assert result.channels is not None and len(result.channels) == 3
 
 
 # --- Snap utils tests ---
@@ -303,6 +387,38 @@ class TestSnapUtils:
         assert np.isclose(offsets["A"]["y"], 0.0)
         assert np.isclose(offsets["B"]["x"], 5.0)  # 295 → 300
         assert np.isclose(offsets["B"]["y"], 0.0)
+
+    def test_snap_to_corner_many_tiles_unique_corners(self) -> None:
+        # Regression: the candidate grid is sized from the tiles' bounding box
+        # (not num_tiles² points); a jittered 20x20 mosaic must snap every tile
+        # to its own grid corner.
+        rng = np.random.default_rng(42)
+        tiles = {}
+        for i in range(20):
+            for j in range(20):
+                name = f"FOV_{i}_{j}"
+                tiles[name] = _make_pixel_tile_slice(
+                    i * 64.0 + rng.uniform(-3, 3),
+                    j * 64.0 + rng.uniform(-3, 3),
+                    64.0,
+                    64.0,
+                    name,
+                )
+        offsets = calculate_snap_to_corner_offset(tiles)
+        origin_x = min(t.roi.get("x").start for t in tiles.values())
+        origin_y = min(t.roi.get("y").start for t in tiles.values())
+        cells = set()
+        for name, tile in tiles.items():
+            x = tile.roi.get("x").start + offsets[name]["x"]
+            y = tile.roi.get("y").start + offsets[name]["y"]
+            cell_x = (x - origin_x) / 64.0
+            cell_y = (y - origin_y) / 64.0
+            # Snapped positions sit exactly on the grid...
+            assert abs(cell_x - round(cell_x)) < 1e-9
+            assert abs(cell_y - round(cell_y)) < 1e-9
+            cells.add((round(cell_x), round(cell_y)))
+        # ...and each tile occupies its own cell.
+        assert len(cells) == len(tiles)
 
     def test_tiles_to_boxes_raises_value_error_missing_y(self) -> None:
         # Regression: missing y-axis should raise ValueError, not AssertionError.
@@ -444,15 +560,6 @@ class TestSnapUtils:
 
 
 class TestTiling:
-    def test_no_tiling_returns_zero_offsets(self) -> None:
-        tiles = {
-            "A": _make_pixel_tile_slice(10.0, 20.0, 100.0, 100.0, "A"),
-            "B": _make_pixel_tile_slice(200.0, 300.0, 100.0, 100.0, "B"),
-        }
-        offsets = _find_tiling(tiles, NoTiling())
-        for offset in offsets.values():
-            assert offset == {"x": 0.0, "y": 0.0}
-
     def test_snap_to_grid_regular(self) -> None:
         tiles = {
             "A": _make_pixel_tile_slice(0.0, 0.0, 100.0, 100.0, "A"),
@@ -486,9 +593,15 @@ class TestTiling:
         assert np.isclose(offsets["B"]["y"], 0.0)
 
     def test_inplace_returns_zero_offsets(self) -> None:
-        tiles = {"A": _make_pixel_tile_slice(50.0, 50.0, 100.0, 100.0, "A")}
+        # Inplace never moves a tile, regardless of how many or where they are
+        # (this is also the arrangement Per-FOV grouping resolves to).
+        tiles = {
+            "A": _make_pixel_tile_slice(50.0, 50.0, 100.0, 100.0, "A"),
+            "B": _make_pixel_tile_slice(200.0, 300.0, 100.0, 100.0, "B"),
+        }
         offsets = _find_tiling(tiles, InplaceTiling())
-        assert offsets["A"] == {"x": 0.0, "y": 0.0}
+        for offset in offsets.values():
+            assert offset == {"x": 0.0, "y": 0.0}
 
     def test_auto_tiling_falls_back_to_corners(self) -> None:
         tiles = {
@@ -503,7 +616,7 @@ class TestTiling:
     def test_apply_mosaic_tiling(self) -> None:
         acq = AcquisitionDetails(
             channels=[ChannelInfo(channel_label="DAPI")],
-            pixelsize=1.0,
+            xy_pixel_size=1.0,
             z_spacing=1.0,
             t_spacing=1.0,
         )
@@ -518,8 +631,6 @@ class TestTiling:
             )
             for i, (x, y) in enumerate([(0, 0), (100, 0), (0, 100), (100, 100)])
         ]
-        images = tiled_image_from_tiles(
-            tiles=tiles, converter_options=ConverterOptions()
-        )
+        images = tiled_image_from_tiles(tiles=tiles, split_per_fov=False)
         result = apply_mosaic_tiling(images[0], InplaceTiling())
         assert len(result.regions) == 4

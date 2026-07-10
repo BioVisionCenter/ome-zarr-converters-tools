@@ -20,7 +20,7 @@ class TestRegistrationRegistry:
 
         name = "test_reg_step_unique"
         try:
-            add_registration_func(my_step, name=name)
+            add_registration_func(function=my_step, name=name)
             assert name in _registration_registry
         finally:
             _registration_registry.pop(name, None)
@@ -31,9 +31,9 @@ class TestRegistrationRegistry:
 
         name = "test_dup_reg_step"
         try:
-            add_registration_func(my_step, name=name)
+            add_registration_func(function=my_step, name=name)
             with pytest.raises(ValueError, match="already registered"):
-                add_registration_func(my_step, name=name)
+                add_registration_func(function=my_step, name=name)
         finally:
             _registration_registry.pop(name, None)
 
@@ -53,8 +53,8 @@ class TestRegistrationPipeline:
             return tiled_image
 
         try:
-            add_registration_func(step_a, name="test_step_a")
-            add_registration_func(step_b, name="test_step_b")
+            add_registration_func(function=step_a, name="test_step_a")
+            add_registration_func(function=step_b, name="test_step_b")
             config = [
                 RegistrationStep(name="test_step_a", params={}),
                 RegistrationStep(name="test_step_b", params={}),
@@ -74,11 +74,12 @@ class TestRegistrationPipeline:
     def test_build_default_registration_pipeline(self) -> None:
         corrections = StagePositionCorrections()
         pipeline = build_default_registration_pipeline(corrections, AutoTiling())
-        assert len(pipeline) == 4
+        assert len(pipeline) == 5
         names = [step["name"] for step in pipeline]
-        assert "remove_offsets" in names
+        assert "offset_removal" in names
         assert "align_to_pixel_grid" in names
-        assert "fov_alignment_corrections" in names
+        assert "xy_jitter_correction" in names
+        assert "reindex_channels" in names
         assert "tile_regions" in names
 
     def test_build_default_registration_pipeline_tolerance(self) -> None:

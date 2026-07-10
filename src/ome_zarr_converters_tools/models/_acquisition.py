@@ -13,14 +13,16 @@ from pydantic import (
     model_validator,
 )
 
+from ome_zarr_converters_tools.models._base import UserFacingModel
+
 CANONICAL_AXES_TYPE = Literal["t", "c", "z", "y", "x"]
 canonical_axes: list[CANONICAL_AXES_TYPE] = ["t", "c", "z", "y", "x"]
-COO_SYSTEM_TYPE = Literal["world", "pixel"]
+SPACE_TYPE = Literal["world", "pixel"]
 ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 
 class DataTypeEnum(StrEnum):
-    """Data type enumeration."""
+    """Pixel data type of the output image; `autodetect` infers it."""
 
     AUTODETECT = "autodetect"
     UINT8 = "uint8"
@@ -89,7 +91,11 @@ def _color_from_wavelength_id(wavelength_id: str | None) -> str | None:
     for upper_bound, color in _WAVELENGTH_COLOR_TABLE:
         if wavelength < upper_bound:
             return color
-    return "#FF00FF"  # >= 750 nm: far-red/IR → Magenta
+    # The final visible band (Red) is inclusive of its 750 nm upper edge;
+    # strictly-longer near-IR wavelengths fall back to magenta.
+    if wavelength == _WAVELENGTH_COLOR_TABLE[-1][0]:
+        return _WAVELENGTH_COLOR_TABLE[-1][1]
+    return "#FF00FF"  # > 750 nm: far-red/IR → Magenta
 
 
 def _color_from_channel_label(channel_label: str) -> str:
@@ -100,12 +106,12 @@ def _color_from_channel_label(channel_label: str) -> str:
     similarity = {
         key: SequenceMatcher(None, lower, key).ratio() for key in _LABEL_COLOR_MAP
     }
-    best = max(similarity, key=similarity.get)  # type: ignore
+    best = max(similarity, key=lambda key: similarity[key])
     return _LABEL_COLOR_MAP[best]
 
 
-class ChannelInfo(BaseModel):
-    """Channel information."""
+class ChannelInfo(UserFacingModel):
+    """Name, wavelength, and display color of a channel."""
 
     channel_label: str
     """Label of the channel."""
@@ -136,8 +142,12 @@ class ChannelInfo(BaseModel):
         return self
 
 
-class StageOrientation(BaseModel):
-    """Stage orientation corrections."""
+class StageOrientation(UserFacingModel):
+    """Corrections for the stage orientation relative to the image axes.
+
+    Use these when the fields of view appear mirrored or arranged wrongly
+    in the output image.
+    """
 
     flip_x: bool = Field(default=False, title="Flip X")
     """Whether to flip the position along the X axis."""
@@ -145,7 +155,6 @@ class StageOrientation(BaseModel):
     """Whether to flip the position along the Y axis."""
     swap_xy: bool = Field(default=False, title="Swap XY")
     """Whether to swap the positions along the X and Y axes."""
-    model_config = ConfigDict(extra="forbid")
 
 
 class AcquisitionDetails(BaseModel):
@@ -155,17 +164,17 @@ class AcquisitionDetails(BaseModel):
     (Either parsed from metadata or manually serialized by the user beforehand.)
     """
 
-    # Determine the coordinate system for start and length values
-    start_x_coo: COO_SYSTEM_TYPE = "world"
-    start_y_coo: COO_SYSTEM_TYPE = "world"
-    start_z_coo: COO_SYSTEM_TYPE = "world"
-    start_t_coo: COO_SYSTEM_TYPE = "world"
-    length_x_coo: COO_SYSTEM_TYPE = "pixel"
-    length_y_coo: COO_SYSTEM_TYPE = "pixel"
-    length_z_coo: COO_SYSTEM_TYPE = "pixel"
-    length_t_coo: COO_SYSTEM_TYPE = "pixel"
+    # Determine the coordinate space for start and length values
+    start_x_space: SPACE_TYPE = "world"
+    start_y_space: SPACE_TYPE = "world"
+    start_z_space: SPACE_TYPE = "world"
+    start_t_space: SPACE_TYPE = "world"
+    length_x_space: SPACE_TYPE = "pixel"
+    length_y_space: SPACE_TYPE = "pixel"
+    length_z_space: SPACE_TYPE = "pixel"
+    length_t_space: SPACE_TYPE = "pixel"
     # Spacing information
-    pixelsize: float = Field(default=1.0, gt=0.0)  # in micrometers
+    xy_pixel_size: float = Field(default=1.0, gt=0.0)  # in micrometers
     z_spacing: float = Field(default=1.0, gt=0.0)  # in micrometers
     t_spacing: float = Field(default=1.0, gt=0.0)  # in micrometers
 

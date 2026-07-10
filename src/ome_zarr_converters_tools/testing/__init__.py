@@ -1,9 +1,10 @@
 """Snapshot testing helpers for OME-Zarr converters.
 
 The heavy `_snapshot` module (numpy/ngio/pydantic) is imported lazily so that
-loading the pytest plugin (`ome_zarr_converters_tools.testing.plugin`, a
-`pytest11` entry point) does not pull it in — this keeps plugin load cheap and
-lets coverage instrument `_snapshot` when tests first import it.
+loading the pytest plugin (`ome_zarr_converters_tools.testing.plugin`, wired via
+`pytest_plugins` in each consumer's conftest, not a `pytest11` entry point) does
+not pull it in — this keeps plugin load cheap and lets coverage instrument
+`_snapshot` when tests first import it.
 """
 
 import importlib

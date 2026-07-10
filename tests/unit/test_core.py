@@ -4,8 +4,10 @@ from typing import Any
 
 import numpy as np
 import pytest
+from pydantic import ValidationError
 
 from ome_zarr_converters_tools.core._dummy_tiles import (
+    DummyLoader,
     StartPosition,
     TileShape,
     build_dummy_tile,
@@ -49,7 +51,7 @@ class TestTile:
     def test_tile_to_roi_with_flip(self, default_collection: SingleImage) -> None:
         acq = AcquisitionDetails(
             channels=[ChannelInfo(channel_label="DAPI")],
-            pixelsize=1.0,
+            xy_pixel_size=1.0,
             z_spacing=1.0,
             t_spacing=1.0,
             stage_orientation=StageOrientation(flip_x=True, flip_y=False),
@@ -73,7 +75,7 @@ class TestTile:
     def test_tile_to_roi_with_swap_xy(self, default_collection: SingleImage) -> None:
         acq = AcquisitionDetails(
             channels=[ChannelInfo(channel_label="DAPI")],
-            pixelsize=1.0,
+            xy_pixel_size=1.0,
             z_spacing=1.0,
             t_spacing=1.0,
             stage_orientation=StageOrientation(swap_xy=True),
@@ -86,30 +88,30 @@ class TestTile:
             acquisition_details=acq,
         )
         roi = tile.to_roi()
-        # swap_xy: when loop sees "y", it swaps to "x" and reads start_x;
-        # when loop sees "x", it swaps to "y" and reads start_y.
+        # swap_xy transposes X and Y: the output x axis is built from the tile's
+        # y position/length and vice versa.
         x_slice = roi.get("x")
         assert x_slice is not None
-        assert x_slice.start == 100.0
-        assert x_slice.length == 64.0
+        assert x_slice.start == 200.0
+        assert x_slice.length == 128.0
         y_slice = roi.get("y")
         assert y_slice is not None
-        assert y_slice.start == 200.0
-        assert y_slice.length == 128.0
+        assert y_slice.start == 100.0
+        assert y_slice.length == 64.0
 
     def test_tile_find_data_type(self, single_tile: Tile[Any, Any]) -> None:
         dtype = single_tile.find_data_type()
         assert dtype == "uint8"
 
     @pytest.mark.parametrize(
-        "start_x,pixelsize",
+        "start_x,xy_pixel_size",
         [
             (-645.814, 0.5979760809567617),
             (745.34, 1.294),
         ],
     )
     def test_tile_to_roi_non_aligned_coordinates(
-        self, default_collection: SingleImage, start_x: float, pixelsize: float
+        self, default_collection: SingleImage, start_x: float, xy_pixel_size: float
     ) -> None:
         """Regression: coordinates that don't land exactly on the pixel grid.
 
@@ -117,7 +119,7 @@ class TestTile:
         """
         acq = AcquisitionDetails(
             channels=[ChannelInfo(channel_label="DAPI")],
-            pixelsize=pixelsize,
+            xy_pixel_size=xy_pixel_size,
             z_spacing=1.0,
             t_spacing=1.0,
         )
@@ -132,6 +134,63 @@ class TestTile:
         x_slice = roi.get("x")
         assert x_slice is not None
         assert x_slice.start is not None
+
+
+class TestTileChannelValidation:
+    """`start_c` indexes into `acquisition_details.channels` (enforced at build)."""
+
+    def _acq(self, n_channels: int | None) -> AcquisitionDetails:
+        channels = None
+        if n_channels is not None:
+            channels = [ChannelInfo(channel_label=f"CH{i}") for i in range(n_channels)]
+        return AcquisitionDetails(channels=channels)
+
+    def _tile(self, start_c: int, acq: AcquisitionDetails) -> Tile:
+        return build_dummy_tile(
+            fov_name="FOV_0",
+            start=StartPosition(c=start_c),
+            shape=TileShape(x=16, y=16),
+            collection=SingleImage(image_path="img"),
+            acquisition_details=acq,
+        )
+
+    def test_start_c_beyond_channels_raises_at_build(self) -> None:
+        with pytest.raises(ValidationError, match="references channel index 3"):
+            self._tile(start_c=3, acq=self._acq(2))
+
+    def test_negative_start_c_raises(self) -> None:
+        with pytest.raises(ValidationError, match="must be >= 0"):
+            self._tile(start_c=-1, acq=self._acq(2))
+
+    def test_channels_none_skips_validation(self) -> None:
+        tile = self._tile(start_c=3, acq=self._acq(None))
+        assert tile.start_c == 3
+
+    def test_padded_channels_recovery(self) -> None:
+        # Recovery path: one ChannelInfo per instrument slot, unused slots padded.
+        tile = self._tile(start_c=3, acq=self._acq(4))
+        assert tile.start_c == 3
+
+    def test_tiled_image_channel_coverage_validated_on_load(self) -> None:
+        # TiledImage is rebuilt from JSON at the fractal init/compute boundary;
+        # the mirror validator must reject inconsistent payloads there too.
+        acq = self._acq(2)
+        coll = SingleImage(image_path="img")
+        tiles = [
+            build_dummy_tile(
+                fov_name="FOV_0",
+                start=StartPosition(c=c),
+                shape=TileShape(x=16, y=16),
+                collection=coll,
+                acquisition_details=acq,
+            )
+            for c in range(2)
+        ]
+        img = tiled_image_from_tiles(tiles=tiles, split_per_fov=False)[0]
+        payload = img.model_dump(mode="json")
+        payload["channels"] = payload["channels"][:1]
+        with pytest.raises(ValidationError, match="references channel range"):
+            TiledImage[SingleImage, DummyLoader].model_validate(payload)
 
 
 class TestTileSlice:
@@ -158,7 +217,7 @@ class TestTiledImage:
     ) -> None:
         acq = AcquisitionDetails(
             channels=[ChannelInfo(channel_label="DIFFERENT")],
-            pixelsize=1.0,
+            xy_pixel_size=1.0,
             z_spacing=1.0,
             t_spacing=1.0,
         )
@@ -193,6 +252,46 @@ class TestTiledImage:
         # DummyLoader fills with non-zero data
         assert data.sum() > 0
 
+    def test_load_data_non_zero_origin(
+        self,
+        default_acquisition_details: AcquisitionDetails,
+        default_collection: SingleImage,
+        default_converter_options: ConverterOptions,
+    ) -> None:
+        # Regions that do not start at pixel 0 must be zeroed to the union origin
+        # before slicing into the union-sized buffer; otherwise their data is
+        # dropped (or a broadcast error is raised). load_data must be
+        # translation-invariant: an offset grid yields identical pixels to the
+        # same grid at the origin.
+        def _build_grid(offset: int) -> TiledImage:
+            positions = [
+                ("FOV_0", StartPosition(x=offset, y=offset)),
+                ("FOV_1", StartPosition(x=offset + 256, y=offset)),
+                ("FOV_2", StartPosition(x=offset, y=offset + 256)),
+                ("FOV_3", StartPosition(x=offset + 256, y=offset + 256)),
+            ]
+            tiles = [
+                build_dummy_tile(
+                    fov_name=fov_name,
+                    start=start,
+                    shape=TileShape(x=256, y=256, z=1, c=2, t=1),
+                    collection=default_collection,
+                    acquisition_details=default_acquisition_details,
+                )
+                for fov_name, start in positions
+            ]
+            images = tiled_image_from_tiles(
+                tiles=tiles,
+                split_per_fov=default_converter_options.grouping.split_per_fov,
+            )
+            assert len(images) == 1
+            return images[0]
+
+        at_origin = _build_grid(0).load_data()
+        offset = _build_grid(100).load_data()
+        assert offset.shape == at_origin.shape == (1, 2, 1, 512, 512)
+        np.testing.assert_array_equal(offset, at_origin)
+
 
 class TestTiledImageFromTiles:
     def test_single_collection(
@@ -202,7 +301,7 @@ class TestTiledImageFromTiles:
     ) -> None:
         images = tiled_image_from_tiles(
             tiles=grid_2x2_tiles,
-            converter_options=default_converter_options,
+            split_per_fov=default_converter_options.grouping.split_per_fov,
         )
         # All tiles share the same collection path -> 1 TiledImage
         assert len(images) == 1
@@ -231,7 +330,7 @@ class TestTiledImageFromTiles:
         ]
         images = tiled_image_from_tiles(
             tiles=tiles,
-            converter_options=ConverterOptions(),
+            split_per_fov=False,
         )
         assert len(images) == 2
 
@@ -239,5 +338,5 @@ class TestTiledImageFromTiles:
         with pytest.raises(ValueError, match="No tiles"):
             tiled_image_from_tiles(
                 tiles=[],
-                converter_options=ConverterOptions(),
+                split_per_fov=False,
             )
