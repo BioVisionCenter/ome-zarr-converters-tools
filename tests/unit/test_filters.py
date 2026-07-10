@@ -17,23 +17,17 @@ from ome_zarr_converters_tools.models import (
     SingleImage,
 )
 from ome_zarr_converters_tools.pipelines._filters import (
-    AcquisitionExcludeFilter,
-    AcquisitionIncludeFilter,
-    AttributeExcludeFilter,
-    AttributeIncludeFilter,
+    AcquisitionFilter,
+    AttributeFilter,
     BoolValue,
-    ChannelExcludeFilter,
-    ChannelIncludeFilter,
-    FovNameExcludeFilter,
-    FovNameIncludeFilter,
+    ChannelFilter,
+    FovNameFilter,
     IsNoneValue,
     IsNotNoneValue,
-    RegexExcludeFilter,
-    RegexIncludeFilter,
+    RegexFilter,
     StringValue,
     TRangeFilter,
-    WellExcludeFilter,
-    WellIncludeFilter,
+    WellFilter,
     ZRangeFilter,
     _filter_registry,
     add_filter,
@@ -78,25 +72,26 @@ def _tile_in_plate(row: str, column: int, well_fov: str = "FOV_0") -> Tile[Any, 
 
 
 class TestFilterModels:
-    def test_regex_include_filter_creation(self) -> None:
-        f = RegexIncludeFilter(regex=".*test.*")
-        assert f.name == "Path Regex Include Filter"
+    def test_regex_filter_creation(self) -> None:
+        f = RegexFilter(regex=".*test.*")
+        assert f.name == "Path Regex Filter"
+        assert f.mode == "Include"
         assert f.regex == ".*test.*"
 
-    def test_regex_exclude_filter_creation(self) -> None:
-        f = RegexExcludeFilter(regex=".*exclude.*")
-        assert f.name == "Path Regex Exclude Filter"
-        assert f.regex == ".*exclude.*"
+    def test_regex_filter_exclude_mode(self) -> None:
+        f = RegexFilter(regex=".*exclude.*", mode="Exclude")
+        assert f.name == "Path Regex Filter"
+        assert f.mode == "Exclude"
 
     def test_well_filter_creation(self) -> None:
-        f = WellExcludeFilter(wells_to_remove=["A01", "B02"])
-        assert f.name == "Well Exclude Filter"
-        assert f.wells_to_remove == ["A01", "B02"]
+        f = WellFilter(wells=["A01", "B02"])
+        assert f.name == "Well Filter"
+        assert f.mode == "Include"
+        assert f.wells == ["A01", "B02"]
 
-    def test_well_include_filter_creation(self) -> None:
-        f = WellIncludeFilter(wells_to_include=["A01", "B02"])
-        assert f.name == "Well Include Filter"
-        assert f.wells_to_include == ["A01", "B02"]
+    def test_filter_mode_rejects_unknown_value(self) -> None:
+        with pytest.raises(ValueError, match="Include"):
+            WellFilter(wells=["A01"], mode="Drop")
 
 
 class TestFilterRegistry:
@@ -148,7 +143,7 @@ class TestFilterPipeline:
             _tile_with_path("img_beta"),
             _tile_with_path("img_alpha2"),
         ]
-        f = RegexIncludeFilter(regex=".*alpha.*")
+        f = RegexFilter(regex=".*alpha.*")
         result = apply_filter_pipeline(tiles, filters_config=[f])
         assert len(result) == 2
         for t in result:
@@ -159,18 +154,18 @@ class TestFilterPipeline:
             _tile_with_path("img_alpha"),
             _tile_with_path("img_beta"),
         ]
-        f = RegexExcludeFilter(regex=".*alpha.*")
+        f = RegexFilter(regex=".*alpha.*", mode="Exclude")
         result = apply_filter_pipeline(tiles, filters_config=[f])
         assert len(result) == 1
         assert "beta" in result[0].collection.path()
 
-    def test_well_filter_removes_wells(self) -> None:
+    def test_well_exclude_removes_wells(self) -> None:
         tiles = [
             _tile_in_plate("A", 1),
             _tile_in_plate("A", 2),
             _tile_in_plate("B", 1),
         ]
-        f = WellExcludeFilter(wells_to_remove=["A01"])
+        f = WellFilter(wells=["A01"], mode="Exclude")
         result = apply_filter_pipeline(tiles, filters_config=[f])
         assert len(result) == 2
         wells = [t.collection.well for t in result]
@@ -178,17 +173,17 @@ class TestFilterPipeline:
 
     def test_well_filter_non_plate_error(self) -> None:
         tiles = [_tile_with_path("img_a")]
-        f = WellExcludeFilter(wells_to_remove=["A01"])
+        f = WellFilter(wells=["A01"], mode="Exclude")
         with pytest.raises(ValueError, match="ImageInPlate"):
             apply_filter_pipeline(tiles, filters_config=[f])
 
-    def test_well_include_filter_keeps_wells(self) -> None:
+    def test_well_include_keeps_wells(self) -> None:
         tiles = [
             _tile_in_plate("A", 1),
             _tile_in_plate("A", 2),
             _tile_in_plate("B", 1),
         ]
-        f = WellIncludeFilter(wells_to_include=["A01", "B01"])
+        f = WellFilter(wells=["A01", "B01"])
         result = apply_filter_pipeline(tiles, filters_config=[f])
         assert len(result) == 2
         wells = [t.collection.well for t in result]
@@ -196,9 +191,9 @@ class TestFilterPipeline:
         assert "A01" in wells
         assert "B01" in wells
 
-    def test_well_include_filter_non_plate_error(self) -> None:
+    def test_well_include_non_plate_error(self) -> None:
         tiles = [_tile_with_path("img_a")]
-        f = WellIncludeFilter(wells_to_include=["A01"])
+        f = WellFilter(wells=["A01"])
         with pytest.raises(ValueError, match="ImageInPlate"):
             apply_filter_pipeline(tiles, filters_config=[f])
 
@@ -209,8 +204,8 @@ class TestFilterPipeline:
             _tile_with_path("img_gamma"),
         ]
         filters = [
-            RegexIncludeFilter(regex=".*alpha|.*gamma"),  # keeps alpha, gamma
-            RegexExcludeFilter(regex=".*gamma.*"),  # removes gamma
+            RegexFilter(regex=".*alpha|.*gamma"),  # keeps alpha, gamma
+            RegexFilter(regex=".*gamma.*", mode="Exclude"),  # removes gamma
         ]
         result = apply_filter_pipeline(tiles, filters_config=filters)
         assert len(result) == 1
@@ -224,7 +219,7 @@ class TestFovNameFilters:
             _tile_with_path("img", fov="FOV_2"),
             _tile_with_path("img", fov="POS_1"),
         ]
-        f = FovNameIncludeFilter(regex="^FOV_")
+        f = FovNameFilter(regex="^FOV_")
         result = apply_filter_pipeline(tiles, filters_config=[f])
         assert [t.fov_name for t in result] == ["FOV_1", "FOV_2"]
 
@@ -233,7 +228,7 @@ class TestFovNameFilters:
             _tile_with_path("img", fov="FOV_1"),
             _tile_with_path("img", fov="POS_1"),
         ]
-        f = FovNameExcludeFilter(regex="^FOV_")
+        f = FovNameFilter(regex="^FOV_", mode="Exclude")
         result = apply_filter_pipeline(tiles, filters_config=[f])
         assert [t.fov_name for t in result] == ["POS_1"]
 
@@ -252,19 +247,19 @@ def _tile_with_acquisition(acquisition: int) -> Tile[Any, Any]:
 class TestAcquisitionFilters:
     def test_acquisition_include(self) -> None:
         tiles = [_tile_with_acquisition(a) for a in (0, 1, 2)]
-        f = AcquisitionIncludeFilter(acquisitions=[0, 2])
+        f = AcquisitionFilter(acquisitions=[0, 2])
         result = apply_filter_pipeline(tiles, filters_config=[f])
         assert [t.collection.acquisition for t in result] == [0, 2]
 
     def test_acquisition_exclude(self) -> None:
         tiles = [_tile_with_acquisition(a) for a in (0, 1, 2)]
-        f = AcquisitionExcludeFilter(acquisitions=[1])
+        f = AcquisitionFilter(acquisitions=[1], mode="Exclude")
         result = apply_filter_pipeline(tiles, filters_config=[f])
         assert [t.collection.acquisition for t in result] == [0, 2]
 
     def test_acquisition_non_plate_error(self) -> None:
         tiles = [_tile_with_path("img_a")]
-        f = AcquisitionIncludeFilter(acquisitions=[0])
+        f = AcquisitionFilter(acquisitions=[0])
         with pytest.raises(ValueError, match="ImageInPlate"):
             apply_filter_pipeline(tiles, filters_config=[f])
 
@@ -281,9 +276,7 @@ class TestAttributeFilters:
             _tile_with_attributes({"condition": ["control"]}),
             _tile_with_attributes({"condition": ["treated"]}),
         ]
-        f = AttributeIncludeFilter(
-            key="condition", values=[StringValue(value="control")]
-        )
+        f = AttributeFilter(key="condition", values=[StringValue(value="control")])
         result = apply_filter_pipeline(tiles, filters_config=[f])
         assert len(result) == 1
         assert result[0].attributes["condition"] == ["control"]
@@ -293,8 +286,8 @@ class TestAttributeFilters:
             _tile_with_attributes({"condition": ["control"]}),
             _tile_with_attributes({"condition": ["treated"]}),
         ]
-        f = AttributeExcludeFilter(
-            key="condition", values=[StringValue(value="control")]
+        f = AttributeFilter(
+            key="condition", values=[StringValue(value="control")], mode="Exclude"
         )
         result = apply_filter_pipeline(tiles, filters_config=[f])
         assert len(result) == 1
@@ -305,7 +298,7 @@ class TestAttributeFilters:
             _tile_with_attributes({"flag": [True]}),
             _tile_with_attributes({"flag": [False]}),
         ]
-        f = AttributeIncludeFilter(key="flag", values=[BoolValue()])
+        f = AttributeFilter(key="flag", values=[BoolValue()])
         result = apply_filter_pipeline(tiles, filters_config=[f])
         assert len(result) == 1
         assert result[0].attributes["flag"] == [True]
@@ -315,7 +308,7 @@ class TestAttributeFilters:
             _tile_with_attributes({"condition": [None]}),
             _tile_with_attributes({"condition": ["treated"]}),
         ]
-        f = AttributeIncludeFilter(key="condition", values=[IsNoneValue()])
+        f = AttributeFilter(key="condition", values=[IsNoneValue()])
         result = apply_filter_pipeline(tiles, filters_config=[f])
         assert len(result) == 1
         assert result[0].attributes["condition"] == [None]
@@ -325,16 +318,14 @@ class TestAttributeFilters:
             _tile_with_attributes({"condition": [None]}),
             _tile_with_attributes({"condition": ["treated"]}),
         ]
-        f = AttributeExcludeFilter(key="condition", values=[IsNotNoneValue()])
+        f = AttributeFilter(key="condition", values=[IsNotNoneValue()], mode="Exclude")
         result = apply_filter_pipeline(tiles, filters_config=[f])
         assert len(result) == 1
         assert result[0].attributes["condition"] == [None]
 
     def test_attribute_missing_key_error(self) -> None:
         tiles = [_tile_with_attributes({"other": ["x"]})]
-        f = AttributeIncludeFilter(
-            key="condition", values=[StringValue(value="control")]
-        )
+        f = AttributeFilter(key="condition", values=[StringValue(value="control")])
         with pytest.raises(ValueError, match="no such attribute"):
             apply_filter_pipeline(tiles, filters_config=[f])
 
@@ -361,7 +352,7 @@ class TestChannelFilters:
             _channel_tile(0, 1, ["DAPI", "GFP"]),
             _channel_tile(1, 1, ["DAPI", "GFP"]),
         ]
-        f = ChannelIncludeFilter(channel_labels=["DAPI"])
+        f = ChannelFilter(channel_labels=["DAPI"])
         result = apply_filter_pipeline(tiles, filters_config=[f])
         assert len(result) == 1
         assert result[0].start_c == 0
@@ -371,7 +362,7 @@ class TestChannelFilters:
             _channel_tile(0, 1, ["DAPI", "GFP"]),
             _channel_tile(1, 1, ["DAPI", "GFP"]),
         ]
-        f = ChannelExcludeFilter(channel_labels=["DAPI"])
+        f = ChannelFilter(channel_labels=["DAPI"], mode="Exclude")
         result = apply_filter_pipeline(tiles, filters_config=[f])
         assert len(result) == 1
         assert result[0].start_c == 1
@@ -384,13 +375,13 @@ class TestChannelFilters:
             collection=SingleImage(image_path="img"),
             acquisition_details=AcquisitionDetails(),
         )
-        f = ChannelIncludeFilter(channel_labels=["DAPI"])
+        f = ChannelFilter(channel_labels=["DAPI"])
         with pytest.raises(ValueError, match="channels=None"):
             apply_filter_pipeline([tile], filters_config=[f])
 
     def test_channel_filter_partial_match_error(self) -> None:
         tiles = [_channel_tile(0, 2, ["DAPI", "GFP"])]
-        f = ChannelIncludeFilter(channel_labels=["DAPI"])
+        f = ChannelFilter(channel_labels=["DAPI"])
         with pytest.raises(ValueError, match="whole tiles"):
             apply_filter_pipeline(tiles, filters_config=[f])
 

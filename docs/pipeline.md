@@ -122,55 +122,45 @@ Filters match against the tile's **collection path** -- the output path derived 
 
 ### Built-in Filters
 
-#### RegexIncludeFilter
+Every matching filter carries a `mode` field (`"Include"` or `"Exclude"`, default `"Include"`): in `Include` mode, matching tiles are kept and all others discarded; in `Exclude` mode, matching tiles are discarded and all others kept.
 
-Keeps only tiles whose collection path matches a regex pattern. All non-matching tiles are discarded.
+#### RegexFilter
+
+Matches tiles whose collection path matches a regex pattern.
 
 ```python
 from ome_zarr_converters_tools.pipelines import apply_filter_pipeline, FilterModel
 
 # Import the specific filter from the internal module
-from ome_zarr_converters_tools.pipelines._filters import RegexIncludeFilter
+from ome_zarr_converters_tools.pipelines._filters import RegexFilter
 
-f = RegexIncludeFilter(regex=".*PlateA.*")
+# Keep only tiles from PlateA
+f = RegexFilter(regex=".*PlateA.*")
+filtered_tiles = apply_filter_pipeline(tiles, filters_config=[f])
+
+# Remove control tiles
+f = RegexFilter(regex=".*control.*", mode="Exclude")
 filtered_tiles = apply_filter_pipeline(tiles, filters_config=[f])
 ```
 
-#### RegexExcludeFilter
+#### WellFilter
 
-Removes tiles whose collection path matches a regex pattern. All non-matching tiles are kept.
+Matches tiles belonging to specific wells. Only works with `ImageInPlate` collections.
 
 ```python
-from ome_zarr_converters_tools.pipelines._filters import RegexExcludeFilter
+from ome_zarr_converters_tools.pipelines._filters import WellFilter
 
-f = RegexExcludeFilter(regex=".*control.*")
+# Keep only wells A1 and B2
+f = WellFilter(wells=["A1", "B2"])
 filtered_tiles = apply_filter_pipeline(tiles, filters_config=[f])
-```
 
-#### WellExcludeFilter
-
-Removes tiles belonging to specific wells. Only works with `ImageInPlate` collections.
-
-```python
-from ome_zarr_converters_tools.pipelines._filters import WellExcludeFilter
-
-f = WellExcludeFilter(wells_to_remove=["A1", "B2"])
-filtered_tiles = apply_filter_pipeline(tiles, filters_config=[f])
-```
-
-#### WellIncludeFilter
-
-Keeps only tiles belonging to specific wells, removing all others. Only works with `ImageInPlate` collections.
-
-```python
-from ome_zarr_converters_tools.pipelines._filters import WellIncludeFilter
-
-f = WellIncludeFilter(wells_to_include=["A1", "B2"])
+# Remove wells A1 and B2
+f = WellFilter(wells=["A1", "B2"], mode="Exclude")
 filtered_tiles = apply_filter_pipeline(tiles, filters_config=[f])
 ```
 
 !!! note
-    The individual filter classes (`RegexIncludeFilter`, `RegexExcludeFilter`, `WellExcludeFilter`, `WellIncludeFilter`) are imported from `ome_zarr_converters_tools.pipelines._filters`. The public API exports `FilterModel` (the base class), `ImplementedFilters` (the union type), `apply_filter_pipeline`, and `add_filter`.
+    The individual filter classes (`RegexFilter`, `WellFilter`, ...) are imported from `ome_zarr_converters_tools.pipelines._filters`. The public API exports `FilterModel` (the base class), `ImplementedFilters` (the union type), `apply_filter_pipeline`, and `add_filter`.
 
 ### Using Filters in the Pipeline
 
@@ -178,12 +168,12 @@ Filters can be passed directly to `tiles_aggregation_pipeline()`:
 
 ```python
 from ome_zarr_converters_tools import tiles_aggregation_pipeline, ConverterOptions
-from ome_zarr_converters_tools.pipelines._filters import RegexIncludeFilter
+from ome_zarr_converters_tools.pipelines._filters import RegexFilter
 
 images = tiles_aggregation_pipeline(
     tiles=tiles,
     converter_options=ConverterOptions(),
-    filters=[RegexIncludeFilter(regex=".*keep.*")],
+    filters=[RegexFilter(regex=".*keep.*")],
 )
 ```
 

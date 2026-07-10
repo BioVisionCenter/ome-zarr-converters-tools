@@ -216,22 +216,12 @@ def converters_tools_models(
         (
             base,
             "pipelines/_filters.py",
-            "WellExcludeFilter",
+            "WellFilter",
         ),
         (
             base,
             "pipelines/_filters.py",
-            "WellIncludeFilter",
-        ),
-        (
-            base,
-            "pipelines/_filters.py",
-            "RegexIncludeFilter",
-        ),
-        (
-            base,
-            "pipelines/_filters.py",
-            "RegexExcludeFilter",
+            "RegexFilter",
         ),
         (
             base,

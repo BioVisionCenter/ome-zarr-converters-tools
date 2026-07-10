@@ -8,20 +8,29 @@ from ome_zarr_converters_tools.core._tile import Tile
 from ome_zarr_converters_tools.models._collection import ImageInPlate
 from ome_zarr_converters_tools.pipelines._registry import Registry
 
+FilterMode = Literal["Include", "Exclude"]
+
 
 class FilterModel(BaseModel):
     name: Any
 
 
-class RegexIncludeFilter(FilterModel):
-    """Regex include filter model."""
+def _apply_mode(matched: bool, mode: FilterMode) -> bool:
+    return matched if mode == "Include" else not matched
 
-    name: Literal["Path Regex Include Filter"] = "Path Regex Include Filter"
+
+class RegexFilter(FilterModel):
+    """Path regex filter model."""
+
+    name: Literal["Path Regex Filter"] = "Path Regex Filter"
     """Name of the filter."""
+    mode: FilterMode = "Include"
+    """Whether matching tiles are included (kept) or excluded (removed)."""
     regex: str
     """
-    Regex pattern to include. If the tile's base path matches this regex,
-    it will be included, otherwise it will be excluded.
+    Regex pattern matched against the tile's base path. In `Include` mode
+    matching tiles are kept and all others removed; in `Exclude` mode
+    matching tiles are removed and all others kept.
     """
 
 
@@ -32,101 +41,50 @@ def _regex_bases_match(tile: Tile, regex: str) -> bool:
     return False
 
 
-def apply_path_include_regex_filter(
-    tile: Tile, filter_params: RegexIncludeFilter
-) -> bool:
-    return _regex_bases_match(tile, filter_params.regex)
+def apply_path_regex_filter(tile: Tile, filter_params: RegexFilter) -> bool:
+    matched = _regex_bases_match(tile, filter_params.regex)
+    return _apply_mode(matched, filter_params.mode)
 
 
-class RegexExcludeFilter(FilterModel):
-    """Regex exclude filter model."""
+class WellFilter(FilterModel):
+    """Well filter model."""
 
-    name: Literal["Path Regex Exclude Filter"] = "Path Regex Exclude Filter"
+    name: Literal["Well Filter"] = "Well Filter"
     """Name of the filter."""
-    regex: str
-    """
-    Regex pattern to exclude. If the tile's base path matches this regex,
-    it will be excluded, otherwise it will be included.
-    """
+    mode: FilterMode = "Include"
+    """Whether matching tiles are included (kept) or excluded (removed)."""
+    wells: list[str]
+    """List of well identifiers to keep (`Include` mode) or remove
+    (`Exclude` mode). E.g., ["A01", "B02"]"""
 
 
-def apply_path_exclude_regex_filter(
-    tile: Tile, filter_params: RegexExcludeFilter
-) -> bool:
-    return not _regex_bases_match(tile, filter_params.regex)
-
-
-class WellExcludeFilter(FilterModel):
-    """Well exclude filter model."""
-
-    name: Literal["Well Exclude Filter"] = "Well Exclude Filter"
-    """Name of the filter."""
-    wells_to_remove: list[str]
-    """List of well identifiers to remove. E.g., ["A01", "B02"]"""
-
-
-def apply_well_filter(tile: Tile, filter_params: WellExcludeFilter) -> bool:
+def apply_well_filter(tile: Tile, filter_params: WellFilter) -> bool:
     if not isinstance(tile.collection, ImageInPlate):
         raise ValueError(
             "Well filter can only be applied to a tile with ImageInPlate collection."
         )
-    if tile.collection.well in filter_params.wells_to_remove:
-        return False
-    return True
+    matched = tile.collection.well in filter_params.wells
+    return _apply_mode(matched, filter_params.mode)
 
 
-class WellIncludeFilter(FilterModel):
-    """Well include filter model."""
+class FovNameFilter(FilterModel):
+    """FOV name filter model."""
 
-    name: Literal["Well Include Filter"] = "Well Include Filter"
+    name: Literal["FOV Name Filter"] = "FOV Name Filter"
     """Name of the filter."""
-    wells_to_include: list[str]
-    """List of well identifiers to keep. E.g., ["A01", "B02"]"""
-
-
-def apply_well_include_filter(tile: Tile, filter_params: WellIncludeFilter) -> bool:
-    if not isinstance(tile.collection, ImageInPlate):
-        raise ValueError(
-            "Well include filter can only be applied to a tile with"
-            " ImageInPlate collection."
-        )
-    return tile.collection.well in filter_params.wells_to_include
-
-
-class FovNameIncludeFilter(FilterModel):
-    """FOV name include filter model."""
-
-    name: Literal["FOV Name Include Filter"] = "FOV Name Include Filter"
-    """Name of the filter."""
+    mode: FilterMode = "Include"
+    """Whether matching tiles are included (kept) or excluded (removed)."""
     regex: str
     """
-    Regex pattern to include. If the tile's `fov_name` matches this regex,
-    it will be included, otherwise it will be excluded.
+    Regex pattern matched against the tile's `fov_name`. In `Include` mode
+    matching tiles are kept and all others removed; in `Exclude` mode
+    matching tiles are removed and all others kept.
     """
 
 
-def apply_fov_name_include_filter(
-    tile: Tile, filter_params: FovNameIncludeFilter
-) -> bool:
-    return re.search(filter_params.regex, tile.fov_name) is not None
-
-
-class FovNameExcludeFilter(FilterModel):
-    """FOV name exclude filter model."""
-
-    name: Literal["FOV Name Exclude Filter"] = "FOV Name Exclude Filter"
-    """Name of the filter."""
-    regex: str
-    """
-    Regex pattern to exclude. If the tile's `fov_name` matches this regex,
-    it will be excluded, otherwise it will be included.
-    """
-
-
-def apply_fov_name_exclude_filter(
-    tile: Tile, filter_params: FovNameExcludeFilter
-) -> bool:
-    return re.search(filter_params.regex, tile.fov_name) is None
+def apply_fov_name_filter(tile: Tile, filter_params: FovNameFilter) -> bool:
+    matched = re.search(filter_params.regex, tile.fov_name) is not None
+    return _apply_mode(matched, filter_params.mode)
 
 
 def _plate_acquisition(tile: Tile, filter_name: str) -> int:
@@ -137,36 +95,22 @@ def _plate_acquisition(tile: Tile, filter_name: str) -> int:
     return tile.collection.acquisition
 
 
-class AcquisitionIncludeFilter(FilterModel):
-    """Acquisition include filter model."""
+class AcquisitionFilter(FilterModel):
+    """Acquisition filter model."""
 
-    name: Literal["Acquisition Include Filter"] = "Acquisition Include Filter"
+    name: Literal["Acquisition Filter"] = "Acquisition Filter"
     """Name of the filter."""
+    mode: FilterMode = "Include"
+    """Whether matching tiles are included (kept) or excluded (removed)."""
     acquisitions: list[int]
-    """List of acquisition indices to keep. E.g., [0, 1]"""
+    """List of acquisition indices to keep (`Include` mode) or remove
+    (`Exclude` mode). E.g., [0, 1]"""
 
 
-def apply_acquisition_include_filter(
-    tile: Tile, filter_params: AcquisitionIncludeFilter
-) -> bool:
+def apply_acquisition_filter(tile: Tile, filter_params: AcquisitionFilter) -> bool:
     acquisition = _plate_acquisition(tile, filter_params.name)
-    return acquisition in filter_params.acquisitions
-
-
-class AcquisitionExcludeFilter(FilterModel):
-    """Acquisition exclude filter model."""
-
-    name: Literal["Acquisition Exclude Filter"] = "Acquisition Exclude Filter"
-    """Name of the filter."""
-    acquisitions: list[int]
-    """List of acquisition indices to remove. E.g., [0, 1]"""
-
-
-def apply_acquisition_exclude_filter(
-    tile: Tile, filter_params: AcquisitionExcludeFilter
-) -> bool:
-    acquisition = _plate_acquisition(tile, filter_params.name)
-    return acquisition not in filter_params.acquisitions
+    matched = acquisition in filter_params.acquisitions
+    return _apply_mode(matched, filter_params.mode)
 
 
 class BoolValue(BaseModel):
@@ -247,44 +191,26 @@ def _attribute_matches(
     )
 
 
-class AttributeIncludeFilter(FilterModel):
-    """Attribute include filter model."""
+class AttributeFilter(FilterModel):
+    """Attribute filter model."""
 
-    name: Literal["Attribute Include Filter"] = "Attribute Include Filter"
+    name: Literal["Attribute Filter"] = "Attribute Filter"
     """Name of the filter."""
+    mode: FilterMode = "Include"
+    """Whether matching tiles are included (kept) or excluded (removed)."""
     key: str
     """Attribute key to match. The attribute must be present on every tile."""
     values: list[AttributeValue]
-    """Values to match against. A tile is included if any element of its
-    attribute value matches one of these."""
+    """Values to match against. A tile matches if any element of its
+    attribute value matches one of these; matching tiles are kept in
+    `Include` mode and removed in `Exclude` mode."""
 
 
-def apply_attribute_include_filter(
-    tile: Tile, filter_params: AttributeIncludeFilter
-) -> bool:
-    return _attribute_matches(
+def apply_attribute_filter(tile: Tile, filter_params: AttributeFilter) -> bool:
+    matched = _attribute_matches(
         tile, filter_params.key, filter_params.values, filter_params.name
     )
-
-
-class AttributeExcludeFilter(FilterModel):
-    """Attribute exclude filter model."""
-
-    name: Literal["Attribute Exclude Filter"] = "Attribute Exclude Filter"
-    """Name of the filter."""
-    key: str
-    """Attribute key to match. The attribute must be present on every tile."""
-    values: list[AttributeValue]
-    """Values to match against. A tile is excluded if any element of its
-    attribute value matches one of these."""
-
-
-def apply_attribute_exclude_filter(
-    tile: Tile, filter_params: AttributeExcludeFilter
-) -> bool:
-    return not _attribute_matches(
-        tile, filter_params.key, filter_params.values, filter_params.name
-    )
+    return _apply_mode(matched, filter_params.mode)
 
 
 def _channel_labels_match(
@@ -324,38 +250,24 @@ def _channel_labels_match(
     )
 
 
-class ChannelIncludeFilter(FilterModel):
-    """Channel include filter model."""
+class ChannelFilter(FilterModel):
+    """Channel filter model."""
 
-    name: Literal["Channel Include Filter"] = "Channel Include Filter"
+    name: Literal["Channel Filter"] = "Channel Filter"
     """Name of the filter."""
+    mode: FilterMode = "Include"
+    """Whether matching tiles are included (kept) or excluded (removed)."""
     channel_labels: list[str]
-    """Channel labels to keep. E.g., ["DAPI", "GFP"]. A tile is kept if all
-    of its channels are in this list; a partial match raises."""
+    """Channel labels to keep (`Include` mode) or remove (`Exclude` mode).
+    E.g., ["DAPI", "GFP"]. A tile matches if all of its channels are in this
+    list; a partial match raises."""
 
 
-def apply_channel_include_filter(
-    tile: Tile, filter_params: ChannelIncludeFilter
-) -> bool:
-    return _channel_labels_match(tile, filter_params.channel_labels, filter_params.name)
-
-
-class ChannelExcludeFilter(FilterModel):
-    """Channel exclude filter model."""
-
-    name: Literal["Channel Exclude Filter"] = "Channel Exclude Filter"
-    """Name of the filter."""
-    channel_labels: list[str]
-    """Channel labels to remove. E.g., ["DAPI", "GFP"]. A tile is removed if
-    all of its channels are in this list; a partial match raises."""
-
-
-def apply_channel_exclude_filter(
-    tile: Tile, filter_params: ChannelExcludeFilter
-) -> bool:
-    return not _channel_labels_match(
+def apply_channel_filter(tile: Tile, filter_params: ChannelFilter) -> bool:
+    matched = _channel_labels_match(
         tile, filter_params.channel_labels, filter_params.name
     )
+    return _apply_mode(matched, filter_params.mode)
 
 
 class ZRangeFilter(FilterModel):
@@ -425,18 +337,12 @@ _filter_registry: Registry[Callable[..., bool]] = Registry(
     "Filter step",
     "add_filter",
     {
-        "Path Regex Include Filter": apply_path_include_regex_filter,
-        "Path Regex Exclude Filter": apply_path_exclude_regex_filter,
-        "Well Exclude Filter": apply_well_filter,
-        "Well Include Filter": apply_well_include_filter,
-        "FOV Name Include Filter": apply_fov_name_include_filter,
-        "FOV Name Exclude Filter": apply_fov_name_exclude_filter,
-        "Acquisition Include Filter": apply_acquisition_include_filter,
-        "Acquisition Exclude Filter": apply_acquisition_exclude_filter,
-        "Attribute Include Filter": apply_attribute_include_filter,
-        "Attribute Exclude Filter": apply_attribute_exclude_filter,
-        "Channel Include Filter": apply_channel_include_filter,
-        "Channel Exclude Filter": apply_channel_exclude_filter,
+        "Path Regex Filter": apply_path_regex_filter,
+        "Well Filter": apply_well_filter,
+        "FOV Name Filter": apply_fov_name_filter,
+        "Acquisition Filter": apply_acquisition_filter,
+        "Attribute Filter": apply_attribute_filter,
+        "Channel Filter": apply_channel_filter,
         "Z Range Filter": apply_z_range_filter,
         "Time Range Filter": apply_t_range_filter,
     },
@@ -476,18 +382,12 @@ def apply_filter_pipeline(
 
 
 ImplementedFilters = Annotated[
-    RegexExcludeFilter
-    | RegexIncludeFilter
-    | WellExcludeFilter
-    | WellIncludeFilter
-    | FovNameIncludeFilter
-    | FovNameExcludeFilter
-    | AcquisitionIncludeFilter
-    | AcquisitionExcludeFilter
-    | AttributeIncludeFilter
-    | AttributeExcludeFilter
-    | ChannelIncludeFilter
-    | ChannelExcludeFilter
+    RegexFilter
+    | WellFilter
+    | FovNameFilter
+    | AcquisitionFilter
+    | AttributeFilter
+    | ChannelFilter
     | ZRangeFilter
     | TRangeFilter,
     Field(discriminator="name"),

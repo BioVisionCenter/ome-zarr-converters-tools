@@ -38,7 +38,7 @@ from ome_zarr_converters_tools.pipelines import (
     tiled_image_creation_pipeline,
     tiles_aggregation_pipeline,
 )
-from ome_zarr_converters_tools.pipelines._filters import RegexIncludeFilter
+from ome_zarr_converters_tools.pipelines._filters import RegexFilter
 from ome_zarr_converters_tools.pipelines._registration_pipeline import (
     apply_registration_pipeline,
     build_default_registration_pipeline,
@@ -122,7 +122,7 @@ class TestTilesAggregationPipeline:
         tiles_drop = _make_tiles(coll2)[2:]
         all_tiles = tiles_keep + tiles_drop
         opts = ConverterOptions()
-        f = RegexIncludeFilter(regex=".*keep.*")
+        f = RegexFilter(regex=".*keep.*")
         images = tiles_aggregation_pipeline(
             tiles=all_tiles, converter_options=opts, filters=[f]
         )

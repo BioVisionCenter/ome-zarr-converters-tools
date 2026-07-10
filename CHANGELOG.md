@@ -34,17 +34,18 @@ versioning.
   asserts the root `__all__` is a superset of each subpackage's `__all__`.
 - Add `CollectionInterface.set_suffix` as the supported way to set the per-FOV
   path suffix (replaces reaching into the private `_suffix` attribute).
-- Ten new built-in filters, all selectable from the Fractal UI via
-  `AcquisitionOptions.filters`: `FovNameIncludeFilter` / `FovNameExcludeFilter`
-  (regex on `fov_name`), `AcquisitionIncludeFilter` / `AcquisitionExcludeFilter`
-  (acquisition indices, plates only), `AttributeIncludeFilter` /
-  `AttributeExcludeFilter` (key/value match on tile attributes; values are
-  typed `AttributeValue` entries, e.g.
-  `AttributeIncludeFilter(key="condition", values=[StringValue(value="control")])`),
-  `ChannelIncludeFilter` / `ChannelExcludeFilter` (channel labels; a partial
-  match on a multi-channel tile raises instead of silently dropping channels),
-  and `ZRangeFilter` / `TRangeFilter` (keep tiles whose `start_z` / `start_t`
-  falls inside an inclusive `[min, max]` range).
+- Six new built-in filters, all selectable from the Fractal UI via
+  `AcquisitionOptions.filters`: `FovNameFilter` (regex on `fov_name`),
+  `AcquisitionFilter` (acquisition indices, plates only), `AttributeFilter`
+  (key/value match on tile attributes; values are typed `AttributeValue`
+  entries, e.g.
+  `AttributeFilter(key="condition", values=[StringValue(value="control")])`),
+  `ChannelFilter` (channel labels; a partial match on a multi-channel tile
+  raises instead of silently dropping channels), and `ZRangeFilter` /
+  `TRangeFilter` (keep tiles whose `start_z` / `start_t` falls inside an
+  inclusive `[min, max]` range). All matching filters carry a
+  `mode: Literal["Include", "Exclude"]` field (default `"Include"`) selecting
+  whether matching tiles are kept or removed.
 - Validators are now pre-flight checks that front-load compute-time failures to
   init time. New built-in `ShapeDtypeProbeValidator` (name
   `"Shape and Dtype Probe"`): runs `preflight` on every tile's loader, then
@@ -108,6 +109,14 @@ versioning.
   emitted `init_args` instead of relying on a no-op `model_dump(exclude=None)`.
 
 ### API Breaking Changes
+- The Include/Exclude filter class pairs are merged into single filters with a
+  `mode: Literal["Include", "Exclude"]` field (default `"Include"`):
+  `RegexIncludeFilter` / `RegexExcludeFilter` → `RegexFilter` and
+  `WellIncludeFilter` / `WellExcludeFilter` → `WellFilter` (whose `wells` field
+  replaces both `wells_to_include` and `wells_to_remove`).
+  Before: `WellIncludeFilter(wells_to_include=["A01"])`,
+  `WellExcludeFilter(wells_to_remove=["B02"])`. After:
+  `WellFilter(wells=["A01"])`, `WellFilter(wells=["B02"], mode="Exclude")`.
 - Image grouping is now separated from the tiling strategy. `ConverterOptions.tiling_strategy`
   is replaced by `ConverterOptions.grouping`, a discriminated union
   `Grouping = MosaicGrouping | PerFovGrouping`. `MosaicGrouping` carries the
@@ -202,6 +211,14 @@ versioning.
     `AcquisitionDetails(start_x_space="world")`.
 
 ### Chores
+- Add a JSON-schema compatibility test (`tests/unit/test_json_schema_compat.py`):
+  the full set of models that downstream converter packages expose to Fractal
+  manifests is rendered with `fractal-task-tools`' schema builder and compared
+  against a committed snapshot (`tests/data/schemas/task_args_schema.json`),
+  checked for complete coverage of the downstream `$defs` surface, and
+  validated against the Fractal webui renderability rules (`E01`–`E22`).
+  Regenerate the snapshot with `pytest --update-snapshots`. Adds
+  `fractal-task-tools` to the `test` extra.
 - Bump the `Development Status` classifier from `3 - Alpha` to
   `5 - Production/Stable`.
 - Remove the unused runtime dependencies `toml` and `tqdm`, and add minimum
