@@ -34,7 +34,7 @@ class ShapeDtypeProbeValidator(ValidatorModel):
 
 def _expected_region_shape(tiled_image: TiledImage, region: Any) -> tuple[int, ...]:
     """Pixel shape a region's data must have, derived as compute derives it."""
-    offset = {}
+    offset: dict[str, float] = {}
     for axis in tiled_image.axes:
         axis_slice = region.roi.get(axis)
         start = axis_slice.start if axis_slice is not None else None
