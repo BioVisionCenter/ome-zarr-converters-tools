@@ -170,7 +170,7 @@ class Tile(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfaceType]
             name=self.fov_name,
             slices=list(roi_slices.values()),
             space="world",
-            **origins,  # type: ignore
+            **origins,
         )
 
     def find_data_type(self, resource: Any | None = None) -> str:

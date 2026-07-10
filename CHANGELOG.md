@@ -243,6 +243,9 @@ versioning.
 - CI lint job installs the `test` extra alongside `dev` so `ty` can resolve
   `pytest`, imported by the shipped pytest plugin
   (`ome_zarr_converters_tools.testing.plugin`).
+- Update `ty` to 0.0.58 in the pixi lockfile (matching CI, which installs the
+  latest) and drop a `# type: ignore` in `_tile.py` that the newer `ty` flags
+  as unused.
 - UI-exposed models set `use_attribute_docstrings=True` explicitly (via the
   `UserFacingModel` base) instead of relying on fractal-task-tools patching it
   into `BaseModel` at import time — schema output no longer depends on import
