@@ -32,6 +32,13 @@ class TestImageLoaderInterface:
         loader = StubLoader()
         assert loader.find_data_type() == "float32"
 
+    def test_preflight_default_noop(self) -> None:
+        class StubLoader(ImageLoaderInterface):
+            def load_data(self, resource=None):
+                return np.zeros((2, 2), dtype=np.uint16)
+
+        StubLoader().preflight()  # must not raise or load data
+
 
 class TestDefaultImageLoader:
     def test_load_npy(self, tmp_path: Path) -> None:
@@ -148,3 +155,27 @@ class TestDefaultImageLoader:
         # ImageLoaderInterface has extra="ignore"
         loader = DefaultImageLoader(file_path="test.npy", unknown_field="value")  # type: ignore
         assert loader.file_path == "test.npy"
+
+    def test_preflight_existing_file(self, tmp_path: Path) -> None:
+        np.save(tmp_path / "img.npy", np.zeros((5, 5), dtype=np.uint8))
+        loader = DefaultImageLoader(file_path=str(tmp_path / "img.npy"))
+        loader.preflight()  # must not raise
+
+    def test_preflight_missing_file_warns(self, tmp_path: Path) -> None:
+        loader = DefaultImageLoader(file_path=str(tmp_path / "missing.npy"))
+        with pytest.warns(UserWarning, match="does not exist"):
+            loader.preflight()
+
+    def test_preflight_resolves_resource(self, tmp_path: Path) -> None:
+        np.save(tmp_path / "img.npy", np.zeros((5, 5), dtype=np.uint8))
+        loader = DefaultImageLoader(file_path="img.npy")
+        loader.preflight(resource=str(tmp_path))
+        with pytest.warns(UserWarning, match="does not exist"):
+            loader.preflight(resource=str(tmp_path / "elsewhere"))
+
+    def test_preflight_unsupported_url_warns(self) -> None:
+        # A bare relative path is not a supported URL; preflight must warn,
+        # never raise.
+        loader = DefaultImageLoader(file_path="img.npy")
+        with pytest.warns(UserWarning, match="could not verify"):
+            loader.preflight()

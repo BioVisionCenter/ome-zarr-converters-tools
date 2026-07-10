@@ -3,6 +3,8 @@
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from ome_zarr_converters_tools.core._dummy_tiles import (
     StartPosition,
     TileShape,
@@ -263,3 +265,41 @@ class TestSetupImagesForConversion:
 
         call_kwargs = mock_setup.call_args[1]
         assert call_kwargs["overwrite_mode"] == OverwriteMode.EXTEND
+
+
+class TestPathCollisionCheck:
+    def test_duplicate_paths_raise_in_parallelization_list(
+        self, tmp_path: Path
+    ) -> None:
+        # Two aggregation calls over the same collection yield two TiledImages
+        # resolving to the same output path.
+        images = _make_tiled_images(1) + _make_tiled_images(1)
+        with pytest.raises(ValueError, match="same output path"):
+            build_parallelization_list(
+                images,
+                zarr_dir=str(tmp_path / "output.zarr"),
+                converter_options=ConverterOptions(),
+            )
+
+    @patch("ome_zarr_converters_tools.fractal._init_task.setup_ome_zarr_collection")
+    def test_duplicate_paths_raise_before_collection_setup(
+        self, mock_setup: MagicMock, tmp_path: Path
+    ) -> None:
+        images = _make_tiled_images(1) + _make_tiled_images(1)
+        with pytest.raises(ValueError, match="same output path"):
+            setup_images_for_conversion(
+                images,
+                zarr_dir=str(tmp_path / "output.zarr"),
+                collection_type="SingleImage",
+                converter_options=ConverterOptions(),
+            )
+        mock_setup.assert_not_called()
+
+    def test_unique_paths_pass(self, tmp_path: Path) -> None:
+        images = _make_tiled_images(2)
+        result = build_parallelization_list(
+            images,
+            zarr_dir=str(tmp_path / "output.zarr"),
+            converter_options=ConverterOptions(),
+        )
+        assert len(result) == 2

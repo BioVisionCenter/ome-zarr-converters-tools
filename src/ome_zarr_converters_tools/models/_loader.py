@@ -31,6 +31,16 @@ class ImageLoaderInterface(BaseModel, ABC):
         """Load the image data as a NumPy array."""
         pass
 
+    def preflight(self, resource: Any | None = None) -> None:
+        """Cheaply verify the source data is reachable, without loading it.
+
+        The default implementation is a no-op. Override it to emit a warning
+        on missing or unreadable sources (e.g. a file-existence check) so
+        that pre-flight validators can surface such problems at init time,
+        before compute jobs are dispatched. Implementations should warn, not
+        raise: only loading the data decides whether it is truly unreadable.
+        """
+
     def find_data_type(self, resource: Any | None = None) -> str:
         """Find the data type of the image data."""
         return str(self.load_data(resource).dtype)
@@ -52,8 +62,8 @@ class DefaultImageLoader(ImageLoaderInterface):
     """Path to the image file. If relative, it is resolved against the
     `resource` passed to `load_data` (usually the acquisition base directory)."""
 
-    def load_data(self, resource: Any | None = None) -> np.ndarray:
-        """Load the image data as a NumPy array."""
+    def _resolve_path(self, resource: Any | None) -> str:
+        """Resolve `file_path` against the optional `resource` base directory."""
         try:
             if resource is not None:
                 # Ensure we can convert to str
@@ -63,9 +73,32 @@ class DefaultImageLoader(ImageLoaderInterface):
                 "DefaultImageLoader expects resource to be of type str, Path, or None."
             )
         if resource and isinstance(resource, str):
-            path = join_url_paths(resource, self.file_path)
-        else:
-            path = self.file_path
+            return join_url_paths(resource, self.file_path)
+        return self.file_path
+
+    def preflight(self, resource: Any | None = None) -> None:
+        """Warn if the source file does not exist, without reading it."""
+        path = self._resolve_path(resource)
+        try:
+            fs = filesystem_for_url(path, error_msg_prefix="Preflight check")
+            exists = fs.exists(path)
+        except Exception as e:
+            warnings.warn(
+                f"Preflight check could not verify source file '{path}': {e}",
+                stacklevel=2,
+            )
+            return
+        if not exists:
+            warnings.warn(
+                f"Source file '{path}' does not exist. Check that the file "
+                "was not moved or deleted, and that `file_path` (combined "
+                "with the `resource` base directory, if any) points to it.",
+                stacklevel=2,
+            )
+
+    def load_data(self, resource: Any | None = None) -> np.ndarray:
+        """Load the image data as a NumPy array."""
+        path = self._resolve_path(resource)
 
         suffix = basename_url(path).split(".")[-1].lower()
         if suffix in ["tiff", "tif", "tf2", "tf8", "btf"]:

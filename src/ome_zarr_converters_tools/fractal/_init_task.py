@@ -22,6 +22,28 @@ from ome_zarr_converters_tools.pipelines._collection_setup import (
 )
 
 
+def _check_path_collisions(tiled_images: list[TiledImage]) -> None:
+    """Raise if two TiledImages resolve to the same output path.
+
+    Duplicate paths mean two compute jobs would race on the same zarr group.
+    Within one aggregation call same-path tiles are merged into one image, so
+    collisions only arise when images from multiple aggregation calls (e.g.
+    one per acquisition) are combined.
+    """
+    seen: dict[str, int] = {}
+    for image in tiled_images:
+        seen[image.path] = seen.get(image.path, 0) + 1
+    duplicates = sorted(path for path, count in seen.items() if count > 1)
+    if duplicates:
+        raise ValueError(
+            f"Multiple TiledImages resolve to the same output path(s): "
+            f"{duplicates}. Each image must have a unique path, otherwise "
+            "parallel compute jobs would overwrite each other. Give each "
+            "image a distinct `acquisition` index (plates) or `image_path` "
+            "(single images), or enable `split_per_fov`."
+        )
+
+
 def build_parallelization_list(
     tiled_images: list[TiledImage],
     *,
@@ -41,6 +63,7 @@ def build_parallelization_list(
         One dict per image, each with a `zarr_url` and `init_args` entry, ready
         to be consumed by the Fractal compute task.
     """
+    _check_path_collisions(tiled_images)
     # Determine whether to use in-memory JSON strings or temporary JSON files
     # based on the total size of the serialized tiled images and the temp_json_options.
     temp_json_options = converter_options.runtime_settings.temp_json_options
@@ -110,6 +133,7 @@ def setup_images_for_conversion(
         overwrite_mode: The overwrite mode to use when writing the data.
         ngff_version: The NGFF version to use when setting up the collection.
     """
+    _check_path_collisions(tiled_images)
     setup_ome_zarr_collection(
         tiled_images=tiled_images,
         collection_type=collection_type,

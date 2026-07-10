@@ -27,13 +27,35 @@ versioning.
   (`add_filter`, `add_registration_func`, `add_validator`,
   `add_collection_handler`, `setup_ome_zarr_collection`,
   `write_tiled_image_as_zarr`, `FilterModel`, `ImplementedFilters`,
-  `RegistrationStep`, `ValidatorStep`), and the enums that appear as public
+  `RegistrationStep`, `ValidatorModel`), and the enums that appear as public
   model-field types (`Scalings` for `FovBasedChunking.xy_scaling`,
   `TempJsonOptions` for `RuntimeSettings.temp_json_options`), plus
   `BackendType`, `find_url_type`, and `local_url_to_path`. A regression test
   asserts the root `__all__` is a superset of each subpackage's `__all__`.
 - Add `CollectionInterface.set_suffix` as the supported way to set the per-FOV
   path suffix (replaces reaching into the private `_suffix` attribute).
+- Ten new built-in filters, all selectable from the Fractal UI via
+  `AcquisitionOptions.filters`: `FovNameIncludeFilter` / `FovNameExcludeFilter`
+  (regex on `fov_name`), `AcquisitionIncludeFilter` / `AcquisitionExcludeFilter`
+  (acquisition indices, plates only), `AttributeIncludeFilter` /
+  `AttributeExcludeFilter` (key/value match on tile attributes),
+  `ChannelIncludeFilter` / `ChannelExcludeFilter` (channel labels; a partial
+  match on a multi-channel tile raises instead of silently dropping channels),
+  and `ZRangeFilter` / `TRangeFilter` (keep tiles whose `start_z` / `start_t`
+  falls inside an inclusive `[min, max]` range).
+- Validators are now pre-flight checks that front-load compute-time failures to
+  init time. New built-in `ShapeDtypeProbeValidator` (name
+  `"Shape and Dtype Probe"`): runs `preflight` on every tile's loader, then
+  loads one sample tile per image and raises if its shape or dtype does not
+  match the declared tile geometry — catching wrong parser `length_*` /
+  `data_type` before compute jobs are dispatched.
+- New optional `ImageLoaderInterface.preflight(resource)` hook: cheaply verify
+  a source is reachable without loading it. Warns (never raises); the default
+  implementation is a no-op. `DefaultImageLoader` implements it as a
+  file-existence check.
+- `build_parallelization_list` and `setup_images_for_conversion` now reject
+  duplicate output paths up front: two `TiledImage`s resolving to the same
+  path would race on the same zarr group during parallel compute.
 - Redesign `StagePositionCorrections` around per-axis stage-position handling:
   - `remove_xy_offset` / `remove_z_offset` / `remove_t_offset` control offset
     removal per axis. `"Global"` (default) translates the axis origin to 0;
@@ -116,6 +138,16 @@ versioning.
   optional `name` (defaulting to `function.__name__`), matching `add_filter` and
   `add_collection_handler`. Before: `add_validator(fn, "my_step")`. After:
   `add_validator(function=fn, name="my_step")`.
+- The validator configuration is now a Pydantic model, aligned with filters:
+  `ValidatorStep` (TypedDict with a `params` dict) is replaced by
+  `ValidatorModel`, and validator functions receive the whole model plus the
+  pipeline `resource` instead of unpacked params. Before:
+  `apply_validator_pipeline(images, [{"name": "my_step", "params": {"k": 1}}])`
+  with `def my_step(image, k): ...`. After:
+  `apply_validator_pipeline(images, validators_config=[MyStepModel(name="my_step", k=1)])`
+  with `def my_step(image, validator_params, resource=None): ...`.
+  `tiles_aggregation_pipeline(validators=...)` takes the new models and forwards
+  its `resource` to them.
 - `CollectionInterface` is now an abstract base class (`abc.ABC` with an
   `@abstractmethod path()`); instantiating it directly, or a subclass that does
   not implement `path`, now raises `TypeError` instead of failing at call time.
