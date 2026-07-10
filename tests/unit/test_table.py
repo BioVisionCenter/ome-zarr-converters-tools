@@ -26,13 +26,13 @@ SINGLE_EXAMPLE_DIR = _DATA_DIR / "single_acquisitions"
 def hcs_acquisition_details() -> AcquisitionDetails:
     return AcquisitionDetails(
         channels=[ChannelInfo(channel_label="DAPI")],
-        pixelsize=0.65,
+        xy_pixel_size=0.65,
         z_spacing=5.0,
         t_spacing=1.0,
-        start_x_coo="world",
-        start_y_coo="world",
-        start_z_coo="pixel",
-        start_t_coo="pixel",
+        start_x_space="world",
+        start_y_space="world",
+        start_z_space="pixel",
+        start_t_space="pixel",
         axes=["t", "c", "z", "y", "x"],
     )
 
@@ -41,13 +41,13 @@ def hcs_acquisition_details() -> AcquisitionDetails:
 def single_acquisition_details() -> AcquisitionDetails:
     return AcquisitionDetails(
         channels=[ChannelInfo(channel_label="DAPI")],
-        pixelsize=0.65,
+        xy_pixel_size=0.65,
         z_spacing=5.0,
         t_spacing=1.0,
-        start_x_coo="world",
-        start_y_coo="world",
-        start_z_coo="pixel",
-        start_t_coo="pixel",
+        start_x_space="world",
+        start_y_space="world",
+        start_z_space="pixel",
+        start_t_space="pixel",
         axes=["t", "c", "z", "y", "x"],
     )
 

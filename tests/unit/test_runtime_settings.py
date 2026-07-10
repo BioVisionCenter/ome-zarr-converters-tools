@@ -97,7 +97,7 @@ def test_process_scheduler_num_workers_ge_one() -> None:
 
 def test_dict_construction_uses_discriminator() -> None:
     rs = RuntimeSettings(
-        dask_scheduler={"type": "Threads", "num_workers": 2},  # type: ignore[arg-type]
+        dask_scheduler={"mode": "Threads", "num_workers": 2},  # type: ignore[arg-type]
     )
     assert isinstance(rs.dask_scheduler, ThreadScheduler)
     assert rs.dask_scheduler.num_workers == 2
@@ -106,7 +106,7 @@ def test_dict_construction_uses_discriminator() -> None:
 def test_invalid_discriminator_value() -> None:
     with pytest.raises(ValidationError):
         RuntimeSettings(
-            dask_scheduler={"type": "bogus"},  # type: ignore[arg-type]
+            dask_scheduler={"mode": "bogus"},  # type: ignore[arg-type]
         )
 
 

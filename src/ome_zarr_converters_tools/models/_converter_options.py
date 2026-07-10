@@ -89,36 +89,36 @@ class WriterMode(StrEnum):
 class StagePositionCorrections(BaseModel):
     """Stage position corrections applied during registration."""
 
-    remove_xy_offset: Literal["False", "Global"] = Field(
+    remove_xy_offset: Literal["Keep", "Global"] = Field(
         default="Global", title="Remove XY Offset"
     )
     """
     Translate the mosaic so its XY origin is 0.
     Cases:
-    - `False`: No translation is applied, failing if the stage
+    - `Keep`: No translation is applied, failing if the stage
     position are negative, if stage position are positive results
     in left padded images.
     - `Global`: The mosaic is translated so its XY origin is 0.
     """
-    remove_z_offset: Literal["False", "Per-FOV", "Global"] = Field(
+    remove_z_offset: Literal["Keep", "Per-FOV", "Global"] = Field(
         default="Global", title="Remove Z Offset"
     )
     """
     Remove Z offset from the mosaic.
     Cases:
-    - `False`: No Z offset is removed, failing if the stage
+    - `Keep`: No Z offset is removed, failing if the stage
     position are negative, if stage position are positive results
     in left padded images.
     - `Per-FOV`: The Z offset is removed per FOV.
     - `Global`: The mosaic is translated so its Z origin is 0.
     """
-    remove_t_offset: Literal["False", "Global"] = Field(
+    remove_t_offset: Literal["Keep", "Global"] = Field(
         default="Global", title="Remove T Offset"
     )
     """
     Remove T offset from the mosaic.
     Cases:
-    - `False`: No T offset is removed, failing if the stage
+    - `Keep`: No T offset is removed, failing if the stage
     position are negative, if stage position are positive results
     in left padded images.
     - `Global`: The mosaic is translated so its T origin is 0.

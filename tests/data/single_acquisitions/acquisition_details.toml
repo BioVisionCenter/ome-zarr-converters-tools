@@ -4,17 +4,17 @@
 # - all length_* fields default to "pixel" if not specified
 # start_c and length_c are always in pixel coordinates
 # and do not need to be specified here.
-start_x_coo = "world"  # can either be "world" or "pixel"
-start_y_coo = "world"  # can either be "world" or "pixel"
-start_z_coo = "pixel"  # can either be "world" or "pixel"
-start_t_coo = "pixel"  # can either be "world" or "pixel"
-length_x_coo = "pixel" # can either be "world" or "pixel"
-length_y_coo = "pixel" # can either be "world" or "pixel"
-length_z_coo = "pixel" # can either be "world" or "pixel"
-length_t_coo = "pixel" # can either be "world" or "pixel"
+start_x_space = "world"  # can either be "world" or "pixel"
+start_y_space = "world"  # can either be "world" or "pixel"
+start_z_space = "pixel"  # can either be "world" or "pixel"
+start_t_space = "pixel"  # can either be "world" or "pixel"
+length_x_space = "pixel" # can either be "world" or "pixel"
+length_y_space = "pixel" # can either be "world" or "pixel"
+length_z_space = "pixel" # can either be "world" or "pixel"
+length_t_space = "pixel" # can either be "world" or "pixel"
 
 # Pixel size in micrometers
-pixelsize = 0.65
+xy_pixel_size = 0.65
 # Z spacing in micrometers
 z_spacing = 5.0
 # T spacing in seconds

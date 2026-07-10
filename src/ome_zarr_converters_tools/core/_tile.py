@@ -6,7 +6,7 @@ from ngio.common._roi import Roi, RoiSlice, pixel_to_world, world_to_pixel
 from pydantic import BaseModel, ConfigDict, Field
 
 from ome_zarr_converters_tools.models._acquisition import (
-    COO_SYSTEM_TYPE,
+    SPACE_TYPE,
     AcquisitionDetails,
     DataTypeEnum,
 )
@@ -22,10 +22,10 @@ def safe_to_world(
     *,
     start: float,
     spacing: float,
-    coo_system: COO_SYSTEM_TYPE,
+    space: SPACE_TYPE,
 ) -> float:
     """Convert coordinates to world space, normalizing through pixel grid."""
-    if coo_system == "world":
+    if space == "world":
         pixel_coord = world_to_pixel(start, spacing)
         return pixel_to_world(pixel_coord, spacing)
     return pixel_to_world(start, spacing)
@@ -99,8 +99,8 @@ class Tile(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfaceType]
         acquisition_details = self.acquisition_details
         stage_corrections = acquisition_details.stage_orientation
         spacing = {
-            "x": acquisition_details.pixelsize,
-            "y": acquisition_details.pixelsize,
+            "x": acquisition_details.xy_pixel_size,
+            "y": acquisition_details.xy_pixel_size,
             "z": acquisition_details.z_spacing,
             "t": acquisition_details.t_spacing,
         }
@@ -118,12 +118,12 @@ class Tile(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfaceType]
 
             start_field = f"start_{source_ax}"
             start = getattr(self, start_field)
-            start_coo_system = getattr(acquisition_details, f"{start_field}_coo", None)
-            if start_coo_system is not None:
+            start_space = getattr(acquisition_details, f"{start_field}_space", None)
+            if start_space is not None:
                 start = safe_to_world(
                     start=start,
                     spacing=spacing[source_ax],
-                    coo_system=start_coo_system,
+                    space=start_space,
                 )
 
             if ax == "x" and stage_corrections.flip_x:
@@ -133,14 +133,12 @@ class Tile(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfaceType]
 
             length_field = f"length_{source_ax}"
             length = getattr(self, length_field)
-            length_coo_system = getattr(
-                acquisition_details, f"{length_field}_coo", None
-            )
-            if length_coo_system is not None:
+            length_space = getattr(acquisition_details, f"{length_field}_space", None)
+            if length_space is not None:
                 length = safe_to_world(
                     start=length,
                     spacing=spacing[source_ax],
-                    coo_system=length_coo_system,
+                    space=length_space,
                 )
             roi_slices[ax] = RoiSlice(start=start, length=length, axis_name=ax)
             if ax in ["x", "y", "z"]:

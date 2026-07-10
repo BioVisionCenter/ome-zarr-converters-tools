@@ -64,14 +64,14 @@ def _shift_axes_to_zero(regions: list[TileSlice], axes: list[str]) -> None:
 
 
 def _validate_non_negative(regions: list[TileSlice], axes: list[str]) -> None:
-    """Raise if any region has a negative start on one of `axes` (False mode)."""
+    """Raise if any region has a negative start on one of `axes` (Keep mode)."""
     field = {"x": "xy", "y": "xy", "z": "z", "t": "t"}
     for region in regions:
         for axis in axes:
             slice_ = region.roi.get(axis)
             if slice_ is not None and slice_.start is not None and slice_.start < 0:
                 raise ValueError(
-                    f"remove_{field[axis]}_offset='False' requires non-negative "
+                    f"remove_{field[axis]}_offset='Keep' requires non-negative "
                     f"{axis} positions, got {slice_.start}."
                 )
 
@@ -83,7 +83,7 @@ def apply_offset_removal(
 
     - `Global`: translate so the axis's global minimum start is 0.
     - `Per-FOV` (z only): translate each FOV group's z independently to 0.
-    - `False`: keep absolute positions (raise on negatives; positives left-pad).
+    - `Keep`: keep absolute positions (raise on negatives; positives left-pad).
     """
     if corrections.remove_xy_offset == "Global":
         _shift_axes_to_zero(tiled_image.regions, ["x", "y"])

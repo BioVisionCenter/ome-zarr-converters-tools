@@ -46,7 +46,7 @@ def tiled_image_from_tiles(
                 regions=[],
                 data_type=data_type,
                 channels=acquisition_details.channels,
-                pixelsize=acquisition_details.pixelsize,
+                xy_pixel_size=acquisition_details.xy_pixel_size,
                 z_spacing=acquisition_details.z_spacing,
                 t_spacing=acquisition_details.t_spacing,
                 axes=acquisition_details.axes,

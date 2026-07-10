@@ -56,14 +56,14 @@ def _example_acq_details() -> AcquisitionDetails:
     """AcquisitionDetails matching the example TOML files."""
     return AcquisitionDetails(
         channels=[ChannelInfo(channel_label="DAPI", wavelength_id="405")],
-        pixelsize=0.65,
+        xy_pixel_size=0.65,
         z_spacing=5.0,
         t_spacing=1.0,
         axes=["t", "c", "z", "y", "x"],
-        start_x_coo="world",
-        start_y_coo="world",
-        start_z_coo="pixel",
-        start_t_coo="pixel",
+        start_x_space="world",
+        start_y_space="world",
+        start_z_space="pixel",
+        start_t_space="pixel",
     )
 
 
@@ -75,7 +75,7 @@ def _example_acq_details() -> AcquisitionDetails:
 def _acq(n_channels: int = 1) -> AcquisitionDetails:
     return AcquisitionDetails(
         channels=[ChannelInfo(channel_label=f"CH{i}") for i in range(n_channels)],
-        pixelsize=1.0,
+        xy_pixel_size=1.0,
         z_spacing=1.0,
         t_spacing=1.0,
     )
@@ -153,8 +153,8 @@ class TestTiledImageCreationPipeline:
         assert data.shape[-2:] == (128, 128)  # 2x2 grid of 64x64
         assert np.any(data > 0)
 
-    def test_false_xy_offset_left_pads_output(self, tmp_path: Path) -> None:
-        # remove_xy_offset="False" keeps absolute positions; a positive origin
+    def test_keep_xy_offset_left_pads_output(self, tmp_path: Path) -> None:
+        # remove_xy_offset="Keep" keeps absolute positions; a positive origin
         # must yield a left-padded output anchored at pixel 0.
         coll = SingleImage(image_path="pad")
         tile = build_dummy_tile(
@@ -165,9 +165,7 @@ class TestTiledImageCreationPipeline:
             acquisition_details=_acq(1),
         )
         opts = ConverterOptions(
-            stage_position_corrections=StagePositionCorrections(
-                remove_xy_offset="False"
-            )
+            stage_position_corrections=StagePositionCorrections(remove_xy_offset="Keep")
         )
         tiled_image = tiles_aggregation_pipeline(tiles=[tile], converter_options=opts)[
             0
@@ -194,7 +192,7 @@ class TestTiledImageCreationPipeline:
         coll = SingleImage(image_path="reindex")
         acq = AcquisitionDetails(
             channels=[ChannelInfo(channel_label=f"CH{i}") for i in range(3)],
-            pixelsize=1.0,
+            xy_pixel_size=1.0,
             z_spacing=1.0,
             t_spacing=1.0,
         )

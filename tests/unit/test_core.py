@@ -49,7 +49,7 @@ class TestTile:
     def test_tile_to_roi_with_flip(self, default_collection: SingleImage) -> None:
         acq = AcquisitionDetails(
             channels=[ChannelInfo(channel_label="DAPI")],
-            pixelsize=1.0,
+            xy_pixel_size=1.0,
             z_spacing=1.0,
             t_spacing=1.0,
             stage_orientation=StageOrientation(flip_x=True, flip_y=False),
@@ -73,7 +73,7 @@ class TestTile:
     def test_tile_to_roi_with_swap_xy(self, default_collection: SingleImage) -> None:
         acq = AcquisitionDetails(
             channels=[ChannelInfo(channel_label="DAPI")],
-            pixelsize=1.0,
+            xy_pixel_size=1.0,
             z_spacing=1.0,
             t_spacing=1.0,
             stage_orientation=StageOrientation(swap_xy=True),
@@ -102,14 +102,14 @@ class TestTile:
         assert dtype == "uint8"
 
     @pytest.mark.parametrize(
-        "start_x,pixelsize",
+        "start_x,xy_pixel_size",
         [
             (-645.814, 0.5979760809567617),
             (745.34, 1.294),
         ],
     )
     def test_tile_to_roi_non_aligned_coordinates(
-        self, default_collection: SingleImage, start_x: float, pixelsize: float
+        self, default_collection: SingleImage, start_x: float, xy_pixel_size: float
     ) -> None:
         """Regression: coordinates that don't land exactly on the pixel grid.
 
@@ -117,7 +117,7 @@ class TestTile:
         """
         acq = AcquisitionDetails(
             channels=[ChannelInfo(channel_label="DAPI")],
-            pixelsize=pixelsize,
+            xy_pixel_size=xy_pixel_size,
             z_spacing=1.0,
             t_spacing=1.0,
         )
@@ -158,7 +158,7 @@ class TestTiledImage:
     ) -> None:
         acq = AcquisitionDetails(
             channels=[ChannelInfo(channel_label="DIFFERENT")],
-            pixelsize=1.0,
+            xy_pixel_size=1.0,
             z_spacing=1.0,
             t_spacing=1.0,
         )

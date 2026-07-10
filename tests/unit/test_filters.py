@@ -30,7 +30,7 @@ from ome_zarr_converters_tools.pipelines._filters import (
 def _acq() -> AcquisitionDetails:
     return AcquisitionDetails(
         channels=[ChannelInfo(channel_label="DAPI")],
-        pixelsize=1.0,
+        xy_pixel_size=1.0,
         z_spacing=1.0,
         t_spacing=1.0,
     )

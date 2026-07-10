@@ -21,7 +21,7 @@ versioning.
 - Redesign `StagePositionCorrections` around per-axis stage-position handling:
   - `remove_xy_offset` / `remove_z_offset` / `remove_t_offset` control offset
     removal per axis. `"Global"` (default) translates the axis origin to 0;
-    `"False"` keeps absolute positions (raises on negatives, left-pads on
+    `"Keep"` keeps absolute positions (raises on negatives, left-pads on
     positives); `"Per-FOV"` (z only) zeros each FOV's z independently.
   - `remove_xy_jitter` (default `True`) snaps a FOV's sub-tiles to a shared XY
     origin (the former `align_xy`).
@@ -64,6 +64,29 @@ versioning.
   corrupt/partial store or a permission/version error now propagates instead of
   being silently replaced with a fresh, empty store (in `setup_plates` and
   `write_tiled_image_as_zarr`).
+- Pre-1.0 naming pass over the public models (four renames):
+  - The `remove_xy_offset` / `remove_z_offset` / `remove_t_offset` value
+    `"False"` is renamed to `"Keep"`. Before:
+    `StagePositionCorrections(remove_z_offset="False")`. After:
+    `StagePositionCorrections(remove_z_offset="Keep")`.
+  - The scheduler models (`ThreadScheduler`, `ProcessScheduler`,
+    `SynchronousScheduler`, `DefaultScheduler`) discriminate on `mode` instead
+    of `type`, matching `TilingStrategy`/`ChunkingStrategy`. Before:
+    `RuntimeSettings(dask_scheduler={"type": "Threads"})`. After:
+    `RuntimeSettings(dask_scheduler={"mode": "Threads"})`.
+  - `pixelsize` is renamed to `xy_pixel_size` on `AcquisitionDetails`,
+    `TiledImage`, and `PixelSizeModel` (the `TiledImage.pixel_size` property
+    returning an ngio `PixelSize` is unchanged). This also renames the
+    `pixelsize` key in `acquisition_details.toml` config files. Before:
+    `AcquisitionDetails(pixelsize=0.65)`. After:
+    `AcquisitionDetails(xy_pixel_size=0.65)`.
+  - The `AcquisitionDetails` coordinate-system fields drop the `_coo` suffix
+    for `_space` (`start_{x,y,z,t}_space`, `length_{x,y,z,t}_space`), and the
+    `COO_SYSTEM_TYPE` alias is renamed to `SPACE_TYPE` (`safe_to_world` takes
+    `space=` instead of `coo_system=`). This also renames the `*_coo` keys in
+    `acquisition_details.toml` config files. Before:
+    `AcquisitionDetails(start_x_coo="world")`. After:
+    `AcquisitionDetails(start_x_space="world")`.
 
 ### Chores
 - Bump the `Development Status` classifier from `3 - Alpha` to

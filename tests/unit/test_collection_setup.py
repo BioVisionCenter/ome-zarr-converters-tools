@@ -37,7 +37,7 @@ def _make_plate_tiled_images(
     """Build TiledImages with ImageInPlate collections."""
     acq = AcquisitionDetails(
         channels=[ChannelInfo(channel_label="DAPI")],
-        pixelsize=1.0,
+        xy_pixel_size=1.0,
         z_spacing=1.0,
         t_spacing=1.0,
     )
@@ -67,7 +67,7 @@ def _make_single_tiled_images(num_images: int = 1) -> list:
     """Build TiledImages with SingleImage collections."""
     acq = AcquisitionDetails(
         channels=[ChannelInfo(channel_label="DAPI")],
-        pixelsize=1.0,
+        xy_pixel_size=1.0,
         z_spacing=1.0,
         t_spacing=1.0,
     )
@@ -111,7 +111,7 @@ class TestSetupConditionTable:
     def test_multiple_images_with_attributes(self) -> None:
         acq = AcquisitionDetails(
             channels=[ChannelInfo(channel_label="DAPI")],
-            pixelsize=1.0,
+            xy_pixel_size=1.0,
             z_spacing=1.0,
             t_spacing=1.0,
         )
@@ -279,7 +279,7 @@ class TestSetupPlates:
         # Extend with a second image in a different well
         acq = AcquisitionDetails(
             channels=[ChannelInfo(channel_label="DAPI")],
-            pixelsize=1.0,
+            xy_pixel_size=1.0,
             z_spacing=1.0,
             t_spacing=1.0,
         )
@@ -322,7 +322,7 @@ class TestSetupPlates:
     def test_multiple_plates(self, tmp_path: Path) -> None:
         acq = AcquisitionDetails(
             channels=[ChannelInfo(channel_label="DAPI")],
-            pixelsize=1.0,
+            xy_pixel_size=1.0,
             z_spacing=1.0,
             t_spacing=1.0,
         )
@@ -380,7 +380,7 @@ class TestSetupPlates:
         # Overwrite with a different image in well B/2
         acq = AcquisitionDetails(
             channels=[ChannelInfo(channel_label="DAPI")],
-            pixelsize=1.0,
+            xy_pixel_size=1.0,
             z_spacing=1.0,
             t_spacing=1.0,
         )
@@ -423,7 +423,7 @@ class TestSetupPlates:
         # cross-plate list inside the per-image loop).
         acq = AcquisitionDetails(
             channels=[ChannelInfo(channel_label="DAPI")],
-            pixelsize=1.0,
+            xy_pixel_size=1.0,
             z_spacing=1.0,
             t_spacing=1.0,
         )

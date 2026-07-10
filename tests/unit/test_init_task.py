@@ -29,7 +29,7 @@ from ome_zarr_converters_tools.models._runtime_settings import (
 def _make_tiled_images(num: int = 1) -> list:
     acq = AcquisitionDetails(
         channels=[ChannelInfo(channel_label="DAPI")],
-        pixelsize=1.0,
+        xy_pixel_size=1.0,
         z_spacing=1.0,
         t_spacing=1.0,
     )

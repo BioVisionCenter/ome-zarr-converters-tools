@@ -15,7 +15,7 @@ from ome_zarr_converters_tools.models._url_utils import join_url_paths
 class ThreadScheduler(BaseModel):
     """Use Dask's threaded scheduler for parallelism."""
 
-    type: Literal["Threads"] = "Threads"
+    mode: Literal["Threads"] = "Threads"
     """The dask scheduler will be set to "threads" when this scheduler is selected."""
 
     num_workers: int = Field(default=8, ge=1, title="Number of Threads")
@@ -30,7 +30,7 @@ class ThreadScheduler(BaseModel):
 class ProcessScheduler(BaseModel):
     """Use Dask's multiprocessing scheduler for parallelism."""
 
-    type: Literal["Processes"] = "Processes"
+    mode: Literal["Processes"] = "Processes"
     """The dask scheduler will be set to "processes" when this scheduler is selected."""
 
     num_workers: int = Field(default=8, ge=1, title="Number of Processes")
@@ -45,7 +45,7 @@ class ProcessScheduler(BaseModel):
 class SynchronousScheduler(BaseModel):
     """Use Dask's synchronous scheduler (no parallelism)."""
 
-    type: Literal["Synchronous"] = "Synchronous"
+    mode: Literal["Synchronous"] = "Synchronous"
     """
     The dask scheduler will be set to "synchronous" when this scheduler is selected.
     """
@@ -59,7 +59,7 @@ class SynchronousScheduler(BaseModel):
 class DefaultScheduler(BaseModel):
     """Do not set a Dask scheduler; leave it up to the caller."""
 
-    type: Literal["Default"] = "Default"
+    mode: Literal["Default"] = "Default"
     """The dask scheduler will not be modified when this scheduler is selected."""
 
     model_config = ConfigDict(extra="forbid")
@@ -70,7 +70,7 @@ class DefaultScheduler(BaseModel):
 
 DaskScheduler = Annotated[
     ThreadScheduler | ProcessScheduler | SynchronousScheduler | DefaultScheduler,
-    Field(discriminator="type"),
+    Field(discriminator="mode"),
 ]
 
 

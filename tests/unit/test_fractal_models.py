@@ -39,8 +39,8 @@ class TestConvertParallelInitArgs:
 
 class TestPixelSizeModel:
     def test_construction(self) -> None:
-        model = PixelSizeModel(pixelsize=0.65, z_spacing=5.0, t_spacing=1.0)
-        assert model.pixelsize == 0.65
+        model = PixelSizeModel(xy_pixel_size=0.65, z_spacing=5.0, t_spacing=1.0)
+        assert model.xy_pixel_size == 0.65
         assert model.z_spacing == 5.0
         assert model.t_spacing == 1.0
 
@@ -77,14 +77,14 @@ class TestAcquisitionOptions:
     def test_update_acquisition_details_no_changes(self) -> None:
         acq = AcquisitionDetails(
             channels=[ChannelInfo(channel_label="DAPI")],
-            pixelsize=1.0,
+            xy_pixel_size=1.0,
             z_spacing=1.0,
             t_spacing=1.0,
         )
         opts = AcquisitionOptions()
         updated = opts.update_acquisition_details(acq)
         assert updated.channels == acq.channels
-        assert updated.pixelsize == acq.pixelsize
+        assert updated.xy_pixel_size == acq.xy_pixel_size
 
     def test_channel_info_ui_default_color_is_auto(self) -> None:
         ch = ChannelInfoUI(channel_label="DAPI")
@@ -100,7 +100,7 @@ class TestAcquisitionOptions:
     def test_update_acquisition_details_channels(self) -> None:
         acq = AcquisitionDetails(
             channels=[ChannelInfo(channel_label="DAPI")],
-            pixelsize=1.0,
+            xy_pixel_size=1.0,
             z_spacing=1.0,
             t_spacing=1.0,
         )
@@ -154,22 +154,22 @@ class TestAcquisitionOptions:
     def test_update_acquisition_details_pixel_info(self) -> None:
         acq = AcquisitionDetails(
             channels=[ChannelInfo(channel_label="DAPI")],
-            pixelsize=1.0,
+            xy_pixel_size=1.0,
             z_spacing=1.0,
             t_spacing=1.0,
         )
         opts = AcquisitionOptions(
-            pixel_info=PixelSizeModel(pixelsize=0.65, z_spacing=5.0, t_spacing=2.0)
+            pixel_info=PixelSizeModel(xy_pixel_size=0.65, z_spacing=5.0, t_spacing=2.0)
         )
         updated = opts.update_acquisition_details(acq)
-        assert updated.pixelsize == 0.65
+        assert updated.xy_pixel_size == 0.65
         assert updated.z_spacing == 5.0
         assert updated.t_spacing == 2.0
 
     def test_update_acquisition_details_axes(self) -> None:
         acq = AcquisitionDetails(
             channels=[ChannelInfo(channel_label="DAPI")],
-            pixelsize=1.0,
+            xy_pixel_size=1.0,
             z_spacing=1.0,
             t_spacing=1.0,
         )
@@ -180,7 +180,7 @@ class TestAcquisitionOptions:
     def test_update_acquisition_details_data_type(self) -> None:
         acq = AcquisitionDetails(
             channels=[ChannelInfo(channel_label="DAPI")],
-            pixelsize=1.0,
+            xy_pixel_size=1.0,
             z_spacing=1.0,
             t_spacing=1.0,
         )
@@ -191,7 +191,7 @@ class TestAcquisitionOptions:
     def test_update_acquisition_details_condition_table(self) -> None:
         acq = AcquisitionDetails(
             channels=[ChannelInfo(channel_label="DAPI")],
-            pixelsize=1.0,
+            xy_pixel_size=1.0,
             z_spacing=1.0,
             t_spacing=1.0,
         )
@@ -202,16 +202,16 @@ class TestAcquisitionOptions:
     def test_update_does_not_mutate_original(self) -> None:
         acq = AcquisitionDetails(
             channels=[ChannelInfo(channel_label="DAPI")],
-            pixelsize=1.0,
+            xy_pixel_size=1.0,
             z_spacing=1.0,
             t_spacing=1.0,
         )
         opts = AcquisitionOptions(
-            pixel_info=PixelSizeModel(pixelsize=0.5, z_spacing=2.0, t_spacing=3.0)
+            pixel_info=PixelSizeModel(xy_pixel_size=0.5, z_spacing=2.0, t_spacing=3.0)
         )
         updated = opts.update_acquisition_details(acq)
-        assert acq.pixelsize == 1.0  # Original unchanged
-        assert updated.pixelsize == 0.5
+        assert acq.xy_pixel_size == 1.0  # Original unchanged
+        assert updated.xy_pixel_size == 0.5
 
 
 class TestConvertersToolsModels:

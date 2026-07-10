@@ -27,7 +27,7 @@ When passed to `tiles_aggregation_pipeline()` and `tiled_image_creation_pipeline
 from ome_zarr_converters_tools import AcquisitionDetails, ChannelInfo
 
 acq = AcquisitionDetails(
-    pixelsize=0.65,          # XY pixel size in micrometers
+    xy_pixel_size=0.65,          # XY pixel size in micrometers
     z_spacing=5.0,           # Z-step size in micrometers
     t_spacing=1.0,           # Time interval in seconds
     channels=[
@@ -35,10 +35,10 @@ acq = AcquisitionDetails(
         ChannelInfo(channel_label="GFP", wavelength_id="488"),
     ],
     axes=["c", "z", "y", "x"],  # Subset of t, c, z, y, x in canonical order
-    start_x_coo="world",    # How to interpret start_x values
-    start_y_coo="world",
-    start_z_coo="pixel",
-    start_t_coo="pixel",
+    start_x_space="world",    # How to interpret start_x values
+    start_y_space="world",
+    start_z_space="pixel",
+    start_t_space="pixel",
 )
 ```
 
@@ -48,15 +48,15 @@ Each `start_*` and `length_*` dimension has a coordinate system setting (`"world
 
 | Parameter | Default | Meaning |
 |-----------|---------|---------|
-| `start_x_coo`, `start_y_coo` | `"world"` | Interpret start positions as physical units (micrometers). The library divides by `pixelsize` to convert to pixels. |
-| `start_z_coo` | `"world"` | Interpret Z start as physical units. Divided by `z_spacing` to convert to pixels. |
-| `start_t_coo` | `"world"` | Interpret T start as physical units (seconds). Divided by `t_spacing`. |
-| `length_x_coo`, `length_y_coo` | `"pixel"` | Interpret lengths as pixel counts (no conversion). |
-| `length_z_coo` | `"pixel"` | Interpret Z length as number of slices. |
-| `length_t_coo` | `"pixel"` | Interpret T length as number of time points. |
+| `start_x_space`, `start_y_space` | `"world"` | Interpret start positions as physical units (micrometers). The library divides by `xy_pixel_size` to convert to pixels. |
+| `start_z_space` | `"world"` | Interpret Z start as physical units. Divided by `z_spacing` to convert to pixels. |
+| `start_t_space` | `"world"` | Interpret T start as physical units (seconds). Divided by `t_spacing`. |
+| `length_x_space`, `length_y_space` | `"pixel"` | Interpret lengths as pixel counts (no conversion). |
+| `length_z_space` | `"pixel"` | Interpret Z length as number of slices. |
+| `length_t_space` | `"pixel"` | Interpret T length as number of time points. |
 
 !!! tip
-    Most microscopes report stage positions in physical units (micrometers) and image dimensions in pixels. The defaults (`start_*_coo="world"`, `length_*_coo="pixel"`) match this convention. If your metadata already provides pixel coordinates for positions, set `start_x_coo="pixel"` etc.
+    Most microscopes report stage positions in physical units (micrometers) and image dimensions in pixels. The defaults (`start_*_space="world"`, `length_*_space="pixel"`) match this convention. If your metadata already provides pixel coordinates for positions, set `start_x_space="pixel"` etc.
 
 ### Channels
 
@@ -96,7 +96,7 @@ Some microscopes have inverted or swapped stage axes. Use `StageOrientation` to 
 from ome_zarr_converters_tools import AcquisitionDetails, StageOrientation
 
 acq = AcquisitionDetails(
-    pixelsize=0.65,
+    xy_pixel_size=0.65,
     stage_orientation=StageOrientation(
         flip_x=True,    # Invert X positions
         flip_y=False,   # Keep Y as-is
@@ -257,15 +257,15 @@ Controls the per-axis position handling applied during registration:
 from ome_zarr_converters_tools.models import StagePositionCorrections
 
 corrections = StagePositionCorrections(
-    remove_xy_offset="Global",   # "Global" (zero origin) or "False" (keep absolute)
-    remove_z_offset="Global",    # "Global", "Per-FOV" (zero each FOV's z), or "False"
-    remove_t_offset="Global",    # "Global" or "False"
+    remove_xy_offset="Global",   # "Global" (zero origin) or "Keep" (keep absolute)
+    remove_z_offset="Global",    # "Global", "Per-FOV" (zero each FOV's z), or "Keep"
+    remove_t_offset="Global",    # "Global" or "Keep"
     remove_xy_jitter=True,       # snap a FOV's sub-tiles to a shared XY origin
     reindex_channels=True,       # compact present channels to a dense range
 )
 ```
 
-Offset modes: `"Global"` translates the axis so its origin is 0; `"False"` keeps absolute positions (raising on negatives, left-padding on positives); `"Per-FOV"` (z only) zeros each FOV's z independently, useful when FOVs are focused independently. `remove_xy_jitter` corrects minor XY stage drift between the sub-acquisitions (Z-slices/channels) of a single FOV.
+Offset modes: `"Global"` translates the axis so its origin is 0; `"Keep"` keeps absolute positions (raising on negatives, left-padding on positives); `"Per-FOV"` (z only) zeros each FOV's z independently, useful when FOVs are focused independently. `remove_xy_jitter` corrects minor XY stage drift between the sub-acquisitions (Z-slices/channels) of a single FOV.
 
 ### Custom Registration Steps
 

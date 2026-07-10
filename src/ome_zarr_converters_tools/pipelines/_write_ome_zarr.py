@@ -183,7 +183,7 @@ def write_tiled_image_as_zarr(
         axes_names=tiled_image.axes,
         shape=tiled_image.output_shape(),
         chunks=_compute_chunk_size(tiled_image, omezarr_options),
-        pixelsize=tiled_image.pixelsize,
+        pixelsize=tiled_image.xy_pixel_size,
         z_spacing=tiled_image.z_spacing,
         time_spacing=tiled_image.t_spacing,
         levels=omezarr_options.num_levels,

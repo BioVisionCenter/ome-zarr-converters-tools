@@ -15,7 +15,7 @@ from pydantic import (
 
 CANONICAL_AXES_TYPE = Literal["t", "c", "z", "y", "x"]
 canonical_axes: list[CANONICAL_AXES_TYPE] = ["t", "c", "z", "y", "x"]
-COO_SYSTEM_TYPE = Literal["world", "pixel"]
+SPACE_TYPE = Literal["world", "pixel"]
 ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 
@@ -159,17 +159,17 @@ class AcquisitionDetails(BaseModel):
     (Either parsed from metadata or manually serialized by the user beforehand.)
     """
 
-    # Determine the coordinate system for start and length values
-    start_x_coo: COO_SYSTEM_TYPE = "world"
-    start_y_coo: COO_SYSTEM_TYPE = "world"
-    start_z_coo: COO_SYSTEM_TYPE = "world"
-    start_t_coo: COO_SYSTEM_TYPE = "world"
-    length_x_coo: COO_SYSTEM_TYPE = "pixel"
-    length_y_coo: COO_SYSTEM_TYPE = "pixel"
-    length_z_coo: COO_SYSTEM_TYPE = "pixel"
-    length_t_coo: COO_SYSTEM_TYPE = "pixel"
+    # Determine the coordinate space for start and length values
+    start_x_space: SPACE_TYPE = "world"
+    start_y_space: SPACE_TYPE = "world"
+    start_z_space: SPACE_TYPE = "world"
+    start_t_space: SPACE_TYPE = "world"
+    length_x_space: SPACE_TYPE = "pixel"
+    length_y_space: SPACE_TYPE = "pixel"
+    length_z_space: SPACE_TYPE = "pixel"
+    length_t_space: SPACE_TYPE = "pixel"
     # Spacing information
-    pixelsize: float = Field(default=1.0, gt=0.0)  # in micrometers
+    xy_pixel_size: float = Field(default=1.0, gt=0.0)  # in micrometers
     z_spacing: float = Field(default=1.0, gt=0.0)  # in micrometers
     t_spacing: float = Field(default=1.0, gt=0.0)  # in micrometers
 

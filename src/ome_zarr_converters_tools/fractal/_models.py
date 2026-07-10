@@ -42,9 +42,9 @@ class ConvertParallelInitArgs(BaseModel):
 class PixelSizeModel(BaseModel):
     """Pixel size model."""
 
-    pixelsize: float
+    xy_pixel_size: float
     """
-    Pixel size in micrometers.
+    XY pixel size in micrometers.
     """
     z_spacing: float
     """
@@ -186,7 +186,7 @@ class AcquisitionOptions(BaseModel):
                 )
             updated_details.channels = _updated_channels
         if self.pixel_info is not None:
-            updated_details.pixelsize = self.pixel_info.pixelsize
+            updated_details.xy_pixel_size = self.pixel_info.xy_pixel_size
             updated_details.z_spacing = self.pixel_info.z_spacing
             updated_details.t_spacing = self.pixel_info.t_spacing
         axes = self.to_axes_list()

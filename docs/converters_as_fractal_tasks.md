@@ -59,7 +59,7 @@ def my_init_task(
     # Step 1: Build tiles from your data source
     acq = AcquisitionDetails(
         channels=[ChannelInfo(channel_label="DAPI")],
-        pixelsize=0.65,
+        xy_pixel_size=0.65,
         z_spacing=5.0,
     )
     tiles_table = pd.read_csv(tiles_csv_path)
@@ -148,7 +148,7 @@ from ome_zarr_converters_tools import AcquisitionOptions
 # User-provided overrides
 acq_options = AcquisitionOptions(
     channels=[ChannelInfo(channel_label="GFP", wavelength_id="488")],
-    pixel_info=PixelSizeModel(pixelsize=0.325, z_spacing=1.0, t_spacing=1.0),
+    pixel_info=PixelSizeModel(xy_pixel_size=0.325, z_spacing=1.0, t_spacing=1.0),
     filters=[RegexIncludeFilter(field="fov_name", pattern="FOV_[12]")],
 )
 

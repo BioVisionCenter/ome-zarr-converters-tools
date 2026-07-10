@@ -27,7 +27,7 @@ class TestAcquisitionDetails:
     ) -> None:
         """Test basic acquisition details creation."""
         assert sample_acquisition_details is not None
-        assert sample_acquisition_details.pixelsize == 0.65
+        assert sample_acquisition_details.xy_pixel_size == 0.65
         assert sample_acquisition_details.channels == [
             ChannelInfo(channel_label="Channel 1"),
             ChannelInfo(channel_label="Channel 2"),
@@ -38,14 +38,14 @@ class TestAcquisitionDetails:
         with pytest.raises(ValueError):
             AcquisitionDetails(
                 channels=[ChannelInfo(channel_label="DAPI")],
-                pixelsize=-1.0,
+                xy_pixel_size=-1.0,
                 z_spacing=1.0,
                 t_spacing=1.0,
             )
         with pytest.raises(ValueError):
             AcquisitionDetails(
                 channels=[ChannelInfo(channel_label="DAPI")],
-                pixelsize=1.0,
+                xy_pixel_size=1.0,
                 z_spacing=0.0,
                 t_spacing=1.0,
             )
@@ -53,7 +53,7 @@ class TestAcquisitionDetails:
         with pytest.raises(ValueError):
             AcquisitionDetails(
                 channels=[ChannelInfo(channel_label="DAPI")],
-                pixelsize=1.0,
+                xy_pixel_size=1.0,
                 z_spacing=1.0,
                 t_spacing=1.0,
                 unknown_field="value",  # type: ignore
@@ -64,7 +64,7 @@ class TestAcquisitionDetails:
         # Valid order: subset of t, c, z, y, x in canonical order
         acq = AcquisitionDetails(
             channels=[ChannelInfo(channel_label="DAPI")],
-            pixelsize=1.0,
+            xy_pixel_size=1.0,
             z_spacing=1.0,
             t_spacing=1.0,
             axes=["c", "z", "y", "x"],
@@ -75,7 +75,7 @@ class TestAcquisitionDetails:
         with pytest.raises(ValueError, match="canonical order"):
             AcquisitionDetails(
                 channels=[ChannelInfo(channel_label="DAPI")],
-                pixelsize=1.0,
+                xy_pixel_size=1.0,
                 z_spacing=1.0,
                 t_spacing=1.0,
                 axes=["x", "y"],
@@ -85,7 +85,7 @@ class TestAcquisitionDetails:
         with pytest.raises(ValueError, match="canonical order"):
             AcquisitionDetails(
                 channels=[ChannelInfo(channel_label="DAPI")],
-                pixelsize=1.0,
+                xy_pixel_size=1.0,
                 z_spacing=1.0,
                 t_spacing=1.0,
                 axes=["y", "y", "x"],
@@ -95,7 +95,7 @@ class TestAcquisitionDetails:
         with pytest.raises(ValueError):
             AcquisitionDetails(
                 channels=[ChannelInfo(channel_label="DAPI")],
-                pixelsize=1.0,
+                xy_pixel_size=1.0,
                 z_spacing=1.0,
                 t_spacing=1.0,
                 axes=["x"],

@@ -76,7 +76,9 @@ def _make_world_tile_slice(
     return TileSlice(roi=roi, image_loader=loader)
 
 
-def _make_tiled_image(regions: list[TileSlice], pixelsize: float = 1.0) -> TiledImage:
+def _make_tiled_image(
+    regions: list[TileSlice], xy_pixel_size: float = 1.0
+) -> TiledImage:
     """Helper: build a TiledImage from TileSlices."""
     collection = SingleImage(image_path="test_image")
     return TiledImage(
@@ -85,7 +87,7 @@ def _make_tiled_image(regions: list[TileSlice], pixelsize: float = 1.0) -> Tiled
         data_type="uint8",
         axes=["x", "y"],
         collection=collection,
-        pixelsize=pixelsize,
+        xy_pixel_size=xy_pixel_size,
     )
 
 
@@ -111,7 +113,7 @@ class TestAlignment:
     def test_apply_xy_jitter_correction(self) -> None:
         acq = AcquisitionDetails(
             channels=[ChannelInfo(channel_label="DAPI")],
-            pixelsize=1.0,
+            xy_pixel_size=1.0,
             z_spacing=1.0,
             t_spacing=1.0,
         )
@@ -147,7 +149,7 @@ class TestAlignment:
 
     def test_apply_align_to_pixel_grid_floor(self) -> None:
         regions = [_make_world_tile_slice(10.7, 20.3, 100.0, 100.0, "FOV")]
-        img = _make_tiled_image(regions, pixelsize=1.0)
+        img = _make_tiled_image(regions, xy_pixel_size=1.0)
         result = apply_align_to_pixel_grid(img, mode="floor")
         roi = result.regions[0].roi
         x_slice = roi.get("x")
@@ -159,7 +161,7 @@ class TestAlignment:
 
     def test_apply_align_to_pixel_grid_ceil(self) -> None:
         regions = [_make_world_tile_slice(10.1, 20.1, 100.0, 100.0, "FOV")]
-        img = _make_tiled_image(regions, pixelsize=1.0)
+        img = _make_tiled_image(regions, xy_pixel_size=1.0)
         result = apply_align_to_pixel_grid(img, mode="ceil")
         roi = result.regions[0].roi
         x_slice = roi.get("x")
@@ -194,7 +196,7 @@ def _multichannel_image(channel_positions: list[int], num_channels: int) -> Tile
     """Build a single-FOV TiledImage with one tile per given channel index."""
     acq = AcquisitionDetails(
         channels=[ChannelInfo(channel_label=f"CH{i}") for i in range(num_channels)],
-        pixelsize=1.0,
+        xy_pixel_size=1.0,
         z_spacing=1.0,
         t_spacing=1.0,
     )
@@ -217,7 +219,7 @@ class TestOffsetAndReindex:
     def _z_image(self, z_by_fov: dict[str, float]) -> TiledImage:
         acq = AcquisitionDetails(
             channels=[ChannelInfo(channel_label="DAPI")],
-            pixelsize=1.0,
+            xy_pixel_size=1.0,
             z_spacing=1.0,
             t_spacing=1.0,
         )
@@ -236,18 +238,18 @@ class TestOffsetAndReindex:
             tiles=tiles, converter_options=ConverterOptions()
         )[0]
 
-    def test_offset_false_keeps_positive(self) -> None:
+    def test_offset_keep_keeps_positive(self) -> None:
         img = self._z_image({"FOV_0": 10.0})
         result = apply_offset_removal(
-            img, StagePositionCorrections(remove_z_offset="False")
+            img, StagePositionCorrections(remove_z_offset="Keep")
         )
         z_slice = result.regions[0].roi.get("z")
         assert z_slice is not None and z_slice.start == 10.0
 
-    def test_offset_false_negative_raises(self) -> None:
+    def test_offset_keep_negative_raises(self) -> None:
         img = self._z_image({"FOV_0": -5.0})
         with pytest.raises(ValueError, match="non-negative"):
-            apply_offset_removal(img, StagePositionCorrections(remove_z_offset="False"))
+            apply_offset_removal(img, StagePositionCorrections(remove_z_offset="Keep"))
 
     def test_offset_z_global_vs_per_fov(self) -> None:
         # Two FOVs at absolute z 10 and 20.
@@ -575,7 +577,7 @@ class TestTiling:
     def test_apply_mosaic_tiling(self) -> None:
         acq = AcquisitionDetails(
             channels=[ChannelInfo(channel_label="DAPI")],
-            pixelsize=1.0,
+            xy_pixel_size=1.0,
             z_spacing=1.0,
             t_spacing=1.0,
         )

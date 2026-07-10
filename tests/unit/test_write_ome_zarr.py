@@ -31,12 +31,12 @@ from ome_zarr_converters_tools.pipelines._write_ome_zarr import (
 
 def _make_tiled_image_with_channels(
     channels: list[ChannelInfo] | None = None,
-    pixelsize: float = 1.0,
+    xy_pixel_size: float = 1.0,
 ) -> TiledImage:
     """Build a simple TiledImage for testing."""
     acq = AcquisitionDetails(
         channels=channels,
-        pixelsize=pixelsize,
+        xy_pixel_size=xy_pixel_size,
         z_spacing=1.0,
         t_spacing=1.0,
     )
@@ -95,7 +95,7 @@ class TestComputeChunkSize:
     def test_with_time_axis(self) -> None:
         acq = AcquisitionDetails(
             channels=[ChannelInfo(channel_label="DAPI")],
-            pixelsize=1.0,
+            xy_pixel_size=1.0,
             z_spacing=1.0,
             t_spacing=1.0,
             axes=["t", "c", "z", "y", "x"],

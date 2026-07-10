@@ -221,7 +221,7 @@ def output_shape_from_rois(
     """Get the output-array shape anchored at pixel 0 (max stop, not extent).
 
     Unlike `shape_from_rois` (the data bounding box), this spans from coordinate
-    0 to the largest stop, so a `remove_*_offset="False"` mosaic with a positive
+    0 to the largest stop, so a `remove_*_offset="Keep"` mosaic with a positive
     origin yields a left-padded array. Identical to `shape_from_rois` when the
     minimum start is already 0 (the default, after `Global` offset removal).
     """

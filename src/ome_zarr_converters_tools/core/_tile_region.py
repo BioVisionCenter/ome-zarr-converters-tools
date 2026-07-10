@@ -170,7 +170,7 @@ class TiledImage(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfac
     regions: list[TileSlice[ImageLoaderInterfaceType]] = Field(default_factory=list)
     path: str
     name: str | None = None
-    pixelsize: float = 1.0
+    xy_pixel_size: float = 1.0
     z_spacing: float = 1.0
     t_spacing: float = 1.0
     data_type: str
@@ -207,8 +207,8 @@ class TiledImage(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfac
     def pixel_size(self) -> PixelSize:
         """Return the PixelSize of the TiledImage."""
         return PixelSize(
-            x=self.pixelsize,
-            y=self.pixelsize,
+            x=self.xy_pixel_size,
+            y=self.xy_pixel_size,
             z=self.z_spacing,
             t=self.t_spacing,
         )
@@ -219,8 +219,10 @@ class TiledImage(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfac
             raise ValueError("Tile channels do not match TiledImage channels.")
         if self.axes != tile.acquisition_details.axes:
             raise ValueError("Tile axes do not match TiledImage axes.")
-        if self.pixelsize != tile.acquisition_details.pixelsize:
-            raise ValueError("Tile pixelsize does not match TiledImage pixelsize.")
+        if self.xy_pixel_size != tile.acquisition_details.xy_pixel_size:
+            raise ValueError(
+                "Tile xy_pixel_size does not match TiledImage xy_pixel_size."
+            )
         if self.z_spacing != tile.acquisition_details.z_spacing:
             raise ValueError("Tile z_spacing does not match TiledImage z_spacing.")
         if self.t_spacing != tile.acquisition_details.t_spacing:
@@ -255,7 +257,7 @@ class TiledImage(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfac
         """Output-array shape anchored at pixel 0 (includes any left-padding).
 
         Equals `shape()` when the mosaic origin is 0 (the default); larger when a
-        `remove_*_offset="False"` axis keeps a positive absolute origin.
+        `remove_*_offset="Keep"` axis keeps a positive absolute origin.
         """
         return output_shape_from_rois(
             [region.roi for region in self.regions],
