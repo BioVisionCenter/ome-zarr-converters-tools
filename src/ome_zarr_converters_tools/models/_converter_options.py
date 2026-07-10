@@ -67,7 +67,7 @@ class InplaceTiling(UserFacingModel):
 
     mode: Literal["Inplace"] = "Inplace"
     """Keep every field of view at its original stage position. Imprecise
-    stage positions may produce artifacts: where tiles overlap, the last
+    stage positions **may produce artifacts**: where tiles overlap, the last
     written tile wins."""
 
 
@@ -88,14 +88,17 @@ class MosaicGrouping(UserFacingModel):
     """
     How the fields of view are arranged within the mosaic.
 
-    - Auto: Automatically determine if Snap to Grid is possible, otherwise use Snap to
-      Corners. Accepts an optional tolerance (in pixels) for grid alignment.
-    - Snap to Grid: Tile images to fit a regular grid. This is only possible if image
-      positions align to a grid (potentially with overlap). Accepts an optional
-      tolerance (in pixels).
-    - Snap to Corners: Tile images to fit a grid defined by the corner positions.
-    - Inplace: Write tiles in their original positions without tiling. This may lead to
-      artifacts if microscope stage positions are not precise.
+    - `Auto`: Automatically determine if `Snap to Grid` is possible,
+      otherwise use `Snap to Corners`. Accepts an optional tolerance
+      (in pixels) for grid alignment.
+    - `Snap to Grid`: Tile images to fit a regular grid. This is only
+      possible if image positions align to a grid (potentially with
+      overlap). Accepts an optional tolerance (in pixels).
+    - `Snap to Corners`: Tile images to fit a grid defined by the corner
+      positions.
+    - `Inplace`: Write tiles in their original positions without tiling.
+      This may lead to artifacts if microscope stage positions are not
+      precise.
     """
     model_config = ConfigDict(title="Mosaic")
 
@@ -179,7 +182,7 @@ class StagePositionCorrections(UserFacingModel):
     Whether to shift the image so its XY origin is 0.
 
     - `Global`: Shift all positions together so the image origin is 0.
-    - `Keep`: Use the stage positions as-is. Fails if any position is
+    - `Keep`: Use the stage positions as-is. **Fails** if any position is
       negative; positive positions produce empty padding at the image origin.
     """
     remove_z_offset: Literal["Keep", "Per-FOV", "Global"] = Field(
@@ -190,7 +193,7 @@ class StagePositionCorrections(UserFacingModel):
 
     - `Global`: Shift all positions together so the Z origin is 0.
     - `Per-FOV`: Shift each field of view independently to Z origin 0.
-    - `Keep`: Use the stage positions as-is. Fails if any position is
+    - `Keep`: Use the stage positions as-is. **Fails** if any position is
       negative; positive positions produce empty padding at the image origin.
     """
     remove_t_offset: Literal["Keep", "Global"] = Field(
@@ -200,7 +203,7 @@ class StagePositionCorrections(UserFacingModel):
     Whether to shift the image so its time origin is 0.
 
     - `Global`: Shift all positions together so the time origin is 0.
-    - `Keep`: Use the stage positions as-is. Fails if any position is
+    - `Keep`: Use the stage positions as-is. **Fails** if any position is
       negative; positive positions produce empty padding at the image origin.
     """
     remove_xy_jitter: bool = Field(default=True, title="Remove XY Jitter")
@@ -224,9 +227,11 @@ class FovBasedChunking(UserFacingModel):
     """How the image is split into storage chunks."""
     xy_scaling: Scalings = Field(default=Scalings.ONE, title="XY Scaling Factor")
     """
-    Scaling factor for XY chunk size. If set to 1, chunk size matches FOV size.
-    If set to 0.5, chunk size is half the FOV size (smaller chunks, more files).
-    If set to 2, chunk size is double the FOV size (larger chunks, fewer files).
+    Scaling factor for the XY chunk size, relative to the field of view size.
+
+    - `1`: chunks match the field of view size.
+    - `0.5`: chunks are half the field of view (smaller chunks, more files).
+    - `2`: chunks are double the field of view (larger chunks, fewer files).
     """
     z_chunk: int = Field(default=10, ge=1, title="Chunk Size for Z")
     """Chunk size for Z dimension."""
@@ -290,23 +295,25 @@ class ConverterOptions(UserFacingModel):
     """
     Mode for writing data during conversion.
 
-    - By Tile: Write data one tile at a time. This consumes less memory, but may be
+    - `By Tile`: Write data one tile at a time. This consumes less memory, but may be
       slower.
-    - By Tile (Using Dask): Write tiles in parallel using Dask. This is usually faster
-      than writing by tile sequentially, but may consume more memory.
-    - By FOV: Write data one field of view at a time. This may the best compromise
+    - `By Tile (Using Dask)`: Write tiles in parallel using Dask. This is
+      usually faster than writing by tile sequentially, but may consume more
+      memory.
+    - `By FOV`: Write data one field of view at a time. Often the best compromise
       between speed and memory usage in most cases.
-    - By FOV (Using Dask): Write fields of view in parallel using Dask. This is usually
-      faster than writing by FOV sequentially, but may consume more memory.
-    - In Memory: Load all data into memory before writing.
+    - `By FOV (Using Dask)`: Write fields of view in parallel using Dask.
+      This is usually faster than writing by FOV sequentially, but may consume
+      more memory.
+    - `In Memory`: Load all data into memory before writing.
     """
     grouping: Grouping = Field(default_factory=MosaicGrouping, title="Grouping")
     """
     How fields of view are grouped into output images.
 
-    - Mosaic: Aggregate all fields of view of an acquisition into one OME-Zarr,
+    - `Mosaic`: Aggregate all fields of view of an acquisition into one OME-Zarr,
       arranged by the nested `tiling_strategy`.
-    - Per-FOV: Write each field of view as its own OME-Zarr image (no mosaic,
+    - `Per-FOV`: Write each field of view as its own OME-Zarr image (no mosaic,
       no tiling strategy).
     """
     stage_position_corrections: StagePositionCorrections = Field(

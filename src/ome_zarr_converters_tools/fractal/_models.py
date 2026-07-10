@@ -21,7 +21,7 @@ from ome_zarr_converters_tools.pipelines._filters import ImplementedFilters
 
 
 class ConvertParallelInitArgs(UserFacingModel):
-    """Internal data handed from the init phase to compute; filled automatically."""
+    """Internal data handed from the init phase to compute; *filled automatically*."""
 
     tiled_image_json_dump_url: str | None = None
     """Location of the temporary file describing the image to convert."""

@@ -5,7 +5,7 @@
       "description": "Keep or remove tiles based on their acquisition index (plates only).",
       "properties": {
         "acquisitions": {
-          "description": "List of acquisition indices to keep (`Include` mode) or remove\n(`Exclude` mode). E.g., [0, 1]",
+          "description": "List of acquisition indices to keep (`Include` mode) or remove\n(`Exclude` mode), e.g. `[0, 1]`.",
           "items": {
             "type": "integer"
           },
@@ -14,7 +14,7 @@
         },
         "mode": {
           "default": "Include",
-          "description": "Whether matching tiles are included (kept) or excluded (removed).",
+          "description": "Whether matching tiles are **included** (kept) or **excluded** (removed).",
           "enum": [
             "Include",
             "Exclude"
@@ -173,7 +173,7 @@
         },
         "mode": {
           "default": "Include",
-          "description": "Whether matching tiles are included (kept) or excluded (removed).",
+          "description": "Whether matching tiles are **included** (kept) or **excluded** (removed).",
           "enum": [
             "Include",
             "Exclude"
@@ -189,7 +189,7 @@
           "type": "string"
         },
         "values": {
-          "description": "Values to match against. A tile matches if any element of its\nattribute value matches one of these; matching tiles are kept in\n`Include` mode and removed in `Exclude` mode.",
+          "description": "Values to match against. A tile matches if *any* element of its\nattribute value matches one of these; matching tiles are kept in\n`Include` mode and removed in `Exclude` mode.",
           "items": {
             "discriminator": {
               "mapping": {
@@ -293,7 +293,7 @@
       "description": "Keep or remove tiles based on their channel labels.",
       "properties": {
         "channel_labels": {
-          "description": "Channel labels to keep (`Include` mode) or remove (`Exclude` mode).\nE.g., [\"DAPI\", \"GFP\"]. A tile matches if all of its channels are in this\nlist; a partial match raises.",
+          "description": "Channel labels to keep (`Include` mode) or remove (`Exclude` mode),\ne.g. `[\"DAPI\", \"GFP\"]`. A tile matches only if *all* of its channels are\nin this list; a partial match **fails the conversion**.",
           "items": {
             "type": "string"
           },
@@ -302,7 +302,7 @@
         },
         "mode": {
           "default": "Include",
-          "description": "Whether matching tiles are included (kept) or excluded (removed).",
+          "description": "Whether matching tiles are **included** (kept) or **excluded** (removed).",
           "enum": [
             "Include",
             "Exclude"
@@ -387,7 +387,7 @@
     },
     "ConvertParallelInitArgs": {
       "additionalProperties": false,
-      "description": "Internal data handed from the init phase to compute; filled automatically.",
+      "description": "Internal data handed from the init phase to compute; *filled automatically*.",
       "properties": {
         "converter_options": {
           "$ref": "#/$defs/ConverterOptions",
@@ -445,7 +445,7 @@
               "tolerance": 1.0
             }
           },
-          "description": "How fields of view are grouped into output images.\n\n- Mosaic: Aggregate all fields of view of an acquisition into one OME-Zarr,\n  arranged by the nested `tiling_strategy`.\n- Per-FOV: Write each field of view as its own OME-Zarr image (no mosaic,\n  no tiling strategy).",
+          "description": "How fields of view are grouped into output images.\n\n- `Mosaic`: Aggregate all fields of view of an acquisition into one OME-Zarr,\n  arranged by the nested `tiling_strategy`.\n- `Per-FOV`: Write each field of view as its own OME-Zarr image (no mosaic,\n  no tiling strategy).",
           "discriminator": {
             "mapping": {
               "Mosaic": "#/$defs/MosaicGrouping",
@@ -511,7 +511,7 @@
         "writer_mode": {
           "$ref": "#/$defs/WriterMode",
           "default": "By FOV",
-          "description": "Mode for writing data during conversion.\n\n- By Tile: Write data one tile at a time. This consumes less memory, but may be\n  slower.\n- By Tile (Using Dask): Write tiles in parallel using Dask. This is usually faster\n  than writing by tile sequentially, but may consume more memory.\n- By FOV: Write data one field of view at a time. This may the best compromise\n  between speed and memory usage in most cases.\n- By FOV (Using Dask): Write fields of view in parallel using Dask. This is usually\n  faster than writing by FOV sequentially, but may consume more memory.\n- In Memory: Load all data into memory before writing.",
+          "description": "Mode for writing data during conversion.\n\n- `By Tile`: Write data one tile at a time. This consumes less memory, but may be\n  slower.\n- `By Tile (Using Dask)`: Write tiles in parallel using Dask. This is\n  usually faster than writing by tile sequentially, but may consume more\n  memory.\n- `By FOV`: Write data one field of view at a time. Often the best compromise\n  between speed and memory usage in most cases.\n- `By FOV (Using Dask)`: Write fields of view in parallel using Dask.\n  This is usually faster than writing by FOV sequentially, but may consume\n  more memory.\n- `In Memory`: Load all data into memory before writing.",
           "title": "Writer Mode"
         }
       },
@@ -638,7 +638,7 @@
         "xy_scaling": {
           "$ref": "#/$defs/Scalings",
           "default": "1",
-          "description": "Scaling factor for XY chunk size. If set to 1, chunk size matches FOV size.\nIf set to 0.5, chunk size is half the FOV size (smaller chunks, more files).\nIf set to 2, chunk size is double the FOV size (larger chunks, fewer files).",
+          "description": "Scaling factor for the XY chunk size, relative to the field of view size.\n\n- `1`: chunks match the field of view size.\n- `0.5`: chunks are half the field of view (smaller chunks, more files).\n- `2`: chunks are double the field of view (larger chunks, fewer files).",
           "title": "XY Scaling Factor"
         },
         "z_chunk": {
@@ -658,7 +658,7 @@
       "properties": {
         "mode": {
           "default": "Include",
-          "description": "Whether matching tiles are included (kept) or excluded (removed).",
+          "description": "Whether matching tiles are **included** (kept) or **excluded** (removed).",
           "enum": [
             "Include",
             "Exclude"
@@ -674,7 +674,7 @@
           "type": "string"
         },
         "regex": {
-          "description": "Regex pattern matched against the tile's `fov_name`. In `Include` mode\nmatching tiles are kept and all others removed; in `Exclude` mode\nmatching tiles are removed and all others kept.",
+          "description": "Regex pattern matched against the tile's `fov_name`.\n\n- `Include`: matching tiles are kept, all others removed.\n- `Exclude`: matching tiles are removed, all others kept.",
           "title": "Regex",
           "type": "string"
         }
@@ -692,7 +692,7 @@
         "mode": {
           "const": "Inplace",
           "default": "Inplace",
-          "description": "Keep every field of view at its original stage position. Imprecise\nstage positions may produce artifacts: where tiles overlap, the last\nwritten tile wins.",
+          "description": "Keep every field of view at its original stage position. Imprecise\nstage positions **may produce artifacts**: where tiles overlap, the last\nwritten tile wins.",
           "title": "Mode",
           "type": "string"
         }
@@ -769,7 +769,7 @@
             "mode": "Auto",
             "tolerance": 1.0
           },
-          "description": "How the fields of view are arranged within the mosaic.\n\n- Auto: Automatically determine if Snap to Grid is possible, otherwise use Snap to\n  Corners. Accepts an optional tolerance (in pixels) for grid alignment.\n- Snap to Grid: Tile images to fit a regular grid. This is only possible if image\n  positions align to a grid (potentially with overlap). Accepts an optional\n  tolerance (in pixels).\n- Snap to Corners: Tile images to fit a grid defined by the corner positions.\n- Inplace: Write tiles in their original positions without tiling. This may lead to\n  artifacts if microscope stage positions are not precise.",
+          "description": "How the fields of view are arranged within the mosaic.\n\n- `Auto`: Automatically determine if `Snap to Grid` is possible,\n  otherwise use `Snap to Corners`. Accepts an optional tolerance\n  (in pixels) for grid alignment.\n- `Snap to Grid`: Tile images to fit a regular grid. This is only\n  possible if image positions align to a grid (potentially with\n  overlap). Accepts an optional tolerance (in pixels).\n- `Snap to Corners`: Tile images to fit a grid defined by the corner\n  positions.\n- `Inplace`: Write tiles in their original positions without tiling.\n  This may lead to artifacts if microscope stage positions are not\n  precise.",
           "discriminator": {
             "mapping": {
               "Auto": "#/$defs/AutoTiling",
@@ -937,7 +937,7 @@
       "properties": {
         "mode": {
           "default": "Include",
-          "description": "Whether matching tiles are included (kept) or excluded (removed).",
+          "description": "Whether matching tiles are **included** (kept) or **excluded** (removed).",
           "enum": [
             "Include",
             "Exclude"
@@ -953,7 +953,7 @@
           "type": "string"
         },
         "regex": {
-          "description": "Regex pattern matched against the tile's base path. In `Include` mode\nmatching tiles are kept and all others removed; in `Exclude` mode\nmatching tiles are removed and all others kept.",
+          "description": "Regex pattern matched against the tile's base path.\n\n- `Include`: matching tiles are kept, all others removed.\n- `Exclude`: matching tiles are removed, all others kept.",
           "title": "Regex",
           "type": "string"
         }
@@ -972,7 +972,7 @@
           "default": {
             "mode": "Default"
           },
-          "description": "How the conversion work is parallelized: `Threads`, `Processes`,\n`Synchronous` (no parallelism), or `Default` (keep the environment's\nsettings unchanged).",
+          "description": "How the conversion work is parallelized.\n\n- `Threads`: parallelize using multiple threads.\n- `Processes`: parallelize using multiple processes.\n- `Synchronous`: run sequentially, without parallelism.\n- `Default`: keep the environment's parallelism settings unchanged.",
           "discriminator": {
             "mapping": {
               "Default": "#/$defs/DefaultScheduler",
@@ -1010,7 +1010,7 @@
         },
         "use_zarrs_codec": {
           "default": false,
-          "description": "Read and write image data with the `zarrs` Rust backend, which is\nusually faster. Requires the optional `zarrs` dependency to be installed.",
+          "description": "Read and write image data with the `zarrs` Rust backend, which is\nusually faster. **Requires** the optional `zarrs` dependency to be\ninstalled.",
           "title": "Use Zarrs Codec Pipeline",
           "type": "boolean"
         }
@@ -1105,7 +1105,7 @@
         },
         "remove_t_offset": {
           "default": "Global",
-          "description": "Whether to shift the image so its time origin is 0.\n\n- `Global`: Shift all positions together so the time origin is 0.\n- `Keep`: Use the stage positions as-is. Fails if any position is\n  negative; positive positions produce empty padding at the image origin.",
+          "description": "Whether to shift the image so its time origin is 0.\n\n- `Global`: Shift all positions together so the time origin is 0.\n- `Keep`: Use the stage positions as-is. **Fails** if any position is\n  negative; positive positions produce empty padding at the image origin.",
           "enum": [
             "Keep",
             "Global"
@@ -1121,7 +1121,7 @@
         },
         "remove_xy_offset": {
           "default": "Global",
-          "description": "Whether to shift the image so its XY origin is 0.\n\n- `Global`: Shift all positions together so the image origin is 0.\n- `Keep`: Use the stage positions as-is. Fails if any position is\n  negative; positive positions produce empty padding at the image origin.",
+          "description": "Whether to shift the image so its XY origin is 0.\n\n- `Global`: Shift all positions together so the image origin is 0.\n- `Keep`: Use the stage positions as-is. **Fails** if any position is\n  negative; positive positions produce empty padding at the image origin.",
           "enum": [
             "Keep",
             "Global"
@@ -1131,7 +1131,7 @@
         },
         "remove_z_offset": {
           "default": "Global",
-          "description": "Whether to shift the image so its Z origin is 0.\n\n- `Global`: Shift all positions together so the Z origin is 0.\n- `Per-FOV`: Shift each field of view independently to Z origin 0.\n- `Keep`: Use the stage positions as-is. Fails if any position is\n  negative; positive positions produce empty padding at the image origin.",
+          "description": "Whether to shift the image so its Z origin is 0.\n\n- `Global`: Shift all positions together so the Z origin is 0.\n- `Per-FOV`: Shift each field of view independently to Z origin 0.\n- `Keep`: Use the stage positions as-is. **Fails** if any position is\n  negative; positive positions produce empty padding at the image origin.",
           "enum": [
             "Keep",
             "Per-FOV",
@@ -1196,7 +1196,7 @@
             }
           ],
           "default": null,
-          "description": "Maximum starting time point (inclusive). Leave empty for no upper\nbound. Tiles are kept or dropped whole, judged by their starting time\npoint only.",
+          "description": "Maximum starting time point (inclusive). Leave empty for no upper\nbound. Tiles are kept or dropped **whole**, judged by their starting time\npoint only.",
           "title": "Max T"
         },
         "min_t": {
@@ -1209,7 +1209,7 @@
             }
           ],
           "default": null,
-          "description": "Minimum starting time point (inclusive). Leave empty for no lower\nbound. Tiles are kept or dropped whole, judged by their starting time\npoint only.",
+          "description": "Minimum starting time point (inclusive). Leave empty for no lower\nbound. Tiles are kept or dropped **whole**, judged by their starting time\npoint only.",
           "title": "Min T"
         },
         "name": {
@@ -1229,14 +1229,14 @@
       "properties": {
         "max_in_memory_bytes": {
           "default": 10485760,
-          "description": "Maximum total size of serialized tiled image data to keep in-memory\nbetween init and compute phases when serialization=\"Auto\".\nIf the total size exceeds this threshold, data will be written to temporary\nJSON files on disk instead. Default is 10 MiB.",
+          "description": "Maximum total size of serialized tiled image data to keep in-memory\nbetween init and compute phases when `serialization` is `Auto`.\nIf the total size exceeds this threshold, data will be written to temporary\nJSON files on disk instead. Default is 10 MiB.",
           "minimum": 1,
           "title": "Max In-Memory Bytes",
           "type": "integer"
         },
         "serialization": {
           "default": "Auto",
-          "description": "Serialization mode for tiled image data between init and compute phases.\n\n- `\"Memory\"`: always keep data in-memory (skips all filesystem I/O).\n- `\"JSON\"`: always write to a temporary JSON file on disk (required for\n  distributed Fractal runs where init and compute execute on different machines).\n- `\"Auto\"`: use in-memory when the total serialized payload is within\n  `max_in_memory_bytes` (default 10 MiB), otherwise fall back to JSON files\n  on disk.",
+          "description": "Serialization mode for tiled image data between init and compute phases.\n\n- `Memory`: always keep data in-memory (skips all filesystem I/O).\n- `JSON`: always write to a temporary JSON file on disk (**required** for\n  distributed Fractal runs where init and compute execute on different\n  machines).\n- `Auto`: use in-memory when the total serialized payload is within\n  `max_in_memory_bytes` (default 10 MiB), otherwise fall back to JSON files\n  on disk.",
           "enum": [
             "Auto",
             "Memory",
@@ -1283,7 +1283,7 @@
       "properties": {
         "mode": {
           "default": "Include",
-          "description": "Whether matching tiles are included (kept) or excluded (removed).",
+          "description": "Whether matching tiles are **included** (kept) or **excluded** (removed).",
           "enum": [
             "Include",
             "Exclude"
@@ -1299,7 +1299,7 @@
           "type": "string"
         },
         "wells": {
-          "description": "List of well identifiers to keep (`Include` mode) or remove\n(`Exclude` mode). E.g., [\"A01\", \"B02\"]",
+          "description": "List of well identifiers to keep (`Include` mode) or remove\n(`Exclude` mode), e.g. `[\"A01\", \"B02\"]`.",
           "items": {
             "type": "string"
           },
@@ -1339,7 +1339,7 @@
             }
           ],
           "default": null,
-          "description": "Maximum starting Z position (inclusive). Leave empty for no upper\nbound. Tiles are kept or dropped whole, judged by their starting Z\nposition only.",
+          "description": "Maximum starting Z position (inclusive). Leave empty for no upper\nbound. Tiles are kept or dropped **whole**, judged by their starting Z\nposition only.",
           "title": "Max Z"
         },
         "min_z": {
@@ -1352,7 +1352,7 @@
             }
           ],
           "default": null,
-          "description": "Minimum starting Z position (inclusive). Leave empty for no lower\nbound. Tiles are kept or dropped whole, judged by their starting Z\nposition only.",
+          "description": "Minimum starting Z position (inclusive). Leave empty for no lower\nbound. Tiles are kept or dropped **whole**, judged by their starting Z\nposition only.",
           "title": "Min Z"
         },
         "name": {

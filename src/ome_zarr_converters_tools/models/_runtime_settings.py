@@ -85,10 +85,11 @@ class TempJsonOptions(UserFacingModel):
     serialization: Literal["Auto", "Memory", "JSON"] = "Auto"
     """Serialization mode for tiled image data between init and compute phases.
 
-    - `"Memory"`: always keep data in-memory (skips all filesystem I/O).
-    - `"JSON"`: always write to a temporary JSON file on disk (required for
-      distributed Fractal runs where init and compute execute on different machines).
-    - `"Auto"`: use in-memory when the total serialized payload is within
+    - `Memory`: always keep data in-memory (skips all filesystem I/O).
+    - `JSON`: always write to a temporary JSON file on disk (**required** for
+      distributed Fractal runs where init and compute execute on different
+      machines).
+    - `Auto`: use in-memory when the total serialized payload is within
       `max_in_memory_bytes` (default 10 MiB), otherwise fall back to JSON files
       on disk.
     """
@@ -98,7 +99,7 @@ class TempJsonOptions(UserFacingModel):
         title="Max In-Memory Bytes",
     )
     """Maximum total size of serialized tiled image data to keep in-memory
-    between init and compute phases when serialization="Auto".
+    between init and compute phases when `serialization` is `Auto`.
     If the total size exceeds this threshold, data will be written to temporary
     JSON files on disk instead. Default is 10 MiB.
     """
@@ -125,14 +126,19 @@ class RuntimeSettings(UserFacingModel):
 
     use_zarrs_codec: bool = Field(default=False, title="Use Zarrs Codec Pipeline")
     """Read and write image data with the `zarrs` Rust backend, which is
-    usually faster. Requires the optional `zarrs` dependency to be installed.
+    usually faster. **Requires** the optional `zarrs` dependency to be
+    installed.
     """
     dask_scheduler: DaskScheduler = Field(
         default_factory=DefaultScheduler, title="Dask Scheduler"
     )
-    """How the conversion work is parallelized: `Threads`, `Processes`,
-    `Synchronous` (no parallelism), or `Default` (keep the environment's
-    settings unchanged).
+    """
+    How the conversion work is parallelized.
+
+    - `Threads`: parallelize using multiple threads.
+    - `Processes`: parallelize using multiple processes.
+    - `Synchronous`: run sequentially, without parallelism.
+    - `Default`: keep the environment's parallelism settings unchanged.
     """
     temp_json_options: TempJsonOptions = Field(
         default_factory=TempJsonOptions, title="Temporary JSON Options"

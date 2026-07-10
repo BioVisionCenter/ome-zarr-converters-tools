@@ -28,12 +28,13 @@ class RegexFilter(FilterModel):
     name: Literal["Path Regex Filter"] = "Path Regex Filter"
     """Name of the filter."""
     mode: FilterMode = "Include"
-    """Whether matching tiles are included (kept) or excluded (removed)."""
+    """Whether matching tiles are **included** (kept) or **excluded** (removed)."""
     regex: str
     """
-    Regex pattern matched against the tile's base path. In `Include` mode
-    matching tiles are kept and all others removed; in `Exclude` mode
-    matching tiles are removed and all others kept.
+    Regex pattern matched against the tile's base path.
+
+    - `Include`: matching tiles are kept, all others removed.
+    - `Exclude`: matching tiles are removed, all others kept.
     """
 
 
@@ -57,10 +58,10 @@ class WellFilter(FilterModel):
     name: Literal["Well Filter"] = "Well Filter"
     """Name of the filter."""
     mode: FilterMode = "Include"
-    """Whether matching tiles are included (kept) or excluded (removed)."""
+    """Whether matching tiles are **included** (kept) or **excluded** (removed)."""
     wells: list[str]
     """List of well identifiers to keep (`Include` mode) or remove
-    (`Exclude` mode). E.g., ["A01", "B02"]"""
+    (`Exclude` mode), e.g. `["A01", "B02"]`."""
 
 
 def apply_well_filter(tile: Tile, filter_params: WellFilter) -> bool:
@@ -80,12 +81,13 @@ class FovNameFilter(FilterModel):
     name: Literal["FOV Name Filter"] = "FOV Name Filter"
     """Name of the filter."""
     mode: FilterMode = "Include"
-    """Whether matching tiles are included (kept) or excluded (removed)."""
+    """Whether matching tiles are **included** (kept) or **excluded** (removed)."""
     regex: str
     """
-    Regex pattern matched against the tile's `fov_name`. In `Include` mode
-    matching tiles are kept and all others removed; in `Exclude` mode
-    matching tiles are removed and all others kept.
+    Regex pattern matched against the tile's `fov_name`.
+
+    - `Include`: matching tiles are kept, all others removed.
+    - `Exclude`: matching tiles are removed, all others kept.
     """
 
 
@@ -110,10 +112,10 @@ class AcquisitionFilter(FilterModel):
     name: Literal["Acquisition Filter"] = "Acquisition Filter"
     """Name of the filter."""
     mode: FilterMode = "Include"
-    """Whether matching tiles are included (kept) or excluded (removed)."""
+    """Whether matching tiles are **included** (kept) or **excluded** (removed)."""
     acquisitions: list[int]
     """List of acquisition indices to keep (`Include` mode) or remove
-    (`Exclude` mode). E.g., [0, 1]"""
+    (`Exclude` mode), e.g. `[0, 1]`."""
 
 
 def apply_acquisition_filter(tile: Tile, filter_params: AcquisitionFilter) -> bool:
@@ -230,11 +232,11 @@ class AttributeFilter(FilterModel):
     name: Literal["Attribute Filter"] = "Attribute Filter"
     """Name of the filter."""
     mode: FilterMode = "Include"
-    """Whether matching tiles are included (kept) or excluded (removed)."""
+    """Whether matching tiles are **included** (kept) or **excluded** (removed)."""
     key: str
     """Attribute key to match. The attribute must be present on every tile."""
     values: list[AttributeValue]
-    """Values to match against. A tile matches if any element of its
+    """Values to match against. A tile matches if *any* element of its
     attribute value matches one of these; matching tiles are kept in
     `Include` mode and removed in `Exclude` mode."""
 
@@ -291,11 +293,11 @@ class ChannelFilter(FilterModel):
     name: Literal["Channel Filter"] = "Channel Filter"
     """Name of the filter."""
     mode: FilterMode = "Include"
-    """Whether matching tiles are included (kept) or excluded (removed)."""
+    """Whether matching tiles are **included** (kept) or **excluded** (removed)."""
     channel_labels: list[str]
-    """Channel labels to keep (`Include` mode) or remove (`Exclude` mode).
-    E.g., ["DAPI", "GFP"]. A tile matches if all of its channels are in this
-    list; a partial match raises."""
+    """Channel labels to keep (`Include` mode) or remove (`Exclude` mode),
+    e.g. `["DAPI", "GFP"]`. A tile matches only if *all* of its channels are
+    in this list; a partial match **fails the conversion**."""
 
 
 def apply_channel_filter(tile: Tile, filter_params: ChannelFilter) -> bool:
@@ -323,11 +325,11 @@ class ZRangeFilter(FilterModel):
     """Name of the filter."""
     min_z: float | None = None
     """Minimum starting Z position (inclusive). Leave empty for no lower
-    bound. Tiles are kept or dropped whole, judged by their starting Z
+    bound. Tiles are kept or dropped **whole**, judged by their starting Z
     position only."""
     max_z: float | None = None
     """Maximum starting Z position (inclusive). Leave empty for no upper
-    bound. Tiles are kept or dropped whole, judged by their starting Z
+    bound. Tiles are kept or dropped **whole**, judged by their starting Z
     position only."""
 
 
@@ -357,11 +359,11 @@ class TRangeFilter(FilterModel):
     """Name of the filter."""
     min_t: float | None = None
     """Minimum starting time point (inclusive). Leave empty for no lower
-    bound. Tiles are kept or dropped whole, judged by their starting time
+    bound. Tiles are kept or dropped **whole**, judged by their starting time
     point only."""
     max_t: float | None = None
     """Maximum starting time point (inclusive). Leave empty for no upper
-    bound. Tiles are kept or dropped whole, judged by their starting time
+    bound. Tiles are kept or dropped **whole**, judged by their starting time
     point only."""
 
 

@@ -15,6 +15,9 @@ versioning.
   no longer cuts them mid-sentence, and union dropdowns show friendly titles
   ("Well Filter", "Snap to Grid") instead of raw class names. Field titles with
   wrong casing were fixed (`XY Pixel Size`, `NGFF Version`, `Wavelength ID`).
+  Descriptions use light markdown (the UI renders it): multi-choice options are
+  itemized lists with backticked values, and key caveats are bolded (e.g. a
+  partial channel match **fails the conversion**).
 - Snapshots now record an informational top-level `versions` block (this package,
   `ngio`, `zarr`, `numpy`, `dask`, `tifffile`, `pillow`, `pydantic`, and Python) captured
   at generation time. It is written to the snapshot JSON but never compared, so a
