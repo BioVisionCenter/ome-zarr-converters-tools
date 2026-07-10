@@ -6,6 +6,11 @@ First stable release. The public API is now considered frozen under semantic
 versioning.
 
 ### Features
+- Snapshots now record an informational top-level `versions` block (this package,
+  `ngio`, `zarr`, `numpy`, `dask`, `tifffile`, `pillow`, `pydantic`, and Python) captured
+  at generation time. It is written to the snapshot JSON but never compared, so a
+  dependency version drift never fails a test; it exists to help diagnose a snapshot
+  discrepancy caused by an upstream change.
 - Promote the primary entry points to the package root so they are importable
   from `ome_zarr_converters_tools` directly (in addition to their subpackages):
   `hcs_images_from_dataframe`, `single_images_from_dataframe`,
