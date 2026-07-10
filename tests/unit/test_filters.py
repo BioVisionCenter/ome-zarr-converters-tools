@@ -21,12 +21,16 @@ from ome_zarr_converters_tools.pipelines._filters import (
     AcquisitionIncludeFilter,
     AttributeExcludeFilter,
     AttributeIncludeFilter,
+    BoolValue,
     ChannelExcludeFilter,
     ChannelIncludeFilter,
     FovNameExcludeFilter,
     FovNameIncludeFilter,
+    IsNoneValue,
+    IsNotNoneValue,
     RegexExcludeFilter,
     RegexIncludeFilter,
+    StringValue,
     TRangeFilter,
     WellExcludeFilter,
     WellIncludeFilter,
@@ -277,7 +281,9 @@ class TestAttributeFilters:
             _tile_with_attributes({"condition": ["control"]}),
             _tile_with_attributes({"condition": ["treated"]}),
         ]
-        f = AttributeIncludeFilter(key="condition", values=["control"])
+        f = AttributeIncludeFilter(
+            key="condition", values=[StringValue(value="control")]
+        )
         result = apply_filter_pipeline(tiles, filters_config=[f])
         assert len(result) == 1
         assert result[0].attributes["condition"] == ["control"]
@@ -287,14 +293,48 @@ class TestAttributeFilters:
             _tile_with_attributes({"condition": ["control"]}),
             _tile_with_attributes({"condition": ["treated"]}),
         ]
-        f = AttributeExcludeFilter(key="condition", values=["control"])
+        f = AttributeExcludeFilter(
+            key="condition", values=[StringValue(value="control")]
+        )
         result = apply_filter_pipeline(tiles, filters_config=[f])
         assert len(result) == 1
         assert result[0].attributes["condition"] == ["treated"]
 
+    def test_attribute_include_bool_value(self) -> None:
+        tiles = [
+            _tile_with_attributes({"flag": [True]}),
+            _tile_with_attributes({"flag": [False]}),
+        ]
+        f = AttributeIncludeFilter(key="flag", values=[BoolValue()])
+        result = apply_filter_pipeline(tiles, filters_config=[f])
+        assert len(result) == 1
+        assert result[0].attributes["flag"] == [True]
+
+    def test_attribute_is_none_value(self) -> None:
+        tiles = [
+            _tile_with_attributes({"condition": [None]}),
+            _tile_with_attributes({"condition": ["treated"]}),
+        ]
+        f = AttributeIncludeFilter(key="condition", values=[IsNoneValue()])
+        result = apply_filter_pipeline(tiles, filters_config=[f])
+        assert len(result) == 1
+        assert result[0].attributes["condition"] == [None]
+
+    def test_attribute_is_not_none_value(self) -> None:
+        tiles = [
+            _tile_with_attributes({"condition": [None]}),
+            _tile_with_attributes({"condition": ["treated"]}),
+        ]
+        f = AttributeExcludeFilter(key="condition", values=[IsNotNoneValue()])
+        result = apply_filter_pipeline(tiles, filters_config=[f])
+        assert len(result) == 1
+        assert result[0].attributes["condition"] == [None]
+
     def test_attribute_missing_key_error(self) -> None:
         tiles = [_tile_with_attributes({"other": ["x"]})]
-        f = AttributeIncludeFilter(key="condition", values=["control"])
+        f = AttributeIncludeFilter(
+            key="condition", values=[StringValue(value="control")]
+        )
         with pytest.raises(ValueError, match="no such attribute"):
             apply_filter_pipeline(tiles, filters_config=[f])
 

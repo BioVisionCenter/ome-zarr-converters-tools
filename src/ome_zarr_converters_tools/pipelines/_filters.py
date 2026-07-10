@@ -169,8 +169,68 @@ def apply_acquisition_exclude_filter(
     return acquisition not in filter_params.acquisitions
 
 
+class BoolValue(BaseModel):
+    """Bool value for attribute filters."""
+
+    type: Literal["Bool"] = "Bool"
+    value: bool = True
+
+
+class StringValue(BaseModel):
+    """String value for attribute filters."""
+
+    type: Literal["String"] = "String"
+    value: str
+
+
+class IntValue(BaseModel):
+    """Int value for attribute filters."""
+
+    type: Literal["Integer"] = "Integer"
+    value: int
+
+
+class FloatValue(BaseModel):
+    """Float value for attribute filters."""
+
+    type: Literal["Float"] = "Float"
+    value: float
+
+
+class IsNoneValue(BaseModel):
+    """Matches attribute elements that are `None`."""
+
+    type: Literal["Is None"] = "Is None"
+
+
+class IsNotNoneValue(BaseModel):
+    """Matches attribute elements that are not `None`."""
+
+    type: Literal["Is Not None"] = "Is Not None"
+
+
+# Typed wrappers (instead of a bare `str | int | float | bool` union) so the
+# manifest schema stays consumable by the Fractal web UI: fractal-task-tools
+# rejects a boolean schema node without a default ([E05]), which a bare union
+# member inside a list cannot carry.
+AttributeValue = Annotated[
+    BoolValue | StringValue | IntValue | FloatValue | IsNoneValue | IsNotNoneValue,
+    Field(discriminator="type"),
+]
+
+
+def _matches_value(
+    element: str | int | float | bool | None, value: AttributeValue
+) -> bool:
+    if isinstance(value, IsNoneValue):
+        return element is None
+    if isinstance(value, IsNotNoneValue):
+        return element is not None
+    return element == value.value
+
+
 def _attribute_matches(
-    tile: Tile, key: str, values: list[str | int | float | bool], filter_name: str
+    tile: Tile, key: str, values: list[AttributeValue], filter_name: str
 ) -> bool:
     if key not in tile.attributes:
         available = sorted(tile.attributes)
@@ -180,7 +240,11 @@ def _attribute_matches(
             f"{available}. Fix the filter key or make the parser set the "
             "attribute on every tile."
         )
-    return any(value in values for value in tile.attributes[key])
+    return any(
+        _matches_value(element, value)
+        for element in tile.attributes[key]
+        for value in values
+    )
 
 
 class AttributeIncludeFilter(FilterModel):
@@ -190,7 +254,7 @@ class AttributeIncludeFilter(FilterModel):
     """Name of the filter."""
     key: str
     """Attribute key to match. The attribute must be present on every tile."""
-    values: list[str | int | float | bool]
+    values: list[AttributeValue]
     """Values to match against. A tile is included if any element of its
     attribute value matches one of these."""
 
@@ -210,7 +274,7 @@ class AttributeExcludeFilter(FilterModel):
     """Name of the filter."""
     key: str
     """Attribute key to match. The attribute must be present on every tile."""
-    values: list[str | int | float | bool]
+    values: list[AttributeValue]
     """Values to match against. A tile is excluded if any element of its
     attribute value matches one of these."""
 

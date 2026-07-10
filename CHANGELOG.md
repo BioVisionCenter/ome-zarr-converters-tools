@@ -38,7 +38,9 @@ versioning.
   `AcquisitionOptions.filters`: `FovNameIncludeFilter` / `FovNameExcludeFilter`
   (regex on `fov_name`), `AcquisitionIncludeFilter` / `AcquisitionExcludeFilter`
   (acquisition indices, plates only), `AttributeIncludeFilter` /
-  `AttributeExcludeFilter` (key/value match on tile attributes),
+  `AttributeExcludeFilter` (key/value match on tile attributes; values are
+  typed `AttributeValue` entries, e.g.
+  `AttributeIncludeFilter(key="condition", values=[StringValue(value="control")])`),
   `ChannelIncludeFilter` / `ChannelExcludeFilter` (channel labels; a partial
   match on a multi-channel tile raises instead of silently dropping channels),
   and `ZRangeFilter` / `TRangeFilter` (keep tiles whose `start_z` / `start_t`
@@ -68,6 +70,14 @@ versioning.
     reconciling channel metadata); set `False` to keep gaps as empty channels.
 
 ### Fix
+- The attribute filters' `values` field no longer breaks Fractal manifest
+  generation (`fractal-task-tools` `[E05] Boolean with no default`): the bare
+  `str | int | float | bool` union is replaced by a discriminated union of
+  typed value models (`BoolValue`, `StringValue`, `IntValue`, `FloatValue`,
+  `IsNoneValue`, `IsNotNoneValue`), whose boolean carries a real default and
+  which render as concrete per-type forms in the Fractal web UI. The
+  `Is None` / `Is Not None` variants additionally allow matching unset
+  (`None`) attribute elements, which the old union could not express.
 - Pixel-grid rounding no longer opens 1-pixel gaps/overlaps at tile boundaries:
   `_region_to_pixel_coordinates` and `apply_align_to_pixel_grid` now round the
   interval endpoints together (`round(start+length) - round(start)`) instead of
