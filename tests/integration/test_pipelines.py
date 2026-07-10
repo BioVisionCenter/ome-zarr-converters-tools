@@ -651,6 +651,46 @@ class TestPerFovTranslation:
                 f"got {translation}"
             )
 
+    def test_per_fov_translation_matches_origin(self, tmp_path: Path) -> None:
+        # Pin the exact translation value, not just "non-zero": a known,
+        # non-symmetric stage origin (x != y catches an axis transposition) with
+        # a non-unit pixel size (catches a micrometer-vs-pixel unit slip) must
+        # land verbatim in the OME-Zarr translation metadata, in axis order.
+        origin_x_um, origin_y_um, pixel_size_um = 100.0, 50.0, 0.5
+        acq = AcquisitionDetails(
+            channels=[ChannelInfo(channel_label="DAPI")],
+            xy_pixel_size=pixel_size_um,
+            z_spacing=1.0,
+            t_spacing=1.0,
+            start_x_space="world",
+            start_y_space="world",
+        )
+        tile = build_dummy_tile(
+            fov_name="FOV_0",
+            start=StartPosition(x=origin_x_um, y=origin_y_um),
+            shape=TileShape(x=64, y=64, z=1, c=1, t=1),
+            collection=SingleImage(image_path="origin_img"),
+            acquisition_details=acq,
+        )
+        opts = ConverterOptions(grouping=PerFovGrouping())
+        images = tiles_aggregation_pipeline(tiles=[tile], converter_options=opts)
+        assert len(images) == 1
+
+        pipeline = build_default_registration_pipeline(
+            StagePositionCorrections(), opts.grouping.tiling_for_registration()
+        )
+        omezarr = tiled_image_creation_pipeline(
+            zarr_url=str(tmp_path / "origin.zarr"),
+            tiled_image=images[0],
+            registration_pipeline=pipeline,
+            converter_options=opts,
+            writer_mode=WriterMode.BY_FOV,
+            overwrite_mode=OverwriteMode.OVERWRITE,
+        )
+        translation = tuple(omezarr.get_image().dataset.translation)
+        # axes order is (t, c, z, y, x); translation is in physical micrometers.
+        assert translation == (0.0, 0.0, 0.0, origin_y_um, origin_x_um), translation
+
     def test_tiling_strategy_auto_has_no_translation(self, tmp_path: Path) -> None:
         df = pd.read_csv(_HCS_EXAMPLE_DIR / "tiles.csv")
         acq = _example_acq_details()
