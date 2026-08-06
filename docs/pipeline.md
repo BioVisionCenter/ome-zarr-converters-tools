@@ -10,10 +10,10 @@ The conversion pipeline processes tiles through several stages before writing th
 from ome_zarr_converters_tools import ConverterOptions, MosaicGrouping
 
 opts = ConverterOptions(
-    grouping=MosaicGrouping(),             # How FOVs are grouped into images
-    writer_mode=WriterMode.BY_FOV,         # How data is loaded and written
+    grouping=MosaicGrouping(),  # How FOVs are grouped into images
+    writer_mode=WriterMode.BY_FOV,  # How data is loaded and written
     stage_position_corrections=StagePositionCorrections(),  # Stage position corrections
-    omezarr_options=OmeZarrOptions(),      # OME-Zarr writing options (levels, chunks, etc.)
+    omezarr_options=OmeZarrOptions(),  # OME-Zarr writing options (levels, chunks, etc.)
 )
 ```
 
@@ -27,15 +27,15 @@ When passed to `tiles_aggregation_pipeline()` and `tiled_image_creation_pipeline
 from ome_zarr_converters_tools import AcquisitionDetails, ChannelInfo
 
 acq = AcquisitionDetails(
-    xy_pixel_size=0.65,          # XY pixel size in micrometers
-    z_spacing=5.0,           # Z-step size in micrometers
-    t_spacing=1.0,           # Time interval in seconds
+    xy_pixel_size=0.65,  # XY pixel size in micrometers
+    z_spacing=5.0,  # Z-step size in micrometers
+    t_spacing=1.0,  # Time interval in seconds
     channels=[
         ChannelInfo(channel_label="DAPI", wavelength_id="405"),
         ChannelInfo(channel_label="GFP", wavelength_id="488"),
     ],
     axes=["c", "z", "y", "x"],  # Subset of t, c, z, y, x in canonical order
-    start_x_space="world",    # How to interpret start_x values
+    start_x_space="world",  # How to interpret start_x values
     start_y_space="world",
     start_z_space="pixel",
     start_t_space="pixel",
@@ -82,10 +82,10 @@ channels = [
 The `axes` parameter defines which dimensions the output image will have. It must be a subset of `["t", "c", "z", "y", "x"]` in canonical order:
 
 ```python
-axes=["t", "c", "z", "y", "x"]  # 5D time-series (default)
-axes=["c", "z", "y", "x"]       # 4D stack (no time)
-axes=["z", "y", "x"]            # 3D single-channel
-axes=["y", "x"]                 # 2D (minimum)
+axes = ["t", "c", "z", "y", "x"]  # 5D time-series (default)
+axes = ["c", "z", "y", "x"]  # 4D stack (no time)
+axes = ["z", "y", "x"]  # 3D single-channel
+axes = ["y", "x"]  # 2D (minimum)
 ```
 
 Omitting `c` means the output has no channel axis, so `channels` must be left as `None`; providing channel metadata for a `c`-less image is an error.
@@ -104,8 +104,8 @@ from ome_zarr_converters_tools import AcquisitionDetails, StageOrientation
 acq = AcquisitionDetails(
     xy_pixel_size=0.65,
     stage_orientation=StageOrientation(
-        flip_x=True,    # Invert X positions
-        flip_y=False,   # Keep Y as-is
+        flip_x=True,  # Invert X positions
+        flip_y=False,  # Keep Y as-is
         swap_xy=False,  # Don't swap X and Y
     ),
 )
@@ -257,11 +257,11 @@ Controls the per-axis position handling applied during registration:
 from ome_zarr_converters_tools.models import StagePositionCorrections
 
 corrections = StagePositionCorrections(
-    remove_xy_offset="Global",   # "Global" (zero origin) or "Keep" (keep absolute)
-    remove_z_offset="Global",    # "Global", "Per-FOV" (zero each FOV's z), or "Keep"
-    remove_t_offset="Global",    # "Global" or "Keep"
-    remove_xy_jitter=True,       # snap a FOV's sub-tiles to a shared XY origin
-    reindex_channels=True,       # compact present channels to a dense range
+    remove_xy_offset="Global",  # "Global" (zero origin) or "Keep" (keep absolute)
+    remove_z_offset="Global",  # "Global", "Per-FOV" (zero each FOV's z), or "Keep"
+    remove_t_offset="Global",  # "Global" or "Keep"
+    remove_xy_jitter=True,  # snap a FOV's sub-tiles to a shared XY origin
+    reindex_channels=True,  # compact present channels to a dense range
 )
 ```
 
@@ -366,7 +366,7 @@ from ome_zarr_converters_tools import RuntimeSettings
 from ome_zarr_converters_tools.models import ThreadScheduler
 
 settings = RuntimeSettings(
-    use_zarrs_codec=True,                     # Use the Zarrs Rust codec backend
+    use_zarrs_codec=True,  # Use the Zarrs Rust codec backend
     dask_scheduler=ThreadScheduler(num_workers=4),  # Run Dask with 4 threads
 )
 
