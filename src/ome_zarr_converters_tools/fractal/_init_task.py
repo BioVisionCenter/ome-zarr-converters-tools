@@ -1,5 +1,7 @@
 """Utilities for converters init tasks in Fractal."""
 
+import warnings
+
 from ome_zarr_converters_tools.core._tile_region import (
     TiledImage,
 )
@@ -12,7 +14,6 @@ from ome_zarr_converters_tools.fractal._models import (
 )
 from ome_zarr_converters_tools.models import (
     ConverterOptions,
-    DefaultNgffVersion,
     NgffVersions,
     OverwriteMode,
 )
@@ -117,7 +118,7 @@ def setup_images_for_conversion(
     collection_type: str,
     converter_options: ConverterOptions,
     overwrite_mode: OverwriteMode = OverwriteMode.NO_OVERWRITE,
-    ngff_version: NgffVersions = DefaultNgffVersion,
+    ngff_version: NgffVersions | None = None,
 ) -> list[dict]:
     """Setup the OME-Zarr collection from converted tiled images.
 
@@ -131,14 +132,46 @@ def setup_images_for_conversion(
         collection_type: The type of collection to set up.
         converter_options: The converter options to use during conversion.
         overwrite_mode: The overwrite mode to use when writing the data.
-        ngff_version: The NGFF version to use when setting up the collection.
+        ngff_version: Deprecated, will be removed in v2.0.0. The NGFF version is
+            taken from `converter_options.omezarr_options.ngff_version`, which is
+            also what the images themselves are written with. Drop the argument.
+
+    Raises:
+        ValueError: If `ngff_version` is given and disagrees with
+            `converter_options.omezarr_options.ngff_version`. The two used to be
+            applied independently, producing a collection whose container and
+            images declare different NGFF versions.
     """
+    options_ngff_version = converter_options.omezarr_options.ngff_version
+    if ngff_version is not None:
+        warnings.warn(
+            "`ngff_version` is deprecated and will be removed in v1.1.0. The "
+            "NGFF version is taken from "
+            "`converter_options.omezarr_options.ngff_version` "
+            f"(currently {options_ngff_version!r}), so that the collection and "
+            "the images it contains cannot end up on different versions. "
+            "Remove the argument from the call.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        if ngff_version != options_ngff_version:
+            raise ValueError(
+                f"Conflicting NGFF versions: setup_images_for_conversion() got "
+                f"ngff_version={ngff_version!r}, but the images will be written "
+                f"as {options_ngff_version!r} "
+                f"(converter_options.omezarr_options.ngff_version). Set the "
+                f"version once, in the converter options, and remove the "
+                f"`ngff_version` argument: if {ngff_version!r} is the version "
+                f"you want, pass `ConverterOptions(omezarr_options="
+                f"OmeZarrOptions(ngff_version={ngff_version!r}))`."
+            )
+
     _check_path_collisions(tiled_images)
     setup_ome_zarr_collection(
         tiled_images=tiled_images,
         collection_type=collection_type,
         zarr_dir=zarr_dir,
-        ngff_version=ngff_version,
+        ngff_version=options_ngff_version,
         overwrite_mode=overwrite_mode,
     )
     return build_parallelization_list(
