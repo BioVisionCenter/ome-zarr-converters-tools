@@ -755,6 +755,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#channel-indices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Channel Indices
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#stage-corrections" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1090,10 +1101,10 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConverterOptions</span><span class="p">,</span> <span class="n">MosaicGrouping</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">opts</span> <span class="o">=</span> <span class="n">ConverterOptions</span><span class="p">(</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">grouping</span><span class="o">=</span><span class="n">MosaicGrouping</span><span class="p">(),</span>             <span class="c1"># How FOVs are grouped into images</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">writer_mode</span><span class="o">=</span><span class="n">WriterMode</span><span class="o">.</span><span class="n">BY_FOV</span><span class="p">,</span>         <span class="c1"># How data is loaded and written</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">grouping</span><span class="o">=</span><span class="n">MosaicGrouping</span><span class="p">(),</span>  <span class="c1"># How FOVs are grouped into images</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">writer_mode</span><span class="o">=</span><span class="n">WriterMode</span><span class="o">.</span><span class="n">BY_FOV</span><span class="p">,</span>  <span class="c1"># How data is loaded and written</span>
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">stage_position_corrections</span><span class="o">=</span><span class="n">StagePositionCorrections</span><span class="p">(),</span>  <span class="c1"># Stage position corrections</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">omezarr_options</span><span class="o">=</span><span class="n">OmeZarrOptions</span><span class="p">(),</span>      <span class="c1"># OME-Zarr writing options (levels, chunks, etc.)</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">omezarr_options</span><span class="o">=</span><span class="n">OmeZarrOptions</span><span class="p">(),</span>  <span class="c1"># OME-Zarr writing options (levels, chunks, etc.)</span>
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="p">)</span>
 </code></pre></div>
 <p>When passed to <code>tiles_aggregation_pipeline()</code> and <code>tiled_image_creation_pipeline()</code>, its fields are used as defaults. You can also override specific settings (like <code>writer_mode</code> or <code>grouping</code>) by passing them directly to the pipeline functions.</p>
@@ -1102,15 +1113,15 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">AcquisitionDetails</span><span class="p">,</span> <span class="n">ChannelInfo</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="n">acq</span> <span class="o">=</span> <span class="n">AcquisitionDetails</span><span class="p">(</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="n">xy_pixel_size</span><span class="o">=</span><span class="mf">0.65</span><span class="p">,</span>          <span class="c1"># XY pixel size in micrometers</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="n">z_spacing</span><span class="o">=</span><span class="mf">5.0</span><span class="p">,</span>           <span class="c1"># Z-step size in micrometers</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="n">t_spacing</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>           <span class="c1"># Time interval in seconds</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="n">xy_pixel_size</span><span class="o">=</span><span class="mf">0.65</span><span class="p">,</span>  <span class="c1"># XY pixel size in micrometers</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="n">z_spacing</span><span class="o">=</span><span class="mf">5.0</span><span class="p">,</span>  <span class="c1"># Z-step size in micrometers</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="n">t_spacing</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>  <span class="c1"># Time interval in seconds</span>
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="n">channels</span><span class="o">=</span><span class="p">[</span>
 <a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>        <span class="n">ChannelInfo</span><span class="p">(</span><span class="n">channel_label</span><span class="o">=</span><span class="s2">&quot;DAPI&quot;</span><span class="p">,</span> <span class="n">wavelength_id</span><span class="o">=</span><span class="s2">&quot;405&quot;</span><span class="p">),</span>
 <a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>        <span class="n">ChannelInfo</span><span class="p">(</span><span class="n">channel_label</span><span class="o">=</span><span class="s2">&quot;GFP&quot;</span><span class="p">,</span> <span class="n">wavelength_id</span><span class="o">=</span><span class="s2">&quot;488&quot;</span><span class="p">),</span>
 <a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>    <span class="p">],</span>
 <a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>    <span class="n">axes</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;c&quot;</span><span class="p">,</span> <span class="s2">&quot;z&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">],</span>  <span class="c1"># Subset of t, c, z, y, x in canonical order</span>
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>    <span class="n">start_x_space</span><span class="o">=</span><span class="s2">&quot;world&quot;</span><span class="p">,</span>    <span class="c1"># How to interpret start_x values</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>    <span class="n">start_x_space</span><span class="o">=</span><span class="s2">&quot;world&quot;</span><span class="p">,</span>  <span class="c1"># How to interpret start_x values</span>
 <a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>    <span class="n">start_y_space</span><span class="o">=</span><span class="s2">&quot;world&quot;</span><span class="p">,</span>
 <a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>    <span class="n">start_z_space</span><span class="o">=</span><span class="s2">&quot;pixel&quot;</span><span class="p">,</span>
 <a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>    <span class="n">start_t_space</span><span class="o">=</span><span class="s2">&quot;pixel&quot;</span><span class="p">,</span>
@@ -1200,11 +1211,14 @@
 </table>
 <h3 id="axes">Axes</h3>
 <p>The <code>axes</code> parameter defines which dimensions the output image will have. It must be a subset of <code>["t", "c", "z", "y", "x"]</code> in canonical order:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">axes</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;t&quot;</span><span class="p">,</span> <span class="s2">&quot;c&quot;</span><span class="p">,</span> <span class="s2">&quot;z&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">]</span>  <span class="c1"># 5D time-series (default)</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">axes</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;c&quot;</span><span class="p">,</span> <span class="s2">&quot;z&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">]</span>       <span class="c1"># 4D stack (no time)</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">axes</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;z&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">]</span>            <span class="c1"># 3D single-channel</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="n">axes</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">]</span>                 <span class="c1"># 2D (minimum)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">axes</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;t&quot;</span><span class="p">,</span> <span class="s2">&quot;c&quot;</span><span class="p">,</span> <span class="s2">&quot;z&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">]</span>  <span class="c1"># 5D time-series (default)</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">axes</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;c&quot;</span><span class="p">,</span> <span class="s2">&quot;z&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">]</span>  <span class="c1"># 4D stack (no time)</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">axes</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;z&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">]</span>  <span class="c1"># 3D single-channel</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="n">axes</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">]</span>  <span class="c1"># 2D (minimum)</span>
 </code></pre></div>
+<p>Omitting <code>c</code> means the output has no channel axis, so <code>channels</code> must be left as <code>None</code>; providing channel metadata for a <code>c</code>-less image is an error.</p>
+<h3 id="channel-indices">Channel Indices</h3>
+<p><code>start_c</code> and <code>length_c</code> on a <code>Tile</code> index into <code>acquisition_details.channels</code>: a tile covers channels <code>start_c … start_c + length_c - 1</code>. Most parsers emit one single-channel tile per channel, but <code>length_c &gt; 1</code> is supported for acquisitions that capture several channels at once (e.g. a two-camera system). Because the span is a contiguous range, channels acquired together must be <strong>adjacent</strong> in <code>channels</code> — if they are not, order the channel list so they are, or emit one tile per channel.</p>
 <h3 id="stage-corrections">Stage Corrections</h3>
 <p>Some microscopes have inverted or swapped stage axes. Use <code>StageOrientation</code> to fix this:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">AcquisitionDetails</span><span class="p">,</span> <span class="n">StageOrientation</span>
@@ -1212,8 +1226,8 @@
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">acq</span> <span class="o">=</span> <span class="n">AcquisitionDetails</span><span class="p">(</span>
 <a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    <span class="n">xy_pixel_size</span><span class="o">=</span><span class="mf">0.65</span><span class="p">,</span>
 <a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>    <span class="n">stage_orientation</span><span class="o">=</span><span class="n">StageOrientation</span><span class="p">(</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>        <span class="n">flip_x</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>    <span class="c1"># Invert X positions</span>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>        <span class="n">flip_y</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>   <span class="c1"># Keep Y as-is</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>        <span class="n">flip_x</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># Invert X positions</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>        <span class="n">flip_y</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>  <span class="c1"># Keep Y as-is</span>
 <a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>        <span class="n">swap_xy</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>  <span class="c1"># Don&#39;t swap X and Y</span>
 <a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>    <span class="p">),</span>
 <a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="p">)</span>
@@ -1337,7 +1351,9 @@
 <p><strong><code>xy_jitter_correction</code></strong> -- When <code>remove_xy_jitter=True</code> (default), tiles within the same FOV that have slightly different XY positions (due to stage drift between Z-slices or channels) are snapped to the FOV's reference position.</p>
 </li>
 <li>
-<p><strong><code>reindex_channels</code></strong> -- When <code>reindex_channels=True</code> (default), the channel indices actually present are compacted to a dense <code>0, 1, 2, …</code> range and channel metadata is reconciled, so a filtered channel does not leave an empty channel in the output.</p>
+<p><strong><code>reindex_channels</code></strong> -- When <code>reindex_channels=True</code> (default), the channel indices actually present are compacted to a dense <code>0, 1, 2, …</code> range and channel metadata is reconciled, so a filtered channel does not leave an empty channel in the output. Compaction happens per <code>TiledImage</code>, so the resulting channel set — and the label each channel index maps to — depends on how tiles were grouped: with <code>split_per_fov=True</code> a FOV that acquired only <code>GFP</code> becomes a single-channel image whose index 0 is <code>GFP</code>, while a neighbouring FOV's index 0 may be <code>DAPI</code>. The same applies across the wells of a plate. Downstream tasks that address channels by label are unaffected; tasks that address them by position across several images are not.</p>
+<p>Tiles spanning several channels (<code>length_c &gt; 1</code>, e.g. a two-camera acquisition) are supported: their start index is remapped and their width preserved. Compaction can never split such a tile, because the channels it covers are consecutive and always all present.</p>
+<p>When <code>reindex_channels=False</code>, the declared channel layout is preserved instead: the output always has one plane per entry in <code>channels</code>, and any channel no tile covers — whether it was never acquired or was removed by a Channel Filter — is written as an empty plane keeping its label. Channel index <code>n</code> then means the same channel in every image, which is what to use when a downstream task addresses channels by position rather than by label. The cost is storage for the empty planes.</p>
 </li>
 <li>
 <p><strong><code>tile_regions</code></strong> -- Applies tiling/snapping to remove overlaps between FOVs (see <a href="#tiling-strategies">Tiling Strategies</a> below). This is the step that determines the final non-overlapping layout.</p>
@@ -1348,11 +1364,11 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">StagePositionCorrections</span>
 <a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>
 <a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="n">corrections</span> <span class="o">=</span> <span class="n">StagePositionCorrections</span><span class="p">(</span>
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>    <span class="n">remove_xy_offset</span><span class="o">=</span><span class="s2">&quot;Global&quot;</span><span class="p">,</span>   <span class="c1"># &quot;Global&quot; (zero origin) or &quot;Keep&quot; (keep absolute)</span>
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>    <span class="n">remove_z_offset</span><span class="o">=</span><span class="s2">&quot;Global&quot;</span><span class="p">,</span>    <span class="c1"># &quot;Global&quot;, &quot;Per-FOV&quot; (zero each FOV&#39;s z), or &quot;Keep&quot;</span>
-<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>    <span class="n">remove_t_offset</span><span class="o">=</span><span class="s2">&quot;Global&quot;</span><span class="p">,</span>    <span class="c1"># &quot;Global&quot; or &quot;Keep&quot;</span>
-<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>    <span class="n">remove_xy_jitter</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>       <span class="c1"># snap a FOV&#39;s sub-tiles to a shared XY origin</span>
-<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>    <span class="n">reindex_channels</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>       <span class="c1"># compact present channels to a dense range</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>    <span class="n">remove_xy_offset</span><span class="o">=</span><span class="s2">&quot;Global&quot;</span><span class="p">,</span>  <span class="c1"># &quot;Global&quot; (zero origin) or &quot;Keep&quot; (keep absolute)</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>    <span class="n">remove_z_offset</span><span class="o">=</span><span class="s2">&quot;Global&quot;</span><span class="p">,</span>  <span class="c1"># &quot;Global&quot;, &quot;Per-FOV&quot; (zero each FOV&#39;s z), or &quot;Keep&quot;</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>    <span class="n">remove_t_offset</span><span class="o">=</span><span class="s2">&quot;Global&quot;</span><span class="p">,</span>  <span class="c1"># &quot;Global&quot; or &quot;Keep&quot;</span>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>    <span class="n">remove_xy_jitter</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># snap a FOV&#39;s sub-tiles to a shared XY origin</span>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>    <span class="n">reindex_channels</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># compact present channels to a dense range</span>
 <a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a><span class="p">)</span>
 </code></pre></div>
 <p>Offset modes: <code>"Global"</code> translates the axis so its origin is 0; <code>"Keep"</code> keeps absolute positions (raising on negatives, left-padding on positives); <code>"Per-FOV"</code> (z only) zeros each FOV's z independently, useful when FOVs are focused independently. <code>remove_xy_jitter</code> corrects minor XY stage drift between the sub-acquisitions (Z-slices/channels) of a single FOV.</p>
@@ -1469,7 +1485,7 @@
 <a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">ThreadScheduler</span>
 <a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>
 <a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="n">settings</span> <span class="o">=</span> <span class="n">RuntimeSettings</span><span class="p">(</span>
-<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>    <span class="n">use_zarrs_codec</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>                     <span class="c1"># Use the Zarrs Rust codec backend</span>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>    <span class="n">use_zarrs_codec</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># Use the Zarrs Rust codec backend</span>
 <a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>    <span class="n">dask_scheduler</span><span class="o">=</span><span class="n">ThreadScheduler</span><span class="p">(</span><span class="n">num_workers</span><span class="o">=</span><span class="mi">4</span><span class="p">),</span>  <span class="c1"># Run Dask with 4 threads</span>
 <a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="p">)</span>
 <a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>
@@ -1645,7 +1661,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 10, 2026 13:09:02 UTC">July 10, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="August 6, 2026 09:46:48 UTC">August 6, 2026</span>
   </span>
 
     
