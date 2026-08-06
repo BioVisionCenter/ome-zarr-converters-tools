@@ -20,6 +20,31 @@
 - `apply_reindex_channels` supports tiles spanning several channels
   (`length_c > 1`, e.g. two-camera acquisitions), which `Tile` and `ChannelFilter`
   already accepted.
+- `UserFacingModel` is now public (`ome_zarr_converters_tools.UserFacingModel`).
+
+### API Breaking Changes
+- The `ngff_version` argument of `setup_images_for_conversion` is deprecated and
+  will be removed in v1.1.0. The NGFF version is now taken from
+  `converter_options.omezarr_options.ngff_version`.
+
+  ```python
+  # before
+  setup_images_for_conversion(
+      tiled_images,
+      zarr_dir=zarr_dir,
+      collection_type="ImageInPlate",
+      converter_options=converter_options,
+      ngff_version=converter_options.omezarr_options.ngff_version,
+  )
+
+  # after
+  setup_images_for_conversion(
+      tiled_images,
+      zarr_dir=zarr_dir,
+      collection_type="ImageInPlate",
+      converter_options=converter_options,
+  )
+  ```
 
 ## [v1.0.1]
 
