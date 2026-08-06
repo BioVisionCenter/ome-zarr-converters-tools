@@ -23,6 +23,8 @@ _ROOT_ENTRY_POINTS = [
     "Grouping",
     "StagePositionCorrections",
     "WriterMode",
+    # Base class for custom Fractal task parameter models.
+    "UserFacingModel",
     # Types of public model fields must be importable from the root.
     "Scalings",
     "TempJsonOptions",

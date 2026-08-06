@@ -157,6 +157,36 @@ acq_options = AcquisitionOptions(
 updated_acq = acq_options.update_acquisition_details(base_acquisition_details)
 ```
 
+## Custom Parameter Models
+
+Converters usually need their own parameter models -- a format-specific acquisition
+input, an advanced-options group, and so on. Subclass `UserFacingModel` rather than
+`pydantic.BaseModel` so those models behave like the ones shipped here:
+
+```python
+from pydantic import ConfigDict, Field
+
+from ome_zarr_converters_tools import UserFacingModel
+
+
+class AcquisitionInput(UserFacingModel):
+    model_config = ConfigDict(title="Acquisition Input")
+
+    path: str
+    """Path to the acquisition file or directory."""
+
+    acquisition_id: int = Field(default=0, ge=0)
+    """Index used to distinguish multiplexing rounds."""
+```
+
+The base sets `use_attribute_docstrings=True`, so the attribute docstrings above become
+the field descriptions shown in the Fractal web UI. This matters because
+`fractal-task-tools` only enables that config globally when it is imported *before* your
+models are defined -- inheriting from `UserFacingModel` makes it independent of import
+order. It also sets `extra="forbid"`, so a typo in a task parameter fails loudly instead
+of being silently dropped. Entries in a subclass `model_config` (such as `title`) merge
+with the base config rather than replacing it.
+
 ## Fractal Manifest: Registering Input Models
 
 Fractal tasks need to declare their input models in the task manifest.
