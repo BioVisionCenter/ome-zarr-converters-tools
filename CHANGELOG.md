@@ -46,6 +46,23 @@
   )
   ```
 
+### Chores
+- `pixi.lock` is now tracked, and the `lint` CI job runs from it via
+  `prefix-dev/setup-pixi` instead of `pip install`ing unpinned tools. Every linter
+  version CI uses is now a reviewed fact in the repo; upgrades happen deliberately
+  through `pixi update` and `prek auto-update`. Two unrelated PR failures came from
+  this drift: ruff 0.16 started formatting Markdown code blocks (CI had 0.16, the
+  pixi env 0.15), and ty 0.0.68 started flagging an unused blanket `type: ignore`.
+- Linting moves from `pre-commit` to [`prek`](https://github.com/j178/prek), a drop-in
+  reimplementation. `.pre-commit-config.yaml` is unchanged apart from its header
+  comment. `pixi run -e dev lint` is the entry point (`chores` now depends on it);
+  `pre-commit autoupdate` becomes `prek auto-update`.
+- Pin `ruff` to `>=0.16,<0.17` in the `dev` extra, bump the `ruff-pre-commit` hook to
+  `v0.16.1`, and reformat the `docs/pipeline.md` python snippets under ruff 0.16's
+  Markdown formatting.
+- Drop a stale `# type: ignore` in `fractal/_models.py` that newer `ty` reports as
+  unused.
+
 ## [v1.0.1]
 
 Re-release of v1.0.0 with no changes of its own. The `v1.0.0` tag (and the

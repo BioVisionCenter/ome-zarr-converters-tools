@@ -110,9 +110,8 @@ ENV/
 .vscode/
 .idea/
 
-# pixi environments
+# pixi environments (pixi.lock is tracked — CI lints from it, see .gitattributes)
 .pixi
-pixi.lock
 *.egg-info
 *ipynb_checkpoints
 *.ipynb

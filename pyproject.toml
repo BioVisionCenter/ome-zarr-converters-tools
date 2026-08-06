@@ -86,7 +86,7 @@ dev = [
     "ipython",
     "ty",
     "pdbpp",                      # https://github.com/pdbpp/pdbpp
-    "pre-commit",
+    "prek",                       # drop-in pre-commit replacement, see .pre-commit-config.yaml
     "rich",                       # https://github.com/Textualize/rich
     "ruff>=0.16,<0.17",           # keep in sync with .pre-commit-config.yaml
 ]
@@ -209,7 +209,13 @@ source = ["ome_zarr_converters_tools"]
 # add files that you want check-manifest to explicitly ignore here
 # (files that are in the repo but shouldn't go in the package)
 [tool.check-manifest]
-ignore = [".pre-commit-config.yaml", ".ruff_cache/**/*", "tests/**/*"]
+ignore = [
+    ".pre-commit-config.yaml",
+    ".ruff_cache/**/*",
+    "tests/**/*",
+    # Tracked so CI lints from the locked environment, but excluded from the sdist
+    "pixi.lock",
+]
 
 [tool.pixi.workspace]
 channels = ["conda-forge"]
@@ -228,4 +234,5 @@ docs = { features = ["docs"], solve-group = "default" }
 ruff-fix-imports = { cmd = "ruff check --select I --fix" }
 ruff = { cmd = "ruff format", depends-on = ["ruff-fix-imports"] }
 test = { cmd = "pytest", depends-on = ["ruff"] }
-chores = { cmd = "pre-commit run --all-files", depends-on = ["test"] }
+lint = { cmd = "prek run --all-files" }
+chores = { depends-on = ["test", "lint"] }

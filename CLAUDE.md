@@ -5,7 +5,11 @@
 All commands require `pixi run -e dev` prefix (never bare `python`/`pytest`/`ruff`):
 
 - `pixi run -e dev pytest tests/` — full test suite
-- `pixi run -e dev pre-commit run --all-files` — all linting/formatting hooks
+- `pixi run -e dev lint` — all linting/formatting hooks (`prek run --all-files`)
+- `pixi run -e dev ty check src` — type check the shipped package
+
+Tool versions come from the committed `pixi.lock` (CI lints from it too); bump them
+deliberately with `pixi update` and hook `rev:` pins with `prek auto-update`.
 
 ## Code Style
 

@@ -1,4 +1,6 @@
-# enable pre-commit.ci at https://pre-commit.ci/
+# Hooks are run by `prek` (a drop-in reimplementation of pre-commit), both in the
+# `lint` CI job and via `pixi run -e dev lint`. Bump the `rev:` pins with
+# `prek auto-update`.
 
 repos:
   - repo: https://github.com/abravalheri/validate-pyproject
