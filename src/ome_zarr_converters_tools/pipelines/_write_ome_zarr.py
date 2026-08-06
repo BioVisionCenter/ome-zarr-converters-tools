@@ -137,6 +137,25 @@ def build_channels_meta(tiled_image: TiledImage) -> list[Channel] | None:
     return channels
 
 
+def _validate_channels_axis(
+    tiled_image: TiledImage, channels_meta: list[Channel] | None
+) -> None:
+    """Raise if channel metadata is declared for an image that has no `c` axis.
+
+    The `c` length itself needs no check here: `TiledImage.output_shape` derives
+    it from `channels`, so the array and the metadata cannot disagree.
+    """
+    if channels_meta is None or "c" in tiled_image.axes:
+        return
+    labels = ", ".join(channel.label for channel in channels_meta)
+    raise ValueError(
+        f"TiledImage '{tiled_image.path}' declares {len(channels_meta)} "
+        f"channel(s) ({labels}) but its axes {tiled_image.axes} have no 'c' "
+        "axis, so the image has nowhere to put them. Either add 'c' to "
+        "AcquisitionDetails.axes, or set channels=None."
+    )
+
+
 def write_tiled_image_as_zarr(
     *,
     zarr_url: str,
@@ -182,6 +201,7 @@ def write_tiled_image_as_zarr(
         tiled_image.pixel_size,
     )
     channels_meta = build_channels_meta(tiled_image)
+    _validate_channels_axis(tiled_image, channels_meta)
     ome_zarr = create_empty_ome_zarr(
         store=base_group,
         axes_names=tiled_image.axes,

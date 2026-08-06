@@ -170,7 +170,7 @@ class AcquisitionOptions(UserFacingModel):
             if ax not in canonical_axes:
                 raise ValueError(f"Invalid axis '{ax}' in axes string.")
             _axes.append(ax)
-        return _axes  # type: ignore
+        return _axes
 
     def update_acquisition_details(
         self,

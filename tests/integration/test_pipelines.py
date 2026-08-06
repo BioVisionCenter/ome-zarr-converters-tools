@@ -40,7 +40,7 @@ from ome_zarr_converters_tools.pipelines import (
     tiled_image_creation_pipeline,
     tiles_aggregation_pipeline,
 )
-from ome_zarr_converters_tools.pipelines._filters import RegexFilter
+from ome_zarr_converters_tools.pipelines._filters import ChannelFilter, RegexFilter
 from ome_zarr_converters_tools.pipelines._registration_pipeline import (
     apply_registration_pipeline,
     build_default_registration_pipeline,
@@ -252,6 +252,86 @@ class TestTiledImageCreationPipeline:
         data = np.asarray(omezarr.get_image().get_array())
         c_idx = tiled_image.axes.index("c")
         assert data.shape[c_idx] == 2  # dense: channels 0 and 2 -> 0 and 1
+
+    def _write_sparse_channels(
+        self,
+        tmp_path: Path,
+        opts: ConverterOptions,
+        acquired: tuple[int, ...],
+        filters: list[Any] | None = None,
+    ) -> tuple[np.ndarray, list[str], int]:
+        """Write a 4-channel acquisition covering only `acquired`, and read it back."""
+        coll = SingleImage(image_path="sparse")
+        acq = AcquisitionDetails(
+            channels=[ChannelInfo(channel_label=f"CH{i}") for i in range(4)],
+            xy_pixel_size=1.0,
+            z_spacing=1.0,
+            t_spacing=1.0,
+        )
+        tiles = [
+            build_dummy_tile(
+                fov_name="FOV_0",
+                start=StartPosition(x=0, y=0, c=c),
+                shape=TileShape(x=32, y=32, z=1, c=1, t=1),
+                collection=coll,
+                acquisition_details=acq,
+            )
+            for c in acquired
+        ]
+        tiled_image = tiles_aggregation_pipeline(
+            tiles=tiles, converter_options=opts, filters=filters
+        )[0]
+        omezarr = tiled_image_creation_pipeline(
+            zarr_url=str(tmp_path / "sparse.zarr"),
+            tiled_image=tiled_image,
+            registration_pipeline=build_default_registration_pipeline(
+                opts.stage_position_corrections, InplaceTiling()
+            ),
+            converter_options=opts,
+            writer_mode=WriterMode.BY_TILE,
+            overwrite_mode=OverwriteMode.OVERWRITE,
+        )
+        image = omezarr.get_image()
+        return (
+            np.asarray(image.get_array()),
+            list(image.channel_labels),
+            tiled_image.axes.index("c"),
+        )
+
+    def test_unacquired_channels_written_as_empty_planes(self, tmp_path: Path) -> None:
+        # Channels 0 and 2 of four declared, reindexing off: the declared layout
+        # is preserved, so the array keeps all four planes and the two that no
+        # tile covers are empty rather than dropped.
+        opts = ConverterOptions(
+            stage_position_corrections=StagePositionCorrections(reindex_channels=False)
+        )
+        data, labels, c_idx = self._write_sparse_channels(tmp_path, opts, (0, 2))
+        assert data.shape[c_idx] == 4
+        assert labels == ["CH0", "CH1", "CH2", "CH3"]
+        assert np.any(np.take(data, 0, axis=c_idx))
+        assert np.any(np.take(data, 2, axis=c_idx))
+        assert not np.any(np.take(data, 1, axis=c_idx))  # unacquired -> empty
+        assert not np.any(np.take(data, 3, axis=c_idx))  # trailing, was dropped
+
+    def test_channel_filter_without_reindex_blanks_excluded_channels(
+        self, tmp_path: Path
+    ) -> None:
+        # Excluding a channel with reindexing off blanks its plane instead of
+        # removing it, and does so regardless of which channel was excluded --
+        # the outcome used to depend on whether it was the highest-indexed one.
+        opts = ConverterOptions(
+            stage_position_corrections=StagePositionCorrections(reindex_channels=False)
+        )
+        data, labels, c_idx = self._write_sparse_channels(
+            tmp_path,
+            opts,
+            (0, 1, 2, 3),
+            filters=[ChannelFilter(channel_labels=["CH0", "CH2"])],
+        )
+        assert data.shape[c_idx] == 4
+        assert labels == ["CH0", "CH1", "CH2", "CH3"]
+        assert not np.any(np.take(data, 1, axis=c_idx))
+        assert not np.any(np.take(data, 3, axis=c_idx))
 
     def test_output_dtype_matches_source(self, tmp_path: Path) -> None:
         """The on-disk array preserves the source dtype (regression for #56).

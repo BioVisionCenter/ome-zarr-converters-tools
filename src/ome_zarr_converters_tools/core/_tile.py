@@ -55,7 +55,12 @@ class Tile(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfaceType]
         length_x: Length of the tile in the X dimension.
         length_y: Length of the tile in the Y dimension.
         length_z: Length of the tile in the Z dimension.
-        length_c: Length of the tile in the C (channel) dimension.
+        length_c: Length of the tile in the C (channel) dimension. Values above 1
+            describe a tile that carries several channels at once (e.g. a
+            two-camera acquisition); the channels it covers must be *adjacent* in
+            `acquisition_details.channels`, since the span is the contiguous
+            range `start_c … start_c + length_c - 1`. Channels acquired together
+            but not adjacent in that list must be emitted as separate tiles.
         length_t: Length of the tile in the T (time) dimension.
         collection: Collection model defining how to build the path to the image(s).
         image_loader: Image loader model defining how to load the image data.

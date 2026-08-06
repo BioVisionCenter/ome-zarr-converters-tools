@@ -19,6 +19,7 @@ from ome_zarr_converters_tools.models import (
     AcquisitionDetails,
     ChannelInfo,
     ConverterOptions,
+    OmeZarrOptions,
     OverwriteMode,
     SingleImage,
 )
@@ -265,6 +266,64 @@ class TestSetupImagesForConversion:
 
         call_kwargs = mock_setup.call_args[1]
         assert call_kwargs["overwrite_mode"] == OverwriteMode.EXTEND
+
+    @patch("ome_zarr_converters_tools.fractal._init_task.setup_ome_zarr_collection")
+    def test_ngff_version_taken_from_converter_options(
+        self, mock_setup: MagicMock, tmp_path: Path
+    ) -> None:
+        images = _make_tiled_images(1)
+
+        setup_images_for_conversion(
+            images,
+            zarr_dir=str(tmp_path / "output.zarr"),
+            collection_type="SingleImage",
+            converter_options=ConverterOptions(
+                omezarr_options=OmeZarrOptions(ngff_version="0.5")
+            ),
+        )
+
+        assert mock_setup.call_args[1]["ngff_version"] == "0.5"
+
+    @patch("ome_zarr_converters_tools.fractal._init_task.setup_ome_zarr_collection")
+    def test_ngff_version_argument_is_deprecated(
+        self, mock_setup: MagicMock, tmp_path: Path
+    ) -> None:
+        images = _make_tiled_images(1)
+
+        with pytest.warns(DeprecationWarning, match="ngff_version"):
+            setup_images_for_conversion(
+                images,
+                zarr_dir=str(tmp_path / "output.zarr"),
+                collection_type="SingleImage",
+                converter_options=ConverterOptions(
+                    omezarr_options=OmeZarrOptions(ngff_version="0.5")
+                ),
+                ngff_version="0.5",
+            )
+
+        assert mock_setup.call_args[1]["ngff_version"] == "0.5"
+
+    @patch("ome_zarr_converters_tools.fractal._init_task.setup_ome_zarr_collection")
+    def test_ngff_version_mismatch_raises(
+        self, mock_setup: MagicMock, tmp_path: Path
+    ) -> None:
+        images = _make_tiled_images(1)
+
+        with (
+            pytest.warns(DeprecationWarning),
+            pytest.raises(ValueError, match="Conflicting NGFF versions"),
+        ):
+            setup_images_for_conversion(
+                images,
+                zarr_dir=str(tmp_path / "output.zarr"),
+                collection_type="SingleImage",
+                converter_options=ConverterOptions(
+                    omezarr_options=OmeZarrOptions(ngff_version="0.5")
+                ),
+                ngff_version="0.4",
+            )
+
+        mock_setup.assert_not_called()
 
 
 class TestPathCollisionCheck:

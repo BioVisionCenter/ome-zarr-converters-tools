@@ -10,10 +10,10 @@ The conversion pipeline processes tiles through several stages before writing th
 from ome_zarr_converters_tools import ConverterOptions, MosaicGrouping
 
 opts = ConverterOptions(
-    grouping=MosaicGrouping(),             # How FOVs are grouped into images
-    writer_mode=WriterMode.BY_FOV,         # How data is loaded and written
+    grouping=MosaicGrouping(),  # How FOVs are grouped into images
+    writer_mode=WriterMode.BY_FOV,  # How data is loaded and written
     stage_position_corrections=StagePositionCorrections(),  # Stage position corrections
-    omezarr_options=OmeZarrOptions(),      # OME-Zarr writing options (levels, chunks, etc.)
+    omezarr_options=OmeZarrOptions(),  # OME-Zarr writing options (levels, chunks, etc.)
 )
 ```
 
@@ -27,15 +27,15 @@ When passed to `tiles_aggregation_pipeline()` and `tiled_image_creation_pipeline
 from ome_zarr_converters_tools import AcquisitionDetails, ChannelInfo
 
 acq = AcquisitionDetails(
-    xy_pixel_size=0.65,          # XY pixel size in micrometers
-    z_spacing=5.0,           # Z-step size in micrometers
-    t_spacing=1.0,           # Time interval in seconds
+    xy_pixel_size=0.65,  # XY pixel size in micrometers
+    z_spacing=5.0,  # Z-step size in micrometers
+    t_spacing=1.0,  # Time interval in seconds
     channels=[
         ChannelInfo(channel_label="DAPI", wavelength_id="405"),
         ChannelInfo(channel_label="GFP", wavelength_id="488"),
     ],
     axes=["c", "z", "y", "x"],  # Subset of t, c, z, y, x in canonical order
-    start_x_space="world",    # How to interpret start_x values
+    start_x_space="world",  # How to interpret start_x values
     start_y_space="world",
     start_z_space="pixel",
     start_t_space="pixel",
@@ -82,11 +82,17 @@ channels = [
 The `axes` parameter defines which dimensions the output image will have. It must be a subset of `["t", "c", "z", "y", "x"]` in canonical order:
 
 ```python
-axes=["t", "c", "z", "y", "x"]  # 5D time-series (default)
-axes=["c", "z", "y", "x"]       # 4D stack (no time)
-axes=["z", "y", "x"]            # 3D single-channel
-axes=["y", "x"]                 # 2D (minimum)
+axes = ["t", "c", "z", "y", "x"]  # 5D time-series (default)
+axes = ["c", "z", "y", "x"]  # 4D stack (no time)
+axes = ["z", "y", "x"]  # 3D single-channel
+axes = ["y", "x"]  # 2D (minimum)
 ```
+
+Omitting `c` means the output has no channel axis, so `channels` must be left as `None`; providing channel metadata for a `c`-less image is an error.
+
+### Channel Indices
+
+`start_c` and `length_c` on a `Tile` index into `acquisition_details.channels`: a tile covers channels `start_c … start_c + length_c - 1`. Most parsers emit one single-channel tile per channel, but `length_c > 1` is supported for acquisitions that capture several channels at once (e.g. a two-camera system). Because the span is a contiguous range, channels acquired together must be **adjacent** in `channels` — if they are not, order the channel list so they are, or emit one tile per channel.
 
 ### Stage Corrections
 
@@ -98,8 +104,8 @@ from ome_zarr_converters_tools import AcquisitionDetails, StageOrientation
 acq = AcquisitionDetails(
     xy_pixel_size=0.65,
     stage_orientation=StageOrientation(
-        flip_x=True,    # Invert X positions
-        flip_y=False,   # Keep Y as-is
+        flip_x=True,  # Invert X positions
+        flip_y=False,  # Keep Y as-is
         swap_xy=False,  # Don't swap X and Y
     ),
 )
@@ -235,7 +241,11 @@ This creates:
 
 3. **`xy_jitter_correction`** -- When `remove_xy_jitter=True` (default), tiles within the same FOV that have slightly different XY positions (due to stage drift between Z-slices or channels) are snapped to the FOV's reference position.
 
-4. **`reindex_channels`** -- When `reindex_channels=True` (default), the channel indices actually present are compacted to a dense `0, 1, 2, …` range and channel metadata is reconciled, so a filtered channel does not leave an empty channel in the output.
+4. **`reindex_channels`** -- When `reindex_channels=True` (default), the channel indices actually present are compacted to a dense `0, 1, 2, …` range and channel metadata is reconciled, so a filtered channel does not leave an empty channel in the output. Compaction happens per `TiledImage`, so the resulting channel set — and the label each channel index maps to — depends on how tiles were grouped: with `split_per_fov=True` a FOV that acquired only `GFP` becomes a single-channel image whose index 0 is `GFP`, while a neighbouring FOV's index 0 may be `DAPI`. The same applies across the wells of a plate. Downstream tasks that address channels by label are unaffected; tasks that address them by position across several images are not.
+
+    Tiles spanning several channels (`length_c > 1`, e.g. a two-camera acquisition) are supported: their start index is remapped and their width preserved. Compaction can never split such a tile, because the channels it covers are consecutive and always all present.
+
+    When `reindex_channels=False`, the declared channel layout is preserved instead: the output always has one plane per entry in `channels`, and any channel no tile covers — whether it was never acquired or was removed by a Channel Filter — is written as an empty plane keeping its label. Channel index `n` then means the same channel in every image, which is what to use when a downstream task addresses channels by position rather than by label. The cost is storage for the empty planes.
 
 5. **`tile_regions`** -- Applies tiling/snapping to remove overlaps between FOVs (see [Tiling Strategies](#tiling-strategies) below). This is the step that determines the final non-overlapping layout.
 
@@ -247,11 +257,11 @@ Controls the per-axis position handling applied during registration:
 from ome_zarr_converters_tools.models import StagePositionCorrections
 
 corrections = StagePositionCorrections(
-    remove_xy_offset="Global",   # "Global" (zero origin) or "Keep" (keep absolute)
-    remove_z_offset="Global",    # "Global", "Per-FOV" (zero each FOV's z), or "Keep"
-    remove_t_offset="Global",    # "Global" or "Keep"
-    remove_xy_jitter=True,       # snap a FOV's sub-tiles to a shared XY origin
-    reindex_channels=True,       # compact present channels to a dense range
+    remove_xy_offset="Global",  # "Global" (zero origin) or "Keep" (keep absolute)
+    remove_z_offset="Global",  # "Global", "Per-FOV" (zero each FOV's z), or "Keep"
+    remove_t_offset="Global",  # "Global" or "Keep"
+    remove_xy_jitter=True,  # snap a FOV's sub-tiles to a shared XY origin
+    reindex_channels=True,  # compact present channels to a dense range
 )
 ```
 
@@ -356,7 +366,7 @@ from ome_zarr_converters_tools import RuntimeSettings
 from ome_zarr_converters_tools.models import ThreadScheduler
 
 settings = RuntimeSettings(
-    use_zarrs_codec=True,                     # Use the Zarrs Rust codec backend
+    use_zarrs_codec=True,  # Use the Zarrs Rust codec backend
     dask_scheduler=ThreadScheduler(num_workers=4),  # Run Dask with 4 threads
 )
 

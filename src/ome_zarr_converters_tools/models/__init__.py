@@ -7,6 +7,9 @@ from ome_zarr_converters_tools.models._acquisition import (
     StageOrientation,
     default_axes_builder,
 )
+from ome_zarr_converters_tools.models._base import (
+    UserFacingModel,
+)
 from ome_zarr_converters_tools.models._collection import (
     CollectionInterface,
     CollectionInterfaceType,
@@ -106,6 +109,7 @@ __all__ = [
     "ThreadScheduler",
     "TilingStrategy",
     "UrlType",
+    "UserFacingModel",
     "WriterMode",
     "basename_url",
     "default_axes_builder",

@@ -1,5 +1,7 @@
 """Unit tests for registration module (alignment, tiling, snap utils)."""
 
+import itertools
+
 import numpy as np
 import pytest
 from ngio import Roi, RoiSlice
@@ -204,27 +206,50 @@ class TestAlignment:
         assert y_slice.start == 0.0
 
 
-def _multichannel_image(channel_positions: list[int], num_channels: int) -> TiledImage:
-    """Build a single-FOV TiledImage with one tile per given channel index."""
+def _multichannel_image(
+    channel_positions: list[int],
+    num_channels: int,
+    channel_lengths: list[int] | None = None,
+    axes: list[str] | None = None,
+    with_channels: bool = True,
+) -> TiledImage:
+    """Build a single-FOV TiledImage with one tile per given channel index.
+
+    `channel_lengths` gives each tile's `length_c` (defaults to 1 each), so a
+    tile can span several channels at once.
+    """
+    if channel_lengths is None:
+        channel_lengths = [1] * len(channel_positions)
+    channels = (
+        [ChannelInfo(channel_label=f"CH{i}") for i in range(num_channels)]
+        if with_channels
+        else None
+    )
     acq = AcquisitionDetails(
-        channels=[ChannelInfo(channel_label=f"CH{i}") for i in range(num_channels)],
+        channels=channels,
         xy_pixel_size=1.0,
         z_spacing=1.0,
         t_spacing=1.0,
+        **({"axes": axes} if axes is not None else {}),
     )
     coll = SingleImage(image_path="img")
     tiles = [
         build_dummy_tile(
             fov_name="FOV_0",
             start=StartPosition(x=0, y=0, z=0, c=c, t=0),
-            shape=TileShape(x=32, y=32, z=1, c=1, t=1),
+            shape=TileShape(x=32, y=32, z=1, c=length, t=1),
             collection=coll,
             acquisition_details=acq,
         )
-        for c in channel_positions
+        for c, length in zip(channel_positions, channel_lengths, strict=True)
     ]
     images = tiled_image_from_tiles(tiles=tiles, split_per_fov=False)
     return images[0]
+
+
+def _c_spans(image: TiledImage) -> list[tuple[float, float]]:
+    """Sorted `(start, length)` of every region's channel slice."""
+    return sorted((r.roi.get("c").start, r.roi.get("c").length) for r in image.regions)
 
 
 class TestOffsetAndReindex:
@@ -293,6 +318,145 @@ class TestOffsetAndReindex:
         c_starts = sorted(r.roi.get("c").start for r in result.regions)
         assert c_starts == [0.0, 2.0]  # gap preserved -> empty channel 1
         assert result.channels is not None and len(result.channels) == 3
+
+    def test_reindex_channels_compacts_dense_prefix(self) -> None:
+        # Dense indices, but fewer than the declared instrument channels: the
+        # metadata must still be compacted to match the image.
+        img = _multichannel_image(channel_positions=[0, 1], num_channels=4)
+        result = apply_reindex_channels(img, StagePositionCorrections())
+        c_starts = sorted(r.roi.get("c").start for r in result.regions)
+        assert c_starts == [0.0, 1.0]
+        assert result.channels is not None
+        assert [ch.channel_label for ch in result.channels] == ["CH0", "CH1"]
+
+    def test_reindex_channels_compacts_single_leading_channel(self) -> None:
+        img = _multichannel_image(channel_positions=[0], num_channels=4)
+        result = apply_reindex_channels(img, StagePositionCorrections())
+        assert result.channels is not None
+        assert [ch.channel_label for ch in result.channels] == ["CH0"]
+        assert result.output_shape()[result.axes.index("c")] == 1
+
+    def test_reindex_channels_already_compact_is_noop(self) -> None:
+        img = _multichannel_image(channel_positions=[0, 1], num_channels=2)
+        result = apply_reindex_channels(img, StagePositionCorrections())
+        c_starts = sorted(r.roi.get("c").start for r in result.regions)
+        assert c_starts == [0.0, 1.0]
+        assert result.channels is not None
+        assert [ch.channel_label for ch in result.channels] == ["CH0", "CH1"]
+
+    def test_reindex_channels_without_regions_is_noop(self) -> None:
+        # An image with no tiles has no channel indices to compact against;
+        # it must return untouched rather than index into an empty list.
+        img = _multichannel_image(channel_positions=[0, 1], num_channels=4)
+        img.regions = []
+        result = apply_reindex_channels(img, StagePositionCorrections())
+        assert result.channels is not None and len(result.channels) == 4
+
+    @pytest.mark.parametrize("with_channels", [True, False])
+    def test_reindex_channels_without_c_axis_is_noop(self, with_channels: bool) -> None:
+        # `axes` without 'c' is a documented configuration (3D single-channel);
+        # reindexing must skip it rather than demand a 'c' slice.
+        img = _multichannel_image(
+            channel_positions=[0],
+            num_channels=1,
+            axes=["z", "y", "x"],
+            with_channels=with_channels,
+        )
+        result = apply_reindex_channels(img, StagePositionCorrections())
+        assert result.output_shape() == (1, 32, 32)
+
+    @pytest.mark.parametrize(
+        ("positions", "lengths", "expected_spans", "expected_labels"),
+        [
+            # A single two-channel tile: compacted to the first two slots.
+            ([0], [2], [(0.0, 2.0)], ["CH0", "CH1"]),
+            # An offset pair shifts down to 0 but keeps its width.
+            ([2], [2], [(0.0, 2.0)], ["CH2", "CH3"]),
+            # Two adjacent pairs stay adjacent and keep their order.
+            ([0, 2], [2, 2], [(0.0, 2.0), (2.0, 2.0)], ["CH0", "CH1", "CH2", "CH3"]),
+            # Mixed widths: a pair plus a single, with a gap between them.
+            ([0, 3], [2, 1], [(0.0, 2.0), (2.0, 1.0)], ["CH0", "CH1", "CH3"]),
+            # A pair sitting on top of a gap on both sides.
+            ([1], [2], [(0.0, 2.0)], ["CH1", "CH2"]),
+        ],
+    )
+    def test_reindex_channels_multichannel_tiles(
+        self,
+        positions: list[int],
+        lengths: list[int],
+        expected_spans: list[tuple[float, float]],
+        expected_labels: list[str],
+    ) -> None:
+        img = _multichannel_image(
+            channel_positions=positions, num_channels=5, channel_lengths=lengths
+        )
+        result = apply_reindex_channels(img, StagePositionCorrections())
+        assert _c_spans(result) == expected_spans
+        assert result.channels is not None
+        assert [ch.channel_label for ch in result.channels] == expected_labels
+        # Shape and metadata must agree, which is the whole point of compaction.
+        assert result.output_shape()[result.axes.index("c")] == len(expected_labels)
+
+    def test_declared_channels_fix_the_c_extent_when_reindexing_is_off(self) -> None:
+        # Channels 0 and 2 of four declared. With reindexing off the output keeps
+        # the declared layout: four planes, the unacquired ones empty. Without
+        # this the c extent would follow the tiles (3) and disagree with the
+        # four metadata entries.
+        img = _multichannel_image(channel_positions=[0, 2], num_channels=4)
+        result = apply_reindex_channels(
+            img, StagePositionCorrections(reindex_channels=False)
+        )
+        assert result.channels is not None
+        assert (
+            result.output_shape()[result.axes.index("c")] == len(result.channels) == 4
+        )
+
+    def test_trailing_declared_channels_are_not_dropped(self) -> None:
+        # The case that used to fail the conversion outright: only the first
+        # channel acquired, so nothing anchors the c extent at the declared end.
+        img = _multichannel_image(channel_positions=[0], num_channels=4)
+        result = apply_reindex_channels(
+            img, StagePositionCorrections(reindex_channels=False)
+        )
+        assert result.output_shape()[result.axes.index("c")] == 4
+
+    def test_c_extent_follows_the_tiles_without_channel_metadata(self) -> None:
+        # No metadata to be authoritative, so the tile extent still decides.
+        img = _multichannel_image(
+            channel_positions=[0, 2], num_channels=4, with_channels=False
+        )
+        result = apply_reindex_channels(
+            img, StagePositionCorrections(reindex_channels=False)
+        )
+        assert result.channels is None
+        assert result.output_shape()[result.axes.index("c")] == 3
+
+    def test_c_extent_matches_metadata_after_reindexing(self) -> None:
+        # Compaction shrinks `channels`, so the padding is a no-op here.
+        img = _multichannel_image(channel_positions=[0, 2], num_channels=4)
+        result = apply_reindex_channels(img, StagePositionCorrections())
+        assert result.channels is not None
+        assert (
+            result.output_shape()[result.axes.index("c")] == len(result.channels) == 2
+        )
+
+    def test_reindex_channels_never_splits_a_multichannel_span(self) -> None:
+        # The invariant the remap relies on: `present` holds every index any tile
+        # covers, so a tile's span is a run of consecutive integers all present,
+        # and consecutive integers always get consecutive ranks. Exhaustive over a
+        # bounded grid rather than asserted on a handful of hand-picked cases.
+        for num_channels in range(1, 6):
+            spans = [
+                (start, length)
+                for start in range(num_channels)
+                for length in range(1, num_channels - start + 1)
+            ]
+            for regions in itertools.combinations_with_replacement(spans, 2):
+                present = sorted({c for s, ln in regions for c in range(s, s + ln)})
+                remap = {old: new for new, old in enumerate(present)}
+                for s, ln in regions:
+                    mapped = [remap[c] for c in range(s, s + ln)]
+                    assert mapped == list(range(mapped[0], mapped[0] + ln))
 
 
 # --- Snap utils tests ---
