@@ -24,6 +24,7 @@ from ome_zarr_converters_tools.pipelines._write_ome_zarr import (
     _attribute_to_condition_table,
     _compute_chunk_size,
     _region_to_pixel_coordinates,
+    _validate_channels_axis,
     build_channels_meta,
 )
 
@@ -247,3 +248,50 @@ class TestBuildChannelsMeta:
         result = build_channels_meta(img)
         assert result is not None
         assert "0000FF" in result[0].channel_visualisation.color  # type: ignore
+
+
+class TestValidateChannelsAxis:
+    def test_channels_with_c_axis_passes(self) -> None:
+        img = _make_tiled_image_with_channels(
+            channels=[ChannelInfo(channel_label="DAPI")]
+        )
+        _validate_channels_axis(img, build_channels_meta(img))
+
+    def test_no_channels_meta_passes(self) -> None:
+        img = _make_tiled_image_with_channels(channels=None)
+        _validate_channels_axis(img, None)
+
+    def test_channels_without_c_axis_raises(self) -> None:
+        img = _make_tiled_image_with_channels(
+            channels=[
+                ChannelInfo(channel_label="DAPI"),
+                ChannelInfo(channel_label="GFP"),
+            ]
+        )
+        img.axes = ["z", "y", "x"]
+        with pytest.raises(ValueError) as exc_info:
+            _validate_channels_axis(img, build_channels_meta(img))
+        message = str(exc_info.value)
+        assert "no 'c' axis" in message
+        assert img.path in message
+        assert "DAPI, GFP" in message
+
+    def test_no_channels_and_no_c_axis_passes(self) -> None:
+        img = _make_tiled_image_with_channels(channels=None)
+        img.axes = ["z", "y", "x"]
+        _validate_channels_axis(img, None)
+
+    def test_declared_channels_fix_the_c_extent(self) -> None:
+        # Three declared channels but a single one-channel tile: the array is
+        # sized by the metadata, so the two are structurally in agreement and
+        # there is no count to cross-check.
+        img = _make_tiled_image_with_channels(
+            channels=[
+                ChannelInfo(channel_label="DAPI"),
+                ChannelInfo(channel_label="GFP"),
+                ChannelInfo(channel_label="TRITC"),
+            ]
+        )
+        meta = build_channels_meta(img)
+        assert meta is not None
+        assert img.output_shape()[img.axes.index("c")] == len(meta)

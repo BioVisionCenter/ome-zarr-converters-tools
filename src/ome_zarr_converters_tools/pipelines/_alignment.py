@@ -109,17 +109,13 @@ def apply_offset_removal(
     return tiled_image
 
 
-def _channel_start(region: TileSlice) -> int:
-    """Return a region's integer channel index (assumes a single-channel tile)."""
+def _channel_range(region: TileSlice) -> tuple[int, int]:
+    """Return a region's channel span as `(start, length)` in integer indices."""
     slice_ = region.roi.get("c")
     if slice_ is None or slice_.start is None:
         raise ValueError("Tile ROI is missing the 'c' axis slice.")
-    if slice_.length is not None and round(slice_.length) != 1:
-        raise ValueError(
-            "reindex_channels requires single-channel tiles "
-            f"(length_c == 1), got length {slice_.length}."
-        )
-    return round(slice_.start)
+    length = 1 if slice_.length is None else round(slice_.length)
+    return round(slice_.start), length
 
 
 def apply_reindex_channels(
@@ -129,14 +125,33 @@ def apply_reindex_channels(
 
     When `reindex_channels` is True, the distinct channel indices present across
     the tiles are mapped to `0, 1, 2, …` and the channel metadata is compacted to
-    match. When False, gaps are preserved so missing channels become empty arrays.
+    match. Both happen even when the present indices are already dense, since the
+    metadata can still declare channels the image does not acquire.
+
+    When False, both the indices and the metadata are left alone, and
+    `TiledImage.output_shape` then sizes the `c` axis from `channels`, so every
+    declared channel gets a plane and the ones no tile covers are written empty.
+
+    Note:
+        Tiles spanning several channels (`length_c > 1`) are remapped by their
+        start index alone, and their length is left untouched. That is exact, not
+        an approximation: `present` holds every index any tile covers, so a tile's
+        span is a run of consecutive integers all of which are in `present`, and
+        consecutive integers always get consecutive ranks. Compaction can
+        therefore never split a tile's span or change which spans overlap.
     """
     if not corrections.reindex_channels:
         return tiled_image
 
-    present = sorted({_channel_start(region) for region in tiled_image.regions})
-    if present == list(range(len(present))):
-        return tiled_image  # already dense
+    if "c" not in tiled_image.axes:
+        return tiled_image  # no channel axis, nothing to reindex or compact
+
+    ranges = [_channel_range(region) for region in tiled_image.regions]
+    present = sorted(
+        {c for start, length in ranges for c in range(start, start + length)}
+    )
+    if not present:
+        return tiled_image  # no tiles, nothing to reindex or compact
 
     if tiled_image.channels is not None:
         if present[-1] >= len(tiled_image.channels):
@@ -149,9 +164,15 @@ def apply_reindex_channels(
             )
         tiled_image.channels = [tiled_image.channels[c] for c in present]
 
+    if present == list(range(len(present))):
+        # Indices are already dense, and the metadata above now matches them.
+        # This check must stay *below* the compaction: a dense index set says
+        # nothing about how many channels the metadata declares.
+        return tiled_image
+
     remap = {old: new for new, old in enumerate(present)}
-    for region in tiled_image.regions:
-        region.roi = move_to(region.roi, {"c": float(remap[_channel_start(region)])})
+    for region, (start, _) in zip(tiled_image.regions, ranges, strict=True):
+        region.roi = move_to(region.roi, {"c": float(remap[start])})
     return tiled_image
 
 

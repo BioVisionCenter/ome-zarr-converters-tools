@@ -1,5 +1,26 @@
 # Changelog
 
+## [v1.0.2]
+
+### Fix
+- `apply_reindex_channels` now compacts `TiledImage.channels` when the acquired
+  channel indices are already dense. Images declaring more channels than they
+  acquired kept every `ChannelInfo` entry and failed at write time, so success
+  depended on which channel numbers the operator used: `[Ch1, Ch3]` worked,
+  `[Ch1, Ch2]` did not.
+- `reindex_channels=False` now stores unacquired channels as empty planes, as its
+  description has always promised. The output `c` length comes from `channels`
+  instead of the tile extent, so channels declared after the last acquired one no
+  longer vanish and fail the conversion. `reindex_channels=True` is unaffected.
+- `apply_reindex_channels` no longer fails on images whose `axes` omit `c` (which
+  broke every `c`-less converter under the default options), nor on a
+  `TiledImage` with no regions.
+
+### Features
+- `apply_reindex_channels` supports tiles spanning several channels
+  (`length_c > 1`, e.g. two-camera acquisitions), which `Tile` and `ChannelFilter`
+  already accepted.
+
 ## [v1.0.1]
 
 Re-release of v1.0.0 with no changes of its own. The `v1.0.0` tag (and the

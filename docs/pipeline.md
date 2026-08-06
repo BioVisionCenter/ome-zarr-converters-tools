@@ -88,6 +88,12 @@ axes=["z", "y", "x"]            # 3D single-channel
 axes=["y", "x"]                 # 2D (minimum)
 ```
 
+Omitting `c` means the output has no channel axis, so `channels` must be left as `None`; providing channel metadata for a `c`-less image is an error.
+
+### Channel Indices
+
+`start_c` and `length_c` on a `Tile` index into `acquisition_details.channels`: a tile covers channels `start_c … start_c + length_c - 1`. Most parsers emit one single-channel tile per channel, but `length_c > 1` is supported for acquisitions that capture several channels at once (e.g. a two-camera system). Because the span is a contiguous range, channels acquired together must be **adjacent** in `channels` — if they are not, order the channel list so they are, or emit one tile per channel.
+
 ### Stage Corrections
 
 Some microscopes have inverted or swapped stage axes. Use `StageOrientation` to fix this:
@@ -235,7 +241,11 @@ This creates:
 
 3. **`xy_jitter_correction`** -- When `remove_xy_jitter=True` (default), tiles within the same FOV that have slightly different XY positions (due to stage drift between Z-slices or channels) are snapped to the FOV's reference position.
 
-4. **`reindex_channels`** -- When `reindex_channels=True` (default), the channel indices actually present are compacted to a dense `0, 1, 2, …` range and channel metadata is reconciled, so a filtered channel does not leave an empty channel in the output.
+4. **`reindex_channels`** -- When `reindex_channels=True` (default), the channel indices actually present are compacted to a dense `0, 1, 2, …` range and channel metadata is reconciled, so a filtered channel does not leave an empty channel in the output. Compaction happens per `TiledImage`, so the resulting channel set — and the label each channel index maps to — depends on how tiles were grouped: with `split_per_fov=True` a FOV that acquired only `GFP` becomes a single-channel image whose index 0 is `GFP`, while a neighbouring FOV's index 0 may be `DAPI`. The same applies across the wells of a plate. Downstream tasks that address channels by label are unaffected; tasks that address them by position across several images are not.
+
+    Tiles spanning several channels (`length_c > 1`, e.g. a two-camera acquisition) are supported: their start index is remapped and their width preserved. Compaction can never split such a tile, because the channels it covers are consecutive and always all present.
+
+    When `reindex_channels=False`, the declared channel layout is preserved instead: the output always has one plane per entry in `channels`, and any channel no tile covers — whether it was never acquired or was removed by a Channel Filter — is written as an empty plane keeping its label. Channel index `n` then means the same channel in every image, which is what to use when a downstream task addresses channels by position rather than by label. The cost is storage for the empty planes.
 
 5. **`tile_regions`** -- Applies tiling/snapping to remove overlaps between FOVs (see [Tiling Strategies](#tiling-strategies) below). This is the step that determines the final non-overlapping layout.
 

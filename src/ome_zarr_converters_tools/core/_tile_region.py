@@ -284,12 +284,28 @@ class TiledImage(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfac
 
         Equals `shape()` when the mosaic origin is 0 (the default); larger when a
         `remove_*_offset="Keep"` axis keeps a positive absolute origin.
+
+        The `c` axis is the exception: when `channels` is set it declares how many
+        channels the image has, so it fixes the `c` length rather than the tile
+        extent doing so. Channels no tile covers become empty planes instead of
+        vanishing, which is what keeps the array and `channels` the same length
+        however sparsely the tiles are spread. This only pads when reindexing is
+        off; `apply_reindex_channels` compacts `channels` first when it runs.
+
+        Padding can never truncate data: `Tile._validate_channel_range` bounds
+        `start_c + length_c` by `len(channels)` at construction, so every region
+        already fits inside the declared channel count.
         """
-        return output_shape_from_rois(
-            [region.roi for region in self.regions],
-            self.axes,
-            self.pixel_size,
+        shape = list(
+            output_shape_from_rois(
+                [region.roi for region in self.regions],
+                self.axes,
+                self.pixel_size,
+            )
         )
+        if self.channels is not None and "c" in self.axes:
+            shape[self.axes.index("c")] = len(self.channels)
+        return tuple(shape)
 
     def roi(self) -> Roi:
         """Get the global ROI covering all TileSlices in the TiledImage."""

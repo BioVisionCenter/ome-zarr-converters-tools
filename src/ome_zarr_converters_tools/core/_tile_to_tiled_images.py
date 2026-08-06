@@ -27,7 +27,11 @@ def tiled_image_from_tiles(
     tiled_images = {}
 
     if len(tiles) == 0:
-        raise ValueError("No tiles provided to build TiledImage.")
+        raise ValueError(
+            "No tiles provided to build TiledImage. If filters are configured, "
+            "they may have removed every tile; check that their patterns and "
+            "Include/Exclude modes match the parsed acquisition."
+        )
     data_type = tiles[0].find_data_type(resource=resource)
     for tile in tiles:
         if split_per_fov:
