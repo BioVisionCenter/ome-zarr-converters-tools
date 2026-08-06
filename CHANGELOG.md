@@ -21,6 +21,22 @@
   (`length_c > 1`, e.g. two-camera acquisitions), which `Tile` and `ChannelFilter`
   already accepted.
 - `UserFacingModel` is now public (`ome_zarr_converters_tools.UserFacingModel`).
+- Every concrete filter and validator is now exported from
+  `ome_zarr_converters_tools` and `ome_zarr_converters_tools.pipelines`:
+  `RegexFilter`, `WellFilter`, `FovNameFilter`, `AcquisitionFilter`,
+  `AttributeFilter`, `ChannelFilter`, `ZRangeFilter`, `TRangeFilter` and
+  `ShapeDtypeProbeValidator`. They were previously reachable only through the
+  private `pipelines._filters` / `pipelines._validators` modules, which the docs
+  had to instruct readers to import from, and which kept them out of the API
+  reference entirely.
+
+  ```python
+  # before
+  from ome_zarr_converters_tools.pipelines._filters import RegexFilter
+
+  # after
+  from ome_zarr_converters_tools.pipelines import RegexFilter
+  ```
 
 ### API Breaking Changes
 - The `ngff_version` argument of `setup_images_for_conversion` is deprecated and
@@ -62,6 +78,46 @@
   Markdown formatting.
 - Drop a stale `# type: ignore` in `fractal/_models.py` that newer `ty` reports as
   unused.
+- The docs build moves from MkDocs + Material to [Zensical](https://zensical.org),
+  matching `ngio`. `mkdocs`, `mkdocs-material`, `mkdocs-jupyter`, `ipywidgets` and the
+  two git-metadata plugins leave the `docs` extra; `zensical`, `pymdown-extensions`,
+  `griffe-typingdoc` and `pandas` join it. `mike` moves to
+  `[tool.pixi.feature.docs.pypi-dependencies]` because Zensical needs a git-only fork
+  and a direct URL reference in `optional-dependencies` would make the package
+  unpublishable to PyPI. New pixi tasks: `serve_docs`, `build_docs`, `test_snippets`,
+  `clean_docs_data`.
+- CI builds the docs and runs every snippet on pull requests, through a new `docs` job
+  in `ci.yml` (kept out of `docs.yml` so its `contents: write` is never extended to
+  PRs). `deploy` now needs it, so a broken example blocks a release instead of
+  surfacing as a bad deploy.
+- `docs.yml` installs through pixi rather than pip, and no longer runs
+  `mike set-default dev` on tag pushes — it had been flipping the published default
+  back to `dev` after every release.
+- Drop the `nbstripout` pre-commit hook and the `*.ipynb` rules in `.gitignore`; there
+  are no notebooks left.
+
+### Documentation
+- The three tutorial notebooks are replaced by executed Python scripts under
+  `docs/snippets/`, included into Markdown pages by `pymdownx.snippets` and run at
+  build time by `markdown-exec`. Each script is runnable on its own from the repo root
+  (`python docs/snippets/getting_started/hcs_plates.py`), so an example that breaks
+  fails a script rather than silently rendering an empty block.
+- Tutorials now show what the converter produces: a stage-layout figure of the parsed
+  tiles and the stitched result, rendered as inline SVG through
+  `docs/snippets/_render.py` so they follow the light/dark toggle.
+- New design layer, `docs/stylesheets/ozct.css`, ported token-for-token from ngio's
+  stylesheet — same palette, type scale, surfaces, radii and motion. Placeholder logo
+  and lockup assets live in `docs/assets/`.
+- Site restructured: Home, Getting started, Guides, API reference, Contributing. The
+  single `api.md` becomes curated per-area pages plus whole-module dumps, and
+  `pipeline.md`, `converters_as_fractal_tasks.md` and `converters.md` move under
+  `docs/guides/`.
+- A `CONTRIBUTING.md` is added at the repo root and single-sourced into the site,
+  alongside the changelog.
+- Fix a latent bug in the programmatic-tiles tutorial: it set `start_z` as a slice index
+  while leaving `start_z_space` at its `"world"` default, so both Z slices resolved to
+  slice 0 and the second overwrote the first. The page now declares
+  `start_z_space="pixel"` and calls out the trap.
 
 ## [v1.0.1]
 

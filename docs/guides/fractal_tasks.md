@@ -1,4 +1,8 @@
-# Building Converters as Fractal Tasks
+---
+description: Package a converter as a Fractal init/compute task pair, with generated argument schemas and parallel conversion.
+---
+
+# Converters as Fractal tasks
 
 The [Fractal platform](https://fractal-analytics-platform.github.io/fractal-server/) enables parallel processing of image conversion tasks.
 `ome-zarr-converters-tools` provides utilities to integrate with Fractal's **init/compute task model**, where:
@@ -144,7 +148,7 @@ The `AcquisitionOptions` model provides this:
 
 ```python
 from ome_zarr_converters_tools import AcquisitionOptions
-from ome_zarr_converters_tools.pipelines._filters import FovNameFilter
+from ome_zarr_converters_tools.pipelines import FovNameFilter
 
 # User-provided overrides
 acq_options = AcquisitionOptions(

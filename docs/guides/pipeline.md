@@ -1,4 +1,8 @@
-# Pipeline Configuration
+---
+description: Configure the conversion pipeline: acquisition details, filters, validators, registration steps, tiling strategies, writer and overwrite modes.
+---
+
+# Pipeline configuration
 
 The conversion pipeline processes tiles through several stages before writing the final OME-Zarr dataset. This page documents the configurable components: **acquisition details**, **converter options**, **filters**, **registration steps**, **tiling modes**, **writer modes**, and **overwrite modes**.
 
@@ -135,10 +139,7 @@ Every matching filter carries a `mode` field (`"Include"` or `"Exclude"`, defaul
 Matches tiles whose collection path matches a regex pattern.
 
 ```python
-from ome_zarr_converters_tools.pipelines import apply_filter_pipeline, FilterModel
-
-# Import the specific filter from the internal module
-from ome_zarr_converters_tools.pipelines._filters import RegexFilter
+from ome_zarr_converters_tools.pipelines import apply_filter_pipeline, RegexFilter
 
 # Keep only tiles from PlateA
 f = RegexFilter(regex=".*PlateA.*")
@@ -154,7 +155,7 @@ filtered_tiles = apply_filter_pipeline(tiles, filters_config=[f])
 Matches tiles belonging to specific wells. Only works with `ImageInPlate` collections.
 
 ```python
-from ome_zarr_converters_tools.pipelines._filters import WellFilter
+from ome_zarr_converters_tools.pipelines import WellFilter
 
 # Keep only wells A1 and B2
 f = WellFilter(wells=["A1", "B2"])
@@ -166,7 +167,7 @@ filtered_tiles = apply_filter_pipeline(tiles, filters_config=[f])
 ```
 
 !!! note
-    The individual filter classes (`RegexFilter`, `WellFilter`, ...) are imported from `ome_zarr_converters_tools.pipelines._filters`. The public API exports `FilterModel` (the base class), `ImplementedFilters` (the union type), `apply_filter_pipeline`, and `add_filter`.
+    Every filter class is exported from `ome_zarr_converters_tools.pipelines`, alongside `FilterModel` (the base class), `ImplementedFilters` (the union type), `apply_filter_pipeline` and `add_filter`. See the [pipelines API reference](../api/pipelines.md#filters).
 
 ### Using Filters in the Pipeline
 
@@ -174,7 +175,7 @@ Filters can be passed directly to `tiles_aggregation_pipeline()`:
 
 ```python
 from ome_zarr_converters_tools import tiles_aggregation_pipeline, ConverterOptions
-from ome_zarr_converters_tools.pipelines._filters import RegexFilter
+from ome_zarr_converters_tools.pipelines import RegexFilter
 
 images = tiles_aggregation_pipeline(
     tiles=tiles,
@@ -397,7 +398,7 @@ pip install ome-zarr-converters-tools[zarrs]
 `RuntimeSettings` also controls where temporary JSON metadata is stored during conversion via `temp_json_options`. The default stores it alongside the Zarr output:
 
 ```python
-from ome_zarr_converters_tools.models._runtime_settings import TempJsonOptions
+from ome_zarr_converters_tools.models import TempJsonOptions
 
 settings = RuntimeSettings(
     temp_json_options=TempJsonOptions(temp_url="{zarr_dir}/_my_tmp"),

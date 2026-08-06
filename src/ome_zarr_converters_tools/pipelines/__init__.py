@@ -6,8 +6,16 @@ from ome_zarr_converters_tools.pipelines._collection_setup import (
     setup_singleimage,
 )
 from ome_zarr_converters_tools.pipelines._filters import (
+    AcquisitionFilter,
+    AttributeFilter,
+    ChannelFilter,
     FilterModel,
+    FovNameFilter,
     ImplementedFilters,
+    RegexFilter,
+    TRangeFilter,
+    WellFilter,
+    ZRangeFilter,
     add_filter,
     apply_filter_pipeline,
 )
@@ -25,6 +33,7 @@ from ome_zarr_converters_tools.pipelines._tiles_aggregation_pipeline import (
 )
 from ome_zarr_converters_tools.pipelines._validators import (
     ImplementedValidators,
+    ShapeDtypeProbeValidator,
     ValidatorModel,
     add_validator,
     apply_validator_pipeline,
@@ -34,11 +43,20 @@ from ome_zarr_converters_tools.pipelines._write_ome_zarr import (
 )
 
 __all__ = [
+    "AcquisitionFilter",
+    "AttributeFilter",
+    "ChannelFilter",
     "FilterModel",
+    "FovNameFilter",
     "ImplementedFilters",
     "ImplementedValidators",
+    "RegexFilter",
     "RegistrationStep",
+    "ShapeDtypeProbeValidator",
+    "TRangeFilter",
     "ValidatorModel",
+    "WellFilter",
+    "ZRangeFilter",
     "add_collection_handler",
     "add_filter",
     "add_registration_func",

@@ -1,19 +1,44 @@
+# The site is built by Zensical (Material for MkDocs' successor), which reads this file
+# natively — there is no zensical.toml. mkdocs-material is not installed.
 site_name: "OME-Zarr Converters Tools"
-site_url: "https://github.com/BioVisionCenter/ome-zarr-converters-tools"
-site_description: "A Python library for building OME-Zarr converters."
+# The published docs root (mike serves versions beneath it, e.g. /ome-zarr-converters-tools/stable/).
+# This must not be the git clone or repo URL: that produces wrong canonical links and,
+# under Zensical, a bogus base path when serving locally.
+site_url: "https://biovisioncenter.github.io/ome-zarr-converters-tools/"
+site_description: "A Python library for building OME-Zarr converters"
 repo_name: "ome-zarr-converters-tools"
 repo_url: "https://github.com/BioVisionCenter/ome-zarr-converters-tools"
-copyright: "Copyright &copy; 2025-, BioVisionCenter UZH"
+copyright: "Copyright &copy; 2025-2026, BioVisionCenter UZH"
+# GitHub's default branch here is `main`. Zensical would otherwise derive
+# `edit/master/docs` and every edit link would 404.
+edit_uri: edit/main/docs/
+
+# The snippet scripts are executed into the docs via pymdownx.snippets, which reads them
+# from the filesystem rather than from the page tree.
+# NOTE: Zensical does not honour `exclude_docs`, so the .py files are still copied into
+# the built site as static assets (they are not rendered as pages). Harmless — they are
+# already public in the repo — but that is why they show up under site/snippets/.
+exclude_docs: |
+  snippets/
 
 theme:
   name: material
+  logo: assets/logo.svg
+  favicon: assets/logo.svg
   icon:
     repo: fontawesome/brands/github
+  # Space Grotesk (display face) is loaded from ozct.css; theme.font only
+  # manages the text and code families.
+  font:
+    text: IBM Plex Sans
+    code: JetBrains Mono
+  # The real brand palette lives in stylesheets/ozct.css as variable overrides;
+  # config only picks the nearest stock name so the toggle behaves.
   palette:
     # Palette toggle for light mode
     - scheme: default
       primary: teal
-      accent: amber
+      accent: teal
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
@@ -21,34 +46,47 @@ theme:
     # Palette toggle for dark mode
     - scheme: slate
       primary: teal
-      accent: amber
+      accent: teal
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
+
+  # Only flags Zensical's templates actually read are listed. Previously enabled but
+  # absent from zensical/templates/, i.e. dead config: navigation.instant, toc.follow,
+  # toc.integrate, search.suggest, search.share.
   features:
-    - content.tooltips
-    - content.tabs.link
+    - announce.dismiss
+    - content.action.edit
+    - content.action.view
     - content.code.annotate
-    - content.code.copy
-    - navigation.instant
-    - navigation.instant.progress
-    - navigation.tabs
-    - navigation.sections
-    - navigation.path
-    - navigation.indexes
+    - content.tabs.link
+    - content.tooltips
     - navigation.footer
-    - toc.follow
-    - toc.integrate
-    - search.suggest
-    - search.share
+    - navigation.indexes
+    - navigation.instant.progress
+    - navigation.path
+    - navigation.sections
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.top
+
+extra_css:
+  - stylesheets/ozct.css
 
 extra:
+  homepage: https://biovisioncenter.github.io/ome-zarr-converters-tools/
   version:
     provider: mike
   social:
     - icon: fontawesome/brands/github
       link: "https://github.com/BioVisionCenter/ome-zarr-converters-tools"
       name: OME-Zarr Converters Tools on GitHub
+    - icon: fontawesome/brands/python
+      link: "https://pypi.org/project/ome-zarr-converters-tools/"
+      name: OME-Zarr Converters Tools on PyPI
+    - icon: fontawesome/solid/microscope
+      link: "https://www.biovisioncenter.uzh.ch/en.html"
+      name: BioVisionCenter, University of Zurich
 
 plugins:
   - search
@@ -60,6 +98,9 @@ plugins:
           import:
             - https://docs.python.org/3/objects.inv
             - https://numpy.org/doc/stable/objects.inv
+            - https://pandas.pydata.org/docs/objects.inv
+            - https://docs.pydantic.dev/latest/objects.inv
+            - https://biovisioncenter.github.io/ngio/stable/objects.inv
           options:
             heading_level: 3
             docstring_style: google
@@ -69,40 +110,105 @@ plugins:
             show_root_full_path: true
             show_bases: true
             docstring_section_style: list
-  - git-revision-date-localized:
-      enable_creation_date: true
-  - git-committers:
-      repository: BioVisionCenter/ome-zarr-converters-tools
-      branch: main
-  - mkdocs-jupyter:
-      execute: true
+            extensions:
+              - griffe_typingdoc
+            # Several public names (`NgffVersions`, `DefaultNgffVersion`, `PixelSize`,
+            # `Roi`) are re-exported from ngio. Griffe resolves those statically, and
+            # without ngio loaded it raises AliasResolutionError and fails the build
+            # rather than degrading — so load it up front.
+            preload_modules:
+              - ngio
+            show_if_no_docstring: true
+            inherited_members: true
+            members_order: source
+            separate_signature: true
+            unwrap_annotated: false
+            filters:
+              - '!^_'
+            merge_init_into_class: true
+            signature_crossrefs: true
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
 
+# IMPORTANT: declaring this key REPLACES Zensical's ~30 defaults rather than extending
+# them, so everything we rely on must be listed here explicitly. Omitting `tables` is what
+# makes pipe tables render as literal `|---|` text; omitting `attr_list` silently breaks
+# `content.code.annotate` and the grid cards; omitting `abbr` breaks `content.tooltips`.
+# Deliberately NOT restored from Zensical's defaults:
+#   pymdownx.smartsymbols — rewrites `<--` to an arrow, and every snippet include
+#     contains `--8<--`; not worth the risk for the gain.
+#   pymdownx.caret / tilde — turn `^x^` / `~x~` into super/subscript, a latent trap in
+#     prose about array axes and dtypes.
+#   pymdownx.magiclink — changes how bare URLs render across existing pages.
+#   pymdownx.arithmatex — no maths in these docs.
 markdown_extensions:
+  - abbr                  # glossary tooltips (with content.tooltips)
   - admonition
-  - pymdownx.details
+  - attr_list             # grid cards, code annotations, link attributes
+  - def_list
+  - footnotes
   - md_in_html
-  - attr_list
+  - tables
+  - pymdownx.details
+  # NB: zensical.extensions.emoji, not material.extensions.emoji — mkdocs-material is
+  # not installed since the Zensical migration.
   - pymdownx.emoji:
-      emoji_index: !!python/name:material.extensions.emoji.twemoji
-      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+      emoji_generator: !!python/name:zensical.extensions.emoji.to_svg
+      emoji_index: !!python/name:zensical.extensions.emoji.twemoji
   - pymdownx.highlight:
       anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
   - pymdownx.inlinehilite
-  - pymdownx.tabbed:
-      alternate_style: true
+  - pymdownx.keys
+  - pymdownx.snippets:
+      base_path: ["."]
+      check_paths: true
+      auto_append:
+        - docs/_glossary.md
   - pymdownx.superfences:
       custom_fences:
         - name: mermaid
           class: mermaid
-          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+      combine_header_slug: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - toc:
+      permalink: true
+      toc_depth: 3
 
+# Nav labels are sentence case, like every other heading and title on the site.
+# Initialisms (OME-Zarr, HCS, FOV, API) keep their capitals; the common nouns beside
+# them do not.
 nav:
-  - "Home": index.md
-  - "Tutorials":
-    - "HCS Plate": hcs_tutorial.ipynb
-    - "Single Images": images_tutorial.ipynb
-    - "Advanced: Programmatic Tiles": advanced_tutorial.ipynb
-  - "Fractal Tasks": converters_as_fractal_tasks.md
-  - "Converters": converters.md
-  - "Pipeline Configuration": pipeline.md
-  - "API Reference": api.md
+  - Home: index.md
+
+  - Getting started:
+      - "HCS plates": getting_started/0_hcs_plates.md
+      - "Single images": getting_started/1_single_images.md
+      - "Programmatic tiles": getting_started/2_programmatic_tiles.md
+
+  - Guides:
+      - "Pipeline configuration": guides/pipeline.md
+      - "Converters as Fractal tasks": guides/fractal_tasks.md
+      - "Downstream converters": guides/converters.md
+
+  - API reference:
+      - "Core": api/core.md
+      - "Models": api/models.md
+      - "Pipelines": api/pipelines.md
+      - "Fractal": api/fractal.md
+      - "Testing": api/testing.md
+      - "Modules":
+          - "ome_zarr_converters_tools": api/modules/root.md
+          - "ome_zarr_converters_tools.core": api/modules/core.md
+          - "ome_zarr_converters_tools.models": api/modules/models.md
+          - "ome_zarr_converters_tools.pipelines": api/modules/pipelines.md
+          - "ome_zarr_converters_tools.fractal": api/modules/fractal.md
+          - "ome_zarr_converters_tools.testing": api/modules/testing.md
+
+  - Contributing:
+      - "Contributing guide": contributing.md
+      - "Changelog": changelog.md

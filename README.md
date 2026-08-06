@@ -17,7 +17,7 @@ A Python library that provides shared utilities for building OME-Zarr image conv
 
 ### Architecture Diagram
 
-![OME-Zarr Converters Tools Architecture](docs/ome-zarr-converter-tools.png)
+![OME-Zarr Converters Tools Architecture](docs/assets/ome-zarr-converter-tools.png)
 
 ## Getting Started
 

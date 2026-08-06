@@ -1,4 +1,8 @@
-# Converters
+---
+description: Projects that use ome-zarr-converters-tools to convert microscopy formats to OME-Zarr.
+---
+
+# Downstream converters
 
 The following projects use `ome-zarr-converters-tools` to build OME-Zarr converters for different microscopy formats.
 
