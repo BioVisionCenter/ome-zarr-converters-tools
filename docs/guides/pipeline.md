@@ -246,7 +246,7 @@ This creates:
 
     Tiles spanning several channels (`length_c > 1`, e.g. a two-camera acquisition) are supported: their start index is remapped and their width preserved. Compaction can never split such a tile, because the channels it covers are consecutive and always all present.
 
-    When `reindex_channels=False`, the declared channel layout is preserved instead: the output always has one plane per entry in `channels`, and any channel no tile covers — whether it was never acquired or was removed by a Channel Filter — is written as an empty plane keeping its label. Channel index `n` then means the same channel in every image, which is what to use when a downstream task addresses channels by position rather than by label. The cost is storage for the empty planes.
+    When `reindex_channels=False`, the declared channel layout is preserved instead: the output always has one plane per entry in `channels`, and any channel no tile covers — whether it was never acquired or was removed by a Channel Filter — is written as an empty plane keeping its label. Channel index `n` then means the same channel in every image, which is what to use when a downstream task addresses channels by position rather than by label. The empty planes cost no disk space under the default [chunking](../api/models.md#pyramids-and-chunking) — a chunk that is entirely fill value is never written — only a longer `c` axis and channel list for downstream tasks to iterate over.
 
 5. **`tile_regions`** -- Applies tiling/snapping to remove overlaps between FOVs (see [Tiling Strategies](#tiling-strategies) below). This is the step that determines the final non-overlapping layout.
 

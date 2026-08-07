@@ -28,6 +28,8 @@ class PngLoader(ImageLoaderInterface):
         else:
             path = self.file_path
         return np.array(Image.open(path))
+
+
 # --8<-- [end:loader]
 
 # --8<-- [start:plot_helpers]
@@ -151,5 +153,7 @@ show_image(
     pixel_size=image.pixel_size,
 )
 fig.tight_layout()
-print(figure_html(fig, alt="The single field of view written through the custom loader."))
+print(
+    figure_html(fig, alt="The single field of view written through the custom loader.")
+)
 # --8<-- [end:plot_result]

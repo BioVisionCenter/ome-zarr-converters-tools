@@ -118,6 +118,8 @@
   while leaving `start_z_space` at its `"world"` default, so both Z slices resolved to
   slice 0 and the second overwrote the first. The page now declares
   `start_z_space="pixel"` and calls out the trap.
+- State explicit cost of `reindex_channels=False` (raised in
+  [#70](https://github.com/BioVisionCenter/ome-zarr-converters-tools/pull/70)).
 
 ## [v1.0.1]
 

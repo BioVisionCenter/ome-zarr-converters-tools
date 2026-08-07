@@ -91,7 +91,9 @@ tiled_images = tiles_aggregation_pipeline(
 
 print(f"Number of TiledImages: {len(tiled_images)}")
 for ti in tiled_images:
-    print(f"  Path: {ti.path}, regions: {len(ti.regions)}, FOVs: {len(ti.group_by_fov())}")
+    print(
+        f"  Path: {ti.path}, regions: {len(ti.regions)}, FOVs: {len(ti.group_by_fov())}"
+    )
 # --8<-- [end:aggregate]
 
 # --8<-- [start:setup_plate]

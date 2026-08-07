@@ -14,8 +14,8 @@ Nothing here prints, and that is load-bearing rather than a style choice. markdo
 does not redirect `sys.stdout`; it injects its own `print` into the globals of the code
 block it executes. A `print` inside this module resolves to the builtin instead, so its
 output would land on the build's terminal and the block would render as empty, silently:
-the build still exits 0. Hence `print(figure_html(fig))` at every call site — the `print`
-has to happen in the block.
+the build still exits 0. Hence `print(figure_html(fig))` at every call site — the
+`print` has to happen in the block.
 
 Zensical ignores `exclude_docs`, so this file is copied into the built site as a static
 asset at `site/snippets/_render.py`, like the snippet scripts themselves. Harmless: a
