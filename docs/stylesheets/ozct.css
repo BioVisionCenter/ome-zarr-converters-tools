@@ -1,0 +1,742 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   ome-zarr-converters-tools — theme layer for Zensical
+   Lives at docs/stylesheets/ozct.css, registered via extra_css in mkdocs.yml
+   (Zensical reads mkdocs.yml natively).
+
+   This is a port of ngio's docs/stylesheets/ngio.css, token-for-token: the two
+   BioVisionCenter sites are meant to read as one system, so the palette, type
+   scale, surfaces, radii and motion are identical and only the wordmark and the
+   logo differ. Changes here that are not converter-specific belong upstream in
+   ngio first, so the pair does not drift again.
+
+   Nothing here touches Zensical's HTML. It re-points the theme's own CSS
+   variables and adds a small number of component-level rules. Everything
+   degrades to the stock theme if a rule stops matching after an upgrade.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Space Grotesk is the display face; theme.font in mkdocs.yml only manages the
+   text and code families (IBM Plex Sans / JetBrains Mono), so it loads here. */
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&display=swap");
+
+/* ── 1. Typography ──────────────────────────────────────────────────────────
+   Text and code families are set via theme.font in mkdocs.yml so the theme
+   preloads them; the :root fallback keeps this stylesheet self-contained. */
+:root {
+  --md-text-font: "IBM Plex Sans";
+  --md-code-font: "JetBrains Mono";
+  --ozct-display-font: "Space Grotesk", "IBM Plex Sans", sans-serif;
+
+  /* Motion. Short and understated — a card lifts 2px on hover and that is the
+     extent of it. Routed through a variable so the reduce block below can
+     neutralise every transition in one place. */
+  --ozct-duration: 180ms;
+  --ozct-ease: cubic-bezier(0.2, 0, 0.2, 1);
+
+  /* Measure. Body copy is capped narrow on purpose; at these widths ragged
+     last lines show, hence `text-wrap: pretty` wherever prose runs. */
+  --ozct-measure-lede: 42ch;
+  --ozct-measure-prose: 66ch;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --ozct-duration: 1ms;
+  }
+}
+
+/* ── 2. Palette ─────────────────────────────────────────────────────────────
+   These are Zensical's own variable names (see its palette.css, per scheme).
+   NB: do not write that path with a glob — the `*` followed by `/` closes this
+   comment early, and everything after it becomes a garbage selector that eats
+   the whole light-scheme block below. That is exactly what used to happen.
+   Overriding them re-colours the whole site — header, nav, links, admonitions,
+   footer, search — without any selector surgery. */
+
+[data-md-color-scheme="default"] {
+  /* Light teal #22a699 — the shared BioVisionCenter hue, identical to ngio's, so
+     the two sites read as one family. This is NOT a stock Material palette entry,
+     so the values below are what carry the brand; theme.palette in config only
+     needs to pick the nearest stock name for the toggle to behave.
+     Note the split between fill and text: --ozct-accent is a fill and fails AA as
+     small text, --ozct-accent-ink is its body-copy variant. Same split on each of
+     the four semantic colours below (--ozct-blue / --ozct-blue-t, and so on). */
+  --ozct-accent: #22a699;
+  --ozct-accent-ink: #16695f;   /* clears AA as body-copy link colour */
+  --ozct-accent-soft: #e4f4f2;
+  --ozct-accent-2: #94dad4;     /* the mark's aqua apex */
+  --ozct-accent-2-ink: #0f4c45; /* hover / active */
+
+  /* semantic fills */
+  --ozct-blue: #2e6fd6;
+  --ozct-green: #4cae4f;
+  --ozct-magenta: #c2185b;
+  --ozct-amber: #ffaa00;
+  /* AA-safe text variants for code and inline use on light surfaces */
+  --ozct-blue-t: #2559b0;
+  --ozct-green-t: #357a38;
+  --ozct-magenta-t: #a81050;
+  --ozct-amber-t: #8a5d00;
+
+  --md-default-bg-color: #f9fafa;
+  --md-default-fg-color: #101619;
+  --md-default-fg-color--light: #5b6569;
+  --md-default-fg-color--lighter: #a3abad;
+  --md-default-fg-color--lightest: #e3e6e6;
+
+  --md-typeset-color: #253034;
+  --md-typeset-a-color: var(--ozct-accent-ink);
+  --md-typeset-table-color: #e3e6e6;
+
+  --md-primary-fg-color: var(--ozct-accent);
+  --md-primary-fg-color--light: #4cc0b3;
+  --md-primary-fg-color--dark: var(--ozct-accent-ink);
+  --md-primary-bg-color: #f9fafa;
+
+  --md-accent-fg-color: var(--ozct-accent-2-ink);
+  --md-accent-fg-color--transparent: #22a6991a;
+
+  --md-code-bg-color: #f2f4f4;
+  --md-code-fg-color: #253034;
+  --md-code-hl-comment-color: #5b6569;
+  --md-code-hl-keyword-color: var(--ozct-magenta-t);
+  --md-code-hl-string-color: var(--ozct-green-t);
+  --md-code-hl-function-color: var(--ozct-blue-t);
+  --md-code-hl-number-color: var(--ozct-amber-t);
+  --md-code-hl-constant-color: var(--ozct-amber-t);
+  --md-code-hl-name-color: #253034;
+  --md-code-hl-operator-color: #5b6569;
+  --md-code-hl-punctuation-color: #5b6569;
+
+  --ozct-line: #e3e6e6;
+  --ozct-line-strong: #cfd4d4;
+  --ozct-surface: #ffffff;
+  --ozct-sunk: #eff1f1;
+  --ozct-on-accent: #ffffff;
+  --ozct-accent-fill: var(--ozct-accent-ink);
+
+  /* Chrome — the header, the tabs and the footer meta bar. It is deliberately
+     NOT the page colour: content is paper, chrome is a different level, and the
+     page is framed by the same tone top and bottom.
+     Light sinks below the page; dark lifts above it. See the slate block. */
+  --ozct-chrome: var(--ozct-sunk);
+  --ozct-chrome-field: var(--ozct-surface); /* search pill, inverted vs chrome */
+
+  /* Aliases for parity with the design system's portable token file. Nothing
+     here uses them; they exist so a stylesheet written against those names
+     resolves instead of computing to the guaranteed-invalid value — a missing
+     --ozct-code-bg silently blanked a search field during the header work. */
+  --ozct-paper: var(--md-default-bg-color);
+  --ozct-ink: var(--md-default-fg-color);
+  --ozct-faint: var(--md-default-fg-color--light);
+  --ozct-code-bg: var(--md-code-bg-color);
+}
+
+[data-md-color-scheme="slate"] {
+  --ozct-accent: #6cc8be;
+  --ozct-accent-ink: #8fd8d0;
+  --ozct-accent-soft: #123330;
+  --ozct-accent-2: #abe4dc;
+  --ozct-accent-2-ink: #abe4dc;
+
+  --ozct-blue: #7fa6ff;
+  --ozct-green: #71c174;
+  --ozct-magenta: #f06090;
+  --ozct-amber: #ffc845;
+  --ozct-blue-t: var(--ozct-blue);
+  --ozct-green-t: var(--ozct-green);
+  --ozct-magenta-t: var(--ozct-magenta);
+  --ozct-amber-t: var(--ozct-amber);
+
+  --md-default-bg-color: #0b1113;
+  --md-default-fg-color: #e6edee;
+  --md-default-fg-color--light: #808d90;
+  --md-default-fg-color--lighter: #58656a;
+  --md-default-fg-color--lightest: #1d272a;
+
+  --md-typeset-color: #c2ccce;
+  --md-typeset-a-color: var(--ozct-accent);
+  --md-typeset-table-color: #1d272a;
+
+  --md-primary-fg-color: var(--ozct-accent);
+  --md-primary-fg-color--light: #8fd8d0;
+  --md-primary-fg-color--dark: #1f9389;
+  --md-primary-bg-color: #0b1113;
+
+  --md-accent-fg-color: var(--ozct-accent-2);
+  --md-accent-fg-color--transparent: #6cc8be1a;
+
+  --md-code-bg-color: #0f1618;
+  --md-code-fg-color: #c2ccce;
+  --md-code-hl-comment-color: #808d90;
+  --md-code-hl-keyword-color: var(--ozct-magenta);
+  --md-code-hl-string-color: var(--ozct-green);
+  --md-code-hl-function-color: var(--ozct-blue);
+  --md-code-hl-number-color: var(--ozct-amber);
+  --md-code-hl-constant-color: var(--ozct-amber);
+  --md-code-hl-name-color: #c2ccce;
+  --md-code-hl-operator-color: #808d90;
+  --md-code-hl-punctuation-color: #808d90;
+
+  --ozct-line: #1d272a;
+  --ozct-line-strong: #2a3639;
+  --ozct-surface: #131b1e;
+  --ozct-sunk: #0f1618;
+  --ozct-on-accent: #06211e;
+  --ozct-accent-fill: var(--ozct-accent);
+
+  /* Chrome inverts here, and the reason is magnitude rather than direction:
+     --ozct-sunk (#0f1618) sits only four or five RGB steps off the page
+     (#0b1113), which is not a visible level change, whereas --ozct-surface
+     (#131b1e) is. Note sunk is *lighter* than the page in this scheme — the
+     rule is "chrome is a different level", not "chrome is darker". */
+  --ozct-chrome: var(--ozct-surface);
+  --ozct-chrome-field: var(--ozct-sunk);
+
+  --ozct-paper: var(--md-default-bg-color);
+  --ozct-ink: var(--md-default-fg-color);
+  --ozct-faint: var(--md-default-fg-color--light);
+  --ozct-code-bg: var(--md-code-bg-color);
+}
+
+/* ── 3. Display type ─────────────────────────────────────────────────────── */
+.md-typeset h1,
+.md-typeset h2,
+.md-typeset h3,
+.md-typeset h4,
+.md-header__title,
+.md-nav__title {
+  font-family: var(--ozct-display-font);
+  letter-spacing: -0.022em;
+}
+
+/* The header title is the wordmark, not a heading — it takes the wordmark's
+   own tracking, which is tighter than the heading scale's. */
+.md-header__title {
+  letter-spacing: -0.025em;
+}
+
+.md-typeset h1 {
+  font-weight: 600;
+  font-size: 2.6rem;
+  line-height: 1.08;
+  letter-spacing: -0.035em;
+  /* The theme's bottom margin is 1.25em of the h1's own size, so the 2.6rem
+     above opens a 65px gap over the lede. Pinned in rem so it stays put. */
+  margin: 0 0 1.1rem;
+  color: var(--md-default-fg-color);
+}
+
+/* Section rules: every h2 opens with a hairline, which is what gives the
+   long landing page its rhythm. */
+.md-typeset h2 {
+  font-weight: 600;
+  font-size: 1.5rem;
+  margin-top: 2.6rem;
+  padding-top: 1.1rem;
+  border-top: 1px solid var(--ozct-line);
+}
+
+.md-typeset h3 {
+  font-weight: 600;
+  font-size: 1.05rem;
+}
+
+/* First paragraph after the h1 is the page lede. */
+.md-typeset h1 + p {
+  font-size: 1.1rem;
+  line-height: 1.5;
+  color: var(--md-default-fg-color);
+  max-width: var(--ozct-measure-lede);
+  text-wrap: pretty;
+}
+
+.md-typeset p,
+.md-typeset li {
+  text-wrap: pretty;
+}
+
+/* Prose runs to a narrow measure. Scoped to top-level paragraphs so it does
+   not squeeze copy that is already inside a constrained box — cards, table
+   cells, admonitions — or push figures and tables off their own width. */
+.md-typeset > p {
+  max-width: var(--ozct-measure-prose);
+}
+
+/* ── 4. Header and tabs ──────────────────────────────────────────────────────
+   Chrome sits on its own level, not on the page colour. The step between the
+   two surfaces is small by design (about 1.08:1), so the edge is carrying most
+   of the separation — which is why it takes --ozct-line-strong rather than the
+   hairline. `box-shadow: none` is load-bearing: it defeats the theme's
+   .md-header--shadow, and this system has exactly one shadow, on card hover. */
+.md-header {
+  background: var(--ozct-chrome);
+  color: var(--md-default-fg-color);
+  box-shadow: none;
+  border-bottom: 1px solid var(--ozct-line-strong);
+}
+
+.md-header__button.md-logo :is(img, svg) {
+  height: 1.5rem;
+  width: 1.5rem;
+}
+
+/* theme.logo is one file for both schemes, and it is an `<img src>`, so it has
+   the same problem as the lockup in 6c: it cannot see the palette. The chrome
+   is near-white under default and dark under slate, where the colour mark's
+   deepest level (#1c7c69) goes muddy — hence the swap to the dark mark.
+   Done as a background on the anchor rather than `content: url()`, whose
+   support on replaced elements is uneven; the img is left in place, only made
+   invisible, so it keeps holding the 1.5rem box open. Paths here resolve
+   against this stylesheet, i.e. /stylesheets/ → /assets/. */
+[data-md-color-scheme="slate"] .md-header__button.md-logo {
+  background: url("../assets/logo-dark.svg") no-repeat center / 1.5rem 1.5rem;
+}
+
+[data-md-color-scheme="slate"] .md-header__button.md-logo :is(img, svg) {
+  visibility: hidden;
+}
+
+/* ── The header wordmark ──────────────────────────────────────────────────
+   Zensical renders `site_name` as the header title, which is the title-cased
+   string we want in <title> and in search results but not in the lockup. The
+   lockup is the wordmark: lowercase `ome-zarr` in the accent, then
+   `converters-tools` in the default ink.
+
+   That needs two separately-coloured pieces out of one text node, and the only
+   ways to get markup are a `custom_dir` override — which means vendoring a
+   generated partial against an unpinned pre-1.0 dependency — or pseudo-elements.
+   `.md-header__topic` is a flex container and `.md-ellipsis` a flex item, so
+   between them they give four ordered slots; two is enough here. (ngio uses
+   three, for `ng` + accent `i` + `o`.)
+
+   The site name is collapsed with `font-size: 0` rather than hidden, because
+   `visibility: hidden` and `opacity: 0` both keep the string's full width and
+   push the trailing piece to the far end of the flex line. Zeroing the size also
+   keeps the name in the accessibility tree, so screen readers still get the real
+   site name; the cost is that the decorative wordmark may be announced alongside
+   it, which is the lesser of the two problems.
+
+   Scoped to :first-child on purpose. The second .md-header__topic is the page
+   title that slides in on scroll; restyling it breaks the scrolled state. */
+.md-header__topic:first-child .md-ellipsis {
+  font-size: 0;
+  flex-grow: 0;
+}
+
+.md-header__topic:first-child .md-ellipsis::after,
+.md-header__topic:first-child::before {
+  font-family: var(--ozct-display-font);
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  color: var(--md-default-fg-color);
+}
+
+.md-header__topic:first-child::before {
+  content: "ome-zarr";
+  /* --ozct-accent-fill already switches per scheme: the darkened ink in light,
+     the raw accent in dark. Using it keeps the first half legible in both. */
+  color: var(--ozct-accent-fill);
+}
+
+.md-header__topic:first-child .md-ellipsis::after {
+  /* The hair space is inside the content string: the two pseudo-elements sit in
+     separate flex slots with no whitespace between them, so a plain gap would
+     collapse.
+     The space after \2009 is part of the escape, not the content. A CSS hex escape
+     consumes up to six hex digits, and `c` is one — written as "\2009converters"
+     this parses as U+2009C plus "onverters", which renders as a tofu box with the
+     `c` eaten. The trailing space terminates the escape and is then discarded. */
+  content: "\2009 converters-tools";
+}
+
+.md-tabs {
+  background: var(--ozct-chrome);
+  color: var(--md-default-fg-color--light);
+  border-bottom: 1px solid var(--ozct-line-strong);
+}
+
+.md-tabs__link {
+  font-size: 0.72rem;
+  font-weight: 500;
+  opacity: 1;
+  color: var(--md-default-fg-color--light);
+}
+
+/* The active tab's 2px underline sits on the chrome/content boundary, so the
+   edge is doing navigation work rather than just being a line. */
+.md-tabs__item--active .md-tabs__link {
+  color: var(--md-default-fg-color);
+  box-shadow: inset 0 -2px 0 var(--md-primary-fg-color);
+}
+
+/* Zensical draws its own `border-bottom: .05rem solid var(--md-default-fg-color)`
+   on the active tab, which stacks under the inset above — two underlines, the
+   lower one near-black in light and near-white in dark. The box-shadow is the
+   underline here. */
+.md-tabs__item--active {
+  border-bottom: 0;
+}
+
+/* ── 5. Sidebar ──────────────────────────────────────────────────────────── */
+.md-nav {
+  font-size: 0.72rem;
+}
+
+.md-nav__link {
+  border-radius: 7px;
+  padding: 0.3rem 0.6rem;
+}
+
+.md-nav__link--active {
+  background: var(--ozct-accent-soft);
+  color: var(--md-accent-fg-color);
+}
+
+/* Top-level section labels read as eyebrows, not links. */
+.md-nav--primary > .md-nav__list > .md-nav__item--nested > .md-nav__link {
+  font-family: var(--md-code-font), monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--md-default-fg-color--light);
+}
+
+/* Table of contents: hairline rail. */
+.md-nav--secondary .md-nav__link {
+  border-left: 2px solid var(--ozct-line);
+  border-radius: 0;
+  padding-left: 0.6rem;
+}
+
+.md-nav--secondary .md-nav__link--active {
+  border-left-color: var(--md-primary-fg-color);
+  background: none;
+}
+
+/* ── 6. Code blocks ──────────────────────────────────────────────────────── */
+.md-typeset pre > code,
+.md-typeset .highlight {
+  border-radius: 10px;
+}
+
+.md-typeset .highlight {
+  border: 1px solid var(--ozct-line);
+  overflow: hidden;
+}
+
+.md-typeset code {
+  border: 1px solid var(--ozct-line);
+  border-radius: 4px;
+  padding: 0.05em 0.35em;
+  font-size: 0.84em;
+}
+
+.md-typeset pre > code {
+  border: 0;
+  line-height: 1.75;
+}
+
+/* The `result` blocks produced by the executed snippets read as terminal
+   output rather than as more prose. */
+.md-typeset .result {
+  margin-top: -0.6rem;
+  border: 1px solid var(--ozct-line);
+  border-top: 0;
+  border-radius: 0 0 10px 10px;
+  background: var(--ozct-sunk);
+  font-family: var(--md-code-font), monospace;
+  font-size: 0.72rem;
+  padding: 0.7rem 0.9rem;
+}
+
+.md-typeset .result::before {
+  content: "OUT";
+  display: block;
+  margin-bottom: 0.4rem;
+  font-size: 0.58rem;
+  letter-spacing: 0.09em;
+  color: var(--md-default-fg-color--light);
+}
+
+/* A rendered figure is not terminal output, even though markdown-exec delivers
+   it through the same `.result` wrapper. Strip the terminal treatment back off
+   when the wrapper holds a figure, so the image reads as an image.
+   Where :has() is unsupported the figure simply keeps the OUT label — the old
+   behaviour, and the reason this is written as a subtraction. */
+.md-typeset .result:has(> .ozct-figure) {
+  margin-top: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  padding: 0;
+}
+
+.md-typeset .result:has(> .ozct-figure)::before {
+  content: none;
+}
+
+/* The SVG carries its own intrinsic size from matplotlib; cap it to the column
+   and let it scale down on narrow viewports. */
+.md-typeset .ozct-figure svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ── 6b. Diagrams ────────────────────────────────────────────────────────────
+   Explanatory diagrams are authored as inline SVG in the Markdown rather than as
+   files in docs/assets/. That is deliberate: an `<img src>` is a separate
+   document and cannot see these custom properties, so it would need two files
+   and would still not follow the palette toggle. Inline, the shapes reference
+   --ozct-blue / --ozct-green / --ozct-magenta and re-colour with the scheme for
+   free.
+
+   The semantic mapping is shared with ngio and with the matplotlib figures in
+   docs/snippets/_render.py: blue = image data, green = labels, magenta = tables
+   and ROIs, teal = the library itself. A greyscale cell field on a dark ground
+   means real pixel data — that field is deliberately fixed rather than
+   tokenised, because a micrograph does not invert with the site theme.
+
+   The figures set their own type inline, so there are no text rules here; only
+   the margin and the width, which the SVGs depend on since they carry a
+   viewBox and no intrinsic size. */
+.md-typeset .ozct-diagram {
+  margin: 1.6em 0;
+}
+
+.md-typeset .ozct-diagram svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* ── 6c. The landing-page lockup ──────────────────────────────────────────────
+   The one place the inline-SVG trick of 6b does not apply. The lockup's
+   wordmark is outlined path data rather than live text — an SVG used as an
+   image cannot load the webfont — so it ships as two files with baked-in
+   fills, one per scheme, and takes the two-file route 6b avoids.
+
+   Nothing here performs the swap: Zensical's own stylesheets hide
+   `img[src$="#only-light"]` under slate and `img[src$="#only-dark"]` under
+   default, so the pair in index.md only needs the URL fragments. What is left
+   is the size, which the SVG cannot supply on its own at this width.
+
+   The heading the lockup replaced is still in the page, just moved off-screen:
+   Zensical takes the page title from the first h1, the table of contents wants
+   a root entry, and a screen reader wants a heading — none of which an image
+   provides. The images are therefore marked decorative (empty alt) so the name
+   is announced once, by the h1. */
+.md-typeset .ozct-hero-logo {
+  display: block;
+  width: 15rem;
+  max-width: 100%;
+  height: auto;
+  margin: 0 0 1.2rem;
+}
+
+.md-typeset .ozct-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ── 7. Content tabs (pip / mamba / source) ──────────────────────────────── */
+.md-typeset .tabbed-set > .tabbed-labels {
+  box-shadow: none;
+  border-bottom: 1px solid var(--ozct-line);
+}
+
+.md-typeset .tabbed-labels > label {
+  font-family: var(--md-code-font), monospace;
+  font-size: 0.68rem;
+  font-weight: 400;
+}
+
+.md-typeset .tabbed-labels > label > [href]:first-child {
+  color: inherit;
+}
+
+/* ── 8. Grid cards ───────────────────────────────────────────────────────── */
+.md-typeset .grid.cards > ul > li {
+  border: 1px solid var(--ozct-line);
+  border-radius: 12px;
+  background: var(--ozct-surface);
+  padding: 1.1rem;
+  transition:
+    border-color var(--ozct-duration) var(--ozct-ease),
+    box-shadow var(--ozct-duration) var(--ozct-ease),
+    transform var(--ozct-duration) var(--ozct-ease);
+}
+
+/* The one shadow in the system, and the only place elevation appears. */
+.md-typeset .grid.cards > ul > li:hover {
+  border-color: var(--md-primary-fg-color);
+  box-shadow:
+    0 1px 2px rgb(16 22 25 / 5%),
+    0 8px 24px -12px rgb(16 22 25 / 16%);
+  transform: translateY(-2px);
+}
+
+/* Shortening the duration is not enough — an instant 2px jump is exactly the
+   movement the preference asks us not to make. The border and shadow still
+   change, so the card is still legibly hovered. */
+@media (prefers-reduced-motion: reduce) {
+  .md-typeset .grid.cards > ul > li:hover {
+    transform: none;
+  }
+}
+
+.md-typeset .grid.cards > ul > li > hr {
+  display: none;
+}
+
+.md-typeset .grid.cards > ul > li > p:first-child strong {
+  font-family: var(--ozct-display-font);
+  font-weight: 600;
+  font-size: 0.86rem;
+}
+
+.md-typeset .grid.cards .twemoji.lg svg,
+.md-typeset .grid.cards .twemoji svg {
+  fill: var(--md-primary-fg-color);
+}
+
+/* ── 9. Admonitions ──────────────────────────────────────────────────────────
+   Admonitions are deliberately NOT colour-coded by severity: every kind gets
+   the same accent left border. If something is dangerous, the title says so.
+
+   The doubled [class] is load-bearing, not a typo. Zensical colours each type
+   with `.md-typeset .admonition.note` (0,3,0) and
+   `.md-typeset .note > .admonition-title::before` (0,3,1), both of which
+   outrank a plain `.md-typeset .admonition` (0,2,0) no matter what order the
+   files load in. Without the bump the translucent blue tint and blue icon
+   survive — which also breaks the "no transparency anywhere" rule. Repeating
+   the attribute selector clears their specificity for every type at once,
+   instead of enumerating a dozen type classes that Zensical may add to. */
+.md-typeset .admonition[class][class],
+.md-typeset details[class][class] {
+  border: 1px solid var(--ozct-line);
+  border-left: 3px solid var(--md-primary-fg-color);
+  border-radius: 0 10px 10px 0;
+  box-shadow: none;
+  background: var(--ozct-surface);
+  font-size: 0.76rem;
+}
+
+.md-typeset .admonition-title,
+.md-typeset summary {
+  font-family: var(--ozct-display-font);
+  font-weight: 600;
+  background: transparent;
+}
+
+.md-typeset [class][class] > .admonition-title::before,
+.md-typeset [class][class] > summary::before {
+  background-color: var(--md-primary-fg-color);
+}
+
+/* ::after is the disclosure chevron on a collapsible `details`, and Zensical
+   colours it per type as well. */
+.md-typeset [class][class] > .admonition-title::after,
+.md-typeset [class][class] > summary::after {
+  color: var(--md-primary-fg-color);
+}
+
+/* ── 10. mkdocstrings API reference ──────────────────────────────────────── */
+.md-typeset .doc-heading {
+  font-family: var(--md-code-font), monospace;
+  font-weight: 500;
+  border-top: 1px solid var(--ozct-line);
+  padding-top: 1rem;
+}
+
+.md-typeset .doc-symbol {
+  border-radius: 5px;
+  background: var(--ozct-accent-soft);
+  color: var(--md-accent-fg-color);
+}
+
+.md-typeset .doc-signature {
+  border: 1px solid var(--ozct-line);
+  border-radius: 10px;
+}
+
+.md-typeset .doc-contents .autorefs-internal {
+  border-bottom: 1px dotted var(--md-primary-fg-color);
+  text-decoration: none;
+}
+
+.md-typeset details.mkdocstrings-source {
+  border-left-width: 1px;
+  border-left-color: var(--ozct-line);
+  border-radius: 10px;
+  background: var(--ozct-sunk);
+}
+
+/* ── 11. Glossary abbreviations ──────────────────────────────────────────── */
+.md-typeset abbr[title] {
+  border-bottom: 1px dotted var(--md-default-fg-color--light);
+  cursor: help;
+  text-decoration: none;
+}
+
+/* ── 12. Footer ──────────────────────────────────────────────────────────────
+   The meta bar takes the same chrome tone as the header, which is what closes
+   the frame: chrome top and bottom, paper between. Matching edge weight too. */
+.md-footer {
+  border-top: 1px solid var(--ozct-line-strong);
+}
+
+.md-footer-meta {
+  background: var(--ozct-chrome);
+  color: var(--md-default-fg-color--light);
+}
+
+.md-footer__link {
+  border: 1px solid var(--ozct-line);
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+  opacity: 1;
+}
+
+.md-footer__link:hover {
+  border-color: var(--md-primary-fg-color);
+}
+
+.md-footer__title {
+  font-family: var(--ozct-display-font);
+  background: none;
+}
+
+.md-copyright {
+  color: var(--md-default-fg-color--light);
+}
+
+/* ── 13. Search button ───────────────────────────────────────────────────────
+   The field is inverted against the chrome it sits on — surface on a sunk bar
+   in light, sunk on a lifted bar in dark — so it reads as something you can
+   type into rather than as a hole in the header. Zensical's modern theme
+   renders this control as a <button>; it emits no .md-search__form/__input. */
+.md-search__button {
+  border: 1px solid var(--ozct-line-strong);
+  border-radius: 8px;
+  background: var(--ozct-chrome-field);
+  color: var(--md-default-fg-color--light);
+  font-size: 0.7rem;
+}
+
+/* Not optional. Zensical's own :hover is (0,2,0) and beats the rule above
+   whatever the source order, flipping the pill to a mid-grey slab. Match its
+   specificity to keep the field a field; the accent border is the hover cue. */
+.md-search__button:hover,
+.md-search__button:focus {
+  background: var(--ozct-chrome-field);
+  border-color: var(--ozct-accent);
+  color: var(--md-default-fg-color);
+}

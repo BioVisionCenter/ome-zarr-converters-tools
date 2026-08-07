@@ -215,7 +215,8 @@ class StagePositionCorrections(UserFacingModel):
     reindex_channels: bool = Field(default=True, title="Reindex Channels")
     """
     If enabled, only the channels actually present are converted; if
-    disabled, missing channels are stored as empty images.
+    disabled, missing channels are kept as empty planes, which take no
+    disk space under the default chunking.
     """
 
 

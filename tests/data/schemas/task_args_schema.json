@@ -1167,7 +1167,7 @@
       "properties": {
         "reindex_channels": {
           "default": true,
-          "description": "If enabled, only the channels actually present are converted; if\ndisabled, missing channels are stored as empty images.",
+          "description": "If enabled, only the channels actually present are converted; if\ndisabled, missing channels are kept as empty planes, which take no\ndisk space under the default chunking.",
           "title": "Reindex Channels",
           "type": "boolean"
         },
