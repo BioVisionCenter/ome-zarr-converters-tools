@@ -2,7 +2,11 @@
 
 from typing import Any, Generic, TypeAlias
 
-from ngio.common._roi import Roi, RoiSlice, pixel_to_world, world_to_pixel
+from ngio import Roi, RoiSlice
+
+# `pixel_to_world`/`world_to_pixel` are not exported from any public ngio
+# namespace (as of ngio 1.1); keep the private import for these two only.
+from ngio.common._roi import pixel_to_world, world_to_pixel
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from ome_zarr_converters_tools.models._acquisition import (
