@@ -3,7 +3,7 @@
 ## [Unreleased]
 
 ### Chores
-- Migrate to `ngio` 1.1 (currently pinned to `ngio==1.1.0a2` for pre-release
+- Migrate to `ngio` 1.1 (currently pinned to `ngio==1.1.0b1` for pre-release
   testing; the pin will be relaxed to a range before release). Call-site
   changes, none of which alter written output:
   - `image.consolidate()` → `image.consolidate(mode="auto")` (opts in to ngio
