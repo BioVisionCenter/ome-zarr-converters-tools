@@ -3,7 +3,7 @@
 ## [Unreleased]
 
 ### Chores
-- Migrate to `ngio` 1.1 (currently pinned to `ngio==1.1.0b1` for pre-release
+- Migrate to `ngio` 1.1 (currently pinned to `ngio==1.1.0b2` for pre-release
   testing; the pin will be relaxed to a range before release). Call-site
   changes, none of which alter written output:
   - `image.consolidate()` → `image.consolidate(mode="auto")` (opts in to ngio
@@ -16,6 +16,9 @@
     `ngio.hcs._plate`; `Roi`/`RoiSlice` from `ngio` instead of
     `ngio.common._roi` (`pixel_to_world`/`world_to_pixel` still have no public
     home and keep the private import).
+  - `Roi`/`RoiSlice` are frozen since ngio 1.1.0b2: the two in-place
+    `union_roi.name = ...` mutations in `core/_tile_region.py` are now
+    `union_roi.model_copy(update={"name": ...})`.
 
 ## [v1.0.2]
 
