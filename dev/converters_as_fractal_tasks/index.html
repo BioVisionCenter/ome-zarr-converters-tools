@@ -883,12 +883,12 @@ deserialize and process them independently.</p>
 <a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    <span class="n">tiles_csv_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 <a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>    <span class="c1"># ... your custom parameters</span>
 <a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
-<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Init task: set up plates and build parallelization list.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="w">    </span><span class="sd">"""Init task: set up plates and build parallelization list."""</span>
 <a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>    <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
 <a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>
 <a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>    <span class="c1"># Step 1: Build tiles from your data source</span>
 <a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>    <span class="n">acq</span> <span class="o">=</span> <span class="n">AcquisitionDetails</span><span class="p">(</span>
-<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>        <span class="n">channels</span><span class="o">=</span><span class="p">[</span><span class="n">ChannelInfo</span><span class="p">(</span><span class="n">channel_label</span><span class="o">=</span><span class="s2">&quot;DAPI&quot;</span><span class="p">)],</span>
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>        <span class="n">channels</span><span class="o">=</span><span class="p">[</span><span class="n">ChannelInfo</span><span class="p">(</span><span class="n">channel_label</span><span class="o">=</span><span class="s2">"DAPI"</span><span class="p">)],</span>
 <a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>        <span class="n">xy_pixel_size</span><span class="o">=</span><span class="mf">0.65</span><span class="p">,</span>
 <a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>        <span class="n">z_spacing</span><span class="o">=</span><span class="mf">5.0</span><span class="p">,</span>
 <a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>    <span class="p">)</span>
@@ -896,7 +896,7 @@ deserialize and process them independently.</p>
 <a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>    <span class="n">tiles</span> <span class="o">=</span> <span class="n">hcs_images_from_dataframe</span><span class="p">(</span>
 <a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>        <span class="n">tiles_table</span><span class="o">=</span><span class="n">tiles_table</span><span class="p">,</span>
 <a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a>        <span class="n">acquisition_details</span><span class="o">=</span><span class="n">acq</span><span class="p">,</span>
-<a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a>        <span class="n">plate_name</span><span class="o">=</span><span class="s2">&quot;MyPlate&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a>        <span class="n">plate_name</span><span class="o">=</span><span class="s2">"MyPlate"</span><span class="p">,</span>
 <a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a>    <span class="p">)</span>
 <a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a>
 <a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a>    <span class="c1"># Step 2: Aggregate tiles</span>
@@ -904,14 +904,14 @@ deserialize and process them independently.</p>
 <a id="__codelineno-0-36" name="__codelineno-0-36" href="#__codelineno-0-36"></a>    <span class="n">tiled_images</span> <span class="o">=</span> <span class="n">tiles_aggregation_pipeline</span><span class="p">(</span>
 <a id="__codelineno-0-37" name="__codelineno-0-37" href="#__codelineno-0-37"></a>        <span class="n">tiles</span><span class="o">=</span><span class="n">tiles</span><span class="p">,</span>
 <a id="__codelineno-0-38" name="__codelineno-0-38" href="#__codelineno-0-38"></a>        <span class="n">converter_options</span><span class="o">=</span><span class="n">opts</span><span class="p">,</span>
-<a id="__codelineno-0-39" name="__codelineno-0-39" href="#__codelineno-0-39"></a>        <span class="n">resource</span><span class="o">=</span><span class="s2">&quot;/path/to/image/data&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-39" name="__codelineno-0-39" href="#__codelineno-0-39"></a>        <span class="n">resource</span><span class="o">=</span><span class="s2">"/path/to/image/data"</span><span class="p">,</span>
 <a id="__codelineno-0-40" name="__codelineno-0-40" href="#__codelineno-0-40"></a>    <span class="p">)</span>
 <a id="__codelineno-0-41" name="__codelineno-0-41" href="#__codelineno-0-41"></a>
 <a id="__codelineno-0-42" name="__codelineno-0-42" href="#__codelineno-0-42"></a>    <span class="c1"># Step 3+4: Set up collection and build parallelization list</span>
 <a id="__codelineno-0-43" name="__codelineno-0-43" href="#__codelineno-0-43"></a>    <span class="n">parallelization_list</span> <span class="o">=</span> <span class="n">setup_images_for_conversion</span><span class="p">(</span>
 <a id="__codelineno-0-44" name="__codelineno-0-44" href="#__codelineno-0-44"></a>        <span class="n">tiled_images</span><span class="o">=</span><span class="n">tiled_images</span><span class="p">,</span>
 <a id="__codelineno-0-45" name="__codelineno-0-45" href="#__codelineno-0-45"></a>        <span class="n">zarr_dir</span><span class="o">=</span><span class="n">zarr_dir</span><span class="p">,</span>
-<a id="__codelineno-0-46" name="__codelineno-0-46" href="#__codelineno-0-46"></a>        <span class="n">collection_type</span><span class="o">=</span><span class="s2">&quot;ImageInPlate&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-46" name="__codelineno-0-46" href="#__codelineno-0-46"></a>        <span class="n">collection_type</span><span class="o">=</span><span class="s2">"ImageInPlate"</span><span class="p">,</span>
 <a id="__codelineno-0-47" name="__codelineno-0-47" href="#__codelineno-0-47"></a>        <span class="n">converter_options</span><span class="o">=</span><span class="n">opts</span><span class="p">,</span>
 <a id="__codelineno-0-48" name="__codelineno-0-48" href="#__codelineno-0-48"></a>        <span class="n">overwrite_mode</span><span class="o">=</span><span class="n">OverwriteMode</span><span class="o">.</span><span class="n">OVERWRITE</span><span class="p">,</span>
 <a id="__codelineno-0-49" name="__codelineno-0-49" href="#__codelineno-0-49"></a>    <span class="p">)</span>
@@ -940,13 +940,13 @@ Use <code>generic_compute_task()</code> which handles JSON deserialization, the 
 <a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>    <span class="n">zarr_url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 <a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>    <span class="n">init_args</span><span class="p">:</span> <span class="n">ConvertParallelInitArgs</span><span class="p">,</span>
 <a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ImageListUpdateDict</span><span class="p">:</span>
-<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute task: convert one TiledImage to OME-Zarr.&quot;&quot;&quot;</span>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="w">    </span><span class="sd">"""Compute task: convert one TiledImage to OME-Zarr."""</span>
 <a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>    <span class="k">return</span> <span class="n">generic_compute_task</span><span class="p">(</span>
 <a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>        <span class="n">zarr_url</span><span class="o">=</span><span class="n">zarr_url</span><span class="p">,</span>
 <a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>        <span class="n">init_args</span><span class="o">=</span><span class="n">init_args</span><span class="p">,</span>
 <a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>        <span class="n">collection_type</span><span class="o">=</span><span class="n">ImageInPlate</span><span class="p">,</span>
 <a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>        <span class="n">image_loader_type</span><span class="o">=</span><span class="n">DefaultImageLoader</span><span class="p">,</span>
-<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>        <span class="n">resource</span><span class="o">=</span><span class="s2">&quot;/path/to/image/data&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>        <span class="n">resource</span><span class="o">=</span><span class="s2">"/path/to/image/data"</span><span class="p">,</span>
 <a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>    <span class="p">)</span>
 </code></pre></div>
 <p><code>generic_compute_task()</code> internally:</p>
@@ -971,9 +971,9 @@ The <code>AcquisitionOptions</code> model provides this:</p>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
 <a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># User-provided overrides</span>
 <a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="n">acq_options</span> <span class="o">=</span> <span class="n">AcquisitionOptions</span><span class="p">(</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    <span class="n">channels</span><span class="o">=</span><span class="p">[</span><span class="n">ChannelInfo</span><span class="p">(</span><span class="n">channel_label</span><span class="o">=</span><span class="s2">&quot;GFP&quot;</span><span class="p">,</span> <span class="n">wavelength_id</span><span class="o">=</span><span class="s2">&quot;488&quot;</span><span class="p">)],</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    <span class="n">channels</span><span class="o">=</span><span class="p">[</span><span class="n">ChannelInfo</span><span class="p">(</span><span class="n">channel_label</span><span class="o">=</span><span class="s2">"GFP"</span><span class="p">,</span> <span class="n">wavelength_id</span><span class="o">=</span><span class="s2">"488"</span><span class="p">)],</span>
 <a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>    <span class="n">pixel_info</span><span class="o">=</span><span class="n">PixelSizeModel</span><span class="p">(</span><span class="n">xy_pixel_size</span><span class="o">=</span><span class="mf">0.325</span><span class="p">,</span> <span class="n">z_spacing</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">t_spacing</span><span class="o">=</span><span class="mf">1.0</span><span class="p">),</span>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>    <span class="n">filters</span><span class="o">=</span><span class="p">[</span><span class="n">FovNameFilter</span><span class="p">(</span><span class="n">regex</span><span class="o">=</span><span class="s2">&quot;FOV_[12]&quot;</span><span class="p">)],</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>    <span class="n">filters</span><span class="o">=</span><span class="p">[</span><span class="n">FovNameFilter</span><span class="p">(</span><span class="n">regex</span><span class="o">=</span><span class="s2">"FOV_[12]"</span><span class="p">)],</span>
 <a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="p">)</span>
 <a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>
 <a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="c1"># Apply overrides to base acquisition details</span>
@@ -989,13 +989,13 @@ input, an advanced-options group, and so on. Subclass <code>UserFacingModel</cod
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>
 <a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>
 <a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="k">class</span><span class="w"> </span><span class="nc">AcquisitionInput</span><span class="p">(</span><span class="n">UserFacingModel</span><span class="p">):</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">&quot;Acquisition Input&quot;</span><span class="p">)</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">"Acquisition Input"</span><span class="p">)</span>
 <a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>
 <a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span>
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Path to the acquisition file or directory.&quot;&quot;&quot;</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">    </span><span class="sd">"""Path to the acquisition file or directory."""</span>
 <a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>
 <a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>    <span class="n">acquisition_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Index used to distinguish multiplexing rounds.&quot;&quot;&quot;</span>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="w">    </span><span class="sd">"""Index used to distinguish multiplexing rounds."""</span>
 </code></pre></div>
 <p>The base sets <code>use_attribute_docstrings=True</code>, so the attribute docstrings above become
 the field descriptions shown in the Fractal web UI. This matters because
@@ -1012,9 +1012,9 @@ Use <code>converters_tools_models()</code> to get the list of models provided by
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="c1"># Returns a list of (package, module_path, class_name) tuples</span>
 <a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="n">models</span> <span class="o">=</span> <span class="n">converters_tools_models</span><span class="p">()</span>
 <a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="c1"># [</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="c1">#     (&quot;ome_zarr_converters_tools&quot;, &quot;fractal/_models.py&quot;, &quot;AcquisitionOptions&quot;),</span>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="c1">#     (&quot;ome_zarr_converters_tools&quot;, &quot;pipelines/_filters.py&quot;, &quot;WellFilter&quot;),</span>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="c1">#     (&quot;ome_zarr_converters_tools&quot;, &quot;models/_converter_options.py&quot;, &quot;ConverterOptions&quot;),</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="c1">#     ("ome_zarr_converters_tools", "fractal/_models.py", "AcquisitionOptions"),</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="c1">#     ("ome_zarr_converters_tools", "pipelines/_filters.py", "WellFilter"),</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="c1">#     ("ome_zarr_converters_tools", "models/_converter_options.py", "ConverterOptions"),</span>
 <a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="c1">#     ...</span>
 <a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="c1"># ]</span>
 </code></pre></div>
