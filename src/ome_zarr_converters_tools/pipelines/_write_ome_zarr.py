@@ -224,7 +224,9 @@ def write_tiled_image_as_zarr(
         resource=resource,
         writer_mode=writer_mode,
     )
-    image.consolidate()
+    # `mode="auto"` opts in to ngio 1.2's default now: it takes the faster
+    # in-memory pyramid path only where it is provably identical to the dask one.
+    image.consolidate(mode="auto")
     ome_zarr.set_channel_windows_with_percentiles()
     logger.info("OME-Zarr image creation and data writing complete.")
 

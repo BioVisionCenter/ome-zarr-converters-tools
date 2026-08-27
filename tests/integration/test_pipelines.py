@@ -709,7 +709,7 @@ class TestPlateEndToEndNoOverwrite:
             assert np.any(data > 0)
 
         plate = open_ome_zarr_plate(str(tmp_path / "NoOverwritePlate.zarr"))
-        assert len(plate.images_paths()) == len(images)
+        assert len(plate.images_paths(max_workers="auto")) == len(images)
 
         # Running the init task again in NO_OVERWRITE mode must refuse.
         with pytest.raises(FileExistsError):

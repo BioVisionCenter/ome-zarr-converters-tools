@@ -54,7 +54,7 @@ classifiers = [
 ]
 # add your package dependencies here
 dependencies = [
-    "ngio>=0.5.8,<0.6.0",
+    "ngio>=1.1.0,<1.2",
     "numpy>=1.26",
     "pillow>=10.0",
     "tifffile>=2024.1.30",

@@ -3,9 +3,8 @@
 from typing import Protocol
 
 import polars as pl
-from ngio import DefaultNgffVersion, NgffVersions
+from ngio import DefaultNgffVersion, ImageInWellPath, NgffVersions
 from ngio.hcs import create_empty_plate, open_ome_zarr_plate
-from ngio.hcs._plate import ImageInWellPath
 from ngio.tables import ConditionTable
 
 from ome_zarr_converters_tools.core._tile_region import TiledImage
@@ -136,7 +135,9 @@ def setup_plates(
                 overwrite=False,
                 cache=True,
             )
-        existing_image = plate.images_paths()
+        # `max_workers="auto"` opts in to ngio 1.2's default now (the 1.1
+        # default, serial reads, emits an `NgioFutureWarning`).
+        existing_image = plate.images_paths(max_workers="auto")
         for image in tile_images:
             image_collection = image.collection
             if not isinstance(image_collection, ImageInPlate):

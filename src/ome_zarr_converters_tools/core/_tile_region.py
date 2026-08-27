@@ -86,9 +86,10 @@ class TileFOVGroup(BaseModel, Generic[ImageLoaderInterfaceType]):
 
     def roi(self) -> Roi:
         """Get the global ROI covering all TileSlices in the FOV group."""
+        # `Roi` is frozen (since ngio 1.1.0b2); derive a renamed copy instead
+        # of assigning in place.
         union_roi = bulk_roi_union([region.roi for region in self.regions])
-        union_roi.name = self.fov_name
-        return union_roi
+        return union_roi.model_copy(update={"name": self.fov_name})
 
     def ref_slice(self) -> TileSlice[ImageLoaderInterfaceType]:
         """Get a reference TileSlice for this FOV group."""
@@ -309,9 +310,10 @@ class TiledImage(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfac
 
     def roi(self) -> Roi:
         """Get the global ROI covering all TileSlices in the TiledImage."""
+        # `Roi` is frozen (since ngio 1.1.0b2); derive a renamed copy instead
+        # of assigning in place.
         union_roi = bulk_roi_union([region.roi for region in self.regions])
-        union_roi.name = self.name or self.path
-        return union_roi
+        return union_roi.model_copy(update={"name": self.name or self.path})
 
     def _prepare_slice_loading(
         self, resource: Any | None = None
