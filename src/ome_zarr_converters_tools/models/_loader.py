@@ -119,9 +119,9 @@ class DefaultImageLoader(ImageLoaderInterface):
                 return self.load_tiff(path)
             except Exception as e:
                 raise ValueError(
-                    f"DefaultImageLoader cannot handle file type {suffix!r}: "
-                    "the TIFF fallback failed to read the file. Supported types are "
-                    ".tiff, .tif, .tf2, .tf8, .btf, .stk, .png, .jpg, .jpeg, .bmp, .npy."
+                    f"DefaultImageLoader cannot handle file type {suffix!r}: the "
+                    "TIFF fallback failed to read the file. Supported types are .tiff, "
+                    ".tif, .tf2, .tf8, .btf, .stk, .png, .jpg, .jpeg, .bmp, .npy."
                 ) from e
 
     def load_tiff(self, path: str) -> np.ndarray:

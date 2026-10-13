@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Features
+- `DefaultImageLoader` recognizes the `.stk` extension (MetaMorph stack files)
+  and loads it through the TIFF path without the unrecognized-extension warning
+  (closing [#75](https://github.com/BioVisionCenter/ome-zarr-converters-tools/issues/75)).
+
 ### Chores
 - Migrate to `ngio` 1.1 (currently pinned to `ngio==1.1.0b2` for pre-release
   testing; the pin will be relaxed to a range before release). Call-site
