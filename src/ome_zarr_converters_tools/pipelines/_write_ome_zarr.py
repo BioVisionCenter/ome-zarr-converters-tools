@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from logging import getLogger
 from typing import Any
 
@@ -20,6 +21,7 @@ from ome_zarr_converters_tools.core._tile_region import (
 )
 from ome_zarr_converters_tools.models import (
     ConverterOptions,
+    NoSharding,
     OmeZarrOptions,
     OverwriteMode,
     WriterMode,
@@ -52,6 +54,22 @@ def _compute_chunk_size(
             logger.warning(f"Unknown axis '{ax}' encountered. Setting chunk size to 1.")
             chunks.append(1)
     return tuple(chunks)
+
+
+def _compute_shard_size(
+    chunks: tuple[int, ...], axes: Sequence[str], ome_zarr_options: OmeZarrOptions
+) -> tuple[int, ...] | None:
+    """Shard shape as a per-axis multiple of `chunks`, or `None` when unsharded.
+
+    A whole multiple by construction, which is what zarr requires; ngio clips
+    shards that exceed the array shape.
+    """
+    strategy = ome_zarr_options.shards
+    if isinstance(strategy, NoSharding):
+        return None
+    return tuple(
+        chunk * strategy.get_factor(ax) for ax, chunk in zip(axes, chunks, strict=True)
+    )
 
 
 def _region_to_pixel_coordinates(
@@ -202,11 +220,13 @@ def write_tiled_image_as_zarr(
     )
     channels_meta = build_channels_meta(tiled_image)
     _validate_channels_axis(tiled_image, channels_meta)
+    chunks = _compute_chunk_size(tiled_image, omezarr_options)
     ome_zarr = create_empty_ome_zarr(
         store=base_group,
         axes_names=tiled_image.axes,
         shape=tiled_image.output_shape(),
-        chunks=_compute_chunk_size(tiled_image, omezarr_options),
+        chunks=chunks,
+        shards=_compute_shard_size(chunks, tiled_image.axes, omezarr_options),
         pixelsize=tiled_image.xy_pixel_size,
         z_spacing=tiled_image.z_spacing,
         time_spacing=tiled_image.t_spacing,

@@ -9,7 +9,10 @@ import numpy as np
 from ngio import PixelSize, Roi
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from ome_zarr_converters_tools.core._dask_lazy_loader import lazy_array_from_regions
+from ome_zarr_converters_tools.core._dask_lazy_loader import (
+    ChunksLike,
+    lazy_array_from_regions,
+)
 from ome_zarr_converters_tools.core._roi_utils import (
     bulk_roi_union,
     move_roi_by,
@@ -148,9 +151,12 @@ class TileFOVGroup(BaseModel, Generic[ImageLoaderInterfaceType]):
         return full_image
 
     def load_data_dask(
-        self, resource: Any | None = None, chunks: tuple[int, ...] | None = None
+        self, resource: Any | None = None, chunks: ChunksLike | None = None
     ) -> da.Array:
-        """Load the full image data for this FOV group using Dask."""
+        """Load the full image data for this FOV group using Dask.
+
+        `chunks` defaults to a single block covering the whole group.
+        """
         shape = self.shape()
         dtype = self.data_type
         slices = self._prepare_slice_loading(resource=resource)
@@ -360,9 +366,12 @@ class TiledImage(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfac
         return full_image
 
     def load_data_dask(
-        self, resource: Any | None = None, chunks: tuple[int, ...] | None = None
+        self, resource: Any | None = None, chunks: ChunksLike | None = None
     ) -> da.Array:
-        """Load the full image data for this TiledImage using Dask."""
+        """Load the full image data for this TiledImage using Dask.
+
+        `chunks` defaults to a single block covering the whole image.
+        """
         shape = self.shape()
         dtype = self.data_type
         slices = self._prepare_slice_loading(resource=resource)

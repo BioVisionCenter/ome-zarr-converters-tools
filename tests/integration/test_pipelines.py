@@ -21,7 +21,9 @@ from ome_zarr_converters_tools.models import (
     AcquisitionDetails,
     AutoTiling,
     ChannelInfo,
+    ChunkMultipleSharding,
     ConverterOptions,
+    FixedSizeChunking,
     ImageInPlate,
     InplaceTiling,
     MosaicGrouping,
@@ -182,6 +184,55 @@ class TestTiledImageCreationPipeline:
         )
         assert omezarr.level_paths == ["s0", "s1", "s2"]
         assert np.any(omezarr.get_image(path="s2").get_array() > 0)
+
+    def test_sharded_output_matches_unsharded(self, tmp_path: Path) -> None:
+        coll = SingleImage(image_path="test_sharded")
+        tiles = _make_tiles(coll)
+        pipeline = build_default_registration_pipeline(
+            StagePositionCorrections(), InplaceTiling()
+        )
+
+        def write(opts: ConverterOptions, name: str, writer_mode: WriterMode):
+            images = tiles_aggregation_pipeline(tiles=tiles, converter_options=opts)
+            return tiled_image_creation_pipeline(
+                zarr_url=str(tmp_path / name),
+                tiled_image=images[0],
+                registration_pipeline=pipeline,
+                converter_options=opts,
+                writer_mode=writer_mode,
+                overwrite_mode=OverwriteMode.OVERWRITE,
+            )
+
+        plain = write(
+            ConverterOptions(omezarr_options=OmeZarrOptions(ngff_version="0.5")),
+            "plain.zarr",
+            WriterMode.BY_FOV,
+        )
+        sharded_opts = ConverterOptions(
+            omezarr_options=OmeZarrOptions(
+                ngff_version="0.5",
+                chunks=FixedSizeChunking(xy_chunk=32),
+                shards=ChunkMultipleSharding(xy_factor=2),
+            )
+        )
+        sharded = write(sharded_opts, "sharded.zarr", WriterMode.BY_TILE_DASK)
+
+        image = sharded.get_image()
+        axes = image.axes
+        expected_unit = tuple(64 if ax in ("y", "x") else 1 for ax in axes)
+        expected_chunks = tuple(32 if ax in ("y", "x") else 1 for ax in axes)
+        assert image.chunks == expected_chunks
+        assert image.write_granularity == expected_unit
+        np.testing.assert_array_equal(image.get_array(), plain.get_image().get_array())
+        # The pyramid is sharded too.
+        assert (
+            sharded.get_image(path="1").write_granularity
+            != sharded.get_image(path="1").chunks
+        )
+
+    def test_sharding_rejected_on_ngff_0_4(self) -> None:
+        with pytest.raises(ValueError, match="Sharding requires OME-Zarr"):
+            OmeZarrOptions(ngff_version="0.4", shards=ChunkMultipleSharding())
 
     def test_keep_xy_offset_left_pads_output(self, tmp_path: Path) -> None:
         # remove_xy_offset="Keep" keeps absolute positions; a positive origin

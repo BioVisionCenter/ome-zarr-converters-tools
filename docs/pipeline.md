@@ -19,6 +19,31 @@ opts = ConverterOptions(
 
 When passed to `tiles_aggregation_pipeline()` and `tiled_image_creation_pipeline()`, its fields are used as defaults. You can also override specific settings (like `writer_mode` or `grouping`) by passing them directly to the pipeline functions.
 
+### OmeZarrOptions
+
+`OmeZarrOptions` controls the on-disk layout of each OME-Zarr image:
+
+- `levels`: how many resolution levels the pyramid has (`NumberOfLevels`) or their explicit names (`NamedLevels`).
+- `chunks`: the storage chunk shape, sized like a field of view (`FovBasedChunking`, the default) or fixed (`FixedSizeChunking`).
+- `shards`: how chunks are grouped into shards, i.e. one stored object holding several chunks. `NoSharding` (the default) stores one object per chunk; `ChunkMultipleSharding` groups a fixed number of chunks per axis. Sharding requires `ngff_version="0.5"` (zarr format 3); requesting it with `"0.4"` fails when the options are built.
+- `ngff_version` and `table_backend`: the OME-NGFF version to write and the file format of the ROI/condition tables.
+
+```python
+from ome_zarr_converters_tools import (
+    ChunkMultipleSharding,
+    FixedSizeChunking,
+    OmeZarrOptions,
+)
+
+opts = OmeZarrOptions(
+    ngff_version="0.5",
+    chunks=FixedSizeChunking(xy_chunk=512),
+    shards=ChunkMultipleSharding(xy_factor=4),  # 2048 x 2048 pixel shards
+)
+```
+
+A shard is the atomic write unit: every write re-encodes the shards it touches. The Dask writer modes stream one write unit at a time, so they pair well with large shards; with the numpy writer modes keep shards no larger than a field of view.
+
 ## AcquisitionDetails
 
 `AcquisitionDetails` describes the physical properties of the acquisition: pixel sizes, coordinate systems, channel metadata, and stage corrections. It is passed when building `Tile` objects (via `hcs_images_from_dataframe()` or `single_images_from_dataframe()`) and is shared by all tiles in the same acquisition.
@@ -412,8 +437,8 @@ Writer modes control how image data is loaded and written to the OME-Zarr datase
 |------|-------------|--------|-------|
 | `WriterMode.BY_TILE` | Loads and writes one tile at a time, sequentially | Low | Slow |
 | `WriterMode.BY_FOV` | Loads and writes one FOV at a time, sequentially | Medium | Medium |
-| `WriterMode.BY_FOV_DASK` | Loads FOVs lazily via Dask, writes one at a time | Medium | Fast |
-| `WriterMode.BY_TILE_DASK` | Loads all tiles lazily via Dask, writes at once | High | Fast |
+| `WriterMode.BY_FOV_DASK` | Loads FOVs lazily via Dask, streams each FOV one write unit at a time | Low–Medium | Fast |
+| `WriterMode.BY_TILE_DASK` | Loads all tiles lazily via Dask, streams one write unit (chunk or shard) at a time | Low–Medium | Fast |
 | `WriterMode.IN_MEMORY` | Loads entire image into memory, writes at once | High | Fastest |
 
 ```python

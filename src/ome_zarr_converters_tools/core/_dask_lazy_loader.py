@@ -77,17 +77,83 @@ def _normalize_slice(s: slice, dim_size: int) -> tuple[int, int]:
     return start, stop
 
 
+ChunksLike = tuple[int | tuple[int, ...], ...]
+"""Per-axis chunking: a uniform chunk size, or the explicit block sizes."""
+
+
 def _build_chunk_ranges(
-    shape: tuple[int, ...], chunks: tuple[int, ...]
+    shape: tuple[int, ...], chunks: ChunksLike
 ) -> list[list[tuple[int, int]]]:
-    """Return per-axis lists of `(start, stop)` for every chunk."""
+    """Return per-axis lists of `(start, stop)` for every chunk.
+
+    An axis entry that is an `int` is a uniform chunk size (the last chunk
+    may be shorter); a tuple is the explicit, dask-style block sizes and must
+    sum to the axis length.
+    """
     ranges = []
     for dim_size, chunk_size in zip(shape, chunks, strict=True):
         axis_ranges = []
-        for start in range(0, dim_size, chunk_size):
-            axis_ranges.append((start, min(start + chunk_size, dim_size)))
+        if isinstance(chunk_size, tuple):
+            if sum(chunk_size) != dim_size:
+                raise ValueError(
+                    f"Explicit chunks {chunk_size} must sum to the axis length "
+                    f"({dim_size})."
+                )
+            start = 0
+            for size in chunk_size:
+                axis_ranges.append((start, start + size))
+                start += size
+        else:
+            for start in range(0, dim_size, chunk_size):
+                axis_ranges.append((start, min(start + chunk_size, dim_size)))
         ranges.append(axis_ranges)
     return ranges
+
+
+def aligned_chunks(
+    start: tuple[int, ...], shape: tuple[int, ...], unit: tuple[int, ...]
+) -> tuple[tuple[int, ...], ...]:
+    """Block sizes for a region so its block edges land on a global grid.
+
+    The region covers `[start, start + shape)` of a larger array whose
+    atomic write unit (zarr shard or chunk) is `unit`. The returned per-axis
+    block sizes cut the region at every multiple of `unit` in global
+    coordinates, so each block touches exactly one write unit; the first and
+    last blocks are shorter when the region does not start or end on the grid.
+
+    Args:
+        start: Region origin in global array coordinates.
+        shape: Region extent per axis.
+        unit: Write unit per axis (positive).
+
+    Returns:
+        Dask-style explicit block sizes per axis, usable as `chunks` in
+        `lazy_array_from_regions`.
+    """
+    if not len(start) == len(shape) == len(unit):
+        raise ValueError(
+            f"start ({len(start)}), shape ({len(shape)}) and unit ({len(unit)}) "
+            "must have the same length."
+        )
+    result: list[tuple[int, ...]] = []
+    for axis_start, axis_len, axis_unit in zip(start, shape, unit, strict=True):
+        if axis_unit <= 0:
+            raise ValueError(f"Write unit must be positive, got {axis_unit}.")
+        if axis_len <= 0:
+            result.append((0,))
+            continue
+        axis_stop = axis_start + axis_len
+        sizes: list[int] = []
+        edge = axis_start
+        # First grid line strictly after the region start.
+        next_edge = (axis_start // axis_unit + 1) * axis_unit
+        while next_edge < axis_stop:
+            sizes.append(next_edge - edge)
+            edge = next_edge
+            next_edge += axis_unit
+        sizes.append(axis_stop - edge)
+        result.append(tuple(sizes))
+    return tuple(result)
 
 
 def _build_chunk_to_loaders(
@@ -181,7 +247,7 @@ def _composite_chunk(
 def lazy_array_from_regions(
     regions: list[tuple[tuple[slice, ...], Callable[[], np.ndarray]]],
     shape: tuple[int, ...],
-    chunks: tuple[int, ...],
+    chunks: ChunksLike,
     dtype: str = "uint16",
     fill_value: float = 0,
 ) -> da.Array:
@@ -196,7 +262,8 @@ def lazy_array_from_regions(
         regions: Each entry is `(per_axis_slices, loader)` where `loader` is
             a zero-argument callable returning an `np.ndarray`.
         shape: Output array shape.
-        chunks: Chunk size per axis.
+        chunks: Chunk size per axis, or explicit block sizes per axis (see
+            `aligned_chunks`).
         dtype: Output dtype.
         fill_value: Value used for areas not covered by any loader.
 
