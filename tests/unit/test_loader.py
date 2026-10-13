@@ -80,6 +80,16 @@ class TestDefaultImageLoader:
         loaded = loader.load_data()
         np.testing.assert_array_equal(loaded, data)
 
+    def test_load_stk_extension(self, tmp_path: Path) -> None:
+        tifffile = pytest.importorskip("tifffile")
+        data = np.random.randint(0, 255, (10, 10), dtype=np.uint8)
+        stk_path = tmp_path / "test.stk"
+        tifffile.imwrite(str(stk_path), data)
+
+        loader = DefaultImageLoader(file_path=str(stk_path))
+        loaded = loader.load_data()
+        np.testing.assert_array_equal(loaded, data)
+
     def test_unknown_extension_falls_back_to_tiff(self, tmp_path: Path) -> None:
         tifffile = pytest.importorskip("tifffile")
         data = np.random.randint(0, 255, (10, 10), dtype=np.uint8)

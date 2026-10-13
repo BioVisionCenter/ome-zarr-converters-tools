@@ -101,7 +101,7 @@ class DefaultImageLoader(ImageLoaderInterface):
         path = self._resolve_path(resource)
 
         suffix = basename_url(path).split(".")[-1].lower()
-        if suffix in ["tiff", "tif", "tf2", "tf8", "btf"]:
+        if suffix in ["tiff", "tif", "tf2", "tf8", "btf", "stk"]:
             return self.load_tiff(path)
         elif suffix in ["png", "jpg", "jpeg", "bmp"]:
             return self.load_png(path)
@@ -121,7 +121,7 @@ class DefaultImageLoader(ImageLoaderInterface):
                 raise ValueError(
                     f"DefaultImageLoader cannot handle file type {suffix!r}: "
                     "the TIFF fallback failed to read the file. Supported types are "
-                    ".tiff, .tif, .tf2, .tf8, .btf, .png, .jpg, .jpeg, .bmp, .npy."
+                    ".tiff, .tif, .tf2, .tf8, .btf, .stk, .png, .jpg, .jpeg, .bmp, .npy."
                 ) from e
 
     def load_tiff(self, path: str) -> np.ndarray:
