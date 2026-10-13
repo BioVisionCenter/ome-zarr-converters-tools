@@ -1,29 +1,34 @@
 # Changelog
 
-## [Unreleased]
+## [v1.1.0]
+
+Requires `ngio` 1.1. Written OME-Zarr output is unchanged.
 
 ### Features
-- `DefaultImageLoader` recognizes the `.stk` extension (MetaMorph stack files)
-  and loads it through the TIFF path without the unrecognized-extension warning
-  (closing [#75](https://github.com/BioVisionCenter/ome-zarr-converters-tools/issues/75)).
+- `DefaultImageLoader` recognizes the `.stk` extension
+  ([#75](https://github.com/BioVisionCenter/ome-zarr-converters-tools/issues/75)).
+- Sharded output via `OmeZarrOptions.shards` (`NoSharding` by default,
+  `ChunkMultipleSharding` groups N chunks per axis into a shard). Requires
+  `ngff_version="0.5"`.
+- The Dask writer modes stream one write unit (chunk or shard) at a time
+  instead of materializing the whole image or FOV first; much lower memory for
+  `By Tile (Using Dask)`.
+- Plate setup writes the plate and well metadata once per plate instead of
+  once per image.
+
+### API Breaking Changes
+- `ngio` requirement: `>=0.5.8,<0.6.0` → `>=1.1.1,<1.3`. Bump your own `ngio`
+  pin in the same change.
+- `ngio` 1.0.1 moved plate lock files to `<store>.ngio-locks/`: upgrade every
+  writer to a plate at the same time, or concurrent updates can be lost silently.
+- `Roi`/`RoiSlice` (returned by `Tile.to_roi()`, `TiledImage.roi()`, ...) are
+  frozen; use `roi.model_copy(update={...})` instead of assigning attributes.
+- The deprecated `ngff_version` argument of `setup_images_for_conversion` is
+  removed; the version comes from `converter_options.omezarr_options.ngff_version`.
 
 ### Chores
-- Migrate to `ngio` 1.1 (currently pinned to `ngio==1.1.0b2` for pre-release
-  testing; the pin will be relaxed to a range before release). Call-site
-  changes, none of which alter written output:
-  - `image.consolidate()` → `image.consolidate(mode="auto")` (opts in to ngio
-    1.2's default; the in-memory path is only taken where provably identical).
-  - Plate fan-outs (`plate.images_paths()`, `plate.get_wells()`,
-    `plate.get_images()`) now pass `max_workers="auto"` (opts in to ngio 1.2's
-    default of concurrent reads; ngio 1.1 warns `NgioFutureWarning` on the
-    serial default).
-  - `ImageInWellPath` is imported from the public `ngio` namespace instead of
-    `ngio.hcs._plate`; `Roi`/`RoiSlice` from `ngio` instead of
-    `ngio.common._roi` (`pixel_to_world`/`world_to_pixel` still have no public
-    home and keep the private import).
-  - `Roi`/`RoiSlice` are frozen since ngio 1.1.0b2: the two in-place
-    `union_roi.name = ...` mutations in `core/_tile_region.py` are now
-    `union_roi.model_copy(update={"name": ...})`.
+- Migrate call sites to `ngio` 1.1 (`consolidate(mode="auto")`,
+  `max_workers="auto"` on plate fan-outs, public imports).
 
 ## [v1.0.2]
 
