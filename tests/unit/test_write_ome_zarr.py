@@ -15,14 +15,17 @@ from ome_zarr_converters_tools.core._tile_to_tiled_images import tiled_image_fro
 from ome_zarr_converters_tools.models import (
     AcquisitionDetails,
     ChannelInfo,
+    ChunkMultipleSharding,
     FixedSizeChunking,
     FovBasedChunking,
+    NoSharding,
     OmeZarrOptions,
     SingleImage,
 )
 from ome_zarr_converters_tools.pipelines._write_ome_zarr import (
     _attribute_to_condition_table,
     _compute_chunk_size,
+    _compute_shard_size,
     _region_to_pixel_coordinates,
     _validate_channels_axis,
     build_channels_meta,
@@ -295,3 +298,37 @@ class TestValidateChannelsAxis:
         meta = build_channels_meta(img)
         assert meta is not None
         assert img.output_shape()[img.axes.index("c")] == len(meta)
+
+
+class TestComputeShardSize:
+    def test_no_sharding_returns_none(self) -> None:
+        options = OmeZarrOptions(ngff_version="0.5")
+        assert (
+            _compute_shard_size((1, 1, 64, 64), ["c", "z", "y", "x"], options) is None
+        )
+
+    def test_shards_are_chunk_multiples(self) -> None:
+        options = OmeZarrOptions(
+            ngff_version="0.5",
+            shards=ChunkMultipleSharding(xy_factor=4, z_factor=2, c_factor=3),
+        )
+        shards = _compute_shard_size((3, 5, 64, 32), ["c", "z", "y", "x"], options)
+        assert shards == (9, 10, 256, 128)
+
+    def test_time_axis_and_unknown_axis(self) -> None:
+        options = OmeZarrOptions(
+            ngff_version="0.5", shards=ChunkMultipleSharding(t_factor=2)
+        )
+        shards = _compute_shard_size(
+            (1, 1, 2, 64, 64), ["t", "c", "q", "y", "x"], options
+        )
+        # Unknown axes keep a factor of one; xy use the default factor.
+        assert shards == (2, 1, 2, 256, 256)
+
+    def test_sharding_requires_ngff_0_5(self) -> None:
+        with pytest.raises(ValueError, match="Sharding requires OME-Zarr"):
+            OmeZarrOptions(ngff_version="0.4", shards=ChunkMultipleSharding())
+
+    def test_no_sharding_allowed_on_ngff_0_4(self) -> None:
+        options = OmeZarrOptions(ngff_version="0.4")
+        assert isinstance(options.shards, NoSharding)

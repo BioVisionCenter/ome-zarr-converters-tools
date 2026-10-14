@@ -1,11 +1,12 @@
 from enum import StrEnum
-from typing import Annotated, Literal
+from typing import Annotated, Literal, Self
 
 from ngio import DefaultNgffVersion, NgffVersions
 from pydantic import (
     ConfigDict,
     Field,
     field_validator,
+    model_validator,
 )
 
 from ome_zarr_converters_tools.models._base import UserFacingModel
@@ -272,6 +273,49 @@ ChunkingStrategy = Annotated[
 ]
 
 
+class NoSharding(UserFacingModel):
+    """Store every chunk as its own object (no sharding)."""
+
+    model_config = ConfigDict(title="No Sharding")
+
+    mode: Literal["None"] = "None"
+    """How storage chunks are grouped into shards."""
+
+
+class ChunkMultipleSharding(UserFacingModel):
+    """Group a fixed number of chunks per axis into one shard."""
+
+    model_config = ConfigDict(title="Multiple of Chunks")
+
+    mode: Literal["Multiple of Chunks"] = "Multiple of Chunks"
+    """How storage chunks are grouped into shards."""
+    xy_factor: int = Field(default=4, ge=1, title="Chunks per Shard in XY")
+    """Number of chunks per shard along X and along Y."""
+    z_factor: int = Field(default=1, ge=1, title="Chunks per Shard in Z")
+    """Number of chunks per shard along Z."""
+    c_factor: int = Field(default=1, ge=1, title="Chunks per Shard in C")
+    """Number of chunks per shard along C."""
+    t_factor: int = Field(default=1, ge=1, title="Chunks per Shard in T")
+    """Number of chunks per shard along T."""
+
+    def get_factor(self, axis: str) -> int:
+        """Chunks per shard along `axis` (`1` for axes without a setting)."""
+        if axis in ("x", "y"):
+            return self.xy_factor
+        if axis == "z":
+            return self.z_factor
+        if axis == "c":
+            return self.c_factor
+        if axis == "t":
+            return self.t_factor
+        return 1
+
+
+ShardingStrategy = Annotated[
+    NoSharding | ChunkMultipleSharding, Field(discriminator="mode")
+]
+
+
 class NumberOfLevels(UserFacingModel):
     """Create a number of resolution levels with default names (`0`, `1`, ...)."""
 
@@ -342,11 +386,35 @@ class OmeZarrOptions(UserFacingModel):
     )
     """How the image is split into storage chunks: sized like the fields of
     view (`Same as FOV`) or with fixed sizes (`Fixed Size`)."""
+    shards: ShardingStrategy = Field(
+        default_factory=NoSharding, title="Sharding Strategy"
+    )
+    """
+    How storage chunks are grouped into shards (one object per shard).
+    Requires NGFF 0.5 (zarr format 3).
+
+    - `None`: one object per chunk.
+    - `Multiple of Chunks`: a fixed number of chunks per axis form one shard.
+
+    A shard is the atomic write unit, so prefer the Dask writer modes (which
+    write one shard at a time) or shards no larger than a field of view;
+    otherwise every write re-encodes the shards it touches.
+    """
     ngff_version: NgffVersions = Field(default=DefaultNgffVersion, title="NGFF Version")
     """Version of the OME-NGFF specification to target."""
     table_backend: BackendType = Field(default=BackendType.CSV, title="Table Backend")
     """File format used to store tables (e.g. ROI tables) inside the
     OME-Zarr."""
+
+    @model_validator(mode="after")
+    def _shards_require_ngff_0_5(self) -> Self:
+        if not isinstance(self.shards, NoSharding) and self.ngff_version == "0.4":
+            raise ValueError(
+                "Sharding requires OME-Zarr 0.5 (zarr format 3), but "
+                "ngff_version='0.4' was requested. Set ngff_version='0.5' or "
+                "use the `None` sharding strategy."
+            )
+        return self
 
 
 class ConverterOptions(UserFacingModel):
@@ -358,14 +426,14 @@ class ConverterOptions(UserFacingModel):
 
     - `By Tile`: Write data one tile at a time. This consumes less memory, but may be
       slower.
-    - `By Tile (Using Dask)`: Write tiles in parallel using Dask. This is
-      usually faster than writing by tile sequentially, but may consume more
-      memory.
+    - `By Tile (Using Dask)`: Build the whole image lazily with Dask and stream
+      it a few write blocks at a time, so memory does not grow with the image.
+      Usually faster than writing by tile sequentially; each tile is loaded once.
     - `By FOV`: Write data one field of view at a time. Often the best compromise
       between speed and memory usage in most cases.
-    - `By FOV (Using Dask)`: Write fields of view in parallel using Dask.
-      This is usually faster than writing by FOV sequentially, but may consume
-      more memory.
+    - `By FOV (Using Dask)`: Build each field of view lazily with Dask and
+      stream it a few write blocks at a time. Usually faster than writing by
+      FOV sequentially.
     - `In Memory`: Load all data into memory before writing.
     """
     grouping: Grouping = Field(default_factory=MosaicGrouping, title="Grouping")

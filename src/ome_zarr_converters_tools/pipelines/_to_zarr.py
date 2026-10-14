@@ -1,13 +1,48 @@
 import time
+from collections.abc import Sequence
 from logging import getLogger
 from typing import Any
 
-from ngio import Image
+from ngio import Image, PixelSize, Roi
 
+from ome_zarr_converters_tools.core._dask_lazy_loader import (
+    ChunksLike,
+    aligned_chunks,
+)
 from ome_zarr_converters_tools.core._tile_region import TiledImage
 from ome_zarr_converters_tools.models import WriterMode
 
 logger = getLogger(__name__)
+
+
+def dask_write_chunks(
+    roi: Roi,
+    shape: tuple[int, ...],
+    axes: Sequence[str],
+    pixel_size: PixelSize,
+    image: Image,
+) -> ChunksLike | None:
+    """Dask block sizes that cut `roi` on the write units of `image`.
+
+    ngio's `store_dask` rechunks a dask patch onto its own grid of whole
+    write units (chunks or shards) and stores the blocks in parallel. A
+    lazy patch cut at every multiple of `image.write_granularity`, in array
+    coordinates, turns that rechunk into a concatenation of whole blocks, so
+    the data streams a few units at a time instead of being materialized
+    first.
+
+    Returns `None` when `image` has no write unit for `axes` (a mock, say):
+    the patch is then a single block.
+    """
+    unit = getattr(image, "write_granularity", None)
+    if not isinstance(unit, tuple) or len(unit) != len(axes):
+        return None
+    slicing = roi.to_slicing_dict(pixel_size=pixel_size)
+    start = []
+    for axis in axes:
+        axis_slice = slicing.get(axis)
+        start.append(0 if axis_slice is None else round(axis_slice.start or 0))
+    return aligned_chunks(tuple(start), tuple(shape), unit)
 
 
 def sequential_tile_writing(
@@ -41,10 +76,13 @@ def dask_parallel_tile_writing(
     For each region in the TiledImage, load the data and write it to the
     corresponding ROI in the OME-Zarr image.
     """
+    roi = tiled_image.roi()
+    chunks = dask_write_chunks(
+        roi, tiled_image.shape(), tiled_image.axes, tiled_image.pixel_size, image
+    )
     logger.info("Starting Dask in-memory writing.")
     timer = time.time()
-    full_image = tiled_image.load_data_dask(resource=resource)
-    roi = tiled_image.roi()
+    full_image = tiled_image.load_data_dask(resource=resource, chunks=chunks)
     image.set_roi(roi=roi, patch=full_image)
     elapsed = time.time() - timer
     logger.info(f"Elapsed time for Dask in-memory writing: {elapsed:.2f} seconds.")
@@ -88,7 +126,10 @@ def dask_parallel_fov_writing(
     timer = time.time()
     for idx, group in enumerate(groups):
         roi = group.roi()
-        group_data = group.load_data_dask(resource=resource)
+        chunks = dask_write_chunks(
+            roi, group.shape(), group.axes, group.pixel_size, image
+        )
+        group_data = group.load_data_dask(resource=resource, chunks=chunks)
         image.set_roi(roi=roi, patch=group_data)
         if idx == 0:
             elapsed = time.time() - timer

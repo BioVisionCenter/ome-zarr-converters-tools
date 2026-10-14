@@ -73,6 +73,23 @@ def _setup_condition_table(
     return pl.DataFrame(condition_table)
 
 
+def _image_in_well_path(image: TiledImage) -> tuple[ImageInWellPath, str]:
+    """Return the plate placement of `image` and its path inside the plate."""
+    image_collection = image.collection
+    if not isinstance(image_collection, ImageInPlate):
+        raise ValueError(
+            f"Expected ImageInPlate collection, got {type(image_collection)}"
+        )
+    image_in_well = ImageInWellPath(
+        row=image_collection.row,
+        column=image_collection.column,
+        path=image_collection.path_in_well(),
+        acquisition_id=image_collection.acquisition,
+        acquisition_name=str(image_collection.acquisition),
+    )
+    return image_in_well, image_collection.image_in_well_path()
+
+
 def setup_plates(
     zarr_dir: str,
     tiled_images: list[TiledImage],
@@ -94,6 +111,7 @@ def setup_plates(
 
     for plate_path, tile_images in images_grouped_by_plate.items():
         plate_url = join_url_paths(zarr_dir, plate_path)
+        images_in_wells = [_image_in_well_path(image) for image in tile_images]
         if overwrite_mode == OverwriteMode.NO_OVERWRITE:
             fs = filesystem_for_url(plate_url)
             if fs.exists(plate_url):
@@ -104,65 +122,40 @@ def setup_plates(
                     f"replace it, or "
                     f"overwrite_mode={OverwriteMode.EXTEND.value} to add to it."
                 )
-        if overwrite_mode == OverwriteMode.OVERWRITE:
-            plate = create_empty_plate(
-                store=plate_url,
-                name=plate_path,
-                ngff_version=ngff_version,
-                overwrite=True,
-                cache=True,
-            )
-        elif overwrite_mode == OverwriteMode.EXTEND:
-            # Distinguish "does not exist yet" from "exists but fails to open":
-            # only the former should create a fresh plate. A corrupt/unreadable
-            # existing store must raise from open, never be silently overwritten.
-            if filesystem_for_url(plate_url).exists(plate_url):
-                plate = open_ome_zarr_plate(plate_url, cache=True)
-            else:
-                plate = create_empty_plate(
-                    store=plate_url,
-                    name=plate_path,
-                    ngff_version=ngff_version,
-                    overwrite=False,
-                    cache=True,
+        # Distinguish "does not exist yet" from "exists but fails to open":
+        # only the former should create a fresh plate. A corrupt/unreadable
+        # existing store must raise from open, never be silently overwritten.
+        extend_existing = overwrite_mode == OverwriteMode.EXTEND and filesystem_for_url(
+            plate_url
+        ).exists(plate_url)
+        if extend_existing:
+            plate = open_ome_zarr_plate(plate_url, cache=True)
+            # `max_workers="auto"` opts in to ngio 1.2's default now (the 1.1
+            # default, serial reads, emits an `NgioFutureWarning`).
+            existing_images = plate.images_paths(max_workers="auto")
+            for image_in_well, image_path in images_in_wells:
+                if image_path in existing_images:
+                    # Image already exists in the plate, skip adding.
+                    continue
+                plate.add_image(
+                    row=image_in_well.row,
+                    column=image_in_well.column,
+                    image_path=image_in_well.path,
+                    acquisition_id=image_in_well.acquisition_id,
+                    acquisition_name=image_in_well.acquisition_name,
                 )
         else:
-            # NO_OVERWRITE — pre-flight check above already raised if plate existed
+            # NO_OVERWRITE: the pre-flight check above already raised if the
+            # plate existed. Passing `images=` writes the plate document once
+            # and each well document once; the per-image `add_image` loop it
+            # replaces rewrote the plate document for every image (ngio 1.1).
             plate = create_empty_plate(
                 store=plate_url,
                 name=plate_path,
+                images=[image_in_well for image_in_well, _ in images_in_wells],
                 ngff_version=ngff_version,
-                overwrite=False,
+                overwrite=overwrite_mode == OverwriteMode.OVERWRITE,
                 cache=True,
-            )
-        # `max_workers="auto"` opts in to ngio 1.2's default now (the 1.1
-        # default, serial reads, emits an `NgioFutureWarning`).
-        existing_image = plate.images_paths(max_workers="auto")
-        for image in tile_images:
-            image_collection = image.collection
-            if not isinstance(image_collection, ImageInPlate):
-                raise ValueError(
-                    f"Expected ImageInPlate collection, got {type(image_collection)}"
-                )
-            image_in_well = ImageInWellPath(
-                row=image_collection.row,
-                column=image_collection.column,
-                path=image_collection.path_in_well(),
-                acquisition_id=image_collection.acquisition,
-                acquisition_name=str(image_collection.acquisition),
-            )
-            image_path = image_collection.image_in_well_path()
-            if image_path in existing_image:
-                # Image already exists in the plate, skip adding
-                # This can only happen in 'extend' mode
-                # other modes would have overwritten or raised an error
-                continue
-            plate.add_image(
-                row=image_in_well.row,
-                column=image_in_well.column,
-                image_path=image_in_well.path,
-                acquisition_id=image_in_well.acquisition_id,
-                acquisition_name=image_in_well.acquisition_name,
             )
 
         # Build the condition table once per plate, from this plate's images only.

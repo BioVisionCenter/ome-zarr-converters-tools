@@ -1,29 +1,46 @@
 # Changelog
 
-## [Unreleased]
+## [v1.1.0]
+
+Requires `ngio` 1.1.2 or later. Written OME-Zarr output is unchanged.
 
 ### Features
-- `DefaultImageLoader` recognizes the `.stk` extension (MetaMorph stack files)
-  and loads it through the TIFF path without the unrecognized-extension warning
-  (closing [#75](https://github.com/BioVisionCenter/ome-zarr-converters-tools/issues/75)).
+- `DefaultImageLoader` recognizes the `.stk` extension
+  ([#75](https://github.com/BioVisionCenter/ome-zarr-converters-tools/issues/75)).
+- Sharded output via `OmeZarrOptions.shards` (`NoSharding` by default,
+  `ChunkMultipleSharding` groups N chunks per axis into a shard). Requires
+  `ngff_version="0.5"`.
+- The Dask writer modes build their lazy array on the grid ngio writes in, so
+  the data streams block by block instead of being materialized first: peak
+  memory no longer scales with the image size (`By Tile (Using Dask)` on a
+  1.1 GiB image: 2.3 GiB → 0.6 GiB above baseline).
+- Plate setup writes the plate and well metadata once per plate instead of
+  once per image.
+
+### Fix
+- Requires `ngio>=1.1.2`, which fixes a silent data loss in dask writes and a
+  `NgioValueError` in `consolidate()` for chunks or shards of 8 MiB or more on
+  an image that is not a multiple of them (`ngio` 1.1.1 `store_dask` let two
+  parallel writers share a storage chunk). The Dask writer modes build their
+  lazy array on the image's write unit and leave the block grid to `ngio`; ozct
+  carries no guard of its own.
+- The Dask writer modes no longer pickle the whole image once per tile while
+  building the dask graph, which was quadratic in the tile count
+  (`By Tile (Using Dask)`, 512 tiles of 8 MiB: 18 s → 5 s).
+
+### API Breaking Changes
+- `ngio` requirement: `>=0.5.8,<0.6.0` → `>=1.1.2,<1.3`. Bump your own `ngio`
+  pin in the same change.
+- `ngio` 1.0.1 moved plate lock files to `<store>.ngio-locks/`: upgrade every
+  writer to a plate at the same time, or concurrent updates can be lost silently.
+- `Roi`/`RoiSlice` (returned by `Tile.to_roi()`, `TiledImage.roi()`, ...) are
+  frozen; use `roi.model_copy(update={...})` instead of assigning attributes.
+- The deprecated `ngff_version` argument of `setup_images_for_conversion` is
+  removed; the version comes from `converter_options.omezarr_options.ngff_version`.
 
 ### Chores
-- Migrate to `ngio` 1.1 (currently pinned to `ngio==1.1.0b2` for pre-release
-  testing; the pin will be relaxed to a range before release). Call-site
-  changes, none of which alter written output:
-  - `image.consolidate()` → `image.consolidate(mode="auto")` (opts in to ngio
-    1.2's default; the in-memory path is only taken where provably identical).
-  - Plate fan-outs (`plate.images_paths()`, `plate.get_wells()`,
-    `plate.get_images()`) now pass `max_workers="auto"` (opts in to ngio 1.2's
-    default of concurrent reads; ngio 1.1 warns `NgioFutureWarning` on the
-    serial default).
-  - `ImageInWellPath` is imported from the public `ngio` namespace instead of
-    `ngio.hcs._plate`; `Roi`/`RoiSlice` from `ngio` instead of
-    `ngio.common._roi` (`pixel_to_world`/`world_to_pixel` still have no public
-    home and keep the private import).
-  - `Roi`/`RoiSlice` are frozen since ngio 1.1.0b2: the two in-place
-    `union_roi.name = ...` mutations in `core/_tile_region.py` are now
-    `union_roi.model_copy(update={"name": ...})`.
+- Migrate call sites to `ngio` 1.1 (`consolidate(mode="auto")`,
+  `max_workers="auto"` on plate fan-outs, public imports).
 
 ## [v1.0.2]
 
