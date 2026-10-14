@@ -10,11 +10,21 @@ Requires `ngio` 1.1. Written OME-Zarr output is unchanged.
 - Sharded output via `OmeZarrOptions.shards` (`NoSharding` by default,
   `ChunkMultipleSharding` groups N chunks per axis into a shard). Requires
   `ngff_version="0.5"`.
-- The Dask writer modes stream one write unit (chunk or shard) at a time
-  instead of materializing the whole image or FOV first; much lower memory for
-  `By Tile (Using Dask)`.
+- The Dask writer modes build their lazy array on the grid ngio writes in, so
+  the data streams block by block instead of being materialized first: peak
+  memory no longer scales with the image size (`By Tile (Using Dask)` on a
+  1.1 GiB image: 2.3 GiB → 0.6 GiB above baseline).
 - Plate setup writes the plate and well metadata once per plate instead of
   once per image.
+
+### Fix
+- The Dask writer modes no longer lose data when dask's write grid splits a
+  storage chunk between two parallel writers (`ngio` 1.1 `store_dask` with
+  chunks or shards of 8 MiB or more and an image that is not a multiple of
+  them). Such regions are detected and written sequentially, with a warning.
+- The Dask writer modes no longer pickle the whole image once per tile while
+  building the dask graph, which was quadratic in the tile count
+  (`By Tile (Using Dask)`, 512 tiles of 8 MiB: 18 s → 5 s).
 
 ### API Breaking Changes
 - `ngio` requirement: `>=0.5.8,<0.6.0` → `>=1.1.1,<1.3`. Bump your own `ngio`

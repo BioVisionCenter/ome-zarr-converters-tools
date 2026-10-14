@@ -126,10 +126,14 @@ class TileFOVGroup(BaseModel, Generic[ImageLoaderInterfaceType]):
             assert start is not None
             offset[axis] = -start
 
+        # Dask tokenizes each loader by pickling it; a closure over `self`
+        # would pickle the whole image per tile (quadratic in the tile count).
+        axes = self.axes
+
         def make_loader(
             region: TileSlice, resource: Any | None
         ) -> Callable[[], np.ndarray]:
-            return lambda: region.load_data(axes=self.axes, resource=resource)
+            return lambda: region.load_data(axes=axes, resource=resource)
 
         for region in self.regions:
             roi_zeroed = move_roi_by(region.roi, offset)  # type: ignore
@@ -338,10 +342,14 @@ class TiledImage(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfac
             assert start is not None
             offset[axis] = -start
 
+        # Dask tokenizes each loader by pickling it; a closure over `self`
+        # would pickle the whole image per tile (quadratic in the tile count).
+        axes = self.axes
+
         def make_loader(
             region: TileSlice, resource: Any | None
         ) -> Callable[[], np.ndarray]:
-            return lambda: region.load_data(axes=self.axes, resource=resource)
+            return lambda: region.load_data(axes=axes, resource=resource)
 
         slices = []
         for region in self.regions:
