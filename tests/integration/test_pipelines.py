@@ -8,6 +8,7 @@ import pandas as pd
 import pytest
 
 from ome_zarr_converters_tools.core._dummy_tiles import (
+    DummyLoader,
     StartPosition,
     TileShape,
     build_dummy_tile,
@@ -86,6 +87,48 @@ def _acq(n_channels: int = 1) -> AcquisitionDetails:
         xy_pixel_size=1.0,
         z_spacing=1.0,
         t_spacing=1.0,
+    )
+
+
+class _TypedDummyLoader(DummyLoader):
+    """`DummyLoader` whose data has `dtype` (the base loader is uint8 only)."""
+
+    dtype: str = "uint8"
+
+    def load_data(self, resource: Any | None = None) -> np.ndarray:
+        return super().load_data(resource=resource).astype(self.dtype)
+
+    def find_data_type(self, resource: Any | None = None) -> str:
+        return self.dtype
+
+
+def _dummy_tile_with_dtype(
+    *,
+    fov_name: str,
+    start: StartPosition,
+    shape: TileShape,
+    collection: SingleImage,
+    acquisition_details: AcquisitionDetails,
+    dtype: str,
+) -> Tile[Any, Any]:
+    tile = build_dummy_tile(
+        fov_name=fov_name,
+        start=start,
+        shape=shape,
+        collection=collection,
+        acquisition_details=acquisition_details,
+    )
+    loader = tile.image_loader
+    assert isinstance(loader, DummyLoader)
+    return tile.model_copy(
+        update={
+            "image_loader": _TypedDummyLoader(
+                shape=loader.shape,
+                text=loader.text,
+                font_scale=loader.font_scale,
+                dtype=dtype,
+            )
+        }
     )
 
 
@@ -293,32 +336,46 @@ class TestTiledImageCreationPipeline:
     @pytest.mark.parametrize(
         "writer_mode", [WriterMode.BY_TILE_DASK, WriterMode.BY_FOV_DASK]
     )
-    def test_dask_writers_fall_back_when_dask_grid_splits_a_chunk(
+    @pytest.mark.parametrize(
+        "fov_px, dtype, xy_chunk",
+        [
+            # 3x3 grid of 2048 px uint8 FOVs on 4096 px chunks (16 MiB).
+            (2048, "uint8", 4096),
+            # 3x3 grid of 1024 px uint16 FOVs on 2048 px chunks (8 MiB).
+            (1024, "uint16", 2048),
+        ],
+    )
+    def test_dask_writers_match_in_memory_on_non_multiple_chunks(
         self,
         tmp_path: Path,
         writer_mode: WriterMode,
+        fov_px: int,
+        dtype: str,
+        xy_chunk: int,
         caplog: pytest.LogCaptureFixture,
     ) -> None:
-        # 3x3 grid of 2048 px uint8 FOVs with two channels on 4096 px chunks
-        # (16 MiB, above ngio's 8 MiB block budget): the image is 1.5 chunks
-        # wide and dask's write grid cuts the axes inside a chunk. Writing that
-        # grid in parallel loses data; ozct must notice and write sequentially.
+        # Two channels on chunks of ngio's 8 MiB block budget or more, with
+        # the image 1.5 chunks wide: ngio 1.1.1 `store_dask` cut dask's block
+        # grid inside a chunk here and two parallel writers lost data (ozct
+        # wrote such regions sequentially). ngio 1.1.2 builds the grid from
+        # whole write units; this guards the pin.
         acq = _acq(2)
         coll = SingleImage(image_path="halfchunk")
         tiles = [
-            build_dummy_tile(
+            _dummy_tile_with_dtype(
                 fov_name=f"FOV_{i}_{j}",
-                start=StartPosition(x=j * 2048, y=i * 2048, c=c),
-                shape=TileShape(x=2048, y=2048, z=1, c=1, t=1),
+                start=StartPosition(x=j * fov_px, y=i * fov_px, c=c),
+                shape=TileShape(x=fov_px, y=fov_px, z=1, c=1, t=1),
                 collection=coll,
                 acquisition_details=acq,
+                dtype=dtype,
             )
             for i in range(3)
             for j in range(3)
             for c in range(2)
         ]
         opts = ConverterOptions(
-            omezarr_options=OmeZarrOptions(chunks=FixedSizeChunking(xy_chunk=4096))
+            omezarr_options=OmeZarrOptions(chunks=FixedSizeChunking(xy_chunk=xy_chunk))
         )
         pipeline = build_default_registration_pipeline(
             StagePositionCorrections(), InplaceTiling()
@@ -337,11 +394,61 @@ class TestTiledImageCreationPipeline:
             )
 
         reference = write(WriterMode.IN_MEMORY).get_image().get_array()
-        assert reference.shape[-2:] == (6144, 6144)
+        assert reference.shape[-2:] == (3 * fov_px, 3 * fov_px)
+        assert reference.dtype == np.dtype(dtype)
         with caplog.at_level("WARNING"):
             actual = write(writer_mode).get_image().get_array()
-        assert "Writing it sequentially" in caplog.text
+        assert caplog.records == []
         np.testing.assert_array_equal(actual, reference)
+
+    def test_consolidate_on_non_multiple_pyramid_level(self, tmp_path: Path) -> None:
+        # 6x6 grid of 1024 px uint16 FOVs with two channels on 2048 px chunks
+        # (8 MiB, ngio's block budget): level 0 is 6144 px (3 chunks) and
+        # level 1 is 3072 px, 1.5 chunks. ngio 1.1.1 `consolidate()` raised
+        # `NgioValueError` on such a level; ozct's own guard never covered the
+        # pyramid.
+        fov_px, xy_chunk = 1024, 2048
+        acq = _acq(2)
+        coll = SingleImage(image_path="pyramid")
+        tiles = [
+            _dummy_tile_with_dtype(
+                fov_name=f"FOV_{i}_{j}",
+                start=StartPosition(x=j * fov_px, y=i * fov_px, c=c),
+                shape=TileShape(x=fov_px, y=fov_px, z=1, c=1, t=1),
+                collection=coll,
+                acquisition_details=acq,
+                dtype="uint16",
+            )
+            for i in range(6)
+            for j in range(6)
+            for c in range(2)
+        ]
+        opts = ConverterOptions(
+            omezarr_options=OmeZarrOptions(chunks=FixedSizeChunking(xy_chunk=xy_chunk))
+        )
+        pipeline = build_default_registration_pipeline(
+            StagePositionCorrections(), InplaceTiling()
+        )
+
+        def write(mode: WriterMode):
+            images = tiles_aggregation_pipeline(tiles=tiles, converter_options=opts)
+            assert len(images) == 1
+            return tiled_image_creation_pipeline(
+                zarr_url=str(tmp_path / f"{mode.name}.zarr"),
+                tiled_image=images[0],
+                registration_pipeline=pipeline,
+                converter_options=opts,
+                writer_mode=mode,
+                overwrite_mode=OverwriteMode.OVERWRITE,
+            )
+
+        reference = write(WriterMode.IN_MEMORY)
+        actual = write(WriterMode.BY_FOV_DASK)
+        for level in ("0", "1"):
+            expected = reference.get_image(path=level).get_array()
+            got = actual.get_image(path=level).get_array()
+            assert expected.shape[-2:] == (6 * fov_px >> int(level),) * 2
+            np.testing.assert_array_equal(got, expected)
 
     def test_sharding_rejected_on_ngff_0_4(self) -> None:
         with pytest.raises(ValueError, match="Sharding requires OME-Zarr"):

@@ -439,9 +439,9 @@ Writer modes control how image data is loaded and written to the OME-Zarr datase
 | `WriterMode.BY_FOV` | Loads and writes one FOV at a time, sequentially | Medium | Medium |
 | `WriterMode.BY_FOV_DASK` | Loads FOVs lazily via Dask, streams each FOV a few write blocks at a time | Low–Medium | Fast |
 | `WriterMode.BY_TILE_DASK` | Loads all tiles lazily via Dask, streams a few write blocks at a time | Low–Medium | Fast |
-
-The Dask modes write each region in parallel, a few storage chunks or shards per dask block. When dask's block grid would instead split a chunk between two writers (chunks or shards of 8 MiB or more and an image that is not a multiple of them), the region is written sequentially with a warning rather than risk losing data.
 | `WriterMode.IN_MEMORY` | Loads entire image into memory, writes at once | High | Fastest |
+
+The Dask modes write each region in parallel, a few storage chunks or shards per dask block; ngio cuts the blocks on whole write units, so no two writers share one.
 
 ```python
 from ome_zarr_converters_tools.models import WriterMode, OverwriteMode

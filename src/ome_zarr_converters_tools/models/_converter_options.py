@@ -434,11 +434,6 @@ class ConverterOptions(UserFacingModel):
     - `By FOV (Using Dask)`: Build each field of view lazily with Dask and
       stream it a few write blocks at a time. Usually faster than writing by
       FOV sequentially.
-
-    Both Dask modes fall back to sequential writing (with a warning) when dask
-    would split a storage chunk between two parallel writers, which happens
-    with chunks or shards of 8 MiB or more on an image that is not a multiple
-    of them.
     - `In Memory`: Load all data into memory before writing.
     """
     grouping: Grouping = Field(default_factory=MosaicGrouping, title="Grouping")

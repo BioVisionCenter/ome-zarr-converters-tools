@@ -2,7 +2,7 @@
 
 ## [v1.1.0]
 
-Requires `ngio` 1.1. Written OME-Zarr output is unchanged.
+Requires `ngio` 1.1.2 or later. Written OME-Zarr output is unchanged.
 
 ### Features
 - `DefaultImageLoader` recognizes the `.stk` extension
@@ -18,16 +18,18 @@ Requires `ngio` 1.1. Written OME-Zarr output is unchanged.
   once per image.
 
 ### Fix
-- The Dask writer modes no longer lose data when dask's write grid splits a
-  storage chunk between two parallel writers (`ngio` 1.1 `store_dask` with
-  chunks or shards of 8 MiB or more and an image that is not a multiple of
-  them). Such regions are detected and written sequentially, with a warning.
+- Requires `ngio>=1.1.2`, which fixes a silent data loss in dask writes and a
+  `NgioValueError` in `consolidate()` for chunks or shards of 8 MiB or more on
+  an image that is not a multiple of them (`ngio` 1.1.1 `store_dask` let two
+  parallel writers share a storage chunk). The Dask writer modes build their
+  lazy array on the image's write unit and leave the block grid to `ngio`; ozct
+  carries no guard of its own.
 - The Dask writer modes no longer pickle the whole image once per tile while
   building the dask graph, which was quadratic in the tile count
   (`By Tile (Using Dask)`, 512 tiles of 8 MiB: 18 s → 5 s).
 
 ### API Breaking Changes
-- `ngio` requirement: `>=0.5.8,<0.6.0` → `>=1.1.1,<1.3`. Bump your own `ngio`
+- `ngio` requirement: `>=0.5.8,<0.6.0` → `>=1.1.2,<1.3`. Bump your own `ngio`
   pin in the same change.
 - `ngio` 1.0.1 moved plate lock files to `<store>.ngio-locks/`: upgrade every
   writer to a plate at the same time, or concurrent updates can be lost silently.
