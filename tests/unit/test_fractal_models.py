@@ -9,11 +9,13 @@ from ome_zarr_converters_tools.fractal._models import (
     ConvertParallelInitArgs,
     PixelSizeModel,
     converters_tools_models,
+    named_colors,
 )
 from ome_zarr_converters_tools.models import (
     AcquisitionDetails,
     ChannelInfo,
     ConverterOptions,
+    ConvertersToolsInternalError,
     OverwriteMode,
 )
 from ome_zarr_converters_tools.models._acquisition import DataTypeEnum
@@ -239,3 +241,11 @@ class TestConvertersToolsModels:
         result = converters_tools_models()
         names = [name for _, _, name in result]
         assert "ConverterOptions" in names
+
+
+def test_color_without_default_is_an_internal_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delitem(named_colors, "Red")
+    with pytest.raises(ConvertersToolsInternalError, match="Channel color 'Red'"):
+        ColorMenu.Red.to_hexstr()  # type: ignore[attr-defined]

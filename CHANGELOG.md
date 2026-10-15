@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [v1.1.1]
 
 ### Features
 - Errors now say which image, tile and source file they concern, with the
@@ -38,8 +38,9 @@
   ```
 
 ### Fix
-- `filesystem_for_url` raises `ConvertersToolsUserError` ("URL ... uses a
-  scheme that is not supported") instead of a misleading `NotImplementedError`.
+- `filesystem_for_url` raises `ConvertersToolsUserError` naming the unsupported
+  scheme ("URL ... uses the scheme 'gcs', which is not supported") instead of a
+  misleading `NotImplementedError`.
 - The compute task's wait for the init task's JSON file logs at `WARNING`
   level with the attempt count instead of `ERROR` on every retry.
 

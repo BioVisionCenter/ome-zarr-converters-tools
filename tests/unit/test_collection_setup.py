@@ -22,6 +22,7 @@ from ome_zarr_converters_tools.models import (
 )
 from ome_zarr_converters_tools.pipelines._collection_setup import (
     _collection_setup_registry,
+    _image_in_well_path,
     _setup_condition_table,
     add_collection_handler,
     setup_ome_zarr_collection,
@@ -512,3 +513,20 @@ class TestSetupOmeZarrCollection:
             zarr_dir=str(tmp_path),
             overwrite_mode=OverwriteMode.NO_OVERWRITE,
         )
+
+
+class TestWrongCollectionType:
+    def test_setup_plates_rejects_single_images(self, tmp_path: Path) -> None:
+        images = _make_single_tiled_images()
+        with pytest.raises(
+            ConvertersToolsInternalError, match="setup_plates requires ImageInPlate"
+        ) as excinfo:
+            setup_plates(zarr_dir=str(tmp_path), tiled_images=images)
+        assert f"image '{images[0].path}' has a SingleImage" in str(excinfo.value)
+
+    def test_image_in_well_path_rejects_single_image(self) -> None:
+        image = _make_single_tiled_images()[0]
+        with pytest.raises(
+            ConvertersToolsInternalError, match="Expected ImageInPlate collection"
+        ):
+            _image_in_well_path(image)

@@ -23,6 +23,7 @@ from ome_zarr_converters_tools.models import (
     AcquisitionDetails,
     ChannelInfo,
     ConverterOptions,
+    ConvertersToolsInternalError,
     ConvertersToolsUserError,
     SingleImage,
     StageOrientation,
@@ -440,3 +441,15 @@ class TestErrorContext:
             message
         )
         assert "from tile" not in message
+
+    def test_group_by_fov_rejects_unnamed_roi(
+        self, tiled_image_from_grid: TiledImage
+    ) -> None:
+        image = tiled_image_from_grid
+        region = image.regions[0]
+        region.roi = region.roi.model_copy(update={"name": None})
+        with pytest.raises(
+            ConvertersToolsInternalError, match="unnamed ROI"
+        ) as excinfo:
+            image.group_by_fov()
+        assert f"image '{image.path}'" in str(excinfo.value)

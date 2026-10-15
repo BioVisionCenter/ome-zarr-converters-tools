@@ -99,7 +99,7 @@ def _build_chunk_ranges(
             if sum(chunk_size) != dim_size:
                 raise ConvertersToolsInternalError(
                     f"Explicit chunks {chunk_size} must sum to the axis length "
-                    f"({dim_size}); got chunks {chunks} for shape {shape}."
+                    f"({dim_size}); got {chunks=} for {shape=}."
                 )
             start = 0
             for size in chunk_size:
@@ -135,14 +135,13 @@ def aligned_chunks(
     if not len(start) == len(shape) == len(unit):
         raise ConvertersToolsInternalError(
             f"start ({len(start)}), shape ({len(shape)}) and unit ({len(unit)}) "
-            f"must have the same length; got start={start}, shape={shape}, "
-            f"unit={unit}."
+            f"must have the same length; got {start=}, {shape=}, {unit=}."
         )
     result: list[tuple[int, ...]] = []
     for axis_start, axis_len, axis_unit in zip(start, shape, unit, strict=True):
         if axis_unit <= 0:
             raise ConvertersToolsInternalError(
-                f"Write unit must be positive, got {axis_unit} in unit={unit}."
+                f"Write unit must be positive, got {axis_unit} in {unit=}."
             )
         if axis_len <= 0:
             result.append((0,))
@@ -278,7 +277,7 @@ def lazy_array_from_regions(
     if len(chunks) != ndim:
         raise ConvertersToolsInternalError(
             f"chunks length ({len(chunks)}) must match shape length ({ndim}); "
-            f"got chunks={chunks} for shape={shape}."
+            f"got {chunks=} for {shape=}."
         )
 
     # Convert per-region slices to explicit (start, stop) bounds.
