@@ -27,7 +27,9 @@ Message contract for new raise sites:
   wraps them in a `ValidationError` and the class is lost anyway.
 """
 
-ISSUE_TRACKER_URL = "https://github.com/BioVisionCenter/ome-zarr-converters-tools/issues"
+ISSUE_TRACKER_URL = (
+    "https://github.com/BioVisionCenter/ome-zarr-converters-tools/issues"
+)
 """Where bugs in ome-zarr-converters-tools are reported."""
 
 REPORT_FOOTER = (
@@ -54,8 +56,7 @@ class ConvertersToolsUserError(ConvertersToolsError, ValueError):
 
 
 class ConvertersToolsOutputExistsError(ConvertersToolsUserError, FileExistsError):
-    """Error raised when the output already exists and `overwrite_mode` forbids
-    replacing it."""
+    """Error raised when the output exists and `overwrite_mode` forbids replacing it."""
 
 
 class ConvertersToolsFileNotFoundError(ConvertersToolsUserError, FileNotFoundError):
