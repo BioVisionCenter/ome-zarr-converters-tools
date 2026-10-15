@@ -88,9 +88,9 @@ For detailed documentation, tutorials, and API reference, visit the [official do
 
 The documentation includes:
 
-- [HCS Plate Tutorial](https://BioVisionCenter.github.io/ome-zarr-converters-tools/stable/hcs_tutorial/) -- converting plate-based microscopy data
-- [Single Images Tutorial](https://BioVisionCenter.github.io/ome-zarr-converters-tools/stable/images_tutorial/) -- converting standalone images
-- [Advanced Tutorial](https://BioVisionCenter.github.io/ome-zarr-converters-tools/stable/advanced_tutorial/) -- programmatic tile construction with custom loaders
-- [Fractal Tasks Guide](https://BioVisionCenter.github.io/ome-zarr-converters-tools/stable/converters_as_fractal_tasks/) -- building parallel converters with the Fractal platform
-- [Pipeline Configuration](https://BioVisionCenter.github.io/ome-zarr-converters-tools/stable/pipeline/) -- filters, registration, tiling, and writer modes
-- [API Reference](https://BioVisionCenter.github.io/ome-zarr-converters-tools/stable/api/)
+- [HCS Plate Tutorial](https://BioVisionCenter.github.io/ome-zarr-converters-tools/stable/getting_started/0_hcs_plates/) -- converting plate-based microscopy data
+- [Single Images Tutorial](https://BioVisionCenter.github.io/ome-zarr-converters-tools/stable/getting_started/1_single_images/) -- converting standalone images
+- [Advanced Tutorial](https://BioVisionCenter.github.io/ome-zarr-converters-tools/stable/getting_started/2_programmatic_tiles/) -- programmatic tile construction with custom loaders
+- [Fractal Tasks Guide](https://BioVisionCenter.github.io/ome-zarr-converters-tools/stable/guides/fractal_tasks/) -- building parallel converters with the Fractal platform
+- [Pipeline Configuration](https://BioVisionCenter.github.io/ome-zarr-converters-tools/stable/guides/pipeline/) -- filters, registration, tiling, and writer modes
+- [API Reference](https://BioVisionCenter.github.io/ome-zarr-converters-tools/stable/api/core/)
