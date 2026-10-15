@@ -155,7 +155,8 @@ def cleanup_if_exists(temp_json_url: str):
     If cleaning up is not possible, log an error message, but do not raise.
 
     Args:
-        temp_json_url: The URL to the temporary JSON directory.
+        temp_json_url: URL of the temporary JSON directory
+            (`RuntimeSettings.temp_json_options.temp_url`).
     """
     fs = filesystem_for_url(temp_json_url, error_msg_prefix="Cleanup")
 
@@ -164,7 +165,9 @@ def cleanup_if_exists(temp_json_url: str):
     if not fs.isdir(temp_json_url):
         raise ConvertersToolsUserError(
             f"Cannot clean up the temporary JSON location {temp_json_url}: it is "
-            "a file, not a directory. Point `temp_json_options` at a directory."
+            "a file, not a directory. Point `temp_json_options.temp_url` (in "
+            "`RuntimeSettings`) at a directory; the default is "
+            "`{zarr_dir}/_tmp_json`."
         )
     try:
         # Limit to depth 1: temp JSON store is flat (files only, no subdirs)
