@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [v1.1.1]
 
 ### Features
 - Errors now say which image, tile and source file they concern, with the
