@@ -707,6 +707,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="ConverterOptions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#omezarroptions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OmeZarrOptions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1108,24 +1125,45 @@
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="p">)</span>
 </code></pre></div>
 <p>When passed to <code>tiles_aggregation_pipeline()</code> and <code>tiled_image_creation_pipeline()</code>, its fields are used as defaults. You can also override specific settings (like <code>writer_mode</code> or <code>grouping</code>) by passing them directly to the pipeline functions.</p>
+<h3 id="omezarroptions">OmeZarrOptions</h3>
+<p><code>OmeZarrOptions</code> controls the on-disk layout of each OME-Zarr image:</p>
+<ul>
+<li><code>levels</code>: how many resolution levels the pyramid has (<code>NumberOfLevels</code>) or their explicit names (<code>NamedLevels</code>).</li>
+<li><code>chunks</code>: the storage chunk shape, sized like a field of view (<code>FovBasedChunking</code>, the default) or fixed (<code>FixedSizeChunking</code>).</li>
+<li><code>shards</code>: how chunks are grouped into shards, i.e. one stored object holding several chunks. <code>NoSharding</code> (the default) stores one object per chunk; <code>ChunkMultipleSharding</code> groups a fixed number of chunks per axis. Sharding requires <code>ngff_version="0.5"</code> (zarr format 3); requesting it with <code>"0.4"</code> fails when the options are built.</li>
+<li><code>ngff_version</code> and <code>table_backend</code>: the OME-NGFF version to write and the file format of the ROI/condition tables.</li>
+</ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="n">ChunkMultipleSharding</span><span class="p">,</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="n">FixedSizeChunking</span><span class="p">,</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="n">OmeZarrOptions</span><span class="p">,</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="p">)</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="n">opts</span> <span class="o">=</span> <span class="n">OmeZarrOptions</span><span class="p">(</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    <span class="n">ngff_version</span><span class="o">=</span><span class="s2">"0.5"</span><span class="p">,</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>    <span class="n">chunks</span><span class="o">=</span><span class="n">FixedSizeChunking</span><span class="p">(</span><span class="n">xy_chunk</span><span class="o">=</span><span class="mi">512</span><span class="p">),</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>    <span class="n">shards</span><span class="o">=</span><span class="n">ChunkMultipleSharding</span><span class="p">(</span><span class="n">xy_factor</span><span class="o">=</span><span class="mi">4</span><span class="p">),</span>  <span class="c1"># 2048 x 2048 pixel shards</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="p">)</span>
+</code></pre></div>
+<p>A shard is the atomic write unit: every write re-encodes the shards it touches. The Dask writer modes stream a few write units at a time, so they pair well with large shards; with the numpy writer modes keep shards no larger than a field of view.</p>
 <h2 id="acquisitiondetails">AcquisitionDetails</h2>
 <p><code>AcquisitionDetails</code> describes the physical properties of the acquisition: pixel sizes, coordinate systems, channel metadata, and stage corrections. It is passed when building <code>Tile</code> objects (via <code>hcs_images_from_dataframe()</code> or <code>single_images_from_dataframe()</code>) and is shared by all tiles in the same acquisition.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">AcquisitionDetails</span><span class="p">,</span> <span class="n">ChannelInfo</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="n">acq</span> <span class="o">=</span> <span class="n">AcquisitionDetails</span><span class="p">(</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="n">xy_pixel_size</span><span class="o">=</span><span class="mf">0.65</span><span class="p">,</span>  <span class="c1"># XY pixel size in micrometers</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="n">z_spacing</span><span class="o">=</span><span class="mf">5.0</span><span class="p">,</span>  <span class="c1"># Z-step size in micrometers</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="n">t_spacing</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>  <span class="c1"># Time interval in seconds</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="n">channels</span><span class="o">=</span><span class="p">[</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>        <span class="n">ChannelInfo</span><span class="p">(</span><span class="n">channel_label</span><span class="o">=</span><span class="s2">"DAPI"</span><span class="p">,</span> <span class="n">wavelength_id</span><span class="o">=</span><span class="s2">"405"</span><span class="p">),</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>        <span class="n">ChannelInfo</span><span class="p">(</span><span class="n">channel_label</span><span class="o">=</span><span class="s2">"GFP"</span><span class="p">,</span> <span class="n">wavelength_id</span><span class="o">=</span><span class="s2">"488"</span><span class="p">),</span>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>    <span class="p">],</span>
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>    <span class="n">axes</span><span class="o">=</span><span class="p">[</span><span class="s2">"c"</span><span class="p">,</span> <span class="s2">"z"</span><span class="p">,</span> <span class="s2">"y"</span><span class="p">,</span> <span class="s2">"x"</span><span class="p">],</span>  <span class="c1"># Subset of t, c, z, y, x in canonical order</span>
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>    <span class="n">start_x_space</span><span class="o">=</span><span class="s2">"world"</span><span class="p">,</span>  <span class="c1"># How to interpret start_x values</span>
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>    <span class="n">start_y_space</span><span class="o">=</span><span class="s2">"world"</span><span class="p">,</span>
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>    <span class="n">start_z_space</span><span class="o">=</span><span class="s2">"pixel"</span><span class="p">,</span>
-<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>    <span class="n">start_t_space</span><span class="o">=</span><span class="s2">"pixel"</span><span class="p">,</span>
-<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">AcquisitionDetails</span><span class="p">,</span> <span class="n">ChannelInfo</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">acq</span> <span class="o">=</span> <span class="n">AcquisitionDetails</span><span class="p">(</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="n">xy_pixel_size</span><span class="o">=</span><span class="mf">0.65</span><span class="p">,</span>  <span class="c1"># XY pixel size in micrometers</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="n">z_spacing</span><span class="o">=</span><span class="mf">5.0</span><span class="p">,</span>  <span class="c1"># Z-step size in micrometers</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    <span class="n">t_spacing</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>  <span class="c1"># Time interval in seconds</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>    <span class="n">channels</span><span class="o">=</span><span class="p">[</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>        <span class="n">ChannelInfo</span><span class="p">(</span><span class="n">channel_label</span><span class="o">=</span><span class="s2">"DAPI"</span><span class="p">,</span> <span class="n">wavelength_id</span><span class="o">=</span><span class="s2">"405"</span><span class="p">),</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>        <span class="n">ChannelInfo</span><span class="p">(</span><span class="n">channel_label</span><span class="o">=</span><span class="s2">"GFP"</span><span class="p">,</span> <span class="n">wavelength_id</span><span class="o">=</span><span class="s2">"488"</span><span class="p">),</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>    <span class="p">],</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>    <span class="n">axes</span><span class="o">=</span><span class="p">[</span><span class="s2">"c"</span><span class="p">,</span> <span class="s2">"z"</span><span class="p">,</span> <span class="s2">"y"</span><span class="p">,</span> <span class="s2">"x"</span><span class="p">],</span>  <span class="c1"># Subset of t, c, z, y, x in canonical order</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>    <span class="n">start_x_space</span><span class="o">=</span><span class="s2">"world"</span><span class="p">,</span>  <span class="c1"># How to interpret start_x values</span>
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>    <span class="n">start_y_space</span><span class="o">=</span><span class="s2">"world"</span><span class="p">,</span>
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>    <span class="n">start_z_space</span><span class="o">=</span><span class="s2">"pixel"</span><span class="p">,</span>
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>    <span class="n">start_t_space</span><span class="o">=</span><span class="s2">"pixel"</span><span class="p">,</span>
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a><span class="p">)</span>
 </code></pre></div>
 <h3 id="coordinate-systems">Coordinate Systems</h3>
 <p>Each <code>start_*</code> and <code>length_*</code> dimension has a coordinate system setting (<code>"world"</code> or <code>"pixel"</code>):</p>
@@ -1176,12 +1214,12 @@
 </div>
 <h3 id="channels">Channels</h3>
 <p>Channel metadata is defined with <code>ChannelInfo</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChannelInfo</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">channels</span> <span class="o">=</span> <span class="p">[</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="n">ChannelInfo</span><span class="p">(</span><span class="n">channel_label</span><span class="o">=</span><span class="s2">"DAPI"</span><span class="p">,</span> <span class="n">wavelength_id</span><span class="o">=</span><span class="s2">"405"</span><span class="p">,</span> <span class="n">colors</span><span class="o">=</span><span class="s2">"Blue (0000FF)"</span><span class="p">),</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="n">ChannelInfo</span><span class="p">(</span><span class="n">channel_label</span><span class="o">=</span><span class="s2">"GFP"</span><span class="p">,</span> <span class="n">wavelength_id</span><span class="o">=</span><span class="s2">"488"</span><span class="p">,</span> <span class="n">colors</span><span class="o">=</span><span class="s2">"Green (00FF00)"</span><span class="p">),</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="p">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChannelInfo</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">channels</span> <span class="o">=</span> <span class="p">[</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="n">ChannelInfo</span><span class="p">(</span><span class="n">channel_label</span><span class="o">=</span><span class="s2">"DAPI"</span><span class="p">,</span> <span class="n">wavelength_id</span><span class="o">=</span><span class="s2">"405"</span><span class="p">,</span> <span class="n">colors</span><span class="o">=</span><span class="s2">"Blue (0000FF)"</span><span class="p">),</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    <span class="n">ChannelInfo</span><span class="p">(</span><span class="n">channel_label</span><span class="o">=</span><span class="s2">"GFP"</span><span class="p">,</span> <span class="n">wavelength_id</span><span class="o">=</span><span class="s2">"488"</span><span class="p">,</span> <span class="n">colors</span><span class="o">=</span><span class="s2">"Green (00FF00)"</span><span class="p">),</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="p">]</span>
 </code></pre></div>
 <table>
 <thead>
@@ -1211,26 +1249,26 @@
 </table>
 <h3 id="axes">Axes</h3>
 <p>The <code>axes</code> parameter defines which dimensions the output image will have. It must be a subset of <code>["t", "c", "z", "y", "x"]</code> in canonical order:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">axes</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"t"</span><span class="p">,</span> <span class="s2">"c"</span><span class="p">,</span> <span class="s2">"z"</span><span class="p">,</span> <span class="s2">"y"</span><span class="p">,</span> <span class="s2">"x"</span><span class="p">]</span>  <span class="c1"># 5D time-series (default)</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">axes</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"c"</span><span class="p">,</span> <span class="s2">"z"</span><span class="p">,</span> <span class="s2">"y"</span><span class="p">,</span> <span class="s2">"x"</span><span class="p">]</span>  <span class="c1"># 4D stack (no time)</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">axes</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"z"</span><span class="p">,</span> <span class="s2">"y"</span><span class="p">,</span> <span class="s2">"x"</span><span class="p">]</span>  <span class="c1"># 3D single-channel</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="n">axes</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"y"</span><span class="p">,</span> <span class="s2">"x"</span><span class="p">]</span>  <span class="c1"># 2D (minimum)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">axes</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"t"</span><span class="p">,</span> <span class="s2">"c"</span><span class="p">,</span> <span class="s2">"z"</span><span class="p">,</span> <span class="s2">"y"</span><span class="p">,</span> <span class="s2">"x"</span><span class="p">]</span>  <span class="c1"># 5D time-series (default)</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">axes</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"c"</span><span class="p">,</span> <span class="s2">"z"</span><span class="p">,</span> <span class="s2">"y"</span><span class="p">,</span> <span class="s2">"x"</span><span class="p">]</span>  <span class="c1"># 4D stack (no time)</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">axes</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"z"</span><span class="p">,</span> <span class="s2">"y"</span><span class="p">,</span> <span class="s2">"x"</span><span class="p">]</span>  <span class="c1"># 3D single-channel</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="n">axes</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"y"</span><span class="p">,</span> <span class="s2">"x"</span><span class="p">]</span>  <span class="c1"># 2D (minimum)</span>
 </code></pre></div>
 <p>Omitting <code>c</code> means the output has no channel axis, so <code>channels</code> must be left as <code>None</code>; providing channel metadata for a <code>c</code>-less image is an error.</p>
 <h3 id="channel-indices">Channel Indices</h3>
 <p><code>start_c</code> and <code>length_c</code> on a <code>Tile</code> index into <code>acquisition_details.channels</code>: a tile covers channels <code>start_c … start_c + length_c - 1</code>. Most parsers emit one single-channel tile per channel, but <code>length_c &gt; 1</code> is supported for acquisitions that capture several channels at once (e.g. a two-camera system). Because the span is a contiguous range, channels acquired together must be <strong>adjacent</strong> in <code>channels</code> — if they are not, order the channel list so they are, or emit one tile per channel.</p>
 <h3 id="stage-corrections">Stage Corrections</h3>
 <p>Some microscopes have inverted or swapped stage axes. Use <code>StageOrientation</code> to fix this:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">AcquisitionDetails</span><span class="p">,</span> <span class="n">StageOrientation</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">acq</span> <span class="o">=</span> <span class="n">AcquisitionDetails</span><span class="p">(</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    <span class="n">xy_pixel_size</span><span class="o">=</span><span class="mf">0.65</span><span class="p">,</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>    <span class="n">stage_orientation</span><span class="o">=</span><span class="n">StageOrientation</span><span class="p">(</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>        <span class="n">flip_x</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># Invert X positions</span>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>        <span class="n">flip_y</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>  <span class="c1"># Keep Y as-is</span>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>        <span class="n">swap_xy</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>  <span class="c1"># Don't swap X and Y</span>
-<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>    <span class="p">),</span>
-<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">AcquisitionDetails</span><span class="p">,</span> <span class="n">StageOrientation</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">acq</span> <span class="o">=</span> <span class="n">AcquisitionDetails</span><span class="p">(</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="n">xy_pixel_size</span><span class="o">=</span><span class="mf">0.65</span><span class="p">,</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    <span class="n">stage_orientation</span><span class="o">=</span><span class="n">StageOrientation</span><span class="p">(</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>        <span class="n">flip_x</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># Invert X positions</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>        <span class="n">flip_y</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>  <span class="c1"># Keep Y as-is</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>        <span class="n">swap_xy</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>  <span class="c1"># Don't swap X and Y</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>    <span class="p">),</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="p">)</span>
 </code></pre></div>
 <p>These corrections are applied when converting <code>Tile</code> positions to ROIs during the registration pipeline.</p>
 <h3 id="other-fields">Other Fields</h3>
@@ -1262,30 +1300,30 @@
 <p>Every matching filter carries a <code>mode</code> field (<code>"Include"</code> or <code>"Exclude"</code>, default <code>"Include"</code>): in <code>Include</code> mode, matching tiles are kept and all others discarded; in <code>Exclude</code> mode, matching tiles are discarded and all others kept.</p>
 <h4 id="regexfilter">RegexFilter</h4>
 <p>Matches tiles whose collection path matches a regex pattern.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.pipelines</span><span class="w"> </span><span class="kn">import</span> <span class="n">apply_filter_pipeline</span><span class="p">,</span> <span class="n">FilterModel</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="c1"># Import the specific filter from the internal module</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.pipelines._filters</span><span class="w"> </span><span class="kn">import</span> <span class="n">RegexFilter</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="c1"># Keep only tiles from PlateA</span>
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="n">f</span> <span class="o">=</span> <span class="n">RegexFilter</span><span class="p">(</span><span class="n">regex</span><span class="o">=</span><span class="s2">".*PlateA.*"</span><span class="p">)</span>
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="n">filtered_tiles</span> <span class="o">=</span> <span class="n">apply_filter_pipeline</span><span class="p">(</span><span class="n">tiles</span><span class="p">,</span> <span class="n">filters_config</span><span class="o">=</span><span class="p">[</span><span class="n">f</span><span class="p">])</span>
-<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>
-<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="c1"># Remove control tiles</span>
-<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="n">f</span> <span class="o">=</span> <span class="n">RegexFilter</span><span class="p">(</span><span class="n">regex</span><span class="o">=</span><span class="s2">".*control.*"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"Exclude"</span><span class="p">)</span>
-<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="n">filtered_tiles</span> <span class="o">=</span> <span class="n">apply_filter_pipeline</span><span class="p">(</span><span class="n">tiles</span><span class="p">,</span> <span class="n">filters_config</span><span class="o">=</span><span class="p">[</span><span class="n">f</span><span class="p">])</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.pipelines</span><span class="w"> </span><span class="kn">import</span> <span class="n">apply_filter_pipeline</span><span class="p">,</span> <span class="n">FilterModel</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="c1"># Import the specific filter from the internal module</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.pipelines._filters</span><span class="w"> </span><span class="kn">import</span> <span class="n">RegexFilter</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="c1"># Keep only tiles from PlateA</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="n">f</span> <span class="o">=</span> <span class="n">RegexFilter</span><span class="p">(</span><span class="n">regex</span><span class="o">=</span><span class="s2">".*PlateA.*"</span><span class="p">)</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="n">filtered_tiles</span> <span class="o">=</span> <span class="n">apply_filter_pipeline</span><span class="p">(</span><span class="n">tiles</span><span class="p">,</span> <span class="n">filters_config</span><span class="o">=</span><span class="p">[</span><span class="n">f</span><span class="p">])</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="c1"># Remove control tiles</span>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="n">f</span> <span class="o">=</span> <span class="n">RegexFilter</span><span class="p">(</span><span class="n">regex</span><span class="o">=</span><span class="s2">".*control.*"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"Exclude"</span><span class="p">)</span>
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="n">filtered_tiles</span> <span class="o">=</span> <span class="n">apply_filter_pipeline</span><span class="p">(</span><span class="n">tiles</span><span class="p">,</span> <span class="n">filters_config</span><span class="o">=</span><span class="p">[</span><span class="n">f</span><span class="p">])</span>
 </code></pre></div>
 <h4 id="wellfilter">WellFilter</h4>
 <p>Matches tiles belonging to specific wells. Only works with <code>ImageInPlate</code> collections.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.pipelines._filters</span><span class="w"> </span><span class="kn">import</span> <span class="n">WellFilter</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="c1"># Keep only wells A1 and B2</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="n">f</span> <span class="o">=</span> <span class="n">WellFilter</span><span class="p">(</span><span class="n">wells</span><span class="o">=</span><span class="p">[</span><span class="s2">"A1"</span><span class="p">,</span> <span class="s2">"B2"</span><span class="p">])</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="n">filtered_tiles</span> <span class="o">=</span> <span class="n">apply_filter_pipeline</span><span class="p">(</span><span class="n">tiles</span><span class="p">,</span> <span class="n">filters_config</span><span class="o">=</span><span class="p">[</span><span class="n">f</span><span class="p">])</span>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="c1"># Remove wells A1 and B2</span>
-<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="n">f</span> <span class="o">=</span> <span class="n">WellFilter</span><span class="p">(</span><span class="n">wells</span><span class="o">=</span><span class="p">[</span><span class="s2">"A1"</span><span class="p">,</span> <span class="s2">"B2"</span><span class="p">],</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"Exclude"</span><span class="p">)</span>
-<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="n">filtered_tiles</span> <span class="o">=</span> <span class="n">apply_filter_pipeline</span><span class="p">(</span><span class="n">tiles</span><span class="p">,</span> <span class="n">filters_config</span><span class="o">=</span><span class="p">[</span><span class="n">f</span><span class="p">])</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.pipelines._filters</span><span class="w"> </span><span class="kn">import</span> <span class="n">WellFilter</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="c1"># Keep only wells A1 and B2</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="n">f</span> <span class="o">=</span> <span class="n">WellFilter</span><span class="p">(</span><span class="n">wells</span><span class="o">=</span><span class="p">[</span><span class="s2">"A1"</span><span class="p">,</span> <span class="s2">"B2"</span><span class="p">])</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="n">filtered_tiles</span> <span class="o">=</span> <span class="n">apply_filter_pipeline</span><span class="p">(</span><span class="n">tiles</span><span class="p">,</span> <span class="n">filters_config</span><span class="o">=</span><span class="p">[</span><span class="n">f</span><span class="p">])</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="c1"># Remove wells A1 and B2</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="n">f</span> <span class="o">=</span> <span class="n">WellFilter</span><span class="p">(</span><span class="n">wells</span><span class="o">=</span><span class="p">[</span><span class="s2">"A1"</span><span class="p">,</span> <span class="s2">"B2"</span><span class="p">],</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"Exclude"</span><span class="p">)</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="n">filtered_tiles</span> <span class="o">=</span> <span class="n">apply_filter_pipeline</span><span class="p">(</span><span class="n">tiles</span><span class="p">,</span> <span class="n">filters_config</span><span class="o">=</span><span class="p">[</span><span class="n">f</span><span class="p">])</span>
 </code></pre></div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -1293,51 +1331,51 @@
 </div>
 <h3 id="using-filters-in-the-pipeline">Using Filters in the Pipeline</h3>
 <p>Filters can be passed directly to <code>tiles_aggregation_pipeline()</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">tiles_aggregation_pipeline</span><span class="p">,</span> <span class="n">ConverterOptions</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.pipelines._filters</span><span class="w"> </span><span class="kn">import</span> <span class="n">RegexFilter</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="n">images</span> <span class="o">=</span> <span class="n">tiles_aggregation_pipeline</span><span class="p">(</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>    <span class="n">tiles</span><span class="o">=</span><span class="n">tiles</span><span class="p">,</span>
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>    <span class="n">converter_options</span><span class="o">=</span><span class="n">ConverterOptions</span><span class="p">(),</span>
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>    <span class="n">filters</span><span class="o">=</span><span class="p">[</span><span class="n">RegexFilter</span><span class="p">(</span><span class="n">regex</span><span class="o">=</span><span class="s2">".*keep.*"</span><span class="p">)],</span>
-<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">tiles_aggregation_pipeline</span><span class="p">,</span> <span class="n">ConverterOptions</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.pipelines._filters</span><span class="w"> </span><span class="kn">import</span> <span class="n">RegexFilter</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="n">images</span> <span class="o">=</span> <span class="n">tiles_aggregation_pipeline</span><span class="p">(</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>    <span class="n">tiles</span><span class="o">=</span><span class="n">tiles</span><span class="p">,</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>    <span class="n">converter_options</span><span class="o">=</span><span class="n">ConverterOptions</span><span class="p">(),</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>    <span class="n">filters</span><span class="o">=</span><span class="p">[</span><span class="n">RegexFilter</span><span class="p">(</span><span class="n">regex</span><span class="o">=</span><span class="s2">".*keep.*"</span><span class="p">)],</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="p">)</span>
 </code></pre></div>
 <h3 id="custom-filters">Custom Filters</h3>
 <p>Create a custom filter by subclassing <code>FilterModel</code> and registering the filter function with <code>add_filter()</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.pipelines</span><span class="w"> </span><span class="kn">import</span> <span class="n">FilterModel</span><span class="p">,</span> <span class="n">add_filter</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tile</span>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="k">class</span><span class="w"> </span><span class="nc">LargeTilesFilter</span><span class="p">(</span><span class="n">FilterModel</span><span class="p">):</span>
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">    </span><span class="sd">"""Filter that keeps only tiles wider than a threshold."""</span>
-<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>
-<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"large_tiles_only"</span>
-<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>    <span class="n">min_width</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span>
-<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>
-<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>
-<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="k">def</span><span class="w"> </span><span class="nf">apply_large_tiles_filter</span><span class="p">(</span><span class="n">tile</span><span class="p">:</span> <span class="n">Tile</span><span class="p">,</span> <span class="n">filter_params</span><span class="p">:</span> <span class="n">LargeTilesFilter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a><span class="w">    </span><span class="sd">"""Keep only tiles with length_x &gt; min_width."""</span>
-<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a>    <span class="k">return</span> <span class="n">tile</span><span class="o">.</span><span class="n">length_x</span> <span class="o">&gt;</span> <span class="n">filter_params</span><span class="o">.</span><span class="n">min_width</span>
-<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a>
-<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a>
-<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a><span class="n">add_filter</span><span class="p">(</span><span class="n">function</span><span class="o">=</span><span class="n">apply_large_tiles_filter</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"large_tiles_only"</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.pipelines</span><span class="w"> </span><span class="kn">import</span> <span class="n">FilterModel</span><span class="p">,</span> <span class="n">add_filter</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tile</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="k">class</span><span class="w"> </span><span class="nc">LargeTilesFilter</span><span class="p">(</span><span class="n">FilterModel</span><span class="p">):</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="w">    </span><span class="sd">"""Filter that keeps only tiles wider than a threshold."""</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"large_tiles_only"</span>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>    <span class="n">min_width</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a><span class="k">def</span><span class="w"> </span><span class="nf">apply_large_tiles_filter</span><span class="p">(</span><span class="n">tile</span><span class="p">:</span> <span class="n">Tile</span><span class="p">,</span> <span class="n">filter_params</span><span class="p">:</span> <span class="n">LargeTilesFilter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a><span class="w">    </span><span class="sd">"""Keep only tiles with length_x &gt; min_width."""</span>
+<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a>    <span class="k">return</span> <span class="n">tile</span><span class="o">.</span><span class="n">length_x</span> <span class="o">&gt;</span> <span class="n">filter_params</span><span class="o">.</span><span class="n">min_width</span>
+<a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a>
+<a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a>
+<a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a><span class="n">add_filter</span><span class="p">(</span><span class="n">function</span><span class="o">=</span><span class="n">apply_large_tiles_filter</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"large_tiles_only"</span><span class="p">)</span>
 </code></pre></div>
 <p>The filter can then be used with <code>apply_filter_pipeline()</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="n">filtered</span> <span class="o">=</span> <span class="n">apply_filter_pipeline</span><span class="p">(</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>    <span class="n">tiles</span><span class="p">,</span> <span class="n">filters_config</span><span class="o">=</span><span class="p">[</span><span class="n">LargeTilesFilter</span><span class="p">(</span><span class="n">min_width</span><span class="o">=</span><span class="mi">512</span><span class="p">)]</span>
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="n">filtered</span> <span class="o">=</span> <span class="n">apply_filter_pipeline</span><span class="p">(</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>    <span class="n">tiles</span><span class="p">,</span> <span class="n">filters_config</span><span class="o">=</span><span class="p">[</span><span class="n">LargeTilesFilter</span><span class="p">(</span><span class="n">min_width</span><span class="o">=</span><span class="mi">512</span><span class="p">)]</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="p">)</span>
 </code></pre></div>
 <h2 id="registration-steps">Registration Steps</h2>
 <p>The registration pipeline transforms tile positions to prepare them for writing. It runs as a sequence of steps, each modifying the <code>TiledImage</code> in place. These steps convert raw microscope stage positions into clean, non-overlapping pixel coordinates suitable for writing into a Zarr array.</p>
 <h3 id="default-registration-pipeline">Default Registration Pipeline</h3>
 <p>The default pipeline is built with <code>build_default_registration_pipeline()</code> and runs four steps in order:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">StagePositionCorrections</span><span class="p">,</span> <span class="n">AutoTiling</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.pipelines</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_default_registration_pipeline</span>
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="n">pipeline</span> <span class="o">=</span> <span class="n">build_default_registration_pipeline</span><span class="p">(</span>
-<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>    <span class="n">alignment_corrections</span><span class="o">=</span><span class="n">StagePositionCorrections</span><span class="p">(),</span>
-<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>    <span class="n">tiling_strategy</span><span class="o">=</span><span class="n">AutoTiling</span><span class="p">(),</span>
-<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">StagePositionCorrections</span><span class="p">,</span> <span class="n">AutoTiling</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.pipelines</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_default_registration_pipeline</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="n">pipeline</span> <span class="o">=</span> <span class="n">build_default_registration_pipeline</span><span class="p">(</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>    <span class="n">alignment_corrections</span><span class="o">=</span><span class="n">StagePositionCorrections</span><span class="p">(),</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>    <span class="n">tiling_strategy</span><span class="o">=</span><span class="n">AutoTiling</span><span class="p">(),</span>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="p">)</span>
 </code></pre></div>
 <p>This creates:</p>
 <ol>
@@ -1361,41 +1399,41 @@
 </ol>
 <h3 id="stagepositioncorrections">StagePositionCorrections</h3>
 <p>Controls the per-axis position handling applied during registration:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">StagePositionCorrections</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="n">corrections</span> <span class="o">=</span> <span class="n">StagePositionCorrections</span><span class="p">(</span>
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>    <span class="n">remove_xy_offset</span><span class="o">=</span><span class="s2">"Global"</span><span class="p">,</span>  <span class="c1"># "Global" (zero origin) or "Keep" (keep absolute)</span>
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>    <span class="n">remove_z_offset</span><span class="o">=</span><span class="s2">"Global"</span><span class="p">,</span>  <span class="c1"># "Global", "Per-FOV" (zero each FOV's z), or "Keep"</span>
-<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>    <span class="n">remove_t_offset</span><span class="o">=</span><span class="s2">"Global"</span><span class="p">,</span>  <span class="c1"># "Global" or "Keep"</span>
-<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>    <span class="n">remove_xy_jitter</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># snap a FOV's sub-tiles to a shared XY origin</span>
-<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>    <span class="n">reindex_channels</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># compact present channels to a dense range</span>
-<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">StagePositionCorrections</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="n">corrections</span> <span class="o">=</span> <span class="n">StagePositionCorrections</span><span class="p">(</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>    <span class="n">remove_xy_offset</span><span class="o">=</span><span class="s2">"Global"</span><span class="p">,</span>  <span class="c1"># "Global" (zero origin) or "Keep" (keep absolute)</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>    <span class="n">remove_z_offset</span><span class="o">=</span><span class="s2">"Global"</span><span class="p">,</span>  <span class="c1"># "Global", "Per-FOV" (zero each FOV's z), or "Keep"</span>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>    <span class="n">remove_t_offset</span><span class="o">=</span><span class="s2">"Global"</span><span class="p">,</span>  <span class="c1"># "Global" or "Keep"</span>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>    <span class="n">remove_xy_jitter</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># snap a FOV's sub-tiles to a shared XY origin</span>
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>    <span class="n">reindex_channels</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># compact present channels to a dense range</span>
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a><span class="p">)</span>
 </code></pre></div>
 <p>Offset modes: <code>"Global"</code> translates the axis so its origin is 0; <code>"Keep"</code> keeps absolute positions (raising on negatives, left-padding on positives); <code>"Per-FOV"</code> (z only) zeros each FOV's z independently, useful when FOVs are focused independently. <code>remove_xy_jitter</code> corrects minor XY stage drift between the sub-acquisitions (Z-slices/channels) of a single FOV.</p>
 <h3 id="custom-registration-steps">Custom Registration Steps</h3>
 <p>Register custom steps with <code>add_registration_func()</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.pipelines</span><span class="w"> </span><span class="kn">import</span> <span class="n">add_registration_func</span>
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">TiledImage</span>
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
-<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>
-<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="k">def</span><span class="w"> </span><span class="nf">my_custom_step</span><span class="p">(</span><span class="n">tiled_image</span><span class="p">:</span> <span class="n">TiledImage</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TiledImage</span><span class="p">:</span>
-<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="w">    </span><span class="sd">"""Custom registration step that modifies tile positions."""</span>
-<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>    <span class="k">for</span> <span class="n">region</span> <span class="ow">in</span> <span class="n">tiled_image</span><span class="o">.</span><span class="n">regions</span><span class="p">:</span>
-<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>        <span class="c1"># Modify region.roi as needed</span>
-<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>        <span class="k">pass</span>
-<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a>    <span class="k">return</span> <span class="n">tiled_image</span>
-<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a>
-<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a>
-<a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a><span class="n">add_registration_func</span><span class="p">(</span><span class="n">function</span><span class="o">=</span><span class="n">my_custom_step</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"my_step"</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.pipelines</span><span class="w"> </span><span class="kn">import</span> <span class="n">add_registration_func</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">TiledImage</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="k">def</span><span class="w"> </span><span class="nf">my_custom_step</span><span class="p">(</span><span class="n">tiled_image</span><span class="p">:</span> <span class="n">TiledImage</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TiledImage</span><span class="p">:</span>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="w">    </span><span class="sd">"""Custom registration step that modifies tile positions."""</span>
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>    <span class="k">for</span> <span class="n">region</span> <span class="ow">in</span> <span class="n">tiled_image</span><span class="o">.</span><span class="n">regions</span><span class="p">:</span>
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>        <span class="c1"># Modify region.roi as needed</span>
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>        <span class="k">pass</span>
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a>    <span class="k">return</span> <span class="n">tiled_image</span>
+<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a>
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>
+<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a><span class="n">add_registration_func</span><span class="p">(</span><span class="n">function</span><span class="o">=</span><span class="n">my_custom_step</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"my_step"</span><span class="p">)</span>
 </code></pre></div>
 <p>Then include it in a pipeline using <code>RegistrationStep</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.pipelines</span><span class="w"> </span><span class="kn">import</span> <span class="n">RegistrationStep</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="n">pipeline</span> <span class="o">=</span> <span class="p">[</span>
-<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>    <span class="n">RegistrationStep</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"offset_removal"</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s2">"corrections"</span><span class="p">:</span> <span class="n">corrections</span><span class="p">}),</span>
-<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>    <span class="n">RegistrationStep</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"my_step"</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s2">"some_param"</span><span class="p">:</span> <span class="mi">42</span><span class="p">}),</span>
-<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>    <span class="n">RegistrationStep</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"align_to_pixel_grid"</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">{}),</span>
-<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="p">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.pipelines</span><span class="w"> </span><span class="kn">import</span> <span class="n">RegistrationStep</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="n">pipeline</span> <span class="o">=</span> <span class="p">[</span>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>    <span class="n">RegistrationStep</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"offset_removal"</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s2">"corrections"</span><span class="p">:</span> <span class="n">corrections</span><span class="p">}),</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>    <span class="n">RegistrationStep</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"my_step"</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s2">"some_param"</span><span class="p">:</span> <span class="mi">42</span><span class="p">}),</span>
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>    <span class="n">RegistrationStep</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"align_to_pixel_grid"</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">{}),</span>
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a><span class="p">]</span>
 </code></pre></div>
 <h2 id="grouping">Grouping</h2>
 <p>Grouping (<code>ConverterOptions.grouping</code>) is the topology decision: how the fields of view of an acquisition map to output images. It is a discriminated union with two variants.</p>
@@ -1417,18 +1455,18 @@
 </tr>
 </tbody>
 </table>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>    <span class="n">ConverterOptions</span><span class="p">,</span>
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>    <span class="n">MosaicGrouping</span><span class="p">,</span>
-<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>    <span class="n">PerFovGrouping</span><span class="p">,</span>
-<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>    <span class="n">SnapToGridTiling</span><span class="p">,</span>
-<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a><span class="p">)</span>
-<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>
-<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a><span class="c1"># One mosaic image per acquisition (default), snapped to a grid</span>
-<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a><span class="n">ConverterOptions</span><span class="p">(</span><span class="n">grouping</span><span class="o">=</span><span class="n">MosaicGrouping</span><span class="p">(</span><span class="n">tiling_strategy</span><span class="o">=</span><span class="n">SnapToGridTiling</span><span class="p">()))</span>
-<a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a>
-<a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a><span class="c1"># One OME-Zarr per field of view</span>
-<a id="__codelineno-14-12" name="__codelineno-14-12" href="#__codelineno-14-12"></a><span class="n">ConverterOptions</span><span class="p">(</span><span class="n">grouping</span><span class="o">=</span><span class="n">PerFovGrouping</span><span class="p">())</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>    <span class="n">ConverterOptions</span><span class="p">,</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>    <span class="n">MosaicGrouping</span><span class="p">,</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>    <span class="n">PerFovGrouping</span><span class="p">,</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>    <span class="n">SnapToGridTiling</span><span class="p">,</span>
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="p">)</span>
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a>
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a><span class="c1"># One mosaic image per acquisition (default), snapped to a grid</span>
+<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a><span class="n">ConverterOptions</span><span class="p">(</span><span class="n">grouping</span><span class="o">=</span><span class="n">MosaicGrouping</span><span class="p">(</span><span class="n">tiling_strategy</span><span class="o">=</span><span class="n">SnapToGridTiling</span><span class="p">()))</span>
+<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a>
+<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a><span class="c1"># One OME-Zarr per field of view</span>
+<a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a><span class="n">ConverterOptions</span><span class="p">(</span><span class="n">grouping</span><span class="o">=</span><span class="n">PerFovGrouping</span><span class="p">())</span>
 </code></pre></div>
 <h2 id="tiling-strategies">Tiling Strategies</h2>
 <p>Tiling controls how overlapping FOVs are arranged relative to each other <em>within a mosaic</em>. It lives on <code>MosaicGrouping.tiling_strategy</code> and is applied as the last step in the default registration pipeline. Each strategy is a Pydantic model, so tolerance and other parameters are passed directly on construction.</p>
@@ -1458,40 +1496,40 @@
 </tr>
 </tbody>
 </table>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.models</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>    <span class="n">AutoTiling</span><span class="p">,</span>
-<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>    <span class="n">SnapToCornersTiling</span><span class="p">,</span>
-<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>    <span class="n">SnapToGridTiling</span><span class="p">,</span>
-<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="p">)</span>
-<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>
-<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="c1"># For regular grid acquisitions (e.g., snake scan)</span>
-<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a><span class="n">pipeline</span> <span class="o">=</span> <span class="n">build_default_registration_pipeline</span><span class="p">(</span>
-<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a>    <span class="n">StagePositionCorrections</span><span class="p">(),</span> <span class="n">SnapToGridTiling</span><span class="p">()</span>
-<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a><span class="p">)</span>
-<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a>
-<a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a><span class="c1"># For irregular FOV arrangements</span>
-<a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a><span class="n">pipeline</span> <span class="o">=</span> <span class="n">build_default_registration_pipeline</span><span class="p">(</span>
-<a id="__codelineno-15-14" name="__codelineno-15-14" href="#__codelineno-15-14"></a>    <span class="n">StagePositionCorrections</span><span class="p">(),</span> <span class="n">SnapToCornersTiling</span><span class="p">()</span>
-<a id="__codelineno-15-15" name="__codelineno-15-15" href="#__codelineno-15-15"></a><span class="p">)</span>
-<a id="__codelineno-15-16" name="__codelineno-15-16" href="#__codelineno-15-16"></a>
-<a id="__codelineno-15-17" name="__codelineno-15-17" href="#__codelineno-15-17"></a><span class="c1"># Let the library decide (with tolerance for minor stage jitter)</span>
-<a id="__codelineno-15-18" name="__codelineno-15-18" href="#__codelineno-15-18"></a><span class="n">pipeline</span> <span class="o">=</span> <span class="n">build_default_registration_pipeline</span><span class="p">(</span>
-<a id="__codelineno-15-19" name="__codelineno-15-19" href="#__codelineno-15-19"></a>    <span class="n">StagePositionCorrections</span><span class="p">(),</span> <span class="n">AutoTiling</span><span class="p">(</span><span class="n">tolerance</span><span class="o">=</span><span class="mf">2.5</span><span class="p">)</span>
-<a id="__codelineno-15-20" name="__codelineno-15-20" href="#__codelineno-15-20"></a><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.models</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>    <span class="n">AutoTiling</span><span class="p">,</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>    <span class="n">SnapToCornersTiling</span><span class="p">,</span>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>    <span class="n">SnapToGridTiling</span><span class="p">,</span>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="p">)</span>
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="c1"># For regular grid acquisitions (e.g., snake scan)</span>
+<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a><span class="n">pipeline</span> <span class="o">=</span> <span class="n">build_default_registration_pipeline</span><span class="p">(</span>
+<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a>    <span class="n">StagePositionCorrections</span><span class="p">(),</span> <span class="n">SnapToGridTiling</span><span class="p">()</span>
+<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a><span class="p">)</span>
+<a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a>
+<a id="__codelineno-16-12" name="__codelineno-16-12" href="#__codelineno-16-12"></a><span class="c1"># For irregular FOV arrangements</span>
+<a id="__codelineno-16-13" name="__codelineno-16-13" href="#__codelineno-16-13"></a><span class="n">pipeline</span> <span class="o">=</span> <span class="n">build_default_registration_pipeline</span><span class="p">(</span>
+<a id="__codelineno-16-14" name="__codelineno-16-14" href="#__codelineno-16-14"></a>    <span class="n">StagePositionCorrections</span><span class="p">(),</span> <span class="n">SnapToCornersTiling</span><span class="p">()</span>
+<a id="__codelineno-16-15" name="__codelineno-16-15" href="#__codelineno-16-15"></a><span class="p">)</span>
+<a id="__codelineno-16-16" name="__codelineno-16-16" href="#__codelineno-16-16"></a>
+<a id="__codelineno-16-17" name="__codelineno-16-17" href="#__codelineno-16-17"></a><span class="c1"># Let the library decide (with tolerance for minor stage jitter)</span>
+<a id="__codelineno-16-18" name="__codelineno-16-18" href="#__codelineno-16-18"></a><span class="n">pipeline</span> <span class="o">=</span> <span class="n">build_default_registration_pipeline</span><span class="p">(</span>
+<a id="__codelineno-16-19" name="__codelineno-16-19" href="#__codelineno-16-19"></a>    <span class="n">StagePositionCorrections</span><span class="p">(),</span> <span class="n">AutoTiling</span><span class="p">(</span><span class="n">tolerance</span><span class="o">=</span><span class="mf">2.5</span><span class="p">)</span>
+<a id="__codelineno-16-20" name="__codelineno-16-20" href="#__codelineno-16-20"></a><span class="p">)</span>
 </code></pre></div>
 <h2 id="runtimesettings">RuntimeSettings</h2>
 <p><code>RuntimeSettings</code> configures low-level runtime behaviour for a conversion call. It is applied as a scoped context manager, so settings are restored when the block exits.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">RuntimeSettings</span>
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">ThreadScheduler</span>
-<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>
-<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="n">settings</span> <span class="o">=</span> <span class="n">RuntimeSettings</span><span class="p">(</span>
-<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>    <span class="n">use_zarrs_codec</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># Use the Zarrs Rust codec backend</span>
-<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>    <span class="n">dask_scheduler</span><span class="o">=</span><span class="n">ThreadScheduler</span><span class="p">(</span><span class="n">num_workers</span><span class="o">=</span><span class="mi">4</span><span class="p">),</span>  <span class="c1"># Run Dask with 4 threads</span>
-<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="p">)</span>
-<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>
-<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a><span class="k">with</span> <span class="n">settings</span><span class="o">.</span><span class="n">apply</span><span class="p">():</span>
-<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a>    <span class="c1"># Conversion code here runs under the configured scheduler and codec</span>
-<a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a>    <span class="o">...</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">RuntimeSettings</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">ThreadScheduler</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="n">settings</span> <span class="o">=</span> <span class="n">RuntimeSettings</span><span class="p">(</span>
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>    <span class="n">use_zarrs_codec</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># Use the Zarrs Rust codec backend</span>
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>    <span class="n">dask_scheduler</span><span class="o">=</span><span class="n">ThreadScheduler</span><span class="p">(</span><span class="n">num_workers</span><span class="o">=</span><span class="mi">4</span><span class="p">),</span>  <span class="c1"># Run Dask with 4 threads</span>
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a><span class="p">)</span>
+<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a>
+<a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a><span class="k">with</span> <span class="n">settings</span><span class="o">.</span><span class="n">apply</span><span class="p">():</span>
+<a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a>    <span class="c1"># Conversion code here runs under the configured scheduler and codec</span>
+<a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a>    <span class="o">...</span>
 </code></pre></div>
 <h3 id="dask-schedulers">Dask Schedulers</h3>
 <table>
@@ -1522,15 +1560,15 @@
 </table>
 <h3 id="zarrs-codec-backend">Zarrs Codec Backend</h3>
 <p>Setting <code>use_zarrs_codec=True</code> switches Zarr to the <code>zarrs.ZarrsCodecPipeline</code> Rust backend, which can significantly speed up encoding/decoding. This requires the optional <code>zarrs</code> package:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>pip<span class="w"> </span>install<span class="w"> </span>ome-zarr-converters-tools<span class="o">[</span>zarrs<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>pip<span class="w"> </span>install<span class="w"> </span>ome-zarr-converters-tools<span class="o">[</span>zarrs<span class="o">]</span>
 </code></pre></div>
 <h3 id="temporary-json-storage">Temporary JSON Storage</h3>
 <p><code>RuntimeSettings</code> also controls where temporary JSON metadata is stored during conversion via <code>temp_json_options</code>. The default stores it alongside the Zarr output:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.models._runtime_settings</span><span class="w"> </span><span class="kn">import</span> <span class="n">TempJsonOptions</span>
-<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>
-<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="n">settings</span> <span class="o">=</span> <span class="n">RuntimeSettings</span><span class="p">(</span>
-<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>    <span class="n">temp_json_options</span><span class="o">=</span><span class="n">TempJsonOptions</span><span class="p">(</span><span class="n">temp_url</span><span class="o">=</span><span class="s2">"</span><span class="si">{zarr_dir}</span><span class="s2">/_my_tmp"</span><span class="p">),</span>
-<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.models._runtime_settings</span><span class="w"> </span><span class="kn">import</span> <span class="n">TempJsonOptions</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="n">settings</span> <span class="o">=</span> <span class="n">RuntimeSettings</span><span class="p">(</span>
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>    <span class="n">temp_json_options</span><span class="o">=</span><span class="n">TempJsonOptions</span><span class="p">(</span><span class="n">temp_url</span><span class="o">=</span><span class="s2">"</span><span class="si">{zarr_dir}</span><span class="s2">/_my_tmp"</span><span class="p">),</span>
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="p">)</span>
 </code></pre></div>
 <h2 id="writer-modes">Writer Modes</h2>
 <p>Writer modes control how image data is loaded and written to the OME-Zarr dataset. The choice affects memory usage and performance.</p>
@@ -1558,14 +1596,14 @@
 </tr>
 <tr>
 <td><code>WriterMode.BY_FOV_DASK</code></td>
-<td>Loads FOVs lazily via Dask, writes one at a time</td>
-<td>Medium</td>
+<td>Loads FOVs lazily via Dask, streams each FOV a few write blocks at a time</td>
+<td>Low–Medium</td>
 <td>Fast</td>
 </tr>
 <tr>
 <td><code>WriterMode.BY_TILE_DASK</code></td>
-<td>Loads all tiles lazily via Dask, writes at once</td>
-<td>High</td>
+<td>Loads all tiles lazily via Dask, streams a few write blocks at a time</td>
+<td>Low–Medium</td>
 <td>Fast</td>
 </tr>
 <tr>
@@ -1576,25 +1614,26 @@
 </tr>
 </tbody>
 </table>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">WriterMode</span><span class="p">,</span> <span class="n">OverwriteMode</span>
-<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.pipelines</span><span class="w"> </span><span class="kn">import</span> <span class="n">tiled_image_creation_pipeline</span>
-<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>
-<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="c1"># For large datasets with limited memory</span>
-<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="n">omezarr</span> <span class="o">=</span> <span class="n">tiled_image_creation_pipeline</span><span class="p">(</span>
-<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>    <span class="n">zarr_url</span><span class="o">=</span><span class="n">zarr_url</span><span class="p">,</span>
-<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a>    <span class="n">tiled_image</span><span class="o">=</span><span class="n">tiled_image</span><span class="p">,</span>
-<a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a>    <span class="n">registration_pipeline</span><span class="o">=</span><span class="n">pipeline</span><span class="p">,</span>
-<a id="__codelineno-19-9" name="__codelineno-19-9" href="#__codelineno-19-9"></a>    <span class="n">converter_options</span><span class="o">=</span><span class="n">opts</span><span class="p">,</span>
-<a id="__codelineno-19-10" name="__codelineno-19-10" href="#__codelineno-19-10"></a>    <span class="n">writer_mode</span><span class="o">=</span><span class="n">WriterMode</span><span class="o">.</span><span class="n">BY_FOV</span><span class="p">,</span>
-<a id="__codelineno-19-11" name="__codelineno-19-11" href="#__codelineno-19-11"></a>    <span class="n">overwrite_mode</span><span class="o">=</span><span class="n">OverwriteMode</span><span class="o">.</span><span class="n">OVERWRITE</span><span class="p">,</span>
-<a id="__codelineno-19-12" name="__codelineno-19-12" href="#__codelineno-19-12"></a>    <span class="n">resource</span><span class="o">=</span><span class="n">data_dir</span><span class="p">,</span>
-<a id="__codelineno-19-13" name="__codelineno-19-13" href="#__codelineno-19-13"></a><span class="p">)</span>
-<a id="__codelineno-19-14" name="__codelineno-19-14" href="#__codelineno-19-14"></a>
-<a id="__codelineno-19-15" name="__codelineno-19-15" href="#__codelineno-19-15"></a><span class="c1"># For small datasets where speed matters</span>
-<a id="__codelineno-19-16" name="__codelineno-19-16" href="#__codelineno-19-16"></a><span class="n">omezarr</span> <span class="o">=</span> <span class="n">tiled_image_creation_pipeline</span><span class="p">(</span>
-<a id="__codelineno-19-17" name="__codelineno-19-17" href="#__codelineno-19-17"></a>    <span class="o">...</span><span class="p">,</span>
-<a id="__codelineno-19-18" name="__codelineno-19-18" href="#__codelineno-19-18"></a>    <span class="n">writer_mode</span><span class="o">=</span><span class="n">WriterMode</span><span class="o">.</span><span class="n">IN_MEMORY</span><span class="p">,</span>
-<a id="__codelineno-19-19" name="__codelineno-19-19" href="#__codelineno-19-19"></a><span class="p">)</span>
+<p>The Dask modes write each region in parallel, a few storage chunks or shards per dask block; ngio cuts the blocks on whole write units, so no two writers share one.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">WriterMode</span><span class="p">,</span> <span class="n">OverwriteMode</span>
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.pipelines</span><span class="w"> </span><span class="kn">import</span> <span class="n">tiled_image_creation_pipeline</span>
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="c1"># For large datasets with limited memory</span>
+<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a><span class="n">omezarr</span> <span class="o">=</span> <span class="n">tiled_image_creation_pipeline</span><span class="p">(</span>
+<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a>    <span class="n">zarr_url</span><span class="o">=</span><span class="n">zarr_url</span><span class="p">,</span>
+<a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a>    <span class="n">tiled_image</span><span class="o">=</span><span class="n">tiled_image</span><span class="p">,</span>
+<a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a>    <span class="n">registration_pipeline</span><span class="o">=</span><span class="n">pipeline</span><span class="p">,</span>
+<a id="__codelineno-20-9" name="__codelineno-20-9" href="#__codelineno-20-9"></a>    <span class="n">converter_options</span><span class="o">=</span><span class="n">opts</span><span class="p">,</span>
+<a id="__codelineno-20-10" name="__codelineno-20-10" href="#__codelineno-20-10"></a>    <span class="n">writer_mode</span><span class="o">=</span><span class="n">WriterMode</span><span class="o">.</span><span class="n">BY_FOV</span><span class="p">,</span>
+<a id="__codelineno-20-11" name="__codelineno-20-11" href="#__codelineno-20-11"></a>    <span class="n">overwrite_mode</span><span class="o">=</span><span class="n">OverwriteMode</span><span class="o">.</span><span class="n">OVERWRITE</span><span class="p">,</span>
+<a id="__codelineno-20-12" name="__codelineno-20-12" href="#__codelineno-20-12"></a>    <span class="n">resource</span><span class="o">=</span><span class="n">data_dir</span><span class="p">,</span>
+<a id="__codelineno-20-13" name="__codelineno-20-13" href="#__codelineno-20-13"></a><span class="p">)</span>
+<a id="__codelineno-20-14" name="__codelineno-20-14" href="#__codelineno-20-14"></a>
+<a id="__codelineno-20-15" name="__codelineno-20-15" href="#__codelineno-20-15"></a><span class="c1"># For small datasets where speed matters</span>
+<a id="__codelineno-20-16" name="__codelineno-20-16" href="#__codelineno-20-16"></a><span class="n">omezarr</span> <span class="o">=</span> <span class="n">tiled_image_creation_pipeline</span><span class="p">(</span>
+<a id="__codelineno-20-17" name="__codelineno-20-17" href="#__codelineno-20-17"></a>    <span class="o">...</span><span class="p">,</span>
+<a id="__codelineno-20-18" name="__codelineno-20-18" href="#__codelineno-20-18"></a>    <span class="n">writer_mode</span><span class="o">=</span><span class="n">WriterMode</span><span class="o">.</span><span class="n">IN_MEMORY</span><span class="p">,</span>
+<a id="__codelineno-20-19" name="__codelineno-20-19" href="#__codelineno-20-19"></a><span class="p">)</span>
 </code></pre></div>
 <h3 id="choosing-a-writer-mode">Choosing a Writer Mode</h3>
 <ul>
@@ -1628,16 +1667,16 @@
 </tr>
 </tbody>
 </table>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">OverwriteMode</span>
-<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>
-<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="c1"># Fail if output already exists (safe default for production)</span>
-<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="n">overwrite_mode</span> <span class="o">=</span> <span class="n">OverwriteMode</span><span class="o">.</span><span class="n">NO_OVERWRITE</span>
-<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>
-<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a><span class="c1"># Replace existing output (useful during development)</span>
-<a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a><span class="n">overwrite_mode</span> <span class="o">=</span> <span class="n">OverwriteMode</span><span class="o">.</span><span class="n">OVERWRITE</span>
-<a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a>
-<a id="__codelineno-20-9" name="__codelineno-20-9" href="#__codelineno-20-9"></a><span class="c1"># Append to existing dataset</span>
-<a id="__codelineno-20-10" name="__codelineno-20-10" href="#__codelineno-20-10"></a><span class="n">overwrite_mode</span> <span class="o">=</span> <span class="n">OverwriteMode</span><span class="o">.</span><span class="n">EXTEND</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ome_zarr_converters_tools.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">OverwriteMode</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="c1"># Fail if output already exists (safe default for production)</span>
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="n">overwrite_mode</span> <span class="o">=</span> <span class="n">OverwriteMode</span><span class="o">.</span><span class="n">NO_OVERWRITE</span>
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a>
+<a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a><span class="c1"># Replace existing output (useful during development)</span>
+<a id="__codelineno-21-7" name="__codelineno-21-7" href="#__codelineno-21-7"></a><span class="n">overwrite_mode</span> <span class="o">=</span> <span class="n">OverwriteMode</span><span class="o">.</span><span class="n">OVERWRITE</span>
+<a id="__codelineno-21-8" name="__codelineno-21-8" href="#__codelineno-21-8"></a>
+<a id="__codelineno-21-9" name="__codelineno-21-9" href="#__codelineno-21-9"></a><span class="c1"># Append to existing dataset</span>
+<a id="__codelineno-21-10" name="__codelineno-21-10" href="#__codelineno-21-10"></a><span class="n">overwrite_mode</span> <span class="o">=</span> <span class="n">OverwriteMode</span><span class="o">.</span><span class="n">EXTEND</span>
 </code></pre></div>
 
 
@@ -1661,7 +1700,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="August 6, 2026 09:46:48 UTC">August 6, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="October 14, 2026 19:20:59 UTC">October 14, 2026</span>
   </span>
 
     
