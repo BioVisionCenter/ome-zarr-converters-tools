@@ -56,8 +56,8 @@ def _compute_chunk_size(
             chunks.append(chunks_strategy.t_chunk)
         else:
             raise ConvertersToolsInternalError(
-                f"Axis '{ax}' of image '{tiled_image.path}' has no chunking rule; "
-                "axes must be among t, c, z, y, x."
+                f"Axis '{ax}' of image '{tiled_image.path}' has no chunking rule "
+                f"({axes=}); axes must be among t, c, z, y, x."
             )
     return tuple(chunks)
 

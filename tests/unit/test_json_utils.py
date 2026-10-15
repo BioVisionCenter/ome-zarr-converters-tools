@@ -129,6 +129,33 @@ class TestTiledImageFromJson:
                 image_loader_type=DummyLoader,
             )
 
+    def test_retries_until_the_file_appears(
+        self,
+        sample_tiled_image: TiledImage,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
+        json_path = dump_to_json(str(tmp_path / "json_store"), sample_tiled_image)
+        pending = json_path + ".pending"
+        os.rename(json_path, pending)
+        monkeypatch.setenv("CONVERTERS_TOOLS_NUM_RETRIES", "3")
+
+        def file_appears_instead_of_sleeping(_seconds: float) -> None:
+            os.rename(pending, json_path)
+
+        monkeypatch.setattr(
+            "ome_zarr_converters_tools.fractal._json_utils.time.sleep",
+            file_appears_instead_of_sleeping,
+        )
+        with caplog.at_level("WARNING"):
+            loaded = tiled_image_from_json(
+                json_path, collection_type=SingleImage, image_loader_type=DummyLoader
+            )
+        assert loaded.path == sample_tiled_image.path
+        assert "does not exist yet (attempt 1/3); retrying in 2 s" in caplog.text
+        assert len(caplog.records) == 1
+
     def test_invalid_num_retries_raises(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
@@ -245,3 +272,11 @@ class TestCleanupIfExists:
     def test_unknown_url_raises_not_supported(self) -> None:
         with pytest.raises(ConvertersToolsUserError, match="not supported"):
             cleanup_if_exists("gcs://bucket/store")
+
+
+def test_cleanup_if_exists_rejects_a_file(tmp_path: Path) -> None:
+    target = tmp_path / "not_a_directory.json"
+    target.write_text("{}")
+    with pytest.raises(ConvertersToolsUserError, match=r"temp_json_options\.temp_url"):
+        cleanup_if_exists(str(target))
+    assert target.exists()

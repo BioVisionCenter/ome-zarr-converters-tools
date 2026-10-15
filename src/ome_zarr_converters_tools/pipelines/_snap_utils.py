@@ -136,7 +136,7 @@ def _find_offset(
     unique_offsets = np.unique(offsets)
     raise NotAGridError(
         f"Cannot snap the tiles to a regular grid: the {ax} steps between "
-        f"neighbouring tiles are not all the same (tolerance={tolerance}); found "
+        f"neighbouring tiles are not all the same ({tolerance=}); found "
         f"steps {unique_offsets}. Raise the tiling `tolerance` to cover the stage "
         "jitter, or use `SnapToCornersTiling` (or `AutoTiling`, which falls back "
         "to it) to snap each tile to its nearest grid corner instead."

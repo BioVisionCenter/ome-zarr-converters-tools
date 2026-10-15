@@ -140,9 +140,10 @@ def filesystem_for_url(
     """Return the fsspec filesystem for a URL; raise if its type is unsupported."""
     url_type = find_url_type(url)
     if url_type == UrlType.NOT_SUPPORTED:
+        scheme, _ = fsspec.core.split_protocol(url)
         raise ConvertersToolsUserError(
-            f"{error_msg_prefix}: the URL '{url}' uses a scheme that is not "
-            "supported. Use a local path or an s3:// URL."
+            f"{error_msg_prefix}: the URL '{url}' uses the scheme {scheme!r}, "
+            "which is not supported. Use a local path or an s3:// URL."
         )
     try:
         return fsspec.filesystem(url_type.value)

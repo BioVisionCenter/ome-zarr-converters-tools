@@ -6,7 +6,10 @@ from typing import Any
 import numpy as np
 import pytest
 
-from ome_zarr_converters_tools.models._errors import ConvertersToolsWarning
+from ome_zarr_converters_tools.models._errors import (
+    ConvertersToolsUserError,
+    ConvertersToolsWarning,
+)
 from ome_zarr_converters_tools.models._loader import (
     DefaultImageLoader,
     ImageLoaderInterface,
@@ -220,3 +223,15 @@ class TestDescribeSource:
         assert long.startswith("BigLoader(payload=[0, 1, 2")
         assert len(long) == 200
         assert long.endswith("...")
+
+    def test_unstringifiable_resource_is_a_user_error(self) -> None:
+        class Opaque:
+            def __str__(self) -> str:
+                raise TypeError("no str")
+
+        loader = DefaultImageLoader(file_path="img.npy")
+        with pytest.raises(ConvertersToolsUserError, match="Opaque") as excinfo:
+            loader.load_data(resource=Opaque())
+        assert "file_path='img.npy'" in str(excinfo.value)
+        # `describe_source` must never raise; it falls back to the declared path.
+        assert loader.describe_source(resource=Opaque()) == "img.npy"

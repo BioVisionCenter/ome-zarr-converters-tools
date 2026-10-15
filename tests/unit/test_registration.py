@@ -19,6 +19,7 @@ from ome_zarr_converters_tools.models import (
     AutoTiling,
     ChannelInfo,
     ConvertersToolsInternalError,
+    ConvertersToolsUserError,
     InplaceTiling,
     SingleImage,
     SnapToGridTiling,
@@ -26,6 +27,7 @@ from ome_zarr_converters_tools.models import (
 )
 from ome_zarr_converters_tools.pipelines._alignment import (
     _align_xy_regions,
+    _channel_range,
     apply_align_to_pixel_grid,
     apply_offset_removal,
     apply_reindex_channels,
@@ -35,6 +37,7 @@ from ome_zarr_converters_tools.pipelines._snap_utils import (
     BBox,
     NotAGridError,
     NotTilableError,
+    _get_start,
     calculate_snap_to_corner_offset,
     calculate_snap_to_grid_offset,
     check_if_regular_grid,
@@ -287,6 +290,30 @@ class TestOffsetAndReindex:
         img = self._z_image({"FOV_0": -5.0})
         with pytest.raises(ValueError, match="non-negative"):
             apply_offset_removal(img, StagePositionCorrections(remove_z_offset="Keep"))
+
+    def test_offset_keep_negative_t_names_tile_and_image(self) -> None:
+        acq = AcquisitionDetails(
+            channels=[ChannelInfo(channel_label="DAPI")],
+            axes=["t", "c", "z", "y", "x"],
+            xy_pixel_size=1.0,
+            z_spacing=1.0,
+            t_spacing=1.0,
+        )
+        tile = build_dummy_tile(
+            fov_name="FOV_0",
+            start=StartPosition(x=0, y=0, z=0, c=0, t=-2),
+            shape=TileShape(x=16, y=16, z=1, c=1, t=1),
+            collection=SingleImage(image_path="img"),
+            acquisition_details=acq,
+        )
+        img = tiled_image_from_tiles(tiles=[tile], split_per_fov=False)[0]
+        with pytest.raises(
+            ConvertersToolsUserError, match="remove_t_offset"
+        ) as excinfo:
+            apply_offset_removal(img, StagePositionCorrections(remove_t_offset="Keep"))
+        message = str(excinfo.value)
+        assert f"tile 'FOV_0' of image '{img.path}'" in message
+        assert "starts at t=-2.0" in message
 
     def test_offset_z_global_vs_per_fov(self) -> None:
         # Two FOVs at absolute z 10 and 20.
@@ -817,3 +844,65 @@ def test_not_tilable_error_names_the_differing_tiles() -> None:
     assert "'B'=200.0" in message
     assert "'C'" not in message
     assert "InplaceTiling" in message
+
+
+class TestInternalInvariants:
+    """Guards a working converter cannot trip; pinned so class and wording hold."""
+
+    def test_channel_range_requires_c_slice(self) -> None:
+        region = _make_pixel_tile_slice(0.0, 0.0, 16.0, 16.0, "A")
+        with pytest.raises(
+            ConvertersToolsInternalError, match="Tile ROI 'A' has no 'c'"
+        ):
+            _channel_range(region)
+
+    def test_reindex_detects_channels_out_of_range(self) -> None:
+        img = _multichannel_image(channel_positions=[0, 2], num_channels=3)
+        assert img.channels is not None
+        img.channels = img.channels[:1]  # corrupt the invariant the validators keep
+        with pytest.raises(
+            ConvertersToolsInternalError,
+            match="references channel index 2 but channels has 1 entries",
+        ):
+            apply_reindex_channels(img, StagePositionCorrections())
+
+    def test_align_to_pixel_grid_rejects_unknown_mode(self) -> None:
+        img = _multichannel_image(channel_positions=[0], num_channels=1)
+        with pytest.raises(ConvertersToolsInternalError, match="mode 'bogus'"):
+            apply_align_to_pixel_grid(img, mode="bogus")  # type: ignore[arg-type]
+
+    def test_find_tiling_rejects_unknown_strategy(self) -> None:
+        with pytest.raises(ConvertersToolsInternalError, match="not handled"):
+            _find_tiling({}, object())  # type: ignore[arg-type]
+
+    def test_tiles_to_boxes_rejects_world_space(self) -> None:
+        tile = _make_world_tile_slice(0.0, 0.0, 16.0, 16.0, "W")
+        with pytest.raises(
+            ConvertersToolsInternalError, match="Tile ROI 'W' is still in world"
+        ):
+            tiles_to_boxes([tile])
+
+    def test_tiles_to_boxes_requires_a_length(self) -> None:
+        roi = Roi(
+            name="L",
+            slices=[
+                RoiSlice(axis_name="x", start=0.0, length=None),
+                RoiSlice(axis_name="y", start=0.0, length=16.0),
+            ],
+            space="pixel",
+        )
+        tile = TileSlice(
+            roi=roi, image_loader=DummyLoader(shape=TileShape(x=16, y=16), text="L")
+        )
+        with pytest.raises(
+            ConvertersToolsInternalError,
+            match="'x' axis slice is missing start or length",
+        ):
+            tiles_to_boxes([tile])
+
+    def test_get_start_reports_missing_axis(self) -> None:
+        tile = _make_pixel_tile_slice(0.0, 0.0, 16.0, 16.0, "G")
+        with pytest.raises(
+            ConvertersToolsInternalError, match="Tile ROI 'G' is missing the 'z' axis"
+        ):
+            _get_start(tile, "z")

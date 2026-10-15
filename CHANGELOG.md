@@ -22,8 +22,9 @@
   comes from in error messages; `DefaultImageLoader` returns its file path.
 
 ### Fix
-- `filesystem_for_url` raises `ConvertersToolsUserError` ("URL ... uses a
-  scheme that is not supported") instead of a misleading `NotImplementedError`.
+- `filesystem_for_url` raises `ConvertersToolsUserError` naming the unsupported
+  scheme ("URL ... uses the scheme 'gcs', which is not supported") instead of a
+  misleading `NotImplementedError`.
 - The compute task's wait for the init task's JSON file logs at `WARNING`
   level with the attempt count instead of `ERROR` on every retry.
 
