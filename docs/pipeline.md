@@ -495,3 +495,55 @@ overwrite_mode = OverwriteMode.OVERWRITE
 # Append to existing dataset
 overwrite_mode = OverwriteMode.EXTEND
 ```
+
+## Raising Errors from a Converter
+
+Every error the package raises subclasses `ConvertersToolsError`, and the
+message is written for the person who can act on it. Custom parsers, image
+loaders, filters, validators and registration steps should raise the same
+classes, so that task users can tell a problem they can fix from a bug:
+
+- `ConvertersToolsUserError` (a `ValueError`) for anything the task user or the
+  converter author can fix: wrong parameters, inconsistent or unreadable input
+  data, a missing dependency. Say what is wrong, name the image, the tile
+  (`fov_name`) and the source file, give the expected and actual values, then
+  say how to fix it.
+- `ConvertersToolsInternalError` (a `RuntimeError`) for an invariant that a
+  working converter can never violate. Write only the diagnostic sentence with
+  the values in scope; the message automatically ends with where to report the
+  bug.
+- `ConvertersToolsWarning` (a `UserWarning`) with `warnings.warn(message,
+  ConvertersToolsWarning, stacklevel=2)` for problems that do not stop the
+  conversion, e.g. a file that is missing at pre-flight time.
+
+Errors raised inside pydantic validators stay plain `ValueError`: pydantic wraps
+them in a `ValidationError` and the class is lost anyway.
+
+Override `ImageLoaderInterface.describe_source()` so that every error naming a
+tile shows where its data comes from (`DefaultImageLoader` returns its file
+path):
+
+```python
+from typing import Any
+
+import numpy as np
+
+from ome_zarr_converters_tools import ConvertersToolsUserError, ImageLoaderInterface
+
+
+class MyLoader(ImageLoaderInterface):
+    file_path: str
+    series: int
+
+    def describe_source(self, resource: Any | None = None) -> str:
+        return f"{self.file_path} (series {self.series})"
+
+    def load_data(self, resource: Any | None = None) -> np.ndarray:
+        try:
+            return read_my_format(self.file_path, series=self.series)
+        except MyFormatError as e:
+            raise ConvertersToolsUserError(
+                f"Cannot read series {self.series} of '{self.file_path}': {e}. "
+                "Check that the file is a complete export from the microscope."
+            ) from e
+```

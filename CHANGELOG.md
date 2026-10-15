@@ -1,5 +1,51 @@
 # Changelog
 
+## [Unreleased]
+
+### Features
+- Errors now say which image, tile and source file they concern, with the
+  expected and actual values and how to fix the problem
+  ([#74](https://github.com/BioVisionCenter/ome-zarr-converters-tools/issues/74)).
+  `TiledImage.add_tile` names the offending tile, the mismatching
+  `AcquisitionDetails` field with both values, and the tile the image was
+  created from.
+- New error classes, exported from the package root and `models`:
+  `ConvertersToolsError` (base), `ConvertersToolsUserError` (a `ValueError`;
+  something the task user or converter author can fix, the message says how),
+  `ConvertersToolsOutputExistsError` (a `FileExistsError`),
+  `ConvertersToolsFileNotFoundError` (a `FileNotFoundError`),
+  `ConvertersToolsInternalError` (a `RuntimeError`; an invariant a working
+  converter cannot violate, its message ends with where to report the bug) and
+  `ConvertersToolsWarning` (a `UserWarning`). Each error also subclasses the
+  builtin it stands in for, so existing `except ValueError` code keeps working.
+- `ImageLoaderInterface.describe_source()` lets custom loaders say where a tile
+  comes from in error messages; `DefaultImageLoader` returns its file path.
+
+### Fix
+- `filesystem_for_url` raises `ConvertersToolsUserError` ("URL ... uses a
+  scheme that is not supported") instead of a misleading `NotImplementedError`.
+- The compute task's wait for the init task's JSON file logs at `WARNING`
+  level with the attempt count instead of `ERROR` on every retry.
+
+### API Breaking Changes
+- Invariant violations that a working converter cannot trigger now raise
+  `ConvertersToolsInternalError`, a `RuntimeError`, instead of `ValueError`
+  (or `TypeError` in `setup_plates`): unknown writer mode or tiling strategy,
+  ROI structure checks inside the tiling utilities, wrong collection type in a
+  setup handler, and the argument checks of the dask lazy loader. Code that
+  caught `ValueError` around those calls must catch `ConvertersToolsError` or
+  `RuntimeError` instead:
+  ```python
+  # before
+  except ValueError: ...
+  # after
+  except ConvertersToolsError: ...
+  ```
+- `NotAGridError` and `NotTilableError` subclass `ConvertersToolsUserError`
+  (and therefore `ValueError`) instead of `Exception`.
+- An unknown axis in `_compute_chunk_size` raises instead of logging a warning
+  and chunking by 1 (the axes are `Literal`-typed, so this was unreachable).
+
 ## [v1.1.0]
 
 Requires `ngio` 1.1.2 or later. Written OME-Zarr output is unchanged.

@@ -20,7 +20,7 @@ from ome_zarr_converters_tools.core._roi_utils import (
     roi_to_point_distance,
     shape_from_rois,
 )
-from ome_zarr_converters_tools.core._tile import AttributeType, Tile
+from ome_zarr_converters_tools.core._tile import AttributeType, Tile, describe_tile
 from ome_zarr_converters_tools.models._acquisition import (
     CANONICAL_AXES_TYPE,
     ChannelInfo,
@@ -28,9 +28,23 @@ from ome_zarr_converters_tools.models._acquisition import (
 from ome_zarr_converters_tools.models._collection import (
     CollectionInterfaceType,
 )
+from ome_zarr_converters_tools.models._errors import (
+    ConvertersToolsInternalError,
+    ConvertersToolsUserError,
+)
 from ome_zarr_converters_tools.models._loader import (
     ImageLoaderInterfaceType,
 )
+
+_ACQUISITION_FIELDS = ("axes", "channels", "xy_pixel_size", "z_spacing", "t_spacing")
+"""`AcquisitionDetails` fields every tile of one `TiledImage` must agree on."""
+
+
+def _format_value(value: Any) -> str:
+    """Render an acquisition field for a message; channels show their labels."""
+    if isinstance(value, list) and value and isinstance(value[0], ChannelInfo):
+        return str([channel.channel_label for channel in value])
+    return repr(value)
 
 
 class TileSlice(BaseModel, Generic[ImageLoaderInterfaceType]):
@@ -62,7 +76,13 @@ class TileSlice(BaseModel, Generic[ImageLoaderInterfaceType]):
         n_axes = len(axes)
         data_axes = data.ndim
         if data_axes > n_axes:
-            raise ValueError("Data has more axes than expected.")
+            raise ConvertersToolsUserError(
+                f"{describe_tile(self.roi.name, self.image_loader, resource)} "
+                f"loaded data with {data_axes} axes (shape {tuple(data.shape)}), "
+                f"but the image declares only {n_axes} axes {list(axes)}. Add the "
+                "missing axes to `AcquisitionDetails.axes`, or make the image "
+                "loader drop the extra axes (e.g. squeeze singleton dimensions)."
+            )
         if data_axes < n_axes:
             data = data.reshape((1,) * (n_axes - data_axes) + data.shape)
         return data
@@ -211,7 +231,8 @@ class TiledImage(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfac
             length = c_slice.length if c_slice.length is not None else 1
             if c_slice.start < 0 or c_slice.start + length > num_channels:
                 raise ValueError(
-                    f"TiledImage '{self.path}' region '{region.roi.name}' "
+                    f"TiledImage '{self.path}' "
+                    f"{describe_tile(region.roi.name, region.image_loader)} "
                     f"references channel range [{c_slice.start}, "
                     f"{c_slice.start + length}) but channels has {num_channels} "
                     "entries. Provide one ChannelInfo per channel index, or set "
@@ -225,7 +246,12 @@ class TiledImage(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfac
         for region in self.regions:
             fov_name = region.roi.name
             if fov_name is None:
-                raise ValueError("TileSlice ROI must have a name to group by FOV.")
+                raise ConvertersToolsInternalError(
+                    f"A region of image '{self.path}' (source: "
+                    f"{region.image_loader.describe_source()}) has an unnamed "
+                    "ROI, so it cannot be grouped by FOV; `Tile.to_roi` always "
+                    "names ROIs after the tile's `fov_name`."
+                )
             if fov_name not in fov_dict:
                 fov_dict[fov_name] = []
             fov_dict[fov_name].append(region)
@@ -250,20 +276,38 @@ class TiledImage(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfac
             t=self.t_spacing,
         )
 
-    def add_tile(self, tile: Tile, add_translation: bool = False) -> None:
-        """Add a Tile to the TiledImage as a TileSlice."""
-        if self.channels != tile.acquisition_details.channels:
-            raise ValueError("Tile channels do not match TiledImage channels.")
-        if self.axes != tile.acquisition_details.axes:
-            raise ValueError("Tile axes do not match TiledImage axes.")
-        if self.xy_pixel_size != tile.acquisition_details.xy_pixel_size:
-            raise ValueError(
-                "Tile xy_pixel_size does not match TiledImage xy_pixel_size."
+    def _mismatch_message(self, tile: Tile, field: str) -> str:
+        """Explain why `tile` cannot join this image because of `field`."""
+        image_value = _format_value(getattr(self, field))
+        tile_value = _format_value(getattr(tile.acquisition_details, field))
+        if self.regions:
+            reference = self.regions[0]
+            origin = (
+                f"the image was created with {field}={image_value} from "
+                f"{describe_tile(reference.roi.name, reference.image_loader)}"
             )
-        if self.z_spacing != tile.acquisition_details.z_spacing:
-            raise ValueError("Tile z_spacing does not match TiledImage z_spacing.")
-        if self.t_spacing != tile.acquisition_details.t_spacing:
-            raise ValueError("Tile t_spacing does not match TiledImage t_spacing.")
+        else:
+            origin = f"the image declares {field}={image_value}"
+        return (
+            f"{describe_tile(tile.fov_name, tile.image_loader)} cannot be added "
+            f"to image '{self.path}': its {field} is {tile_value} but {origin}. "
+            "All tiles aggregated into one image must share the same "
+            f"AcquisitionDetails ({', '.join(_ACQUISITION_FIELDS)}). Check the "
+            "metadata the parser assigns to this tile, or give tiles with "
+            "different settings distinct collection paths (e.g. one acquisition "
+            "per image) so they are not aggregated together."
+        )
+
+    def add_tile(self, tile: Tile, add_translation: bool = False) -> None:
+        """Add a Tile to the TiledImage as a TileSlice.
+
+        Raises:
+            ConvertersToolsUserError: if the tile's `AcquisitionDetails` differ
+                from the image's in axes, channels or spacing.
+        """
+        for field in _ACQUISITION_FIELDS:
+            if getattr(self, field) != getattr(tile.acquisition_details, field):
+                raise ConvertersToolsUserError(self._mismatch_message(tile, field))
         tile_slice = TileSlice.from_tile(tile)
 
         if add_translation:

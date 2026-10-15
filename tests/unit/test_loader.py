@@ -1,10 +1,12 @@
 """Unit tests for models._loader."""
 
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pytest
 
+from ome_zarr_converters_tools.models._errors import ConvertersToolsWarning
 from ome_zarr_converters_tools.models._loader import (
     DefaultImageLoader,
     ImageLoaderInterface,
@@ -98,7 +100,9 @@ class TestDefaultImageLoader:
         tifffile.imwrite(str(custom_path), data)
 
         loader = DefaultImageLoader(file_path=str(custom_path))
-        with pytest.warns(UserWarning, match="attempting to load it as a TIFF"):
+        with pytest.warns(
+            ConvertersToolsWarning, match="attempting to load it as a TIFF"
+        ):
             loaded = loader.load_data()
         np.testing.assert_array_equal(loaded, data)
 
@@ -131,7 +135,9 @@ class TestDefaultImageLoader:
         fake_path.touch()
         loader = DefaultImageLoader(file_path=str(fake_path))
         with (
-            pytest.warns(UserWarning, match="attempting to load it as a TIFF"),
+            pytest.warns(
+                ConvertersToolsWarning, match="attempting to load it as a TIFF"
+            ),
             pytest.raises(ValueError, match="the TIFF fallback failed"),
         ):
             loader.load_data()
@@ -173,19 +179,42 @@ class TestDefaultImageLoader:
 
     def test_preflight_missing_file_warns(self, tmp_path: Path) -> None:
         loader = DefaultImageLoader(file_path=str(tmp_path / "missing.npy"))
-        with pytest.warns(UserWarning, match="does not exist"):
+        with pytest.warns(ConvertersToolsWarning, match="does not exist"):
             loader.preflight()
 
     def test_preflight_resolves_resource(self, tmp_path: Path) -> None:
         np.save(tmp_path / "img.npy", np.zeros((5, 5), dtype=np.uint8))
         loader = DefaultImageLoader(file_path="img.npy")
         loader.preflight(resource=str(tmp_path))
-        with pytest.warns(UserWarning, match="does not exist"):
+        with pytest.warns(ConvertersToolsWarning, match="does not exist"):
             loader.preflight(resource=str(tmp_path / "elsewhere"))
 
     def test_preflight_unsupported_url_warns(self) -> None:
         # A bare relative path is not a supported URL; preflight must warn,
         # never raise.
         loader = DefaultImageLoader(file_path="img.npy")
-        with pytest.warns(UserWarning, match="could not verify"):
+        with pytest.warns(ConvertersToolsWarning, match="could not verify"):
             loader.preflight()
+
+
+class TestDescribeSource:
+    def test_default_loader_returns_the_resolved_path(self, tmp_path: Path) -> None:
+        loader = DefaultImageLoader(file_path="img.npy")
+        assert loader.describe_source() == "img.npy"
+        resolved = loader.describe_source(resource=str(tmp_path))
+        assert resolved.endswith("/img.npy")
+        assert resolved.startswith(str(tmp_path))
+
+    def test_interface_default_is_a_truncated_repr(self) -> None:
+        class BigLoader(ImageLoaderInterface):
+            payload: list[int]
+
+            def load_data(self, resource: Any | None = None) -> np.ndarray:
+                return np.zeros((1,))
+
+        short = BigLoader(payload=[1, 2, 3]).describe_source()
+        assert short == "BigLoader(payload=[1, 2, 3])"
+        long = BigLoader(payload=list(range(500))).describe_source()
+        assert long.startswith("BigLoader(payload=[0, 1, 2")
+        assert len(long) == 200
+        assert long.endswith("...")

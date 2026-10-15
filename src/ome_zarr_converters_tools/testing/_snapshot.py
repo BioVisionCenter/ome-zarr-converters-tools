@@ -43,6 +43,9 @@ from ome_zarr_converters_tools.models._converter_options import (
     ConverterOptions,
     OverwriteMode,
 )
+from ome_zarr_converters_tools.models._errors import (
+    ConvertersToolsFileNotFoundError,
+)
 
 # Fingerprint stats are rounded to this many decimals on write; comparison uses
 # an absolute/relative tolerance of the same order. The sha256 pixel hash stays
@@ -579,7 +582,7 @@ def run_converter_test(
         return
 
     if not snapshot_path.exists():
-        raise FileNotFoundError(
+        raise ConvertersToolsFileNotFoundError(
             f"Snapshot file {snapshot_path} not found. "
             "Run with --update-snapshots to generate it."
         )

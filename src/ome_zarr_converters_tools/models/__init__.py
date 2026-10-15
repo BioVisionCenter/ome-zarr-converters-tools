@@ -44,6 +44,14 @@ from ome_zarr_converters_tools.models._converter_options import (
     TilingStrategy,
     WriterMode,
 )
+from ome_zarr_converters_tools.models._errors import (
+    ConvertersToolsError,
+    ConvertersToolsFileNotFoundError,
+    ConvertersToolsInternalError,
+    ConvertersToolsOutputExistsError,
+    ConvertersToolsUserError,
+    ConvertersToolsWarning,
+)
 from ome_zarr_converters_tools.models._loader import (
     DefaultImageLoader,
     ImageLoaderInterface,
@@ -80,6 +88,12 @@ __all__ = [
     "CollectionInterface",
     "CollectionInterfaceType",
     "ConverterOptions",
+    "ConvertersToolsError",
+    "ConvertersToolsFileNotFoundError",
+    "ConvertersToolsInternalError",
+    "ConvertersToolsOutputExistsError",
+    "ConvertersToolsUserError",
+    "ConvertersToolsWarning",
     "DaskScheduler",
     "DataTypeEnum",
     "DefaultImageLoader",

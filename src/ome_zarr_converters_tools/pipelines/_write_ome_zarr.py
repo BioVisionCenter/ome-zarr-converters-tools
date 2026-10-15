@@ -26,6 +26,10 @@ from ome_zarr_converters_tools.models import (
     OverwriteMode,
     WriterMode,
 )
+from ome_zarr_converters_tools.models._errors import (
+    ConvertersToolsInternalError,
+    ConvertersToolsUserError,
+)
 from ome_zarr_converters_tools.models._url_utils import filesystem_for_url
 from ome_zarr_converters_tools.pipelines._to_zarr import write_to_zarr
 
@@ -51,8 +55,10 @@ def _compute_chunk_size(
         elif ax == "t":
             chunks.append(chunks_strategy.t_chunk)
         else:
-            logger.warning(f"Unknown axis '{ax}' encountered. Setting chunk size to 1.")
-            chunks.append(1)
+            raise ConvertersToolsInternalError(
+                f"Axis '{ax}' of image '{tiled_image.path}' has no chunking rule; "
+                "axes must be among t, c, z, y, x."
+            )
     return tuple(chunks)
 
 
@@ -107,11 +113,13 @@ def _region_to_pixel_coordinates(
 
 def _attribute_to_condition_table(
     attributes: dict[str, AttributeType],
+    image_path: str | None = None,
 ) -> ConditionTable | None:
     """Convert attributes to a condition table.
 
     Args:
         attributes: Dictionary of attribute names to lists of attribute values.
+        image_path: Path of the image the attributes belong to, named in errors.
 
     Returns:
         A `ConditionTable`, or `None` if no attributes are provided.
@@ -123,9 +131,10 @@ def _attribute_to_condition_table(
         num_rows_dict[attr_name] = len(attr_values)
 
     if len(set(num_rows_dict.values())) > 1:
-        raise ValueError(
-            "All attributes must have the same number of values. "
-            f"Got attributes {attributes}."
+        of_image = f" of image '{image_path}'" if image_path is not None else ""
+        raise ConvertersToolsUserError(
+            f"All attributes{of_image} must have the same number of values; got "
+            f"{num_rows_dict}. Pad the shorter attributes with None values."
         )
     if len(num_rows_dict) == 0:
         # No attributes, no need to create a condition table
@@ -166,7 +175,7 @@ def _validate_channels_axis(
     if channels_meta is None or "c" in tiled_image.axes:
         return
     labels = ", ".join(channel.label for channel in channels_meta)
-    raise ValueError(
+    raise ConvertersToolsUserError(
         f"TiledImage '{tiled_image.path}' declares {len(channels_meta)} "
         f"channel(s) ({labels}) but its axes {tiled_image.axes} have no 'c' "
         "axis, so the image has nowhere to put them. Either add 'c' to "
@@ -266,7 +275,9 @@ def write_tiled_image_as_zarr(
     ome_zarr.add_table(
         "well_ROI_table", well_roi, backend=omezarr_options.table_backend
     )
-    condition_table = _attribute_to_condition_table(tiled_image.attributes)
+    condition_table = _attribute_to_condition_table(
+        tiled_image.attributes, image_path=tiled_image.path
+    )
     if condition_table is not None:
         ome_zarr.add_table("condition_table", condition_table, backend="csv")
     logger.info("Finished writing OME-Zarr Tables and metadata.")

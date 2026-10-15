@@ -203,5 +203,7 @@ class AcquisitionDetails(BaseModel):
         """Validate that axes are in canonical order."""
         for i in range(1, len(v)):
             if canonical_axes.index(v[i]) <= canonical_axes.index(v[i - 1]):
-                raise ValueError("Axes must be in canonical order: t, c, z, y, x")
+                raise ValueError(
+                    f"Axes must be in canonical order t, c, z, y, x; got {v}."
+                )
         return v

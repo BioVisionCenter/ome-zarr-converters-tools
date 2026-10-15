@@ -17,6 +17,10 @@ from ome_zarr_converters_tools.models._converter_options import (
     ConverterOptions,
     OverwriteMode,
 )
+from ome_zarr_converters_tools.models._errors import (
+    ConvertersToolsInternalError,
+    ConvertersToolsUserError,
+)
 from ome_zarr_converters_tools.pipelines._filters import ImplementedFilters
 
 
@@ -94,7 +98,10 @@ class ColorMenuBase(StrEnum):
             return None
         color = named_colors.get(self.name)
         if color is None:
-            raise ValueError(f"No default color found for {self.name=}")
+            raise ConvertersToolsInternalError(
+                f"Channel color {self.name!r} has no entry in `named_colors`; "
+                "every ColorMenu member needs one."
+            )
         return color
 
 
@@ -168,7 +175,10 @@ class AcquisitionOptions(UserFacingModel):
         _axes = []
         for ax in self.axes:
             if ax not in canonical_axes:
-                raise ValueError(f"Invalid axis '{ax}' in axes string.")
+                raise ConvertersToolsUserError(
+                    f"Invalid axis '{ax}' in axes string {self.axes!r}. Use only "
+                    f"the letters {canonical_axes}, in that order (e.g. 'czyx')."
+                )
             _axes.append(ax)
         return _axes
 

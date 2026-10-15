@@ -9,6 +9,7 @@ from ome_zarr_converters_tools.core._dask_lazy_loader import (
     aligned_chunks,
     lazy_array_from_regions,
 )
+from ome_zarr_converters_tools.models._errors import ConvertersToolsInternalError
 from ome_zarr_converters_tools.models._url_utils import (
     UrlType,
     basename_url,
@@ -262,7 +263,7 @@ class TestDaskLazyLoader:
         np.testing.assert_array_equal(arr.compute(), data)  # type: ignore[no-untyped-call]
 
     def test_explicit_chunks_must_sum_to_shape(self) -> None:
-        with pytest.raises(ValueError, match="must sum to the axis length"):
+        with pytest.raises(ConvertersToolsInternalError, match="must sum to the"):
             lazy_array_from_regions(
                 [],
                 shape=(10,),
@@ -297,7 +298,7 @@ class TestAlignedChunks:
             assert all(edge % u == 0 for edge in edges)
 
     def test_rejects_bad_unit_and_lengths(self) -> None:
-        with pytest.raises(ValueError, match="positive"):
+        with pytest.raises(ConvertersToolsInternalError, match="positive"):
             aligned_chunks((0,), (10,), (0,))
-        with pytest.raises(ValueError, match="same length"):
+        with pytest.raises(ConvertersToolsInternalError, match="same length"):
             aligned_chunks((0, 0), (10,), (4,))

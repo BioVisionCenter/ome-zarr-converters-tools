@@ -14,6 +14,7 @@ from ome_zarr_converters_tools.models import (
     ConverterOptions,
     OverwriteMode,
 )
+from ome_zarr_converters_tools.models._errors import ConvertersToolsUserError
 from ome_zarr_converters_tools.models._url_utils import join_url_paths
 from ome_zarr_converters_tools.pipelines._collection_setup import (
     setup_ome_zarr_collection,
@@ -33,7 +34,7 @@ def _check_path_collisions(tiled_images: list[TiledImage]) -> None:
         seen[image.path] = seen.get(image.path, 0) + 1
     duplicates = sorted(path for path, count in seen.items() if count > 1)
     if duplicates:
-        raise ValueError(
+        raise ConvertersToolsUserError(
             f"Multiple TiledImages resolve to the same output path(s): "
             f"{duplicates}. Each image must have a unique path, otherwise "
             "parallel compute jobs would overwrite each other. Give each "

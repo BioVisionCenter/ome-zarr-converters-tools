@@ -15,6 +15,7 @@ from ome_zarr_converters_tools.core._tile_to_tiled_images import tiled_image_fro
 from ome_zarr_converters_tools.models import (
     AcquisitionDetails,
     ChannelInfo,
+    ConvertersToolsInternalError,
     ImageInPlate,
     OverwriteMode,
     SingleImage,
@@ -201,7 +202,7 @@ class TestSetupSingleimage:
 
     def test_wrong_collection_type_raises(self, tmp_path: Path) -> None:
         images = _make_plate_tiled_images()
-        with pytest.raises(ValueError, match="Expected SingleImage"):
+        with pytest.raises(ConvertersToolsInternalError, match="Expected SingleImage"):
             setup_singleimage(
                 zarr_dir=str(tmp_path),
                 tiled_images=images,

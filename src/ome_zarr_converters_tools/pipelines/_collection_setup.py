@@ -13,6 +13,11 @@ from ome_zarr_converters_tools.models import (
     OverwriteMode,
     SingleImage,
 )
+from ome_zarr_converters_tools.models._errors import (
+    ConvertersToolsInternalError,
+    ConvertersToolsOutputExistsError,
+    ConvertersToolsUserError,
+)
 from ome_zarr_converters_tools.models._url_utils import (
     filesystem_for_url,
     join_url_paths,
@@ -36,7 +41,7 @@ def _setup_condition_table(
         keys_by_image = {
             tile.path: sorted(tile.attributes.keys()) for tile in with_attributes
         }
-        raise ValueError(
+        raise ConvertersToolsUserError(
             "All images with attributes must define the same attribute keys to "
             f"build a condition table; got {keys_by_image}. Add the missing "
             "attribute columns to the tiles table (None values are allowed) or "
@@ -44,7 +49,7 @@ def _setup_condition_table(
         )
     reserved = set(next(iter(key_sets))) & set(_RESERVED_CONDITION_COLUMNS)
     if reserved:
-        raise ValueError(
+        raise ConvertersToolsUserError(
             f"Attribute keys {sorted(reserved)} collide with the condition "
             f"table's reserved columns {_RESERVED_CONDITION_COLUMNS}. Rename "
             "these columns in the tiles table."
@@ -54,7 +59,7 @@ def _setup_condition_table(
     for tile in with_attributes:
         num_rows_by_key = {key: len(values) for key, values in tile.attributes.items()}
         if len(set(num_rows_by_key.values())) > 1:
-            raise ValueError(
+            raise ConvertersToolsUserError(
                 f"All attributes of image '{tile.path}' must have the same "
                 f"number of values; got {num_rows_by_key}. Pad the shorter "
                 "attributes with None values."
@@ -77,8 +82,10 @@ def _image_in_well_path(image: TiledImage) -> tuple[ImageInWellPath, str]:
     """Return the plate placement of `image` and its path inside the plate."""
     image_collection = image.collection
     if not isinstance(image_collection, ImageInPlate):
-        raise ValueError(
-            f"Expected ImageInPlate collection, got {type(image_collection)}"
+        raise ConvertersToolsInternalError(
+            f"Expected ImageInPlate collection for image '{image.path}', got "
+            f"{type(image_collection).__name__}; the plate setup handler was "
+            "dispatched for a different collection type."
         )
     image_in_well = ImageInWellPath(
         row=image_collection.row,
@@ -98,9 +105,11 @@ def setup_plates(
 ) -> None:
     """Set up an ImageInPlate collection in the Zarr group."""
     if not isinstance(tiled_images[0].collection, ImageInPlate):
-        raise TypeError(
-            "setup_plates requires ImageInPlate collections, got "
-            f"{type(tiled_images[0].collection).__name__}."
+        raise ConvertersToolsInternalError(
+            "setup_plates requires ImageInPlate collections, but image "
+            f"'{tiled_images[0].path}' has a "
+            f"{type(tiled_images[0].collection).__name__} collection; the plate "
+            "setup handler was dispatched for a different collection type."
         )
     images_grouped_by_plate: dict[str, list[TiledImage]] = {}
     for tiled_image in tiled_images:
@@ -115,7 +124,7 @@ def setup_plates(
         if overwrite_mode == OverwriteMode.NO_OVERWRITE:
             fs = filesystem_for_url(plate_url)
             if fs.exists(plate_url):
-                raise FileExistsError(
+                raise ConvertersToolsOutputExistsError(
                     f"A Plate already exists at {plate_url} "
                     f"(overwrite_mode={OverwriteMode.NO_OVERWRITE.value}). "
                     f"Set overwrite_mode={OverwriteMode.OVERWRITE.value} to "
@@ -182,12 +191,16 @@ def setup_singleimage(
     for tiled_image in tiled_images:
         collection = tiled_image.collection
         if not isinstance(collection, SingleImage):
-            raise ValueError(f"Expected SingleImage collection, got {type(collection)}")
+            raise ConvertersToolsInternalError(
+                f"Expected SingleImage collection for image '{tiled_image.path}', "
+                f"got {type(collection).__name__}; the single-image setup handler "
+                "was dispatched for a different collection type."
+            )
         zarr_url = join_url_paths(zarr_dir, collection.path())
         if overwrite_mode == OverwriteMode.NO_OVERWRITE:
             fs = filesystem_for_url(zarr_url)
             if fs.exists(zarr_url):
-                raise FileExistsError(
+                raise ConvertersToolsOutputExistsError(
                     f"A zarr already exists at {zarr_url} "
                     f"(overwrite_mode={OverwriteMode.NO_OVERWRITE.value}). "
                     f"Set overwrite_mode={OverwriteMode.OVERWRITE.value} to "

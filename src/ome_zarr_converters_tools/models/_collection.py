@@ -6,6 +6,7 @@ from typing import Any, TypeVar
 
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, field_validator
 
+from ome_zarr_converters_tools.models._errors import ConvertersToolsUserError
 from ome_zarr_converters_tools.models._url_utils import join_url_paths
 
 ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -16,7 +17,7 @@ VALID_ZARR_NAME_PATTERN = r"^(?!__)(?! )((?!^\.+$)[a-zA-Z0-9_. -]+)(?<! )$"
 def validate_zarr_name(name: str) -> str:
     """Validate a name to be used as a Zarr group or dataset name."""
     if not re.match(VALID_ZARR_NAME_PATTERN, name):
-        raise ValueError(
+        raise ConvertersToolsUserError(
             f"Invalid Zarr name '{name}'. "
             "Names must only contain A-Z, a-z, 0-9, -, _, space, and . characters. "
             "Additionally, names cannot have leading or trailing spaces, "
