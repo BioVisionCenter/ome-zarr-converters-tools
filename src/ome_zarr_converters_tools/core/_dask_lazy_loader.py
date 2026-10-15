@@ -278,7 +278,7 @@ def lazy_array_from_regions(
     if len(chunks) != ndim:
         raise ConvertersToolsInternalError(
             f"chunks length ({len(chunks)}) must match shape length ({ndim}); "
-            f"got chunks={chunks} for shape={shape}."
+            f"got {chunks=} for {shape=}."
         )
 
     # Convert per-region slices to explicit (start, stop) bounds.
