@@ -23,6 +23,8 @@ from ome_zarr_converters_tools.models import (
     AcquisitionDetails,
     ChannelInfo,
     ConverterOptions,
+    ConvertersToolsInternalError,
+    ConvertersToolsUserError,
     SingleImage,
     StageOrientation,
 )
@@ -228,8 +230,52 @@ class TestTiledImage:
             collection=default_collection,
             acquisition_details=acq,
         )
-        with pytest.raises(ValueError, match="channels"):
+        with pytest.raises(ConvertersToolsUserError, match="channels"):
             tiled_image_from_grid.add_tile(tile)
+
+    @pytest.mark.parametrize(
+        ("field", "value"),
+        [
+            ("xy_pixel_size", 0.5),
+            ("z_spacing", 2.0),
+            ("t_spacing", 3.0),
+            ("channels", [ChannelInfo(channel_label="DIFFERENT")]),
+        ],
+    )
+    def test_add_tile_mismatch_names_tile_and_values(
+        self,
+        tiled_image_from_grid: TiledImage,
+        default_collection: SingleImage,
+        field: str,
+        value: object,
+    ) -> None:
+        image = tiled_image_from_grid
+        acq = AcquisitionDetails(
+            channels=image.channels,
+            axes=image.axes,
+            xy_pixel_size=image.xy_pixel_size,
+            z_spacing=image.z_spacing,
+            t_spacing=image.t_spacing,
+        ).model_copy(update={field: value})
+        tile = build_dummy_tile(
+            fov_name="FOV_bad",
+            start=StartPosition(x=0, y=0),
+            shape=TileShape(x=64, y=64, z=1, c=1, t=1),
+            collection=default_collection,
+            acquisition_details=acq,
+        )
+        reference = image.regions[0]
+        with pytest.raises(ConvertersToolsUserError) as excinfo:
+            image.add_tile(tile)
+        # Still a ValueError for callers that catch the builtin.
+        assert isinstance(excinfo.value, ValueError)
+        message = str(excinfo.value)
+        assert "tile 'FOV_bad'" in message
+        assert tile.image_loader.describe_source() in message
+        assert f"to image '{image.path}'" in message
+        assert f"its {field} is" in message
+        assert f"from tile '{reference.roi.name}'" in message
+        assert reference.image_loader.describe_source() in message
 
     def test_group_by_fov(self, tiled_image_from_grid: TiledImage) -> None:
         groups = tiled_image_from_grid.group_by_fov()
@@ -340,3 +386,70 @@ class TestTiledImageFromTiles:
                 tiles=[],
                 split_per_fov=False,
             )
+
+
+class TestErrorContext:
+    def _acq(self) -> AcquisitionDetails:
+        return AcquisitionDetails(
+            channels=[ChannelInfo(channel_label="DAPI")],
+            xy_pixel_size=1.0,
+            z_spacing=1.0,
+            t_spacing=1.0,
+        )
+
+    def test_load_data_with_too_many_axes_names_the_tile(
+        self, default_collection: SingleImage
+    ) -> None:
+        tile = build_dummy_tile(
+            fov_name="FOV_0",
+            start=StartPosition(x=0, y=0),
+            shape=TileShape(x=8, y=8, z=1, c=1, t=1),
+            collection=default_collection,
+            acquisition_details=self._acq(),
+        )
+        region = TileSlice.from_tile(tile)
+        with pytest.raises(ConvertersToolsUserError, match="tile 'FOV_0'") as excinfo:
+            region.load_data(axes=["y", "x"])
+        message = str(excinfo.value)
+        assert "5 axes" in message
+        assert "declares only 2 axes ['y', 'x']" in message
+        assert region.image_loader.describe_source() in message
+
+    def test_add_tile_to_empty_image_reports_declared_value(
+        self, default_collection: SingleImage
+    ) -> None:
+        acq = self._acq()
+        image = TiledImage(
+            path="empty",
+            data_type="uint8",
+            channels=acq.channels,
+            axes=acq.axes,
+            xy_pixel_size=2.0,
+            collection=default_collection,
+        )
+        tile = build_dummy_tile(
+            fov_name="FOV_0",
+            start=StartPosition(x=0, y=0),
+            shape=TileShape(x=8, y=8, z=1, c=1, t=1),
+            collection=default_collection,
+            acquisition_details=acq,
+        )
+        with pytest.raises(ConvertersToolsUserError) as excinfo:
+            image.add_tile(tile)
+        message = str(excinfo.value)
+        assert "its xy_pixel_size is 1.0 but the image declares xy_pixel_size=2.0" in (
+            message
+        )
+        assert "from tile" not in message
+
+    def test_group_by_fov_rejects_unnamed_roi(
+        self, tiled_image_from_grid: TiledImage
+    ) -> None:
+        image = tiled_image_from_grid
+        region = image.regions[0]
+        region.roi = region.roi.model_copy(update={"name": None})
+        with pytest.raises(
+            ConvertersToolsInternalError, match="unnamed ROI"
+        ) as excinfo:
+            image.group_by_fov()
+        assert f"image '{image.path}'" in str(excinfo.value)

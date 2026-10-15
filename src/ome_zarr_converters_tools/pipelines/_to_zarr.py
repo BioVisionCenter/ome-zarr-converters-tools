@@ -11,6 +11,7 @@ from ome_zarr_converters_tools.core._dask_lazy_loader import (
 )
 from ome_zarr_converters_tools.core._tile_region import TiledImage
 from ome_zarr_converters_tools.models import WriterMode
+from ome_zarr_converters_tools.models._errors import ConvertersToolsInternalError
 
 logger = getLogger(__name__)
 
@@ -177,4 +178,7 @@ def write_to_zarr(
     elif writer_mode == WriterMode.IN_MEMORY:
         in_memory_writing(tiled_image=tiled_image, image=image, resource=resource)
     else:
-        raise ValueError(f"Unknown writer mode: {writer_mode}")
+        raise ConvertersToolsInternalError(
+            f"Unknown writer mode {writer_mode!r}; expected one of "
+            f"{[mode.value for mode in WriterMode]}."
+        )

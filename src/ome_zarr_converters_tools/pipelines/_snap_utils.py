@@ -7,18 +7,26 @@ from typing import Literal, NamedTuple
 import numpy as np
 
 from ome_zarr_converters_tools.core import TileSlice
+from ome_zarr_converters_tools.models._errors import (
+    ConvertersToolsInternalError,
+    ConvertersToolsUserError,
+)
 
 
-class NotAGridError(Exception):
-    """Exception raised when tiles do not form a regular grid."""
+class NotAGridError(ConvertersToolsUserError):
+    """Error raised when the tiles do not form a regular grid.
 
-    pass
+    Under `AutoTiling` it is caught and the tiles are snapped to the nearest
+    grid corners instead; under `SnapToGridTiling` it reaches the user.
+    """
 
 
-class NotTilableError(Exception):
-    """Exception raised when tiles cannot be tiled."""
+class NotTilableError(ConvertersToolsUserError):
+    """Error raised when tiles of different sizes cannot be snapped to a grid.
 
-    pass
+    No tiling strategy falls back from it: use `InplaceTiling`, or make the
+    parser emit tiles of one size.
+    """
 
 
 class BBox(NamedTuple):
@@ -42,48 +50,71 @@ class GridSetup(NamedTuple):
     num_y: int
 
 
+def _pixel_extent(tile: TileSlice, axis: str) -> tuple[float, float]:
+    """Return `(start, length)` of `axis` for a tile in pixel coordinates."""
+    axis_slice = tile.roi.get(axis)
+    if axis_slice is None:
+        raise ConvertersToolsInternalError(
+            f"Tile ROI '{tile.roi.name}' is missing the '{axis}' axis slice."
+        )
+    if axis_slice.start is None or axis_slice.length is None:
+        raise ConvertersToolsInternalError(
+            f"Tile ROI '{tile.roi.name}' '{axis}' axis slice is missing start or "
+            f"length (start={axis_slice.start}, length={axis_slice.length})."
+        )
+    return float(axis_slice.start), float(axis_slice.length)
+
+
+def _describe_size_mismatch(
+    tiles: list[TileSlice], boxes: list[BBox], axis: str, reference: float
+) -> str:
+    """List up to five tiles whose `axis` length differs from `reference`."""
+    index = 2 if axis == "x" else 3
+    differing = [
+        f"'{tile.roi.name}'={box[index]}"
+        for tile, box in zip(tiles, boxes, strict=True)
+        if not math.isclose(box[index], reference)
+    ]
+    shown = ", ".join(differing[:5])
+    more = f" and {len(differing) - 5} more" if len(differing) > 5 else ""
+    return f"{shown}{more}"
+
+
 def tiles_to_boxes(tiles: list[TileSlice]) -> list[BBox]:
     """Convert a list of TileSlice to a list of Box."""
     if len(tiles) == 0:
-        raise ValueError("Tile list is empty, something went wrong.")
+        raise ConvertersToolsInternalError(
+            "Tiling received an empty tile list; the registration pipeline must "
+            "not run a tiling step on an image without regions."
+        )
 
     boxes = []
     for tile in tiles:
-        roi = tile.roi
-        if roi.space == "world":
-            raise ValueError("Tiling is only supported for tiles in pixel coordinates.")
-        slice_x = tile.roi.get("x")
-        if slice_x is None:
-            raise ValueError("Tile ROI is missing the 'x' axis slice.")
-        start_x = slice_x.start
-        length_x = slice_x.length
-        if start_x is None or length_x is None:
-            raise ValueError("Tile ROI 'x' axis slice is missing start or length.")
-
-        slice_y = tile.roi.get("y")
-        if slice_y is None:
-            raise ValueError("Tile ROI is missing the 'y' axis slice.")
-        start_y = slice_y.start
-        length_y = slice_y.length
-        if start_y is None or length_y is None:
-            raise ValueError("Tile ROI 'y' axis slice is missing start or length.")
-        box = BBox(x=start_x, y=start_y, x_len=length_x, y_len=length_y)
-        boxes.append(box)
+        if tile.roi.space == "world":
+            raise ConvertersToolsInternalError(
+                f"Tile ROI '{tile.roi.name}' is still in world coordinates; tiling "
+                "requires pixel coordinates, which the registration pipeline "
+                "converts to before any tiling step."
+            )
+        start_x, length_x = _pixel_extent(tile, "x")
+        start_y, length_y = _pixel_extent(tile, "y")
+        boxes.append(BBox(x=start_x, y=start_y, x_len=length_x, y_len=length_y))
 
     if len(boxes) <= 1:
         return boxes
     # Consistency check: all boxes should have the same size
     first_box = boxes[0]
-    len_x = [box.x_len for box in boxes[1:]]
-    len_y = [box.y_len for box in boxes[1:]]
-    if not np.allclose(len_x, first_box.x_len):
-        raise NotTilableError(
-            "Tiling is not possible when tiles have different x length."
-        )
-    if not np.allclose(len_y, first_box.y_len):
-        raise NotTilableError(
-            "Tiling is not possible when tiles have different y length."
-        )
+    for axis, reference in (("x", first_box.x_len), ("y", first_box.y_len)):
+        lengths = [box.x_len if axis == "x" else box.y_len for box in boxes[1:]]
+        if not np.allclose(lengths, reference):
+            differing = _describe_size_mismatch(tiles, boxes, axis, reference)
+            raise NotTilableError(
+                f"Tiles cannot be snapped to a grid because their {axis} lengths "
+                f"differ: tile '{tiles[0].roi.name}' has {axis} length "
+                f"{reference} but {differing}. Snapping needs tiles of one size "
+                "and no tiling strategy falls back from this; use "
+                "`InplaceTiling`, or make the parser emit equally sized tiles."
+            )
     return boxes
 
 
@@ -104,8 +135,11 @@ def _find_offset(
 
     unique_offsets = np.unique(offsets)
     raise NotAGridError(
-        f"Cannot tile to a regular grid: not all {ax} offsets are "
-        f"the same (tolerance={tolerance}): {unique_offsets}"
+        f"Cannot snap the tiles to a regular grid: the {ax} steps between "
+        f"neighbouring tiles are not all the same ({tolerance=}); found "
+        f"steps {unique_offsets}. Raise the tiling `tolerance` to cover the stage "
+        "jitter, or use `SnapToCornersTiling` (or `AutoTiling`, which falls back "
+        "to it) to snap each tile to its nearest grid corner instead."
     )
 
 
@@ -159,9 +193,13 @@ def check_if_regular_grid(tiles: list[TileSlice], tolerance: float = 0.0) -> Gri
 def _get_start(tile: TileSlice, axis: str) -> float:
     s = tile.roi.get(axis)
     if s is None:
-        raise ValueError(f"Tile ROI is missing the '{axis}' axis slice.")
+        raise ConvertersToolsInternalError(
+            f"Tile ROI '{tile.roi.name}' is missing the '{axis}' axis slice."
+        )
     if s.start is None:
-        raise ValueError(f"Tile ROI '{axis}' axis slice is missing start.")
+        raise ConvertersToolsInternalError(
+            f"Tile ROI '{tile.roi.name}' '{axis}' axis slice is missing start."
+        )
     return float(s.start)
 
 

@@ -10,7 +10,7 @@ from ngio import Roi
 from ome_zarr_converters_tools.core._dask_lazy_loader import aligned_chunks
 from ome_zarr_converters_tools.core._roi_utils import move_roi_by
 from ome_zarr_converters_tools.core._tile_region import TiledImage
-from ome_zarr_converters_tools.models import WriterMode
+from ome_zarr_converters_tools.models import ConvertersToolsInternalError, WriterMode
 from ome_zarr_converters_tools.pipelines._to_zarr import (
     dask_parallel_fov_writing,
     dask_parallel_tile_writing,
@@ -335,7 +335,7 @@ class TestWriteToZarr:
         tiled_image_from_grid: TiledImage,
         mock_image: MagicMock,
     ) -> None:
-        with pytest.raises(ValueError, match="Unknown writer mode"):
+        with pytest.raises(ConvertersToolsInternalError, match="Unknown writer mode"):
             write_to_zarr(
                 image=mock_image,
                 tiled_image=tiled_image_from_grid,

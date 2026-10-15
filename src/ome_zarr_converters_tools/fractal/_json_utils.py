@@ -10,6 +10,10 @@ from ome_zarr_converters_tools.models import (
     CollectionInterfaceType,
     ImageLoaderInterfaceType,
 )
+from ome_zarr_converters_tools.models._errors import (
+    ConvertersToolsFileNotFoundError,
+    ConvertersToolsUserError,
+)
 from ome_zarr_converters_tools.models._url_utils import (
     filesystem_for_url,
     join_url_paths,
@@ -59,7 +63,10 @@ def tiled_image_from_json(
     num_retries = int(os.getenv("CONVERTERS_TOOLS_NUM_RETRIES", 5))
 
     if num_retries < 1:
-        raise ValueError("NUM_RETRIES must be greater than 0")
+        raise ConvertersToolsUserError(
+            f"CONVERTERS_TOOLS_NUM_RETRIES must be at least 1, got {num_retries}. "
+            "Set the environment variable to a positive integer."
+        )
 
     for t in range(num_retries):
         try:
@@ -77,14 +84,18 @@ def tiled_image_from_json(
         except FileNotFoundError:
             if t == num_retries - 1:
                 break  # Last attempt failed; don't sleep before raising.
-            logger.error(
-                f"JSON file does not exist: {tiled_image_json_dump_url}, retrying..."
+            logger.warning(
+                f"JSON file {tiled_image_json_dump_url} does not exist yet "
+                f"(attempt {t + 1}/{num_retries}); retrying in {2 ** (t + 1)} s."
             )
             time.sleep(2 ** (t + 1))
 
-    raise FileNotFoundError(
-        f"JSON file does not exist after {num_retries} "
-        f"retries: {tiled_image_json_dump_url}"
+    raise ConvertersToolsFileNotFoundError(
+        f"JSON file {tiled_image_json_dump_url} does not exist after "
+        f"{num_retries} attempts. The init task writes it and the compute task "
+        "deletes it after use: check that the temporary JSON directory is shared "
+        "between the init and compute jobs, and that the compute task is not run "
+        "twice for the same image."
     )
 
 
@@ -144,15 +155,19 @@ def cleanup_if_exists(temp_json_url: str):
     If cleaning up is not possible, log an error message, but do not raise.
 
     Args:
-        temp_json_url: The URL to the temporary JSON directory.
+        temp_json_url: URL of the temporary JSON directory
+            (`RuntimeSettings.temp_json_options.temp_url`).
     """
     fs = filesystem_for_url(temp_json_url, error_msg_prefix="Cleanup")
 
     if not fs.exists(temp_json_url):
         return
     if not fs.isdir(temp_json_url):
-        raise ValueError(
-            f"Expected a directory for a cleanup, but got a file: {temp_json_url}"
+        raise ConvertersToolsUserError(
+            f"Cannot clean up the temporary JSON location {temp_json_url}: it is "
+            "a file, not a directory. Point `temp_json_options.temp_url` (in "
+            "`RuntimeSettings`) at a directory; the default is "
+            "`{zarr_dir}/_tmp_json`."
         )
     try:
         # Limit to depth 1: temp JSON store is flat (files only, no subdirs)

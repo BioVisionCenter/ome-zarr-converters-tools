@@ -6,6 +6,8 @@ from pydantic import BaseModel
 
 from ome_zarr_converters_tools.core import TiledImage
 from ome_zarr_converters_tools.core._roi_utils import move_roi_by
+from ome_zarr_converters_tools.core._tile import describe_tile
+from ome_zarr_converters_tools.models._errors import ConvertersToolsUserError
 from ome_zarr_converters_tools.pipelines._registry import Registry
 
 
@@ -58,20 +60,20 @@ def apply_shape_dtype_probe(
     sample = tiled_image.regions[0]
     data = sample.load_data(axes=tiled_image.axes, resource=resource)
     expected_shape = _expected_region_shape(tiled_image, sample)
+    tile_label = describe_tile(sample.roi.name, sample.image_loader, resource)
     if tuple(data.shape) != expected_shape:
-        raise ValueError(
-            f"TiledImage '{tiled_image.path}' tile '{sample.roi.name}' "
-            f"declares shape {expected_shape} (axes {tiled_image.axes}) but "
-            f"its loader returned shape {tuple(data.shape)}. Fix the "
-            "`length_*` values the parser sets on its tiles to match the "
-            "actual data."
+        raise ConvertersToolsUserError(
+            f"TiledImage '{tiled_image.path}' {tile_label} declares shape "
+            f"{expected_shape} (axes {tiled_image.axes}) but its loader returned "
+            f"shape {tuple(data.shape)}. Fix the `length_*` values the parser "
+            "sets on its tiles to match the actual data."
         )
     if str(data.dtype) != tiled_image.data_type:
-        raise ValueError(
+        raise ConvertersToolsUserError(
             f"TiledImage '{tiled_image.path}' declares data type "
-            f"'{tiled_image.data_type}' but tile '{sample.roi.name}' loaded "
-            f"as '{data.dtype}'. Fix the `data_type` in AcquisitionDetails, "
-            "or leave it as AUTODETECT."
+            f"'{tiled_image.data_type}' but {tile_label} loaded as "
+            f"'{data.dtype}'. Fix the `data_type` in AcquisitionDetails, or "
+            "leave it as AUTODETECT."
         )
 
 

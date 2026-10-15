@@ -7,6 +7,7 @@ from pydantic import ConfigDict, Field
 from ome_zarr_converters_tools.core._tile import Tile
 from ome_zarr_converters_tools.models._base import UserFacingModel
 from ome_zarr_converters_tools.models._collection import ImageInPlate
+from ome_zarr_converters_tools.models._errors import ConvertersToolsUserError
 from ome_zarr_converters_tools.pipelines._registry import Registry
 
 FilterMode = Literal["Include", "Exclude"]
@@ -66,8 +67,11 @@ class WellFilter(FilterModel):
 
 def apply_well_filter(tile: Tile, filter_params: WellFilter) -> bool:
     if not isinstance(tile.collection, ImageInPlate):
-        raise ValueError(
-            "Well filter can only be applied to a tile with ImageInPlate collection."
+        raise ConvertersToolsUserError(
+            "Well Filter can only be applied to tiles with an ImageInPlate "
+            f"collection, but tile '{tile.fov_name}' has a "
+            f"{type(tile.collection).__name__} collection. Remove the filter, or "
+            "convert the data as a plate."
         )
     matched = tile.collection.well in filter_params.wells
     return _apply_mode(matched, filter_params.mode)
@@ -98,8 +102,11 @@ def apply_fov_name_filter(tile: Tile, filter_params: FovNameFilter) -> bool:
 
 def _plate_acquisition(tile: Tile, filter_name: str) -> int:
     if not isinstance(tile.collection, ImageInPlate):
-        raise ValueError(
-            f"{filter_name} can only be applied to a tile with ImageInPlate collection."
+        raise ConvertersToolsUserError(
+            f"{filter_name} can only be applied to tiles with an ImageInPlate "
+            f"collection, but tile '{tile.fov_name}' has a "
+            f"{type(tile.collection).__name__} collection. Remove the filter, or "
+            "convert the data as a plate."
         )
     return tile.collection.acquisition
 
@@ -211,7 +218,7 @@ def _attribute_matches(
 ) -> bool:
     if key not in tile.attributes:
         available = sorted(tile.attributes)
-        raise ValueError(
+        raise ConvertersToolsUserError(
             f"{filter_name} references attribute '{key}' but tile "
             f"'{tile.fov_name}' has no such attribute; available attributes: "
             f"{available}. Fix the filter key or make the parser set the "
@@ -260,7 +267,7 @@ def _channel_labels_match(
     """
     channels = tile.acquisition_details.channels
     if channels is None:
-        raise ValueError(
+        raise ConvertersToolsUserError(
             f"{filter_name} requires channel metadata, but tile "
             f"'{tile.fov_name}' has acquisition_details.channels=None. "
             "Provide ChannelInfo entries in AcquisitionDetails to use "
@@ -276,7 +283,7 @@ def _channel_labels_match(
     if not any(matches):
         return False
     matched = [label for label, m in zip(tile_labels, matches, strict=True) if m]
-    raise ValueError(
+    raise ConvertersToolsUserError(
         f"{filter_name} matches channels {matched} of tile "
         f"'{tile.fov_name}', which spans channels {tile_labels}. Filters can "
         "only drop whole tiles, never crop them; split tiles per channel in "

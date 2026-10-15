@@ -70,6 +70,8 @@ import numpy as np
 from dask import base as dask_base
 from dask.highlevelgraph import HighLevelGraph
 
+from ome_zarr_converters_tools.models._errors import ConvertersToolsInternalError
+
 
 def _normalize_slice(s: slice, dim_size: int) -> tuple[int, int]:
     """Convert a `slice` to an explicit `(start, stop)` pair."""
@@ -95,9 +97,9 @@ def _build_chunk_ranges(
         axis_ranges = []
         if isinstance(chunk_size, tuple):
             if sum(chunk_size) != dim_size:
-                raise ValueError(
+                raise ConvertersToolsInternalError(
                     f"Explicit chunks {chunk_size} must sum to the axis length "
-                    f"({dim_size})."
+                    f"({dim_size}); got {chunks=} for {shape=}."
                 )
             start = 0
             for size in chunk_size:
@@ -131,14 +133,16 @@ def aligned_chunks(
         `lazy_array_from_regions`.
     """
     if not len(start) == len(shape) == len(unit):
-        raise ValueError(
+        raise ConvertersToolsInternalError(
             f"start ({len(start)}), shape ({len(shape)}) and unit ({len(unit)}) "
-            "must have the same length."
+            f"must have the same length; got {start=}, {shape=}, {unit=}."
         )
     result: list[tuple[int, ...]] = []
     for axis_start, axis_len, axis_unit in zip(start, shape, unit, strict=True):
         if axis_unit <= 0:
-            raise ValueError(f"Write unit must be positive, got {axis_unit}.")
+            raise ConvertersToolsInternalError(
+                f"Write unit must be positive, got {axis_unit} in {unit=}."
+            )
         if axis_len <= 0:
             result.append((0,))
             continue
@@ -271,8 +275,9 @@ def lazy_array_from_regions(
     """
     ndim = len(shape)
     if len(chunks) != ndim:
-        raise ValueError(
-            f"chunks length ({len(chunks)}) must match shape length ({ndim})"
+        raise ConvertersToolsInternalError(
+            f"chunks length ({len(chunks)}) must match shape length ({ndim}); "
+            f"got {chunks=} for {shape=}."
         )
 
     # Convert per-region slices to explicit (start, stop) bounds.

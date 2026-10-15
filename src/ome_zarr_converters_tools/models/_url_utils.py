@@ -6,6 +6,8 @@ from pathlib import Path
 import fsspec
 import fsspec.core
 
+from ome_zarr_converters_tools.models._errors import ConvertersToolsUserError
+
 logger = getLogger(__name__)
 
 
@@ -63,9 +65,10 @@ def join_url_paths(base_url: str, *paths: str) -> str:
     backslashes and corrupt S3 keys).
 
     Raises:
-        ValueError: if `..` segments would ascend above the network location
-            of a protocol URL (e.g. `join_url_paths("s3://bucket", "..", "x")`
-            would otherwise silently drop the bucket).
+        ConvertersToolsUserError: if `..` segments would ascend above the
+            network location of a protocol URL (e.g.
+            `join_url_paths("s3://bucket", "..", "x")` would otherwise
+            silently drop the bucket).
     """
     protocol, base = fsspec.core.split_protocol(base_url)
     combined = f"{base}/{'/'.join(str(p) for p in paths)}".replace("\\", "/")
@@ -76,8 +79,10 @@ def join_url_paths(base_url: str, *paths: str) -> str:
     # S3 bucket) and is inviolable — reject any `..` that escapes it.
     netloc = base.replace("\\", "/").split("/", 1)[0]
     if joined != netloc and not joined.startswith(f"{netloc}/"):
-        raise ValueError(
-            f"Path escapes network location for URL: {base_url!r} + {paths!r}"
+        raise ConvertersToolsUserError(
+            f"Path escapes network location for URL: joining {paths!r} onto "
+            f"{base_url!r} leaves the bucket {netloc!r} through '..' segments. "
+            "Use a path that stays inside the bucket."
         )
     return f"{protocol}://{joined}"
 
@@ -92,14 +97,17 @@ def parent_url(url: str) -> str:
     location (e.g. the S3 bucket), which has no parent.
 
     Raises:
-        ValueError: if `url` is a filesystem/network-location root with no
-            parent (e.g. `/`, `s3://bucket`, or an empty string).
+        ConvertersToolsUserError: if `url` is a filesystem/network-location
+            root with no parent (e.g. `/`, `s3://bucket`, or an empty string).
     """
     protocol, path = fsspec.core.split_protocol(url)
     path = path.replace("\\", "/").rstrip("/")
     parent = posixpath.dirname(path)
     if parent == "":
-        raise ValueError(f"No parent directory for URL: {url}")
+        raise ConvertersToolsUserError(
+            f"No parent directory for URL {url!r}: it is a filesystem root, a "
+            "bucket, or empty."
+        )
     return parent if protocol is None else f"{protocol}://{parent}"
 
 
@@ -132,9 +140,10 @@ def filesystem_for_url(
     """Return the fsspec filesystem for a URL; raise if its type is unsupported."""
     url_type = find_url_type(url)
     if url_type == UrlType.NOT_SUPPORTED:
-        raise NotImplementedError(
-            f"{error_msg_prefix} for URL {url} "
-            f"with detected type {url_type} is not implemented yet."
+        scheme, _ = fsspec.core.split_protocol(url)
+        raise ConvertersToolsUserError(
+            f"{error_msg_prefix}: the URL '{url}' uses the scheme {scheme!r}, "
+            "which is not supported. Use a local path or an s3:// URL."
         )
     try:
         return fsspec.filesystem(url_type.value)

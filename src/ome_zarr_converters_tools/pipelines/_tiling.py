@@ -7,6 +7,7 @@ from ome_zarr_converters_tools.models import (
     SnapToGridTiling,
     TilingStrategy,
 )
+from ome_zarr_converters_tools.models._errors import ConvertersToolsInternalError
 from ome_zarr_converters_tools.pipelines._snap_utils import (
     NotAGridError,
     calculate_snap_to_corner_offset,
@@ -57,7 +58,11 @@ def _find_tiling(
         case SnapToGridTiling():
             return _snap_to_grid_tiling(regions, strategy.tolerance)
         case _:
-            raise ValueError(f"Tiling strategy '{strategy}' is not recognized.")
+            raise ConvertersToolsInternalError(
+                f"Tiling strategy {strategy!r} is not handled; expected "
+                "InplaceTiling, AutoTiling, SnapToCornersTiling or "
+                "SnapToGridTiling."
+            )
 
 
 def _tile_regions(

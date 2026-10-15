@@ -16,6 +16,25 @@ Key exports: `ConverterOptions`, `AcquisitionDetails`, `ChannelInfo`, `ImageInPl
 
 ::: ome_zarr_converters_tools.models
 
+## Errors
+
+Every error raised by the package subclasses `ConvertersToolsError`, and each one also subclasses the builtin it stands in for (`ValueError`, `FileExistsError`, `FileNotFoundError`, `RuntimeError`), so `except ValueError` keeps working. Errors come in two tiers, by who can act on them:
+
+- `ConvertersToolsUserError`: the task user or converter author can fix it by changing task parameters, converter options, the input data, the environment or the output location. The message names the image, tile and source file when known, gives the expected and actual values, and says how to fix it.
+- `ConvertersToolsInternalError`: an invariant that a working converter can never violate, i.e. a bug in the converter implementation or in this library. Its message always ends with where to report it.
+
+Warnings use `ConvertersToolsWarning` (a `UserWarning`), so they can be filtered or turned into errors with `warnings.filterwarnings`. Custom parsers, loaders, validators and filters should raise the same classes; see [Raising Errors from a Converter](pipeline.md#raising-errors-from-a-converter).
+
+::: ome_zarr_converters_tools.models
+    options:
+      members:
+        - ConvertersToolsError
+        - ConvertersToolsUserError
+        - ConvertersToolsOutputExistsError
+        - ConvertersToolsFileNotFoundError
+        - ConvertersToolsInternalError
+        - ConvertersToolsWarning
+
 ## URL & Path Utilities
 
 Protocol-aware path helpers that work transparently for local paths and remote `s3://` URLs, and are robust to Windows backslash separators (they always emit POSIX `/`). Use these instead of `os.path` / `pathlib` whenever a location may point at object storage -- they are the URL equivalents of `os.path.join` / `dirname` / `basename` / `isabs` / `glob`, plus fsspec filesystem resolution.
