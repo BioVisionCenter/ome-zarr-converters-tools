@@ -56,7 +56,7 @@ class ConvertersToolsUserError(ConvertersToolsError, ValueError):
 
 
 class ConvertersToolsOutputExistsError(ConvertersToolsUserError, FileExistsError):
-    """Raised when the output exists and `overwrite_mode` forbids replacing it."""
+    """Error raised when the output exists and `overwrite_mode` forbids replacing it."""
 
 
 class ConvertersToolsFileNotFoundError(ConvertersToolsUserError, FileNotFoundError):

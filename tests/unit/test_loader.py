@@ -11,6 +11,7 @@ from ome_zarr_converters_tools.models._loader import (
     DefaultImageLoader,
     ImageLoaderInterface,
 )
+from ome_zarr_converters_tools.models._url_utils import join_url_paths
 
 
 class TestImageLoaderInterface:
@@ -202,8 +203,9 @@ class TestDescribeSource:
         loader = DefaultImageLoader(file_path="img.npy")
         assert loader.describe_source() == "img.npy"
         resolved = loader.describe_source(resource=str(tmp_path))
+        # `join_url_paths` always emits POSIX separators, also on Windows.
+        assert resolved == join_url_paths(str(tmp_path), "img.npy")
         assert resolved.endswith("/img.npy")
-        assert resolved.startswith(str(tmp_path))
 
     def test_interface_default_is_a_truncated_repr(self) -> None:
         class BigLoader(ImageLoaderInterface):
