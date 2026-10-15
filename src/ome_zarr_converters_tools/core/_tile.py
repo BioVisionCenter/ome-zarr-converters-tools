@@ -2,7 +2,11 @@
 
 from typing import Any, Generic, TypeAlias
 
-from ngio.common._roi import Roi, RoiSlice, pixel_to_world, world_to_pixel
+from ngio import Roi, RoiSlice
+
+# `pixel_to_world`/`world_to_pixel` are not exported from any public ngio
+# namespace (as of ngio 1.1); keep the private import for these two only.
+from ngio.common._roi import pixel_to_world, world_to_pixel
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from ome_zarr_converters_tools.models._acquisition import (
@@ -14,6 +18,7 @@ from ome_zarr_converters_tools.models._collection import (
     CollectionInterfaceType,
 )
 from ome_zarr_converters_tools.models._loader import (
+    ImageLoaderInterface,
     ImageLoaderInterfaceType,
 )
 
@@ -34,6 +39,19 @@ def safe_to_world(
 AttributeType: TypeAlias = (
     list[str | None] | list[int | None] | list[float | None] | list[bool | None]
 )
+
+
+def describe_tile(
+    fov_name: str | None,
+    image_loader: ImageLoaderInterface,
+    resource: Any | None = None,
+) -> str:
+    """Label a tile for error messages as `tile '<fov>' (source: <where>)`.
+
+    The source comes from `image_loader.describe_source`, so a
+    `DefaultImageLoader` shows its file path.
+    """
+    return f"tile '{fov_name}' (source: {image_loader.describe_source(resource)})"
 
 
 class Tile(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfaceType]):
@@ -106,14 +124,15 @@ class Tile(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfaceType]
         """Enforce that channel indices resolve into `acquisition_details.channels`."""
         if self.start_c < 0:
             raise ValueError(
-                f"Tile '{self.fov_name}' has start_c={self.start_c}; "
-                "channel indices must be >= 0."
+                f"{describe_tile(self.fov_name, self.image_loader)} has "
+                f"start_c={self.start_c}; channel indices must be >= 0."
             )
         channels = self.acquisition_details.channels
         if channels is not None and self.start_c + self.length_c > len(channels):
             max_index = self.start_c + self.length_c - 1
             raise ValueError(
-                f"Tile '{self.fov_name}' references channel index {max_index} but "
+                f"{describe_tile(self.fov_name, self.image_loader)} references "
+                f"channel index {max_index} but "
                 f"acquisition_details.channels has {len(channels)} entries. Provide "
                 "one ChannelInfo per channel index (padding unused instrument slots "
                 'with e.g. ChannelInfo(channel_label="unused_1")), or set '

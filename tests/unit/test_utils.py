@@ -5,7 +5,11 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from ome_zarr_converters_tools.core._dask_lazy_loader import lazy_array_from_regions
+from ome_zarr_converters_tools.core._dask_lazy_loader import (
+    aligned_chunks,
+    lazy_array_from_regions,
+)
+from ome_zarr_converters_tools.models._errors import ConvertersToolsInternalError
 from ome_zarr_converters_tools.models._url_utils import (
     UrlType,
     basename_url,
@@ -245,3 +249,56 @@ class TestDaskLazyLoader:
         np.testing.assert_array_equal(result[:5, :5], 99)
         np.testing.assert_array_equal(result[5:, :], -1.0)
         np.testing.assert_array_equal(result[:5, 5:], -1.0)
+
+    def test_explicit_chunks_per_axis(self) -> None:
+        data = np.arange(100, dtype="uint8").reshape(10, 10)
+        regions = [((slice(0, 10), slice(0, 10)), lambda: data)]
+        arr = lazy_array_from_regions(
+            regions,
+            shape=(10, 10),
+            chunks=((3, 4, 3), 10),
+            dtype="uint8",  # type: ignore[arg-type]
+        )
+        assert arr.chunks == ((3, 4, 3), (10,))
+        np.testing.assert_array_equal(arr.compute(), data)  # type: ignore[no-untyped-call]
+
+    def test_explicit_chunks_must_sum_to_shape(self) -> None:
+        with pytest.raises(ConvertersToolsInternalError, match="must sum to the"):
+            lazy_array_from_regions(
+                [],
+                shape=(10,),
+                chunks=((3, 3),),
+                dtype="uint8",  # type: ignore[arg-type]
+            )
+
+
+class TestAlignedChunks:
+    def test_region_on_grid_is_uniform(self) -> None:
+        assert aligned_chunks((0, 0), (128, 64), (64, 64)) == ((64, 64), (64,))
+
+    def test_region_off_grid_cuts_at_global_edges(self) -> None:
+        # Region [10, 150) on a grid of 64: edges at 64 and 128.
+        assert aligned_chunks((10,), (140,), (64,)) == ((54, 64, 22),)
+
+    def test_region_inside_one_unit(self) -> None:
+        assert aligned_chunks((70,), (20,), (64,)) == ((20,),)
+
+    def test_region_ending_on_edge_has_no_empty_block(self) -> None:
+        assert aligned_chunks((32,), (96,), (64,)) == ((32, 64),)
+
+    def test_zero_length_axis(self) -> None:
+        assert aligned_chunks((5,), (0,), (64,)) == ((0,),)
+
+    def test_blocks_cover_region_and_land_on_grid(self) -> None:
+        start, shape, unit = (7, 130), (300, 1000), (64, 256)
+        chunks = aligned_chunks(start, shape, unit)
+        for s, n, u, sizes in zip(start, shape, unit, chunks, strict=True):
+            assert sum(sizes) == n
+            edges = [s + sum(sizes[:i]) for i in range(1, len(sizes))]
+            assert all(edge % u == 0 for edge in edges)
+
+    def test_rejects_bad_unit_and_lengths(self) -> None:
+        with pytest.raises(ConvertersToolsInternalError, match="positive"):
+            aligned_chunks((0,), (10,), (0,))
+        with pytest.raises(ConvertersToolsInternalError, match="same length"):
+            aligned_chunks((0, 0), (10,), (4,))

@@ -9,6 +9,10 @@ import tifffile
 from PIL import Image
 from pydantic import BaseModel, ConfigDict
 
+from ome_zarr_converters_tools.models._errors import (
+    ConvertersToolsUserError,
+    ConvertersToolsWarning,
+)
 from ome_zarr_converters_tools.models._url_utils import (
     basename_url,
     filesystem_for_url,
@@ -41,6 +45,16 @@ class ImageLoaderInterface(BaseModel, ABC):
         raise: only loading the data decides whether it is truly unreadable.
         """
 
+    def describe_source(self, resource: Any | None = None) -> str:
+        """Describe where this loader reads from, for error messages.
+
+        The default is the loader's `repr`, truncated to 200 characters.
+        Override it to return something the user can locate directly, such as
+        the resolved file path.
+        """
+        text = repr(self)
+        return text if len(text) <= 200 else f"{text[:197]}..."
+
     def find_data_type(self, resource: Any | None = None) -> str:
         """Find the data type of the image data."""
         return str(self.load_data(resource).dtype)
@@ -68,13 +82,23 @@ class DefaultImageLoader(ImageLoaderInterface):
             if resource is not None:
                 # Ensure we can convert to str
                 resource = str(resource)
-        except Exception:
-            raise ValueError(  # noqa: B904
-                "DefaultImageLoader expects resource to be of type str, Path, or None."
-            )
+        except Exception as e:
+            raise ConvertersToolsUserError(
+                f"DefaultImageLoader(file_path={self.file_path!r}) received a "
+                f"resource of type {type(resource).__name__} that cannot be "
+                "converted to a string. Pass the base directory as a str or "
+                "Path, or None."
+            ) from e
         if resource and isinstance(resource, str):
             return join_url_paths(resource, self.file_path)
         return self.file_path
+
+    def describe_source(self, resource: Any | None = None) -> str:
+        """Return the file path, resolved against `resource` when possible."""
+        try:
+            return self._resolve_path(resource)
+        except ValueError:
+            return self.file_path
 
     def preflight(self, resource: Any | None = None) -> None:
         """Warn if the source file does not exist, without reading it."""
@@ -84,7 +108,9 @@ class DefaultImageLoader(ImageLoaderInterface):
             exists = fs.exists(path)
         except Exception as e:
             warnings.warn(
-                f"Preflight check could not verify source file '{path}': {e}",
+                f"Preflight check could not verify source file '{path}': {e}. "
+                "The file will be checked again when its data is loaded.",
+                ConvertersToolsWarning,
                 stacklevel=2,
             )
             return
@@ -93,6 +119,7 @@ class DefaultImageLoader(ImageLoaderInterface):
                 f"Source file '{path}' does not exist. Check that the file "
                 "was not moved or deleted, and that `file_path` (combined "
                 "with the `resource` base directory, if any) points to it.",
+                ConvertersToolsWarning,
                 stacklevel=2,
             )
 
@@ -101,7 +128,7 @@ class DefaultImageLoader(ImageLoaderInterface):
         path = self._resolve_path(resource)
 
         suffix = basename_url(path).split(".")[-1].lower()
-        if suffix in ["tiff", "tif", "tf2", "tf8", "btf"]:
+        if suffix in ["tiff", "tif", "tf2", "tf8", "btf", "stk"]:
             return self.load_tiff(path)
         elif suffix in ["png", "jpg", "jpeg", "bmp"]:
             return self.load_png(path)
@@ -111,17 +138,20 @@ class DefaultImageLoader(ImageLoaderInterface):
             # Unknown extension: many files (e.g. custom/uncommon TIFF variants) are
             # still readable by tifffile, so warn and attempt a best-effort TIFF read.
             warnings.warn(
-                f"DefaultImageLoader does not recognize file type {suffix!r}; "
-                "attempting to load it as a TIFF file.",
+                f"DefaultImageLoader does not recognize the file type {suffix!r} "
+                f"of '{path}'; attempting to load it as a TIFF file.",
+                ConvertersToolsWarning,
                 stacklevel=2,
             )
             try:
                 return self.load_tiff(path)
             except Exception as e:
-                raise ValueError(
-                    f"DefaultImageLoader cannot handle file type {suffix!r}: "
-                    "the TIFF fallback failed to read the file. Supported types are "
-                    ".tiff, .tif, .tf2, .tf8, .btf, .png, .jpg, .jpeg, .bmp, .npy."
+                raise ConvertersToolsUserError(
+                    f"DefaultImageLoader cannot read '{path}': the file type "
+                    f"{suffix!r} is not recognized and the TIFF fallback failed to "
+                    "read the file. Supported types are .tiff, .tif, .tf2, .tf8, "
+                    ".btf, .stk, .png, .jpg, .jpeg, .bmp, .npy; convert the file to "
+                    "one of them or implement a custom ImageLoaderInterface."
                 ) from e
 
     def load_tiff(self, path: str) -> np.ndarray:

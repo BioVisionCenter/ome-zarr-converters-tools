@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from logging import getLogger
 from typing import Any
 
@@ -20,9 +21,14 @@ from ome_zarr_converters_tools.core._tile_region import (
 )
 from ome_zarr_converters_tools.models import (
     ConverterOptions,
+    NoSharding,
     OmeZarrOptions,
     OverwriteMode,
     WriterMode,
+)
+from ome_zarr_converters_tools.models._errors import (
+    ConvertersToolsInternalError,
+    ConvertersToolsUserError,
 )
 from ome_zarr_converters_tools.models._url_utils import filesystem_for_url
 from ome_zarr_converters_tools.pipelines._to_zarr import write_to_zarr
@@ -49,9 +55,27 @@ def _compute_chunk_size(
         elif ax == "t":
             chunks.append(chunks_strategy.t_chunk)
         else:
-            logger.warning(f"Unknown axis '{ax}' encountered. Setting chunk size to 1.")
-            chunks.append(1)
+            raise ConvertersToolsInternalError(
+                f"Axis '{ax}' of image '{tiled_image.path}' has no chunking rule; "
+                "axes must be among t, c, z, y, x."
+            )
     return tuple(chunks)
+
+
+def _compute_shard_size(
+    chunks: tuple[int, ...], axes: Sequence[str], ome_zarr_options: OmeZarrOptions
+) -> tuple[int, ...] | None:
+    """Shard shape as a per-axis multiple of `chunks`, or `None` when unsharded.
+
+    A whole multiple by construction, which is what zarr requires; ngio clips
+    shards that exceed the array shape.
+    """
+    strategy = ome_zarr_options.shards
+    if isinstance(strategy, NoSharding):
+        return None
+    return tuple(
+        chunk * strategy.get_factor(ax) for ax, chunk in zip(axes, chunks, strict=True)
+    )
 
 
 def _region_to_pixel_coordinates(
@@ -89,11 +113,13 @@ def _region_to_pixel_coordinates(
 
 def _attribute_to_condition_table(
     attributes: dict[str, AttributeType],
+    image_path: str | None = None,
 ) -> ConditionTable | None:
     """Convert attributes to a condition table.
 
     Args:
         attributes: Dictionary of attribute names to lists of attribute values.
+        image_path: Path of the image the attributes belong to, named in errors.
 
     Returns:
         A `ConditionTable`, or `None` if no attributes are provided.
@@ -105,9 +131,10 @@ def _attribute_to_condition_table(
         num_rows_dict[attr_name] = len(attr_values)
 
     if len(set(num_rows_dict.values())) > 1:
-        raise ValueError(
-            "All attributes must have the same number of values. "
-            f"Got attributes {attributes}."
+        of_image = f" of image '{image_path}'" if image_path is not None else ""
+        raise ConvertersToolsUserError(
+            f"All attributes{of_image} must have the same number of values; got "
+            f"{num_rows_dict}. Pad the shorter attributes with None values."
         )
     if len(num_rows_dict) == 0:
         # No attributes, no need to create a condition table
@@ -148,7 +175,7 @@ def _validate_channels_axis(
     if channels_meta is None or "c" in tiled_image.axes:
         return
     labels = ", ".join(channel.label for channel in channels_meta)
-    raise ValueError(
+    raise ConvertersToolsUserError(
         f"TiledImage '{tiled_image.path}' declares {len(channels_meta)} "
         f"channel(s) ({labels}) but its axes {tiled_image.axes} have no 'c' "
         "axis, so the image has nowhere to put them. Either add 'c' to "
@@ -202,11 +229,13 @@ def write_tiled_image_as_zarr(
     )
     channels_meta = build_channels_meta(tiled_image)
     _validate_channels_axis(tiled_image, channels_meta)
+    chunks = _compute_chunk_size(tiled_image, omezarr_options)
     ome_zarr = create_empty_ome_zarr(
         store=base_group,
         axes_names=tiled_image.axes,
         shape=tiled_image.output_shape(),
-        chunks=_compute_chunk_size(tiled_image, omezarr_options),
+        chunks=chunks,
+        shards=_compute_shard_size(chunks, tiled_image.axes, omezarr_options),
         pixelsize=tiled_image.xy_pixel_size,
         z_spacing=tiled_image.z_spacing,
         time_spacing=tiled_image.t_spacing,
@@ -224,7 +253,9 @@ def write_tiled_image_as_zarr(
         resource=resource,
         writer_mode=writer_mode,
     )
-    image.consolidate()
+    # `mode="auto"` opts in to ngio 1.2's default now: it takes the faster
+    # in-memory pyramid path only where it is provably identical to the dask one.
+    image.consolidate(mode="auto")
     ome_zarr.set_channel_windows_with_percentiles()
     logger.info("OME-Zarr image creation and data writing complete.")
 
@@ -244,7 +275,9 @@ def write_tiled_image_as_zarr(
     ome_zarr.add_table(
         "well_ROI_table", well_roi, backend=omezarr_options.table_backend
     )
-    condition_table = _attribute_to_condition_table(tiled_image.attributes)
+    condition_table = _attribute_to_condition_table(
+        tiled_image.attributes, image_path=tiled_image.path
+    )
     if condition_table is not None:
         ome_zarr.add_table("condition_table", condition_table, backend="csv")
     logger.info("Finished writing OME-Zarr Tables and metadata.")

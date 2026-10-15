@@ -43,6 +43,9 @@ from ome_zarr_converters_tools.models._converter_options import (
     ConverterOptions,
     OverwriteMode,
 )
+from ome_zarr_converters_tools.models._errors import (
+    ConvertersToolsFileNotFoundError,
+)
 
 # Fingerprint stats are rounded to this many decimals on write; comparison uses
 # an absolute/relative tolerance of the same order. The sha256 pixel hash stays
@@ -270,9 +273,14 @@ def _build_plate_snapshot(
     all_plates = {}
     for plate_name in plate_names:
         ome_zarr_plate = open_ome_zarr_plate(zarr_dir / plate_name)
-        wells = list(ome_zarr_plate.get_wells().keys())
+        # `max_workers="auto"` opts in to ngio 1.2's default now (the 1.1
+        # default, serial reads, emits an `NgioFutureWarning`). Results keep
+        # their input order, so snapshots stay deterministic.
+        wells = list(ome_zarr_plate.get_wells(max_workers="auto").keys())
         images_dict = {}
-        for img_path, ome_zarr_image in ome_zarr_plate.get_images().items():
+        for img_path, ome_zarr_image in ome_zarr_plate.get_images(
+            max_workers="auto"
+        ).items():
             full_path = f"{plate_name}/{img_path}"
             images_dict[img_path] = _build_image_entry(
                 ome_zarr_image=ome_zarr_image, upd=updates.get(full_path)
@@ -574,7 +582,7 @@ def run_converter_test(
         return
 
     if not snapshot_path.exists():
-        raise FileNotFoundError(
+        raise ConvertersToolsFileNotFoundError(
             f"Snapshot file {snapshot_path} not found. "
             "Run with --update-snapshots to generate it."
         )

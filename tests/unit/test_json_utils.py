@@ -26,6 +26,7 @@ from ome_zarr_converters_tools.fractal._json_utils import (
 from ome_zarr_converters_tools.models import (
     AcquisitionDetails,
     ChannelInfo,
+    ConvertersToolsUserError,
     SingleImage,
 )
 
@@ -100,10 +101,10 @@ class TestDumpToJson:
         fs = s3fs.S3FileSystem()
         assert fs.exists(result)
 
-    def test_unknown_url_raises_not_implemented(
+    def test_unknown_url_raises_not_supported(
         self, sample_tiled_image: TiledImage
     ) -> None:
-        with pytest.raises(NotImplementedError, match="not implemented"):
+        with pytest.raises(ConvertersToolsUserError, match="not supported"):
             dump_to_json("gcs://bucket/store", sample_tiled_image)
 
 
@@ -150,8 +151,8 @@ class TestTiledImageFromJson:
         assert len(loaded.regions) == len(sample_tiled_image.regions)
         assert loaded.axes == sample_tiled_image.axes
 
-    def test_unknown_url_raises_not_implemented(self) -> None:
-        with pytest.raises(NotImplementedError, match="not implemented"):
+    def test_unknown_url_raises_not_supported(self) -> None:
+        with pytest.raises(ConvertersToolsUserError, match="not supported"):
             tiled_image_from_json(
                 "gcs://bucket/test.json",
                 collection_type=SingleImage,
@@ -190,9 +191,9 @@ class TestRemoveJson:
         remove_json(json_path)
         assert not fs.exists("s3://bucket/store")
 
-    def test_unknown_url_raises_not_implemented(self) -> None:
-        # Should raise NotImplementedError as it's not supported at all
-        with pytest.raises(NotImplementedError, match="not implemented"):
+    def test_unknown_url_raises_not_supported(self) -> None:
+        # An unsupported URL scheme is a user error, never silently ignored.
+        with pytest.raises(ConvertersToolsUserError, match="not supported"):
             remove_json("gcs://bucket/test.json")
 
 
@@ -241,6 +242,6 @@ class TestCleanupIfExists:
         cleanup_if_exists(json_url)
         assert not fs.exists("s3://bucket/store")
 
-    def test_unknown_url_raises_not_implemented(self) -> None:
-        with pytest.raises(NotImplementedError, match="not implemented"):
+    def test_unknown_url_raises_not_supported(self) -> None:
+        with pytest.raises(ConvertersToolsUserError, match="not supported"):
             cleanup_if_exists("gcs://bucket/store")

@@ -2,6 +2,8 @@
 
 from typing import Generic, TypeVar
 
+from ome_zarr_converters_tools.models._errors import ConvertersToolsUserError
+
 F = TypeVar("F")
 
 
@@ -41,7 +43,7 @@ class Registry(Generic[F]):
         if name is None:
             name = getattr(function, "__name__")  # noqa: B009
         if not overwrite and name in self._registry:
-            raise ValueError(
+            raise ConvertersToolsUserError(
                 f"{self._kind} '{name}' is already registered. Pass "
                 f"overwrite=True to `{self._register_hint}` to replace it, or "
                 "register under a different name."
@@ -51,7 +53,7 @@ class Registry(Generic[F]):
     def get(self, name: str | None) -> F:
         """Return the function registered under `name`; raise if unknown."""
         if name is None or name not in self._registry:
-            raise ValueError(
+            raise ConvertersToolsUserError(
                 f"{self._kind} '{name}' is not registered; available: "
                 f"{sorted(self._registry)}. Register custom functions with "
                 f"`{self._register_hint}` at import time of the module defining "

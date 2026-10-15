@@ -18,6 +18,7 @@ from ome_zarr_converters_tools.models import (
     AcquisitionDetails,
     AutoTiling,
     ChannelInfo,
+    ConvertersToolsInternalError,
     InplaceTiling,
     SingleImage,
     SnapToGridTiling,
@@ -33,6 +34,7 @@ from ome_zarr_converters_tools.pipelines._alignment import (
 from ome_zarr_converters_tools.pipelines._snap_utils import (
     BBox,
     NotAGridError,
+    NotTilableError,
     calculate_snap_to_corner_offset,
     calculate_snap_to_grid_offset,
     check_if_regular_grid,
@@ -474,7 +476,7 @@ class TestSnapUtils:
         assert boxes[1] == BBox(x=256.0, y=0.0, x_len=256.0, y_len=256.0)
 
     def test_tiles_to_boxes_empty_error(self) -> None:
-        with pytest.raises(ValueError, match="empty"):
+        with pytest.raises(ConvertersToolsInternalError, match="empty"):
             tiles_to_boxes([])
 
     def test_check_if_regular_grid(self) -> None:
@@ -599,7 +601,9 @@ class TestSnapUtils:
 
         loader = DummyLoader(shape=TileShape(x=100, y=100), text="bad")
         bad_tile = TileSlice(roi=roi, image_loader=loader)
-        with pytest.raises(ValueError, match="missing the 'y' axis slice"):
+        with pytest.raises(
+            ConvertersToolsInternalError, match="missing the 'y' axis slice"
+        ):
             tiles_to_boxes([bad_tile])
 
     def test_snap_to_grid_with_tolerance_accepts_varying_step(self) -> None:
@@ -798,3 +802,18 @@ class TestTiling:
         images = tiled_image_from_tiles(tiles=tiles, split_per_fov=False)
         result = apply_mosaic_tiling(images[0], InplaceTiling())
         assert len(result.regions) == 4
+
+
+def test_not_tilable_error_names_the_differing_tiles() -> None:
+    tiles = [
+        _make_pixel_tile_slice(0.0, 0.0, 256.0, 256.0, "A"),
+        _make_pixel_tile_slice(256.0, 0.0, 200.0, 256.0, "B"),
+        _make_pixel_tile_slice(512.0, 0.0, 256.0, 256.0, "C"),
+    ]
+    with pytest.raises(NotTilableError) as excinfo:
+        tiles_to_boxes(tiles)
+    message = str(excinfo.value)
+    assert "tile 'A' has x length 256.0" in message
+    assert "'B'=200.0" in message
+    assert "'C'" not in message
+    assert "InplaceTiling" in message

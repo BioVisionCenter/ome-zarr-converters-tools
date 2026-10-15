@@ -1,5 +1,5 @@
 ---
-description: Configure the conversion pipeline: acquisition details, filters, validators, registration steps, tiling strategies, writer and overwrite modes.
+description: "Configure the conversion pipeline: acquisition details, filters, validators, registration steps, tiling strategies, writer and overwrite modes."
 ---
 
 # Pipeline configuration
@@ -22,6 +22,31 @@ opts = ConverterOptions(
 ```
 
 When passed to `tiles_aggregation_pipeline()` and `tiled_image_creation_pipeline()`, its fields are used as defaults. You can also override specific settings (like `writer_mode` or `grouping`) by passing them directly to the pipeline functions.
+
+### OmeZarrOptions
+
+`OmeZarrOptions` controls the on-disk layout of each OME-Zarr image:
+
+- `levels`: how many resolution levels the pyramid has (`NumberOfLevels`) or their explicit names (`NamedLevels`).
+- `chunks`: the storage chunk shape, sized like a field of view (`FovBasedChunking`, the default) or fixed (`FixedSizeChunking`).
+- `shards`: how chunks are grouped into shards, i.e. one stored object holding several chunks. `NoSharding` (the default) stores one object per chunk; `ChunkMultipleSharding` groups a fixed number of chunks per axis. Sharding requires `ngff_version="0.5"` (zarr format 3); requesting it with `"0.4"` fails when the options are built.
+- `ngff_version` and `table_backend`: the OME-NGFF version to write and the file format of the ROI/condition tables.
+
+```python
+from ome_zarr_converters_tools import (
+    ChunkMultipleSharding,
+    FixedSizeChunking,
+    OmeZarrOptions,
+)
+
+opts = OmeZarrOptions(
+    ngff_version="0.5",
+    chunks=FixedSizeChunking(xy_chunk=512),
+    shards=ChunkMultipleSharding(xy_factor=4),  # 2048 x 2048 pixel shards
+)
+```
+
+A shard is the atomic write unit: every write re-encodes the shards it touches. The Dask writer modes stream a few write units at a time, so they pair well with large shards; with the numpy writer modes keep shards no larger than a field of view.
 
 ## AcquisitionDetails
 
@@ -413,9 +438,11 @@ Writer modes control how image data is loaded and written to the OME-Zarr datase
 |------|-------------|--------|-------|
 | `WriterMode.BY_TILE` | Loads and writes one tile at a time, sequentially | Low | Slow |
 | `WriterMode.BY_FOV` | Loads and writes one FOV at a time, sequentially | Medium | Medium |
-| `WriterMode.BY_FOV_DASK` | Loads FOVs lazily via Dask, writes one at a time | Medium | Fast |
-| `WriterMode.BY_TILE_DASK` | Loads all tiles lazily via Dask, writes at once | High | Fast |
+| `WriterMode.BY_FOV_DASK` | Loads FOVs lazily via Dask, streams each FOV a few write blocks at a time | Low–Medium | Fast |
+| `WriterMode.BY_TILE_DASK` | Loads all tiles lazily via Dask, streams a few write blocks at a time | Low–Medium | Fast |
 | `WriterMode.IN_MEMORY` | Loads entire image into memory, writes at once | High | Fastest |
+
+The Dask modes write each region in parallel, a few storage chunks or shards per dask block; ngio cuts the blocks on whole write units, so no two writers share one.
 
 ```python
 from ome_zarr_converters_tools.models import WriterMode, OverwriteMode
@@ -468,4 +495,56 @@ overwrite_mode = OverwriteMode.OVERWRITE
 
 # Append to existing dataset
 overwrite_mode = OverwriteMode.EXTEND
+```
+
+## Raising Errors from a Converter
+
+Every error the package raises subclasses `ConvertersToolsError`, and the
+message is written for the person who can act on it. Custom parsers, image
+loaders, filters, validators and registration steps should raise the same
+classes, so that task users can tell a problem they can fix from a bug:
+
+- `ConvertersToolsUserError` (a `ValueError`) for anything the task user or the
+  converter author can fix: wrong parameters, inconsistent or unreadable input
+  data, a missing dependency. Say what is wrong, name the image, the tile
+  (`fov_name`) and the source file, give the expected and actual values, then
+  say how to fix it.
+- `ConvertersToolsInternalError` (a `RuntimeError`) for an invariant that a
+  working converter can never violate. Write only the diagnostic sentence with
+  the values in scope; the message automatically ends with where to report the
+  bug.
+- `ConvertersToolsWarning` (a `UserWarning`) with `warnings.warn(message,
+  ConvertersToolsWarning, stacklevel=2)` for problems that do not stop the
+  conversion, e.g. a file that is missing at pre-flight time.
+
+Errors raised inside pydantic validators stay plain `ValueError`: pydantic wraps
+them in a `ValidationError` and the class is lost anyway.
+
+Override `ImageLoaderInterface.describe_source()` so that every error naming a
+tile shows where its data comes from (`DefaultImageLoader` returns its file
+path):
+
+```python
+from typing import Any
+
+import numpy as np
+
+from ome_zarr_converters_tools import ConvertersToolsUserError, ImageLoaderInterface
+
+
+class MyLoader(ImageLoaderInterface):
+    file_path: str
+    series: int
+
+    def describe_source(self, resource: Any | None = None) -> str:
+        return f"{self.file_path} (series {self.series})"
+
+    def load_data(self, resource: Any | None = None) -> np.ndarray:
+        try:
+            return read_my_format(self.file_path, series=self.series)
+        except MyFormatError as e:
+            raise ConvertersToolsUserError(
+                f"Cannot read series {self.series} of '{self.file_path}': {e}. "
+                "Check that the file is a complete export from the microscope."
+            ) from e
 ```

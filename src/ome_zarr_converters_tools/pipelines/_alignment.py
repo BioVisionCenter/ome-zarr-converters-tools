@@ -9,6 +9,10 @@ from ome_zarr_converters_tools.core import (
 )
 from ome_zarr_converters_tools.core._roi_utils import move_roi_by, move_to
 from ome_zarr_converters_tools.models import StagePositionCorrections
+from ome_zarr_converters_tools.models._errors import (
+    ConvertersToolsInternalError,
+    ConvertersToolsUserError,
+)
 
 
 def _align_xy_regions(regions: list[TileSlice]) -> list[TileSlice]:
@@ -63,16 +67,22 @@ def _shift_axes_to_zero(regions: list[TileSlice], axes: list[str]) -> None:
         region.roi = move_roi_by(region.roi, shifts)
 
 
-def _validate_non_negative(regions: list[TileSlice], axes: list[str]) -> None:
+def _validate_non_negative(
+    regions: list[TileSlice], axes: list[str], image_path: str
+) -> None:
     """Raise if any region has a negative start on one of `axes` (Keep mode)."""
     field = {"x": "xy", "y": "xy", "z": "z", "t": "t"}
     for region in regions:
         for axis in axes:
             slice_ = region.roi.get(axis)
             if slice_ is not None and slice_.start is not None and slice_.start < 0:
-                raise ValueError(
+                raise ConvertersToolsUserError(
                     f"remove_{field[axis]}_offset='Keep' requires non-negative "
-                    f"{axis} positions, got {slice_.start}."
+                    f"{axis} positions, but tile '{region.roi.name}' of image "
+                    f"'{image_path}' starts at {axis}={slice_.start}. Set "
+                    f"remove_{field[axis]}_offset='Global' to shift the image so "
+                    "its minimum position becomes 0, or fix the stage positions "
+                    "the parser assigns to the tiles."
                 )
 
 
@@ -88,7 +98,7 @@ def apply_offset_removal(
     if corrections.remove_xy_offset == "Global":
         _shift_axes_to_zero(tiled_image.regions, ["x", "y"])
     else:
-        _validate_non_negative(tiled_image.regions, ["x", "y"])
+        _validate_non_negative(tiled_image.regions, ["x", "y"], tiled_image.path)
 
     if corrections.remove_z_offset == "Global":
         _shift_axes_to_zero(tiled_image.regions, ["z"])
@@ -99,12 +109,12 @@ def apply_offset_removal(
             new_regions.extend(fov_tile.regions)
         tiled_image.regions = new_regions
     else:
-        _validate_non_negative(tiled_image.regions, ["z"])
+        _validate_non_negative(tiled_image.regions, ["z"], tiled_image.path)
 
     if corrections.remove_t_offset == "Global":
         _shift_axes_to_zero(tiled_image.regions, ["t"])
     else:
-        _validate_non_negative(tiled_image.regions, ["t"])
+        _validate_non_negative(tiled_image.regions, ["t"], tiled_image.path)
 
     return tiled_image
 
@@ -113,7 +123,10 @@ def _channel_range(region: TileSlice) -> tuple[int, int]:
     """Return a region's channel span as `(start, length)` in integer indices."""
     slice_ = region.roi.get("c")
     if slice_ is None or slice_.start is None:
-        raise ValueError("Tile ROI is missing the 'c' axis slice.")
+        raise ConvertersToolsInternalError(
+            f"Tile ROI '{region.roi.name}' has no 'c' axis slice with a start, "
+            "but the image declares a 'c' axis."
+        )
     length = 1 if slice_.length is None else round(slice_.length)
     return round(slice_.start), length
 
@@ -156,11 +169,10 @@ def apply_reindex_channels(
     if tiled_image.channels is not None:
         if present[-1] >= len(tiled_image.channels):
             # Unreachable: Tile/TiledImage validators enforce this at construction.
-            raise ValueError(
-                f"Internal error: TiledImage '{tiled_image.path}' references "
-                f"channel index {present[-1]} but channels has "
-                f"{len(tiled_image.channels)} entries; this should have been "
-                "rejected at tile building. Please report this as a bug."
+            raise ConvertersToolsInternalError(
+                f"TiledImage '{tiled_image.path}' references channel index "
+                f"{present[-1]} but channels has {len(tiled_image.channels)} "
+                "entries; this should have been rejected when the tiles were built."
             )
         tiled_image.channels = [tiled_image.channels[c] for c in present]
 
@@ -190,7 +202,10 @@ def apply_align_to_pixel_grid(
     elif mode == "ceil":
         op = math.ceil
     else:
-        raise ValueError(f"Mode '{mode}' is not recognized.")
+        raise ConvertersToolsInternalError(
+            f"Pixel-grid alignment mode {mode!r} is not one of 'round', 'floor', "
+            "'ceil'."
+        )
 
     pixel_size = tiled_image.pixel_size
     for region in tiled_image.regions:

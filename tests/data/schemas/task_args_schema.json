@@ -359,6 +359,49 @@
       "title": "ChannelInfoUI",
       "type": "object"
     },
+    "ChunkMultipleSharding": {
+      "additionalProperties": false,
+      "description": "Group a fixed number of chunks per axis into one shard.",
+      "properties": {
+        "c_factor": {
+          "default": 1,
+          "description": "Number of chunks per shard along C.",
+          "minimum": 1,
+          "title": "Chunks per Shard in C",
+          "type": "integer"
+        },
+        "mode": {
+          "const": "Multiple of Chunks",
+          "default": "Multiple of Chunks",
+          "description": "How storage chunks are grouped into shards.",
+          "title": "Mode",
+          "type": "string"
+        },
+        "t_factor": {
+          "default": 1,
+          "description": "Number of chunks per shard along T.",
+          "minimum": 1,
+          "title": "Chunks per Shard in T",
+          "type": "integer"
+        },
+        "xy_factor": {
+          "default": 4,
+          "description": "Number of chunks per shard along X and along Y.",
+          "minimum": 1,
+          "title": "Chunks per Shard in XY",
+          "type": "integer"
+        },
+        "z_factor": {
+          "default": 1,
+          "description": "Number of chunks per shard along Z.",
+          "minimum": 1,
+          "title": "Chunks per Shard in Z",
+          "type": "integer"
+        }
+      },
+      "title": "Multiple of Chunks",
+      "type": "object"
+    },
     "ColorMenu": {
       "description": "Display color of the channel. `Auto` picks a color based on the channel name or wavelength.",
       "enum": [
@@ -478,6 +521,9 @@
               "num_levels": 5
             },
             "ngff_version": "0.4",
+            "shards": {
+              "mode": "None"
+            },
             "table_backend": "csv"
           },
           "description": "Options specific to OME-Zarr writing.",
@@ -514,7 +560,7 @@
         "writer_mode": {
           "$ref": "#/$defs/WriterMode",
           "default": "By FOV",
-          "description": "Mode for writing data during conversion.\n\n- `By Tile`: Write data one tile at a time. This consumes less memory, but may be\n  slower.\n- `By Tile (Using Dask)`: Write tiles in parallel using Dask. This is\n  usually faster than writing by tile sequentially, but may consume more\n  memory.\n- `By FOV`: Write data one field of view at a time. Often the best compromise\n  between speed and memory usage in most cases.\n- `By FOV (Using Dask)`: Write fields of view in parallel using Dask.\n  This is usually faster than writing by FOV sequentially, but may consume\n  more memory.\n- `In Memory`: Load all data into memory before writing.",
+          "description": "Mode for writing data during conversion.\n\n- `By Tile`: Write data one tile at a time. This consumes less memory, but may be\n  slower.\n- `By Tile (Using Dask)`: Build the whole image lazily with Dask and stream\n  it a few write blocks at a time, so memory does not grow with the image.\n  Usually faster than writing by tile sequentially; each tile is loaded once.\n- `By FOV`: Write data one field of view at a time. Often the best compromise\n  between speed and memory usage in most cases.\n- `By FOV (Using Dask)`: Build each field of view lazily with Dask and\n  stream it a few write blocks at a time. Usually faster than writing by\n  FOV sequentially.\n- `In Memory`: Load all data into memory before writing.",
           "title": "Writer Mode"
         }
       },
@@ -829,6 +875,21 @@
       "title": "Custom Names",
       "type": "object"
     },
+    "NoSharding": {
+      "additionalProperties": false,
+      "description": "Store every chunk as its own object (no sharding).",
+      "properties": {
+        "mode": {
+          "const": "None",
+          "default": "None",
+          "description": "How storage chunks are grouped into shards.",
+          "title": "Mode",
+          "type": "string"
+        }
+      },
+      "title": "No Sharding",
+      "type": "object"
+    },
     "NumberOfLevels": {
       "additionalProperties": false,
       "description": "Create a number of resolution levels with default names (`0`, `1`, ...).",
@@ -913,6 +974,28 @@
           ],
           "title": "NGFF Version",
           "type": "string"
+        },
+        "shards": {
+          "default": {
+            "mode": "None"
+          },
+          "description": "How storage chunks are grouped into shards (one object per shard).\nRequires NGFF 0.5 (zarr format 3).\n\n- `None`: one object per chunk.\n- `Multiple of Chunks`: a fixed number of chunks per axis form one shard.\n\nA shard is the atomic write unit, so prefer the Dask writer modes (which\nwrite one shard at a time) or shards no larger than a field of view;\notherwise every write re-encodes the shards it touches.",
+          "discriminator": {
+            "mapping": {
+              "Multiple of Chunks": "#/$defs/ChunkMultipleSharding",
+              "None": "#/$defs/NoSharding"
+            },
+            "propertyName": "mode"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/NoSharding"
+            },
+            {
+              "$ref": "#/$defs/ChunkMultipleSharding"
+            }
+          ],
+          "title": "Sharding Strategy"
         },
         "table_backend": {
           "$ref": "#/$defs/BackendType",
@@ -1468,6 +1551,9 @@
             "num_levels": 5
           },
           "ngff_version": "0.4",
+          "shards": {
+            "mode": "None"
+          },
           "table_backend": "csv"
         },
         "runtime_settings": {

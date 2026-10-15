@@ -4,6 +4,7 @@ from typing import Any
 
 from ome_zarr_converters_tools.core._tile import Tile
 from ome_zarr_converters_tools.core._tile_region import TiledImage
+from ome_zarr_converters_tools.models._errors import ConvertersToolsUserError
 
 
 def tiled_image_from_tiles(
@@ -27,7 +28,7 @@ def tiled_image_from_tiles(
     tiled_images = {}
 
     if len(tiles) == 0:
-        raise ValueError(
+        raise ConvertersToolsUserError(
             "No tiles provided to build TiledImage. If filters are configured, "
             "they may have removed every tile; check that their patterns and "
             "Include/Exclude modes match the parsed acquisition."

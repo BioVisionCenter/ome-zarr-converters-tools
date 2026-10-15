@@ -15,6 +15,7 @@ from ome_zarr_converters_tools.core._tile_to_tiled_images import tiled_image_fro
 from ome_zarr_converters_tools.models import (
     AcquisitionDetails,
     ChannelInfo,
+    ConvertersToolsInternalError,
     ImageInPlate,
     OverwriteMode,
     SingleImage,
@@ -201,7 +202,7 @@ class TestSetupSingleimage:
 
     def test_wrong_collection_type_raises(self, tmp_path: Path) -> None:
         images = _make_plate_tiled_images()
-        with pytest.raises(ValueError, match="Expected SingleImage"):
+        with pytest.raises(ConvertersToolsInternalError, match="Expected SingleImage"):
             setup_singleimage(
                 zarr_dir=str(tmp_path),
                 tiled_images=images,
@@ -279,7 +280,7 @@ class TestSetupPlates:
         plate_path = tmp_path / "TestPlate.zarr"
         assert plate_path.exists()
         plate = open_ome_zarr_plate(plate_path)
-        assert len(plate.images_paths()) == 1
+        assert len(plate.images_paths(max_workers="auto")) == 1
 
     def test_creates_plate_no_overwrite(self, tmp_path: Path) -> None:
         images = _make_plate_tiled_images()
@@ -322,7 +323,7 @@ class TestSetupPlates:
             overwrite_mode=OverwriteMode.EXTEND,
         )
         plate = open_ome_zarr_plate(tmp_path / "TestPlate.zarr")
-        assert len(plate.images_paths()) == 2
+        assert len(plate.images_paths(max_workers="auto")) == 2
 
     def test_extend_mode_skips_existing_image(self, tmp_path: Path) -> None:
         images = _make_plate_tiled_images()
@@ -339,7 +340,7 @@ class TestSetupPlates:
             overwrite_mode=OverwriteMode.EXTEND,
         )
         plate = open_ome_zarr_plate(tmp_path / "TestPlate.zarr")
-        assert len(plate.images_paths()) == 1
+        assert len(plate.images_paths(max_workers="auto")) == 1
 
     def test_multiple_plates(self, tmp_path: Path) -> None:
         acq = AcquisitionDetails(
@@ -419,7 +420,7 @@ class TestSetupPlates:
             overwrite_mode=OverwriteMode.OVERWRITE,
         )
         plate = open_ome_zarr_plate(tmp_path / "TestPlate.zarr")
-        image_paths = plate.images_paths()
+        image_paths = plate.images_paths(max_workers="auto")
         # Old plate (well A/1) must be gone; only new plate (well B/2) remains
         assert len(image_paths) == 1
         assert not any("A" in p for p in image_paths), (

@@ -145,7 +145,7 @@ from ngio import open_ome_zarr_plate
 ome_zarr_plate = open_ome_zarr_plate(f"{zarr_dir}/CardiomyocytePlate.zarr")
 
 print(f"Plate: {ome_zarr_plate}")
-print(f"Images: {ome_zarr_plate.get_images()}")
+print(f"Images: {ome_zarr_plate.get_images(max_workers='auto')}")
 
 ome_zarr_container = ome_zarr_plate.get_image(row="A", column=1, image_path="0")
 image = ome_zarr_container.get_image()

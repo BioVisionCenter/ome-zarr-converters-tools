@@ -69,6 +69,38 @@ configuration](../guides/pipeline.md) for how these fit together in prose.
 ::: ome_zarr_converters_tools.ThreadScheduler
 ::: ome_zarr_converters_tools.ProcessScheduler
 
+## Errors
+
+Every error raised by the package subclasses `ConvertersToolsError`, and each one also
+subclasses the builtin it stands in for (`ValueError`, `FileExistsError`,
+`FileNotFoundError`, `RuntimeError`), so `except ValueError` keeps working. Errors come
+in two tiers, by who can act on them:
+
+- `ConvertersToolsUserError`: the task user or converter author can fix it by changing
+  task parameters, converter options, the input data, the environment or the output
+  location. The message names the image, tile and source file when known, gives the
+  expected and actual values, and says how to fix it.
+- `ConvertersToolsInternalError`: an invariant that a working converter can never
+  violate, i.e. a bug in the converter implementation or in this library. Its message
+  always ends with where to report it.
+
+Warnings use `ConvertersToolsWarning` (a `UserWarning`), so they can be filtered or
+turned into errors with `warnings.filterwarnings`. Custom parsers, loaders, validators
+and filters should raise the same classes; see
+[Raising Errors from a Converter](../guides/pipeline.md#raising-errors-from-a-converter).
+
+::: ome_zarr_converters_tools.models
+    options:
+      show_root_heading: false
+      show_root_toc_entry: false
+      members:
+        - ConvertersToolsError
+        - ConvertersToolsUserError
+        - ConvertersToolsOutputExistsError
+        - ConvertersToolsFileNotFoundError
+        - ConvertersToolsInternalError
+        - ConvertersToolsWarning
+
 ## URL helpers
 
 Paths and `s3://` URLs are handled through the same helpers, so a converter does not

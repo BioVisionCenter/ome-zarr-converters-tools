@@ -8,6 +8,7 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, Field
 
 from ome_zarr_converters_tools.fractal._compute_task import ImageListUpdateDict
+from ome_zarr_converters_tools.models._errors import ConvertersToolsUserError
 
 
 class SequentialRunner(BaseModel):
@@ -136,7 +137,7 @@ def exec_compound_task(
                 num_processes=n,
             )
         case _:
-            raise ValueError(
+            raise ConvertersToolsUserError(
                 f"Unsupported runner {runner!r}. Use one of SequentialRunner, "
                 "ThreadedRunner, MultiprocessingRunner, or None for sequential "
                 "execution."

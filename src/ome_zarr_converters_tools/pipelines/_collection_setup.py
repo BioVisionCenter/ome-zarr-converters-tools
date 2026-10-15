@@ -3,9 +3,8 @@
 from typing import Protocol
 
 import polars as pl
-from ngio import DefaultNgffVersion, NgffVersions
+from ngio import DefaultNgffVersion, ImageInWellPath, NgffVersions
 from ngio.hcs import create_empty_plate, open_ome_zarr_plate
-from ngio.hcs._plate import ImageInWellPath
 from ngio.tables import ConditionTable
 
 from ome_zarr_converters_tools.core._tile_region import TiledImage
@@ -13,6 +12,11 @@ from ome_zarr_converters_tools.models import (
     ImageInPlate,
     OverwriteMode,
     SingleImage,
+)
+from ome_zarr_converters_tools.models._errors import (
+    ConvertersToolsInternalError,
+    ConvertersToolsOutputExistsError,
+    ConvertersToolsUserError,
 )
 from ome_zarr_converters_tools.models._url_utils import (
     filesystem_for_url,
@@ -37,7 +41,7 @@ def _setup_condition_table(
         keys_by_image = {
             tile.path: sorted(tile.attributes.keys()) for tile in with_attributes
         }
-        raise ValueError(
+        raise ConvertersToolsUserError(
             "All images with attributes must define the same attribute keys to "
             f"build a condition table; got {keys_by_image}. Add the missing "
             "attribute columns to the tiles table (None values are allowed) or "
@@ -45,7 +49,7 @@ def _setup_condition_table(
         )
     reserved = set(next(iter(key_sets))) & set(_RESERVED_CONDITION_COLUMNS)
     if reserved:
-        raise ValueError(
+        raise ConvertersToolsUserError(
             f"Attribute keys {sorted(reserved)} collide with the condition "
             f"table's reserved columns {_RESERVED_CONDITION_COLUMNS}. Rename "
             "these columns in the tiles table."
@@ -55,7 +59,7 @@ def _setup_condition_table(
     for tile in with_attributes:
         num_rows_by_key = {key: len(values) for key, values in tile.attributes.items()}
         if len(set(num_rows_by_key.values())) > 1:
-            raise ValueError(
+            raise ConvertersToolsUserError(
                 f"All attributes of image '{tile.path}' must have the same "
                 f"number of values; got {num_rows_by_key}. Pad the shorter "
                 "attributes with None values."
@@ -74,6 +78,25 @@ def _setup_condition_table(
     return pl.DataFrame(condition_table)
 
 
+def _image_in_well_path(image: TiledImage) -> tuple[ImageInWellPath, str]:
+    """Return the plate placement of `image` and its path inside the plate."""
+    image_collection = image.collection
+    if not isinstance(image_collection, ImageInPlate):
+        raise ConvertersToolsInternalError(
+            f"Expected ImageInPlate collection for image '{image.path}', got "
+            f"{type(image_collection).__name__}; the plate setup handler was "
+            "dispatched for a different collection type."
+        )
+    image_in_well = ImageInWellPath(
+        row=image_collection.row,
+        column=image_collection.column,
+        path=image_collection.path_in_well(),
+        acquisition_id=image_collection.acquisition,
+        acquisition_name=str(image_collection.acquisition),
+    )
+    return image_in_well, image_collection.image_in_well_path()
+
+
 def setup_plates(
     zarr_dir: str,
     tiled_images: list[TiledImage],
@@ -82,9 +105,11 @@ def setup_plates(
 ) -> None:
     """Set up an ImageInPlate collection in the Zarr group."""
     if not isinstance(tiled_images[0].collection, ImageInPlate):
-        raise TypeError(
-            "setup_plates requires ImageInPlate collections, got "
-            f"{type(tiled_images[0].collection).__name__}."
+        raise ConvertersToolsInternalError(
+            "setup_plates requires ImageInPlate collections, but image "
+            f"'{tiled_images[0].path}' has a "
+            f"{type(tiled_images[0].collection).__name__} collection; the plate "
+            "setup handler was dispatched for a different collection type."
         )
     images_grouped_by_plate: dict[str, list[TiledImage]] = {}
     for tiled_image in tiled_images:
@@ -95,73 +120,51 @@ def setup_plates(
 
     for plate_path, tile_images in images_grouped_by_plate.items():
         plate_url = join_url_paths(zarr_dir, plate_path)
+        images_in_wells = [_image_in_well_path(image) for image in tile_images]
         if overwrite_mode == OverwriteMode.NO_OVERWRITE:
             fs = filesystem_for_url(plate_url)
             if fs.exists(plate_url):
-                raise FileExistsError(
+                raise ConvertersToolsOutputExistsError(
                     f"A Plate already exists at {plate_url} "
                     f"(overwrite_mode={OverwriteMode.NO_OVERWRITE.value}). "
                     f"Set overwrite_mode={OverwriteMode.OVERWRITE.value} to "
                     f"replace it, or "
                     f"overwrite_mode={OverwriteMode.EXTEND.value} to add to it."
                 )
-        if overwrite_mode == OverwriteMode.OVERWRITE:
-            plate = create_empty_plate(
-                store=plate_url,
-                name=plate_path,
-                ngff_version=ngff_version,
-                overwrite=True,
-                cache=True,
-            )
-        elif overwrite_mode == OverwriteMode.EXTEND:
-            # Distinguish "does not exist yet" from "exists but fails to open":
-            # only the former should create a fresh plate. A corrupt/unreadable
-            # existing store must raise from open, never be silently overwritten.
-            if filesystem_for_url(plate_url).exists(plate_url):
-                plate = open_ome_zarr_plate(plate_url, cache=True)
-            else:
-                plate = create_empty_plate(
-                    store=plate_url,
-                    name=plate_path,
-                    ngff_version=ngff_version,
-                    overwrite=False,
-                    cache=True,
+        # Distinguish "does not exist yet" from "exists but fails to open":
+        # only the former should create a fresh plate. A corrupt/unreadable
+        # existing store must raise from open, never be silently overwritten.
+        extend_existing = overwrite_mode == OverwriteMode.EXTEND and filesystem_for_url(
+            plate_url
+        ).exists(plate_url)
+        if extend_existing:
+            plate = open_ome_zarr_plate(plate_url, cache=True)
+            # `max_workers="auto"` opts in to ngio 1.2's default now (the 1.1
+            # default, serial reads, emits an `NgioFutureWarning`).
+            existing_images = plate.images_paths(max_workers="auto")
+            for image_in_well, image_path in images_in_wells:
+                if image_path in existing_images:
+                    # Image already exists in the plate, skip adding.
+                    continue
+                plate.add_image(
+                    row=image_in_well.row,
+                    column=image_in_well.column,
+                    image_path=image_in_well.path,
+                    acquisition_id=image_in_well.acquisition_id,
+                    acquisition_name=image_in_well.acquisition_name,
                 )
         else:
-            # NO_OVERWRITE — pre-flight check above already raised if plate existed
+            # NO_OVERWRITE: the pre-flight check above already raised if the
+            # plate existed. Passing `images=` writes the plate document once
+            # and each well document once; the per-image `add_image` loop it
+            # replaces rewrote the plate document for every image (ngio 1.1).
             plate = create_empty_plate(
                 store=plate_url,
                 name=plate_path,
+                images=[image_in_well for image_in_well, _ in images_in_wells],
                 ngff_version=ngff_version,
-                overwrite=False,
+                overwrite=overwrite_mode == OverwriteMode.OVERWRITE,
                 cache=True,
-            )
-        existing_image = plate.images_paths()
-        for image in tile_images:
-            image_collection = image.collection
-            if not isinstance(image_collection, ImageInPlate):
-                raise ValueError(
-                    f"Expected ImageInPlate collection, got {type(image_collection)}"
-                )
-            image_in_well = ImageInWellPath(
-                row=image_collection.row,
-                column=image_collection.column,
-                path=image_collection.path_in_well(),
-                acquisition_id=image_collection.acquisition,
-                acquisition_name=str(image_collection.acquisition),
-            )
-            image_path = image_collection.image_in_well_path()
-            if image_path in existing_image:
-                # Image already exists in the plate, skip adding
-                # This can only happen in 'extend' mode
-                # other modes would have overwritten or raised an error
-                continue
-            plate.add_image(
-                row=image_in_well.row,
-                column=image_in_well.column,
-                image_path=image_in_well.path,
-                acquisition_id=image_in_well.acquisition_id,
-                acquisition_name=image_in_well.acquisition_name,
             )
 
         # Build the condition table once per plate, from this plate's images only.
@@ -188,12 +191,16 @@ def setup_singleimage(
     for tiled_image in tiled_images:
         collection = tiled_image.collection
         if not isinstance(collection, SingleImage):
-            raise ValueError(f"Expected SingleImage collection, got {type(collection)}")
+            raise ConvertersToolsInternalError(
+                f"Expected SingleImage collection for image '{tiled_image.path}', "
+                f"got {type(collection).__name__}; the single-image setup handler "
+                "was dispatched for a different collection type."
+            )
         zarr_url = join_url_paths(zarr_dir, collection.path())
         if overwrite_mode == OverwriteMode.NO_OVERWRITE:
             fs = filesystem_for_url(zarr_url)
             if fs.exists(zarr_url):
-                raise FileExistsError(
+                raise ConvertersToolsOutputExistsError(
                     f"A zarr already exists at {zarr_url} "
                     f"(overwrite_mode={OverwriteMode.NO_OVERWRITE.value}). "
                     f"Set overwrite_mode={OverwriteMode.OVERWRITE.value} to "

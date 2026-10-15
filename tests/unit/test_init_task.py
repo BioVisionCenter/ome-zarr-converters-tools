@@ -284,13 +284,12 @@ class TestSetupImagesForConversion:
 
         assert mock_setup.call_args[1]["ngff_version"] == "0.5"
 
-    @patch("ome_zarr_converters_tools.fractal._init_task.setup_ome_zarr_collection")
-    def test_ngff_version_argument_is_deprecated(
-        self, mock_setup: MagicMock, tmp_path: Path
-    ) -> None:
+    def test_ngff_version_argument_is_removed(self, tmp_path: Path) -> None:
+        # Removed in v1.1.0 after the v1.0.2 deprecation; the version now comes
+        # only from converter_options.omezarr_options.ngff_version.
         images = _make_tiled_images(1)
 
-        with pytest.warns(DeprecationWarning, match="ngff_version"):
+        with pytest.raises(TypeError, match="ngff_version"):
             setup_images_for_conversion(
                 images,
                 zarr_dir=str(tmp_path / "output.zarr"),
@@ -298,32 +297,8 @@ class TestSetupImagesForConversion:
                 converter_options=ConverterOptions(
                     omezarr_options=OmeZarrOptions(ngff_version="0.5")
                 ),
-                ngff_version="0.5",
+                ngff_version="0.5",  # ty: ignore[unknown-argument]
             )
-
-        assert mock_setup.call_args[1]["ngff_version"] == "0.5"
-
-    @patch("ome_zarr_converters_tools.fractal._init_task.setup_ome_zarr_collection")
-    def test_ngff_version_mismatch_raises(
-        self, mock_setup: MagicMock, tmp_path: Path
-    ) -> None:
-        images = _make_tiled_images(1)
-
-        with (
-            pytest.warns(DeprecationWarning),
-            pytest.raises(ValueError, match="Conflicting NGFF versions"),
-        ):
-            setup_images_for_conversion(
-                images,
-                zarr_dir=str(tmp_path / "output.zarr"),
-                collection_type="SingleImage",
-                converter_options=ConverterOptions(
-                    omezarr_options=OmeZarrOptions(ngff_version="0.5")
-                ),
-                ngff_version="0.4",
-            )
-
-        mock_setup.assert_not_called()
 
 
 class TestPathCollisionCheck:
