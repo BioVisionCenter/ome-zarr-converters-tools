@@ -61,7 +61,7 @@ def my_init_task(
     zarr_dir: str,
     tiles_csv_path: str,
     # ... your custom parameters
-) -> list[dict]:
+) -> dict:
     """Init task: set up plates and build parallelization list."""
     import pandas as pd
 
@@ -95,9 +95,11 @@ def my_init_task(
         overwrite_mode=OverwriteMode.OVERWRITE,
     )
 
-    return parallelization_list
+    return {"parallelization_list": parallelization_list}
 ```
 
+The init task returns the list under the `parallelization_list` key: that is the
+compound-task contract Fractal, and `exec_compound_task()` below, read.
 `setup_images_for_conversion()` does two things internally:
 
 - Calls `setup_ome_zarr_collection()` to create the plate/well structure in the Zarr store
@@ -152,7 +154,35 @@ def my_compute_task(
 !!! note "Why the types are passed again"
     The `collection_type` and `image_loader_type` parameters are needed because
     `TiledImage` is generic — the concrete types must be specified when deserializing
-    from JSON.
+    from JSON. Two consequences for a custom loader: one loader class per converter,
+    since `image_loader_type` is a single type, and JSON-serialisable loader fields
+    (paths, indices, names), since the loader travels inside the serialised
+    `TiledImage`.
+
+## Run locally
+
+`exec_compound_task()` runs the init task once and the compute task for every entry of
+its parallelization list, the way Fractal would, without a server:
+
+```python
+from ome_zarr_converters_tools import ThreadedRunner, exec_compound_task
+
+updates = exec_compound_task(
+    init_task_fn=my_init_task,
+    compute_task_fn=my_compute_task,
+    init_task_kwargs={"zarr_dir": "/tmp/out", "tiles_csv_path": "tiles.csv"},
+    runner=ThreadedRunner(num_threads=4),
+)
+```
+
+It returns the compute tasks' `ImageListUpdateDict`s in list order. The runner is the
+execution strategy: `SequentialRunner()`, the default when `runner` is `None`, runs
+everything in one process and is the easiest to debug; `ThreadedRunner` converts images
+in parallel threads; `MultiprocessingRunner` uses processes, so the compute task must be
+a picklable module-level function. The existing converters expose exactly this call as
+their Python API, `convert_<format>(*, zarr_dir, acquisitions, converter_options=None,
+overwrite=…, runner=None)`, which is also what their
+[snapshot tests](writing_a_converter.md#step-6-test-with-snapshots) call.
 
 ## Acquisition options
 
@@ -224,7 +254,61 @@ order. It also sets `extra="forbid"`, so a typo in a task parameter fails loudly
 of being silently dropped. Entries in a subclass `model_config` (such as `title`) merge
 with the base config rather than replacing it.
 
-## Registering input models in the manifest
+## Packaging
+
+A converter ships as a Python package that Fractal installs and reads a task manifest
+from. The layout the existing converters use, built with
+[fractal-task-tools](https://github.com/fractal-analytics-platform/fractal-task-tools):
+
+```text
+src/my_converter/
+  __FRACTAL_MANIFEST__.json       # generated, committed
+  __init__.py
+  api.py                          # convert_my_format(), see "Run locally"
+  convert_my_format_init_task.py  # the init task
+  compute_task.py                 # the compute task
+  dev/
+    task_list.py                  # declares the tasks, see below
+    docs_info/                    # Markdown shown in the Fractal UI for each task
+```
+
+Each task module ends with the entry point Fractal invokes:
+
+```python
+if __name__ == "__main__":
+    from fractal_task_tools.task_wrapper import run_fractal_task
+
+    run_fractal_task(task_function=my_init_task)
+```
+
+`dev/task_list.py` declares the init/compute pair as one compound converter task:
+
+```python
+from fractal_task_tools.task_models import ConverterCompoundTask
+
+TASK_LIST = [
+    ConverterCompoundTask(
+        name="Convert My Format to OME-Zarr",
+        executable_init="convert_my_format_init_task.py",
+        executable="compute_task.py",
+        meta_init={"cpus_per_task": 1, "mem": 4000},
+        meta={"cpus_per_task": 1, "mem": 4000},
+        category="Conversion",
+        modality="HCS",
+        docs_info="file:docs_info/my_format_task.md",
+    ),
+]
+```
+
+`fractal-manifest create --package my_converter` then writes the manifest, with the
+argument schemas generated from the task signatures and their Pydantic models, and
+`fractal-manifest check --package my_converter` verifies it is up to date; the existing
+converters run the check in CI. The [Fractal task
+documentation](https://fractal-analytics-platform.github.io/) covers the manifest fields
+and publishing, and the [converters built on this library](converters.md) are complete
+examples of this layout.
+
+### Registering input models in the manifest
 
 Fractal tasks need to declare their input models in the task manifest. Use
 `converters_tools_models()` to get the list of models provided by this library:
@@ -247,6 +331,8 @@ platform can render the correct input forms for your task.
 
 ## Next
 
+- [Writing a converter](writing_a_converter.md) — the whole path from a parser to a
+  packaged task, with testing
 - [fractal-uzh-converters](https://github.com/fractal-analytics-platform/fractal-uzh-converters)
   — several Fractal tasks built with this library, one per microscope, to crib from
 - [Fractal task development](https://fractal-analytics-platform.github.io/) — the

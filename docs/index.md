@@ -11,8 +11,8 @@ description: OME-Zarr Converters Tools is a Python library for building OME-Zarr
 { .ozct-hero-tagline }
 
 Every microscope writes its own flavour of metadata, but every converter that reads it
-has the same job afterwards: work out where each tile belongs, resolve overlaps, and
-write a valid [OME-Zarr](https://ngff.openmicroscopy.org/) image or HCS plate. This
+has the same job afterwards: work out where each tile belongs, arrange the overlapping
+fields of view, and write a valid [OME-Zarr](https://ngff.openmicroscopy.org/) image or HCS plate. This
 library is that second half. It handles tile management, registration, filtering,
 validation and writing, and adds [Fractal](https://fractal-analytics-platform.github.io/)
 utilities for packaging a converter as a task.
@@ -31,10 +31,36 @@ utilities for packaging a converter as a task.
 - **Configurable pipeline** — [filter, validate, register and tile](guides/pipeline.md)
   with built-in steps, or plug in your own.
 - **Flexible input** — parse tiles from a pandas `DataFrame`, or
-  [build them programmatically](getting_started/2_programmatic_tiles.md) with a custom
-  image loader.
+  [build them in code](getting_started/2_programmatic_tiles.md) with a custom image
+  loader.
 - **Fractal integration** — [wrap a converter as an init/compute task
   pair](guides/fractal_tasks.md) for parallel conversion, with generated JSON schemas.
+
+## Scope
+
+This library is the second half of a converter. Reading the proprietary format is the
+first half and stays in the converter: a `DefaultImageLoader` pointed at one image file
+per tile, or a loader you write. What the library then does, and does not do:
+
+- **Position-based registration.** Fields of view are placed from the stage positions
+  the parser supplies, snapped to a grid or kept in place. There is no cross-correlation
+  and no blending: where fields of view overlap, their pixels are kept side by side, not
+  merged.
+- **Axes and types.** Any subset of `t, c, z, y, x` ending in `y, x`; pixel types
+  `uint8`, `uint16` and `uint32`.
+- **Output.** OME-Zarr images and HCS plates, OME-NGFF 0.4 (the default) or 0.5, with a
+  multiscale pyramid, channel display metadata, per-FOV and per-well ROI tables and a
+  condition table, written through [ngio](https://biovisioncenter.github.io/ngio/), which
+  is also the recommended way to open the result from Python.
+- **Storage.** Local file systems and S3 (with the `s3` extra), for input and output;
+  other object stores are not supported.
+- **Fractal is optional.** Everything runs as plain Python; the Fractal utilities wrap a
+  converter as an init/compute task pair so that a cluster converts images in parallel.
+- **Not a reader, a GUI or a CLI.** General-purpose converters such as
+  [bioformats2raw](https://github.com/glencoesoftware/bioformats2raw) or
+  [ngff-zarr](https://github.com/thewtex/ngff-zarr) turn one readable file into one
+  OME-Zarr image. This library assembles mosaics and plates from many files using the
+  microscope's own metadata, and brings no readers of its own.
 
 ## Installation
 
@@ -105,6 +131,18 @@ Two collection types decide where a `TiledImage` lands:
 - **Single images** — standalone conversions with no plate hierarchy. See
   [single images](getting_started/1_single_images.md).
 
+A few words this site uses in a narrow sense:
+
+- **tile**: one array on disk plus where it belongs; the unit a parser produces.
+- **field of view (FOV)**: one stage position. A FOV may be several tiles: its Z
+  slices, channels and time points.
+- **mosaic**: the fields of view of one well or image arranged into one picture.
+- **acquisition**: one multiplexing cycle inside a well, the OME-Zarr `acquisition`
+  index; not the imaging run as a whole.
+- **ROI table**: the per-FOV and per-well tables written next to each image.
+- **HCS plate**: the plate, row, column and acquisition hierarchy of the OME-Zarr
+  high-content screening layout.
+
 ## Pipeline overview
 
 ```mermaid
@@ -133,15 +171,23 @@ registration steps, tiling strategies and writer modes available at each stage.
 ## Extensibility
 
 - **Custom image loaders** — implement `ImageLoaderInterface` to read any format; see
-  [programmatic tiles](getting_started/2_programmatic_tiles.md).
+  [custom file formats](getting_started/2_programmatic_tiles.md).
 - **Custom pipeline steps** — add [registration](guides/pipeline.md#custom-registration-steps),
   [filtering](guides/pipeline.md#custom-filters) or
   [validation](guides/pipeline.md#custom-validators) steps.
-- **Custom collection types** — register new handlers with `add_collection_handler()`.
 
 ## Where to go next
 
 <div class="grid cards" markdown>
+
+-   :material-hammer-wrench:{ .lg .middle } **Writing a converter**
+
+    ---
+
+    What a converter consists of, how to map your metadata onto tiles, and how to run,
+    test and package it.
+
+    [:octicons-arrow-right-24:Build your own](guides/writing_a_converter.md)
 
 -   :material-rocket-launch:{ .lg .middle } **Getting started**
 

@@ -2,7 +2,7 @@
 description: Build Tile objects and a custom image loader directly, without going through a DataFrame.
 ---
 
-# Programmatic tiles
+# Custom file formats
 
 **Build `Tile` objects in code, with a loader that reads your own file format.**
 
@@ -13,6 +13,9 @@ in when:
 - your format needs a **custom loader** — a proprietary microscope file, a remote API
 - you need **fine-grained control** over how tiles are constructed
 - your data source does not map cleanly onto a table
+
+The example reuses the plate tutorial's images; the set-up (clone, data location, extra
+packages) is described at the top of the [plate tutorial](0_hcs_plates.md).
 
 ## Step 1: Implement a custom image loader
 
@@ -66,6 +69,8 @@ From here nothing is specific to the programmatic path — this is the same sequ
 
 ## Next
 
+- [Writing a converter](../guides/writing_a_converter.md) — the loader contract, tile
+  recipes, running, testing and packaging a converter
 - [Pipeline configuration](../guides/pipeline.md) — filters, registration, writer modes
 - [Converters as Fractal tasks](../guides/fractal_tasks.md) — package this as a task
 - [Core API](../api/core.md) — the `Tile` and `TiledImage` reference

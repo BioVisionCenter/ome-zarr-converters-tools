@@ -16,7 +16,9 @@ See [pipeline configuration](../guides/pipeline.md) for the prose version.
 ## Filters
 
 Every filter except the range filters (`ZRangeFilter`, `TRangeFilter`) takes a `mode` of
-`"Include"` or `"Exclude"`. Register a custom one with `add_filter()`.
+`"Include"` or `"Exclude"`. Register a custom one with `add_filter()`. An
+`AttributeFilter` matches against typed values, one wrapper model per type:
+`AttributeFilter(key="drug", values=[StringValue(value="DMSO")])`.
 
 ::: ome_zarr_converters_tools.pipelines.FilterModel
 ::: ome_zarr_converters_tools.pipelines.RegexFilter
@@ -24,6 +26,12 @@ Every filter except the range filters (`ZRangeFilter`, `TRangeFilter`) takes a `
 ::: ome_zarr_converters_tools.pipelines.FovNameFilter
 ::: ome_zarr_converters_tools.pipelines.AcquisitionFilter
 ::: ome_zarr_converters_tools.pipelines.AttributeFilter
+::: ome_zarr_converters_tools.pipelines.StringValue
+::: ome_zarr_converters_tools.pipelines.IntValue
+::: ome_zarr_converters_tools.pipelines.FloatValue
+::: ome_zarr_converters_tools.pipelines.BoolValue
+::: ome_zarr_converters_tools.pipelines.IsNoneValue
+::: ome_zarr_converters_tools.pipelines.IsNotNoneValue
 ::: ome_zarr_converters_tools.pipelines.ChannelFilter
 ::: ome_zarr_converters_tools.pipelines.ZRangeFilter
 ::: ome_zarr_converters_tools.pipelines.TRangeFilter

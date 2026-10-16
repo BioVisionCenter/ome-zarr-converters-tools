@@ -14,6 +14,7 @@ See [pipeline configuration](../guides/pipeline.md) for how these fit together i
 ::: ome_zarr_converters_tools.ChannelInfo
 ::: ome_zarr_converters_tools.StageOrientation
 ::: ome_zarr_converters_tools.DataTypeEnum
+::: ome_zarr_converters_tools.default_axes_builder
 
 ## Converter options
 
@@ -41,6 +42,9 @@ See [pipeline configuration](../guides/pipeline.md) for how these fit together i
 ::: ome_zarr_converters_tools.ChunkingStrategy
 ::: ome_zarr_converters_tools.FixedSizeChunking
 ::: ome_zarr_converters_tools.FovBasedChunking
+::: ome_zarr_converters_tools.ShardingStrategy
+::: ome_zarr_converters_tools.NoSharding
+::: ome_zarr_converters_tools.ChunkMultipleSharding
 
 ## Writing
 
@@ -48,6 +52,7 @@ See [pipeline configuration](../guides/pipeline.md) for how these fit together i
 ::: ome_zarr_converters_tools.OverwriteMode
 ::: ome_zarr_converters_tools.BackendType
 ::: ome_zarr_converters_tools.NgffVersions
+::: ome_zarr_converters_tools.DefaultNgffVersion
 
 ## Collections
 

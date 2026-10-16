@@ -15,6 +15,21 @@ The example data is a small copy of the [cardiomyocyte differentiation
 dataset](https://zenodo.org/records/8287221): one well (`A/01`), three fields of view,
 two Z slices each, one channel.
 
+!!! note "Before you start"
+
+    The tutorials read their data from the repository checkout, so clone it and install
+    the library with the two packages the snippets use on top of it:
+
+    ```bash
+    git clone https://github.com/BioVisionCenter/ome-zarr-converters-tools
+    cd ome-zarr-converters-tools
+    pip install -e . pandas matplotlib
+    ```
+
+    The tile table and images are under `tests/data/hcs_plate/` (the Zenodo record above
+    is the full dataset, not this copy); the snippets run from the repository root and
+    write their output to `./data/`. Each page runs in a few seconds.
+
 ## Step 1: Prepare the tile table
 
 The frame must contain one row per tile. Columns fall into three groups.
@@ -42,7 +57,9 @@ The frame must contain one row per tile. Columns fall into three groups.
 | `column` | Well column, a 1-based integer |
 
 **Extra columns** — any additional column is carried through onto the tile's
-`attributes` and can be written out as a condition table. Here that is `drug`.
+`attributes` and written out as a condition table; see [attributes, condition tables
+and the image list](../guides/pipeline.md#attributes-condition-tables-and-the-image-list)
+for the rules. Here that is `drug`.
 
 ```python exec="true" source="material-block" session="hcs"
 --8<-- "docs/snippets/getting_started/hcs_plates.py:load_table"
@@ -167,5 +184,6 @@ outside them is written as background.
 ## Next
 
 - [Single images](1_single_images.md) — the same pipeline without a plate hierarchy
-- [Programmatic tiles](2_programmatic_tiles.md) — build `Tile` objects without a table
+- [Custom file formats](2_programmatic_tiles.md) — build `Tile` objects without a table,
+  with your own image loader
 - [Pipeline configuration](../guides/pipeline.md) — filters, registration, writer modes

@@ -1,6 +1,10 @@
 """Core utility module for OME-Zarr converters tools."""
 
-from ome_zarr_converters_tools.core._dummy_tiles import build_dummy_tile
+from ome_zarr_converters_tools.core._dummy_tiles import (
+    StartPosition,
+    TileShape,
+    build_dummy_tile,
+)
 from ome_zarr_converters_tools.core._table import (
     hcs_images_from_dataframe,
     single_images_from_dataframe,
@@ -20,8 +24,10 @@ from ome_zarr_converters_tools.models._url_utils import (
 
 __all__ = [
     "AttributeType",
+    "StartPosition",
     "Tile",
     "TileFOVGroup",
+    "TileShape",
     "TileSlice",
     "TiledImage",
     "build_dummy_tile",

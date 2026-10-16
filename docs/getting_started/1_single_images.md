@@ -12,7 +12,8 @@ pandas `DataFrame`, one row per image file, and the pipeline after parsing is id
 
 The example reuses images from the [cardiomyocyte differentiation
 dataset](https://zenodo.org/records/8287221): one image, two fields of view, two Z slices
-each, one channel.
+each, one channel. The set-up (clone, data location, extra packages) is described at the
+top of the [plate tutorial](0_hcs_plates.md).
 
 ## Step 1: Prepare the tile table
 
@@ -94,5 +95,6 @@ field of view, and `well_ROI_table`, covering the whole image.
 
 ## Next
 
-- [Programmatic tiles](2_programmatic_tiles.md) — build `Tile` objects without a table
+- [Custom file formats](2_programmatic_tiles.md) — build `Tile` objects without a table,
+  with your own image loader
 - [Pipeline configuration](../guides/pipeline.md) — filters, registration, writer modes

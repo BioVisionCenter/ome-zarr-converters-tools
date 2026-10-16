@@ -107,7 +107,7 @@ plugins:
             show_source: true
             show_signature_annotations: true
             show_root_heading: true
-            # The curated pages show short names; the module pages opt back in.
+            # The API pages are curated by topic, so headings carry short names.
             show_root_full_path: false
             show_bases: true
             docstring_section_style: list
@@ -190,12 +190,12 @@ nav:
   - Getting started:
       - "HCS plates": getting_started/0_hcs_plates.md
       - "Single images": getting_started/1_single_images.md
-      - "Programmatic tiles": getting_started/2_programmatic_tiles.md
+      - "Custom file formats": getting_started/2_programmatic_tiles.md
 
   - Guides:
+      - "Writing a converter": guides/writing_a_converter.md
       - "Pipeline configuration": guides/pipeline.md
       - "Converters as Fractal tasks": guides/fractal_tasks.md
-      - "Converters built on this library": guides/converters.md
 
   - API reference:
       - "Core": api/core.md
@@ -203,14 +203,8 @@ nav:
       - "Pipelines": api/pipelines.md
       - "Fractal": api/fractal.md
       - "Testing": api/testing.md
-      - "Modules":
-          - "ome_zarr_converters_tools": api/modules/root.md
-          - "ome_zarr_converters_tools.core": api/modules/core.md
-          - "ome_zarr_converters_tools.models": api/modules/models.md
-          - "ome_zarr_converters_tools.pipelines": api/modules/pipelines.md
-          - "ome_zarr_converters_tools.fractal": api/modules/fractal.md
-          - "ome_zarr_converters_tools.testing": api/modules/testing.md
 
-  - Contributing:
-      - "Contributing guide": contributing.md
+  - Project:
+      - "Converters built on this library": guides/converters.md
+      - "Contributing": contributing.md
       - "Changelog": changelog.md

@@ -19,6 +19,23 @@
   # after
   from ome_zarr_converters_tools.pipelines import RegexFilter
   ```
+- `StartPosition` and `TileShape`, the two tuples `build_dummy_tile` takes, are
+  exported from `ome_zarr_converters_tools` and `ome_zarr_converters_tools.core`, so
+  synthetic test tiles can be built from the public API.
+- The typed value models of `AttributeFilter` (`StringValue`, `IntValue`,
+  `FloatValue`, `BoolValue`, `IsNoneValue`, `IsNotNoneValue`, the `AttributeValue`
+  union and the `FilterMode` alias) are exported from `ome_zarr_converters_tools`
+  and `ome_zarr_converters_tools.pipelines`.
+
+  ```python
+  # before
+  from ome_zarr_converters_tools.pipelines._filters import StringValue
+
+  # after
+  from ome_zarr_converters_tools import AttributeFilter, StringValue
+
+  AttributeFilter(key="drug", values=[StringValue(value="DMSO")])
+  ```
 
 ### Chores
 - The docs build moves from MkDocs + Material to [Zensical](https://zensical.org),
@@ -74,6 +91,48 @@
   example and the in-memory JSON hand-off; dark-mode links use the brand accent;
   API headings drop the package prefix and `model_config`; the home page routes
   task users to the converters built on this library.
+- New guide "Writing a converter": what a converter consists of, a checklist
+  from metadata to `AcquisitionDetails` and `Tile` fields, recipes for mapping
+  common acquisition shapes onto tiles, the image-loader surface, running the
+  init/compute pair locally, snapshot testing with a complete example, and
+  packaging. Linked as the first home-page card.
+- The array layout `ImageLoaderInterface.load_data` must return (trailing `y, x`,
+  other axes in canonical order restricted to `AcquisitionDetails.axes`, leading
+  singletons optional, extra axes an error) is documented on the method, on
+  `TileSlice.load_data` and in the new guide, with the `(c, y, x)` trap called
+  out.
+- `AcquisitionDetails` fields have docstrings (units, what `"world"` and
+  `"pixel"` mean per field, the `axes` rule); `Tile` positions are documented as
+  the top-left corner in the declared coordinate space, and the same rule is a
+  warning in the pipeline guide.
+- Pipeline guide: new "Attributes, condition tables and the image list" section
+  (list values, same keys, reserved keys, what is written where, how the Fractal
+  image list receives them); "What snapping does to your pixels"; units of ROIs
+  in custom registration steps; a worked memory example for choosing a writer
+  mode. The `condition_table_path` row now says the built-in pipelines do not
+  read it.
+- Fractal guide: the init-task example returns `{"parallelization_list": [...]}`
+  as `exec_compound_task` and Fractal expect (it returned a bare list); new "Run
+  locally" and "Packaging" sections; the one-loader-class and JSON-serialisable
+  fields rules next to `generic_compute_task`.
+- `run_converter_test` documents the `api_fn` call and return contract and its
+  `Raises`; `build_dummy_tile` and its tuples have docstrings.
+- The six module-dump pages under "API reference / Modules" are removed; the
+  nine names only they rendered (`ShardingStrategy`, `NoSharding`,
+  `ChunkMultipleSharding`, `UserFacingModel`, `AttributeType`,
+  `CollectionInterfaceType`, `ImageLoaderInterfaceType`, `DefaultNgffVersion`,
+  `default_axes_builder`) are rendered on the curated pages, so every object has
+  one search hit.
+- Home page: a "Scope" section (position-based registration, axes and types,
+  what is written, storage, Fractal optional, how it relates to bioformats2raw,
+  ngff-zarr and ngio) and a short vocabulary list under "Main concepts".
+- Navigation: "Programmatic tiles" is now "Custom file formats"; the converters
+  page, contributing guide and changelog sit under "Project". The HCS tutorial
+  opens with a "Before you start" note (clone, data location, extra packages),
+  which the other tutorials point to.
+- README: routes users of supported microscopes to the converters page, links
+  the tile-table columns and the tutorials directly, and lists the new guide.
+- `docs/CLAUDE.md` records the terminology and spelling rules for site prose.
 
 ## [v1.1.1]
 

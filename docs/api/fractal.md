@@ -22,6 +22,7 @@ task. See [converters as Fractal tasks](../guides/fractal_tasks.md) for the walk
 These are the models Fractal renders argument forms from, so their JSON schemas are part
 of the public contract.
 
+::: ome_zarr_converters_tools.UserFacingModel
 ::: ome_zarr_converters_tools.AcquisitionOptions
 ::: ome_zarr_converters_tools.ChannelInfoUI
 ::: ome_zarr_converters_tools.fractal.PixelSizeModel

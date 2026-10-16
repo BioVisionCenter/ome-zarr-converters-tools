@@ -47,3 +47,32 @@ Declaring `markdown_extensions` in `mkdocs.yml` **replaces** Zensical's defaults
 of extending them, so anything relied on must be listed explicitly. Dropping `tables`
 makes every pipe table render as literal text; dropping `attr_list` breaks grid cards and
 code annotations; dropping `abbr` breaks the glossary tooltips fed by `docs/_glossary.md`.
+
+## Terminology and spelling
+
+House rules for prose on the site and in docstrings; code identifiers stay as they are.
+
+- British spelling in prose (colour, behaviour, artefact, serialise); Dask, NumPy,
+  Pydantic, Zarr capitalised outside code font.
+- The directory on disk is the "store" (`zarr_dir`, `zarr_url`); the objects in it are
+  an "OME-Zarr image" or "OME-Zarr plate"; never "Zarr file" or "dataset". "OME-Zarr"
+  is the format; "OME-NGFF 0.5" only when naming a spec version; "Zarr v3" for the
+  storage format.
+- `TiledImage` in code font for the class or an instance; "tiled image" in prose only
+  where a plural or adjective is needed; never "TiledImages" in a heading.
+- "field of view" spelled out at first use on each page, then `FOV`; hyphenate only as
+  a compound modifier (per-FOV).
+- "acquisition" means one multiplexing cycle inside a well, never the imaging run.
+- "tile table" in prose, `tiles_table` only as the identifier; "tiling strategy", not
+  "tiling mode"; a path filter matches the "output path" (`TiledImage.path`).
+- "stage orientation" for `StageOrientation`, "stage position corrections" for
+  `StagePositionCorrections`; never bare "stage corrections".
+- "task user" runs a task in the Fractal UI; "converter author" writes one; a
+  "downstream converter" is the package built on this library.
+- "Z slice" (noun, no hyphen); "plane" only for an array plane; "time point";
+  "pre-flight" in prose, `preflight()` as the identifier; "init task" and "compute
+  task" in lower case.
+- "µm" in tables and code comments, "micrometres" spelled out once per page.
+- The product is "OME-Zarr Converters Tools" at most once per page, then "this
+  library"; `ome-zarr-converters-tools` only in install commands; "ozct" nowhere
+  user-facing.

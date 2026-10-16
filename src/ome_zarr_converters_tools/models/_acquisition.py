@@ -158,42 +158,63 @@ class StageOrientation(UserFacingModel):
 
 
 class AcquisitionDetails(BaseModel):
-    """Details about the acquisition.
+    """Details about the acquisition, shared by every tile it produced.
 
-    These attributes are known and fixed prior to conversion.
-    (Either parsed from metadata or manually serialized by the user beforehand.)
+    Known before conversion starts: parsed from the microscope metadata or set
+    by the user. The positions and sizes on each `Tile` are interpreted through
+    the `*_space` fields and the spacings declared here.
     """
 
-    # Determine the coordinate space for start and length values
     start_x_space: SPACE_TYPE = "world"
+    """Coordinate system of `Tile.start_x`: `"world"` (µm, snapped to the
+    pixel grid through `xy_pixel_size`) or `"pixel"` (an index)."""
     start_y_space: SPACE_TYPE = "world"
+    """Coordinate system of `Tile.start_y`; see `start_x_space`."""
     start_z_space: SPACE_TYPE = "world"
+    """Coordinate system of `Tile.start_z`: `"world"` (µm, snapped to the
+    slice grid through `z_spacing`) or `"pixel"` (a slice index). Set
+    `"pixel"` when the parser produces slice indices: under the default a
+    `start_z` of 1 at `z_spacing=5.0` rounds back to slice 0."""
     start_t_space: SPACE_TYPE = "world"
+    """Coordinate system of `Tile.start_t`: `"world"` (seconds, snapped
+    through `t_spacing`) or `"pixel"` (a time-point index)."""
     length_x_space: SPACE_TYPE = "pixel"
+    """Unit of `Tile.length_x`: `"pixel"` (a count) or `"world"` (µm)."""
     length_y_space: SPACE_TYPE = "pixel"
+    """Unit of `Tile.length_y`; see `length_x_space`."""
     length_z_space: SPACE_TYPE = "pixel"
+    """Unit of `Tile.length_z`: `"pixel"` (a number of slices) or `"world"`
+    (µm)."""
     length_t_space: SPACE_TYPE = "pixel"
-    # Spacing information
-    xy_pixel_size: float = Field(default=1.0, gt=0.0)  # in micrometers
-    z_spacing: float = Field(default=1.0, gt=0.0)  # in micrometers
-    t_spacing: float = Field(default=1.0, gt=0.0)  # in seconds
-
-    # Channel information
+    """Unit of `Tile.length_t`: `"pixel"` (a number of time points) or
+    `"world"` (seconds)."""
+    xy_pixel_size: float = Field(default=1.0, gt=0.0)
+    """Pixel size along X and Y, in µm."""
+    z_spacing: float = Field(default=1.0, gt=0.0)
+    """Distance between Z slices, in µm."""
+    t_spacing: float = Field(default=1.0, gt=0.0)
+    """Interval between time points, in seconds."""
     channels: list[ChannelInfo] | None = None
-
-    # Axes order to be used for the data (should be a subset of canonical axes)
+    """One entry per channel index, in order; `Tile.start_c` indexes into it.
+    `None` generates channel names from the indices."""
     axes: list[CANONICAL_AXES_TYPE] = Field(
         default_factory=lambda: canonical_axes.copy(), min_length=2, max_length=5
     )
-
-    # Data type of the image data (if known)
+    """Axes of the output image: a subset of `t, c, z, y, x` in that order,
+    ending in `y, x`; `c` is required when `channels` is set. Image loaders
+    must return arrays laid out along these axes (leading singleton axes may
+    be omitted)."""
     data_type: DataTypeEnum = DataTypeEnum.AUTODETECT
-
-    # Condition table path (if applicable)
+    """Pixel data type. `AUTODETECT` reads it from the first tile of every
+    image, through the loader's `find_data_type`; set it when known to skip
+    that read."""
     condition_table_path: str | None = None
-
-    # Stage orientation corrections
+    """Path of a condition table supplied by the task user, carried over from
+    `AcquisitionOptions` for converters that attach one themselves. The
+    built-in pipelines do not read it."""
     stage_orientation: StageOrientation = Field(default_factory=StageOrientation)
+    """Flips and swap applied to stage positions when the mosaic comes out
+    mirrored or transposed."""
 
     model_config = ConfigDict(extra="forbid")
 

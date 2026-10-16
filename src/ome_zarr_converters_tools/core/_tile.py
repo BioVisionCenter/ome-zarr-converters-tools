@@ -62,24 +62,39 @@ class Tile(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfaceType]
     basic entry point for defining what regions of an acquisition to convert.
 
     Attributes:
-        fov_name: Name of the field of view (FOV) this tile belongs to.
-        start_x: Starting position in the X dimension.
-        start_y: Starting position in the Y dimension.
-        start_z: Starting position in the Z dimension.
+        fov_name: Name of the field of view (FOV) this tile belongs to. Needs
+            to be unique only within one output image (one well and
+            acquisition for plates).
+        start_x: Position of the tile's top-left corner along X, i.e. the
+            smallest X it covers, in the space declared by
+            `acquisition_details.start_x_space` (µm by default). Metadata that
+            reports the FOV centre must be shifted by `length_x / 2` in the
+            parser; snapping hides that error instead of flagging it.
+        start_y: Position of the tile's top-left corner along Y, i.e. its
+            first row (row index grows with Y), in the space declared by
+            `acquisition_details.start_y_space`.
+        start_z: First Z slice, in the space declared by
+            `acquisition_details.start_z_space` (µm by default; set
+            `"pixel"` there when this is a slice index).
         start_c: Starting position in the C (channel) dimension. Channel indices
             index into `acquisition_details.channels` when channel metadata is
             provided, so `start_c + length_c` must not exceed its length.
-        start_t: Starting position in the T (time) dimension.
-        length_x: Length of the tile in the X dimension.
-        length_y: Length of the tile in the Y dimension.
-        length_z: Length of the tile in the Z dimension.
+        start_t: First time point, in the space declared by
+            `acquisition_details.start_t_space` (seconds by default).
+        length_x: Extent along X, in the unit declared by
+            `acquisition_details.length_x_space` (pixels by default).
+        length_y: Extent along Y, in the unit declared by
+            `acquisition_details.length_y_space` (pixels by default).
+        length_z: Number of Z slices the tile carries (or µm when
+            `acquisition_details.length_z_space` is `"world"`).
         length_c: Length of the tile in the C (channel) dimension. Values above 1
             describe a tile that carries several channels at once (e.g. a
             two-camera acquisition); the channels it covers must be *adjacent* in
             `acquisition_details.channels`, since the span is the contiguous
             range `start_c … start_c + length_c - 1`. Channels acquired together
             but not adjacent in that list must be emitted as separate tiles.
-        length_t: Length of the tile in the T (time) dimension.
+        length_t: Number of time points the tile carries (or seconds when
+            `acquisition_details.length_t_space` is `"world"`).
         collection: Collection model defining how to build the path to the image(s).
         image_loader: Image loader model defining how to load the image data.
         acquisition_details: Acquisition specific details that will be used to validate
@@ -199,7 +214,12 @@ class Tile(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfaceType]
         )
 
     def find_data_type(self, resource: Any | None = None) -> str:
-        """Find the data type of the image data."""
+        """Return the tile's pixel data type as a dtype string.
+
+        Returns `acquisition_details.data_type` when it is set; under
+        `DataTypeEnum.AUTODETECT` it defers to `image_loader.find_data_type`,
+        which by default loads the tile.
+        """
         if self.acquisition_details.data_type != DataTypeEnum.AUTODETECT:
             return self.acquisition_details.data_type
         return self.image_loader.find_data_type(resource)

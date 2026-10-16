@@ -95,6 +95,15 @@ Each `start_*` and `length_*` dimension has a coordinate system setting (`"world
 !!! tip "The defaults match what most microscopes report"
     Most microscopes report stage positions in physical units (micrometers) and image dimensions in pixels. The defaults (`start_*_space="world"`, `length_*_space="pixel"`) match this convention. If your metadata already provides pixel coordinates for positions, set `start_x_space="pixel"` etc.
 
+!!! warning "Positions are the top-left corner"
+
+    `start_x` and `start_y` are the corner of the tile with the smallest X and Y, in the
+    same frame as the image axes: the row index grows with Y. If your metadata reports
+    the centre of each field of view, subtract `length / 2` in the parser. A centre
+    value shifts every FOV by half a tile, and snapping to a grid still "works", so the
+    error goes unnoticed. Use `StageOrientation` when the finished mosaic comes out
+    mirrored or transposed.
+
 ### Channels
 
 Channel metadata is defined with `ChannelInfo`:
@@ -155,7 +164,31 @@ These corrections are applied when converting `Tile` positions to ROIs during th
 | Field | Default | Description |
 |-------|---------|-------------|
 | `data_type` | `"autodetect"` | Force the output data type (`"uint8"`, `"uint16"`, or `"uint32"`). With `"autodetect"` (`DataTypeEnum.AUTODETECT`) it is inferred from the first tile's image data, which means that tile is read during aggregation. |
-| `condition_table_path` | `None` | Path to an external condition table CSV. When set, this is stored in the plate metadata. |
+| `condition_table_path` | `None` | Path of a condition table supplied by the task user, carried over from `AcquisitionOptions` for converters that attach one themselves. The built-in pipelines do not read it. |
+
+### Attributes, condition tables and the image list
+
+`Tile.attributes` carries per-image metadata the parser knows and the output should
+keep: a plate map's compound and concentration, say. The rules, which the tutorials'
+odd-looking `drug: ["DMSO"]` follows:
+
+- Values are **lists**, one element per row of the condition table: `{"drug": ["DMSO"],
+  "conc_um": [10.0]}` is one row, two-element lists are two rows. Every attribute of one
+  image must have the same length; pad with `None`.
+- Every image that has attributes must have the **same keys** (`None` values are
+  allowed), and `row`, `column`, `acquisition` and `path_in_well` are **reserved**.
+  Violations raise `ConvertersToolsUserError` when the collection is set up.
+- Attributes are read when an image is created from its first tile, so give every tile
+  of an image the same attributes.
+- What is written: a `condition_table` next to each image with the attribute columns,
+  and for plates one more at plate level with the reserved columns added, so that each
+  row names its well and acquisition.
+- The Fractal image list receives the attributes as scalars (a one-element list becomes
+  its element, longer lists are joined with ` & `), plus `plate`, `well` and
+  `acquisition` for plates, and the types `is_3D` and, for time series,
+  `is_time_series`.
+- Filter tiles on them with `AttributeFilter(key="drug", values=[StringValue(value="DMSO")])`;
+  see [filters](#filters).
 
 ## Filters
 
@@ -394,6 +427,8 @@ def my_custom_step(tiled_image: TiledImage, **kwargs) -> TiledImage:
 add_registration_func(function=my_custom_step, name="my_step")
 ```
 
+A step receives the `TiledImage` and returns it. Each `region.roi` is an ngio `Roi`, a frozen model, so derive a changed copy with `model_copy` rather than assigning fields. Its units depend on where the step sits: before `align_to_pixel_grid` the ROIs are in world units (micrometres), after it in pixels.
+
 Then include it in a pipeline using `RegistrationStep`; the `params` of each step are forwarded to the function as keyword arguments:
 
 ```python
@@ -442,6 +477,17 @@ Tiling controls how overlapping FOVs are arranged relative to each other within 
 | `SnapToGridTiling(tolerance=1)` | Snaps FOV positions to a regular grid, removing overlaps. Requires tiles to be arranged in a grid pattern |
 | `SnapToCornersTiling()` | Snaps each FOV to the nearest corner, removing overlaps without requiring a grid structure |
 | `InplaceTiling()` | No tiling — keeps original positions as-is |
+
+**What snapping does to your pixels.** The snapping strategies move whole fields of
+view: each FOV is translated to a point of a grid whose pitch is the tile size, so after
+snapping neighbours abut exactly. Nothing is cropped or blended. The strip the microscope
+imaged twice (a 10 % stage overlap, say) therefore appears twice in the mosaic, once at
+the edge of each neighbour, and the mosaic is wider than the physical extent by the sum
+of the overlaps. `InplaceTiling` keeps the stage positions instead, and where tiles
+overlap the last written one wins. In both cases two tiles of one FOV that land on the
+same `(z, c, t)` overwrite each other silently: that is a parser bug the library does not
+flag, so enable `ShapeDtypeProbeValidator` during development and compare
+`len(tiled_image.regions)` with what the parser produced.
 
 ```python
 from ome_zarr_converters_tools import (
@@ -560,6 +606,11 @@ omezarr = tiled_image_creation_pipeline(
 - **`BY_TILE`**: lowest memory usage, useful when individual tiles are very large.
 - **`IN_MEMORY`**: fastest for small datasets that fit entirely in memory.
 - **`BY_TILE_DASK`**: builds the whole image lazily and streams it a few write blocks at a time, so memory does not grow with the image; each tile is loaded once. Good when Dask is already part of your workflow.
+
+To size the modes against your data: a 2048 × 2048 `uint16` field of view with 20 Z
+slices and 4 channels is 2048 × 2048 × 20 × 4 × 2 bytes, about 670 MB. `BY_FOV` holds one
+of those at a time; `BY_TILE` one tile, here one Z slice of one channel at 8 MB;
+`IN_MEMORY` every FOV of the image at once; the Dask modes a few write blocks.
 
 ## Overwrite modes
 
