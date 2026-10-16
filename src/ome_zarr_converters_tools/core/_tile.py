@@ -84,8 +84,9 @@ class Tile(BaseModel, Generic[CollectionInterfaceType, ImageLoaderInterfaceType]
         image_loader: Image loader model defining how to load the image data.
         acquisition_details: Acquisition specific details that will be used to validate
             and convert the tile.
-        attributes: Additional attributes for the these will be passed to
-            the fractal image list as key-value pairs.
+        attributes: Extra per-tile metadata. Values are lists (one entry per
+            condition-table row); scalarised copies are passed to the Fractal
+            image list as key-value pairs.
 
     """
 

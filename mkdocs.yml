@@ -107,7 +107,8 @@ plugins:
             show_source: true
             show_signature_annotations: true
             show_root_heading: true
-            show_root_full_path: true
+            # The curated pages show short names; the module pages opt back in.
+            show_root_full_path: false
             show_bases: true
             docstring_section_style: list
             extensions:
@@ -125,6 +126,7 @@ plugins:
             unwrap_annotated: false
             filters:
               - '!^_'
+              - '!^model_config$'
             merge_init_into_class: true
             signature_crossrefs: true
             show_symbol_type_heading: true
@@ -193,7 +195,7 @@ nav:
   - Guides:
       - "Pipeline configuration": guides/pipeline.md
       - "Converters as Fractal tasks": guides/fractal_tasks.md
-      - "Downstream converters": guides/converters.md
+      - "Converters built on this library": guides/converters.md
 
   - API reference:
       - "Core": api/core.md

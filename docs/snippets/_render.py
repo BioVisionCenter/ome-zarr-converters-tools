@@ -85,8 +85,8 @@ HOUSE_STYLE: dict[str, Any] = {
     "svg.fonttype": "none",
     "font.family": "monospace",
     "font.monospace": ["JetBrains Mono", "DejaVu Sans Mono"],
-    "font.size": 8.5,
-    "axes.titlesize": 8.5,
+    "font.size": 10.0,
+    "axes.titlesize": 11.0,
     "axes.titlelocation": "left",
     "axes.titlecolor": INK,
     # "medium" would print a `findfont: Failed to find font weight` line on every build.
@@ -99,10 +99,10 @@ HOUSE_STYLE: dict[str, Any] = {
     "ytick.color": INK,
     "xtick.labelcolor": INK,
     "ytick.labelcolor": INK,
-    "xtick.labelsize": 8.0,
-    "ytick.labelsize": 8.0,
+    "xtick.labelsize": 10.0,
+    "ytick.labelsize": 10.0,
     "legend.frameon": False,
-    "legend.fontsize": 8.0,
+    "legend.fontsize": 10.0,
     "lines.linewidth": 1.4,
 }
 
@@ -245,7 +245,7 @@ def show_tile_layout(
                 tile.fov_name,
                 ha="center",
                 va="center",
-                fontsize=8.0,
+                fontsize=10.0,
                 color=color,
             )
         seen.add(tile.fov_name)
@@ -314,7 +314,7 @@ def add_scale_bar(ax: Axes, pixel_size: "PixelSize", *, fraction: float = 0.22) 
         transform=ax.transAxes,
         ha="left",
         va="bottom",
-        fontsize=7.5,
+        fontsize=9.0,
         color=ON_IMAGE,
         path_effects=halo,
         zorder=6,

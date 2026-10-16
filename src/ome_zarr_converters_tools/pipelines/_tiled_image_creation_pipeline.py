@@ -32,7 +32,34 @@ def tiled_image_creation_pipeline(
     overwrite_mode: OverwriteMode,
     resource: Any | None = None,
 ) -> OmeZarrContainer:
-    """Write a TiledImage from a dictionary."""
+    """Register and write one `TiledImage` as an OME-Zarr image.
+
+    Applies `registration_pipeline` (see `build_default_registration_pipeline`)
+    and then `write_tiled_image_as_zarr`, inside
+    `converter_options.runtime_settings.apply()`.
+
+    Args:
+        zarr_url: Full URL of the image to write, i.e. the output directory
+            joined with `tiled_image.path`.
+        tiled_image: The image to register and write.
+        registration_pipeline: Registration steps applied in order before
+            writing.
+        converter_options: Supplies `omezarr_options` and `runtime_settings`.
+            Its `writer_mode` is not read here; pass `writer_mode` explicitly.
+        writer_mode: How the data is loaded and written.
+        overwrite_mode: What to do when the output already exists.
+        resource: Passed unchanged to every image-loader call.
+
+    Returns:
+        The written image.
+
+    Raises:
+        ConvertersToolsOutputExistsError: The output exists and `overwrite_mode`
+            is `NO_OVERWRITE`.
+        ConvertersToolsUserError: The tiles cannot be laid out or written, e.g.
+            negative positions under `Keep`, unequal tile sizes under a snapping
+            strategy, or channels declared without a `c` axis.
+    """
     with converter_options.runtime_settings.apply():
         logger.info("Applying registration pipeline to TiledImage.")
         tiled_image = apply_registration_pipeline(tiled_image, registration_pipeline)

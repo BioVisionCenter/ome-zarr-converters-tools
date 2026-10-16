@@ -10,8 +10,9 @@ Build a fingerprint of a converted store, commit it, and assert later runs still
 
 The pytest plugin (`--update-snapshots`, `--extended`, the `extended` marker and the
 `update_snapshots` fixture) is loaded explicitly with
-`pytest_plugins = ["ome_zarr_converters_tools.testing.plugin"]` in a consumer's
-`tests/conftest.py`, not through an entry point.
+`pytest_plugins = ["ome_zarr_converters_tools.testing.plugin"]` in a downstream
+converter's `tests/conftest.py`, not through an entry point. Run with
+`--update-snapshots` to write the snapshot, and without it to compare against it.
 
 ## Running a test
 

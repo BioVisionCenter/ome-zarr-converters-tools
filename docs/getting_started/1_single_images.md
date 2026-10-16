@@ -16,20 +16,9 @@ each, one channel.
 
 ## Step 1: Prepare the tile table
 
-Same position and size columns as the plate case:
-
-| Column | Description |
-|--------|-------------|
-| `file_path` | Path to the raw image file, relative to the `resource` directory or absolute |
-| `fov_name` | Field-of-view identifier — tiles sharing a `fov_name` are stitched together |
-| `start_x`, `start_y` | XY position, in the coordinate system declared on `AcquisitionDetails` |
-| `start_z` | Z position: a slice index or a physical position |
-| `start_c` | Channel index, 0-based |
-| `start_t` | Time-point index |
-| `length_x`, `length_y` | Tile dimensions, in µm or pixels |
-| `length_z`, `length_c`, `length_t` | Extent in Z, C and T (usually 1) |
-
-The plate columns are replaced by one:
+The position and size columns are the same as in the [plate
+tutorial](0_hcs_plates.md#step-1-prepare-the-tile-table). The `row` and `column` plate
+columns are replaced by one:
 
 | Column | Description |
 |--------|-------------|
@@ -46,8 +35,6 @@ The plate columns are replaced by one:
 ```python exec="true" html="1" session="single"
 --8<-- "docs/snippets/getting_started/single_images.py:show_table"
 ```
-
-Note the `image_path` column and the absence of `row`/`column`.
 
 ## Step 2: Describe the acquisition
 

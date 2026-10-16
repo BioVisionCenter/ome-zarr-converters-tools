@@ -176,7 +176,7 @@ class AcquisitionDetails(BaseModel):
     # Spacing information
     xy_pixel_size: float = Field(default=1.0, gt=0.0)  # in micrometers
     z_spacing: float = Field(default=1.0, gt=0.0)  # in micrometers
-    t_spacing: float = Field(default=1.0, gt=0.0)  # in micrometers
+    t_spacing: float = Field(default=1.0, gt=0.0)  # in seconds
 
     # Channel information
     channels: list[ChannelInfo] | None = None

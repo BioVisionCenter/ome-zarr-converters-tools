@@ -36,7 +36,9 @@ of the public contract.
 
 ## JSON plumbing
 
-`TiledImage` objects are handed between the init and compute tasks as JSON on disk.
+`TiledImage` objects are handed between the init and compute tasks as JSON: inline in
+the parallelization list when small (10 MiB by default), otherwise in a temporary file.
+See `TempJsonOptions`.
 
 ::: ome_zarr_converters_tools.fractal.dump_to_json
 ::: ome_zarr_converters_tools.fractal.dump_json_str

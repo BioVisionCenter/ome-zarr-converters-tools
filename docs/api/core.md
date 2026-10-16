@@ -25,6 +25,6 @@ The objects the whole pipeline is expressed in. A `Tile` is one region of one fi
 
 ::: ome_zarr_converters_tools.TiledImage
 
-## Testing helpers
+## Fixtures
 
 ::: ome_zarr_converters_tools.build_dummy_tile

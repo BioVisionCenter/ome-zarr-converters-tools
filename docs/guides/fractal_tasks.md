@@ -6,51 +6,54 @@ description: Package a converter as a Fractal init/compute task pair, with gener
 
 **Package a converter as an init/compute task pair that Fractal runs in parallel.**
 
-The [Fractal platform](https://fractal-analytics-platform.github.io/fractal-server/) enables parallel processing of image conversion tasks.
-`ome-zarr-converters-tools` provides utilities to integrate with Fractal's **init/compute task model**, where:
+[Fractal](https://fractal-analytics-platform.github.io/fractal-server/) is an optional
+workflow platform (web UI plus server) that runs these converters in parallel on a
+cluster; everything on this site also works as plain Python. A converter plugs into
+Fractal as a pair of tasks:
 
 - An **init task** sets up the output structure and creates a parallelization list
-- Multiple **compute tasks** run independently (one per image), each converting a `TiledImage` to OME-Zarr
+- Multiple **compute tasks** run independently (one per image), each converting a
+  `TiledImage` to OME-Zarr
 
 This page shows how to build a converter that plugs into the Fractal workflow.
 
 ## Overview
 
-The Fractal integration builds on the same pipeline used in the tutorials.
-The difference is that the init task serializes `TiledImage` objects to JSON and the compute tasks
+The Fractal integration builds on the same pipeline used in the tutorials. The difference
+is that the init task serializes `TiledImage` objects to JSON and the compute tasks
 deserialize and process them independently.
 
 ```mermaid
 graph LR
-    A[Init Task] -->|parallelization list| B[Compute Task 1]
-    A -->|parallelization list| C[Compute Task 2]
-    A -->|parallelization list| D[Compute Task N]
-    B --> E[OME-Zarr Image 1]
-    C --> F[OME-Zarr Image 2]
-    D --> G[OME-Zarr Image N]
+    A[Init task] -->|parallelization list| B[Compute task 1]
+    A -->|parallelization list| C[Compute task 2]
+    A -->|parallelization list| D[Compute task N]
+    B --> E[OME-Zarr image 1]
+    C --> F[OME-Zarr image 2]
+    D --> G[OME-Zarr image N]
 ```
 
-## Init Task
+## Init task
 
 The init task is responsible for:
 
-1. Building `Tile` objects from your data source (DataFrame, custom parsing, etc.)
+1. Building `Tile` objects from your data source (a table, a custom parser, ...)
 2. Aggregating them into `TiledImage` objects
 3. Setting up the OME-Zarr collection structure (plates, wells)
 4. Creating a parallelization list for the compute tasks
 
-Use `setup_images_for_conversion()` which combines steps 3 and 4:
+Use `setup_images_for_conversion()`, which combines steps 3 and 4:
 
 ```python
 from ome_zarr_converters_tools import (
     AcquisitionDetails,
     ChannelInfo,
     ConverterOptions,
+    OverwriteMode,
+    hcs_images_from_dataframe,
     setup_images_for_conversion,
     tiles_aggregation_pipeline,
 )
-from ome_zarr_converters_tools.core import hcs_images_from_dataframe
-from ome_zarr_converters_tools.models import OverwriteMode
 
 
 def my_init_task(
@@ -83,7 +86,7 @@ def my_init_task(
         resource="/path/to/image/data",
     )
 
-    # Step 3+4: Set up collection and build parallelization list
+    # Steps 3 and 4: Set up collection and build parallelization list
     parallelization_list = setup_images_for_conversion(
         tiled_images=tiled_images,
         zarr_dir=zarr_dir,
@@ -98,12 +101,18 @@ def my_init_task(
 `setup_images_for_conversion()` does two things internally:
 
 - Calls `setup_ome_zarr_collection()` to create the plate/well structure in the Zarr store
-- Calls `build_parallelization_list()` to serialize each `TiledImage` to a temporary JSON file and return a list of `{"zarr_url": ..., "init_args": ...}` dictionaries
+- Serializes each `TiledImage` to JSON and returns a list of
+  `{"zarr_url": ..., "init_args": ...}` dictionaries. By default the JSON travels inline
+  in that list when the total payload is small (10 MiB) and is written to a temporary
+  file otherwise; `TempJsonOptions.serialization` on the runtime settings forces either
+  mode, and distributed runs where init and compute execute on different machines need
+  `"JSON"`.
 
-## Compute Task
+## Compute task
 
-Each compute task receives one entry from the parallelization list and converts a single `TiledImage`.
-Use `generic_compute_task()` which handles JSON deserialization, the registration pipeline, writing, and cleanup:
+Each compute task receives one entry from the parallelization list and converts a single
+`TiledImage`. Use `generic_compute_task()`, which handles JSON deserialization, the
+registration pipeline, writing, and cleanup:
 
 ```python
 from ome_zarr_converters_tools import (
@@ -132,40 +141,62 @@ def my_compute_task(
 
 `generic_compute_task()` internally:
 
-1. Loads the `TiledImage` from its JSON dump (with retry logic for filesystem latency)
+1. Loads the `TiledImage` from the JSON string or file (retrying while the file is not
+   yet visible on a shared filesystem)
 2. Builds the default registration pipeline from `converter_options`
-3. Calls `tiled_image_creation_pipeline()` to write the OME-Zarr data
-4. Cleans up the temporary JSON file
+3. Calls `tiled_image_creation_pipeline()` to write the OME-Zarr data, with
+   `writer_mode` taken from `converter_options`
+4. Cleans up the temporary JSON file, if one was written
 5. Returns an `ImageListUpdateDict` with metadata for the Fractal image list
 
-!!! note
-    The `collection_type` and `image_loader_type` parameters are needed because `TiledImage` is generic --
-    the concrete types must be specified when deserializing from JSON.
+!!! note "Why the types are passed again"
+    The `collection_type` and `image_loader_type` parameters are needed because
+    `TiledImage` is generic — the concrete types must be specified when deserializing
+    from JSON.
 
-## AcquisitionOptions
+## Acquisition options
 
-When building Fractal tasks, you often want to let users override acquisition details at runtime
-(e.g., pixel size, channels, filters) without modifying the init task.
-The `AcquisitionOptions` model provides this:
+When building Fractal tasks, you often want to let users override acquisition details at
+runtime (pixel size, channels, filters) without modifying the init task. The
+`AcquisitionOptions` model provides this. As a rule of thumb: `AcquisitionDetails` is
+what your parser knows from the metadata, `AcquisitionOptions` is what the task user may
+override in the Fractal UI.
 
 ```python
-from ome_zarr_converters_tools import AcquisitionOptions
-from ome_zarr_converters_tools.pipelines import FovNameFilter
+from ome_zarr_converters_tools import (
+    AcquisitionDetails,
+    AcquisitionOptions,
+    ChannelInfoUI,
+    FovNameFilter,
+)
+from ome_zarr_converters_tools.fractal import PixelSizeModel
 
-# User-provided overrides
+# What the parser knows
+acq = AcquisitionDetails(xy_pixel_size=0.65, z_spacing=5.0)
+
+# What the task user typed in the Fractal form (normally a task parameter)
 acq_options = AcquisitionOptions(
-    channels=[ChannelInfo(channel_label="GFP", wavelength_id="488")],
+    channels=[
+        ChannelInfoUI(channel_label="GFP", wavelength_id="488", color="Green (#00FF00)")
+    ],
     pixel_info=PixelSizeModel(xy_pixel_size=0.325, z_spacing=1.0, t_spacing=1.0),
     filters=[FovNameFilter(regex="FOV_[12]")],
 )
 
-# Apply overrides to base acquisition details
-updated_acq = acq_options.update_acquisition_details(base_acquisition_details)
+# Apply the overrides before building tiles
+acq = acq_options.update_acquisition_details(acq)
 ```
 
-## Custom Parameter Models
+`ChannelInfoUI` is the form-friendly twin of `ChannelInfo`: its `color` is a named menu
+(`Auto`, `Blue`, `Red`, `Yellow`, `Magenta`, `Cyan`, `Gray`, `Green`, `Orange`, `Purple`,
+`Teal`, `Lime`, `Amber`, `Pink`, `Navy`, `Maroon`, `Olive`, `Coral`, `Violet`, each
+rendered as `"Name (#RRGGBB)"`) that is converted to the hex `ChannelInfo.color` when the
+details are updated. The `filters` in the options are passed on to
+`tiles_aggregation_pipeline()` by your init task.
 
-Converters usually need their own parameter models -- a format-specific acquisition
+## Custom parameter models
+
+Converters usually need their own parameter models — a format-specific acquisition
 input, an advanced-options group, and so on. Subclass `UserFacingModel` rather than
 `pydantic.BaseModel` so those models behave like the ones shipped here:
 
@@ -188,15 +219,15 @@ class AcquisitionInput(UserFacingModel):
 The base sets `use_attribute_docstrings=True`, so the attribute docstrings above become
 the field descriptions shown in the Fractal web UI. This matters because
 `fractal-task-tools` only enables that config globally when it is imported *before* your
-models are defined -- inheriting from `UserFacingModel` makes it independent of import
+models are defined — inheriting from `UserFacingModel` makes it independent of import
 order. It also sets `extra="forbid"`, so a typo in a task parameter fails loudly instead
 of being silently dropped. Entries in a subclass `model_config` (such as `title`) merge
 with the base config rather than replacing it.
 
-## Fractal Manifest: Registering Input Models
+## Registering input models in the manifest
 
-Fractal tasks need to declare their input models in the task manifest.
-Use `converters_tools_models()` to get the list of models provided by this library:
+Fractal tasks need to declare their input models in the task manifest. Use
+`converters_tools_models()` to get the list of models provided by this library:
 
 ```python
 from ome_zarr_converters_tools import converters_tools_models
@@ -211,13 +242,14 @@ models = converters_tools_models()
 # ]
 ```
 
-These tuples can be passed directly to Fractal's manifest generation tools
-so that the platform can render the correct input forms for your task.
+These tuples can be passed directly to Fractal's manifest generation tools so that the
+platform can render the correct input forms for your task.
 
-## Learning More
+## Next
 
-For concrete examples of converters built as Fractal tasks, see [Fractal UZH Converters](https://github.com/fractal-analytics-platform/fractal-uzh-converters)
-Which includes several fractal tasks built with `ome-zarr-converters-tools` for different microscopy datasets.
-
-For more details on Fractal task development, see the official
-[Fractal documentation](https://fractal-analytics-platform.github.io/).
+- [fractal-uzh-converters](https://github.com/fractal-analytics-platform/fractal-uzh-converters)
+  — several Fractal tasks built with this library, one per microscope, to crib from
+- [Fractal task development](https://fractal-analytics-platform.github.io/) — the
+  platform's own documentation on writing and packaging tasks
+- [Fractal API reference](../api/fractal.md) — `exec_compound_task()` for running an
+  init/compute pair locally, the runners, and the UI-facing models

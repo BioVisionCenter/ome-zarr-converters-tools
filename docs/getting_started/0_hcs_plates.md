@@ -62,7 +62,7 @@ The frame must contain one row per tile. Columns fall into three groups.
 metadata, axis order, and the coordinate systems the `start_*` and `length_*` columns are
 expressed in.
 
-!!! note "Coordinate systems"
+!!! warning "Coordinate systems"
 
     The `start_*_space` and `length_*_space` parameters say how to read the numbers in
     your table. Use `"world"` for physical units (micrometers) and `"pixel"` for
@@ -116,8 +116,8 @@ an absolute path or an `s3://` URL. If your paths are already absolute you can o
 
 The path (`CardiomyocytePlate.zarr/A/01/0`) is where this image lands inside the store:
 plate name, well row and column, acquisition index. All six tiles — three FOVs times two
-Z slices — grouped into a single `TiledImage`, because they belong to the same well and
-acquisition.
+Z slices — are grouped into a single `TiledImage`, because they belong to the same well
+and acquisition.
 
 ## Step 5: Create the plate structure
 
@@ -143,8 +143,10 @@ strategies and writer modes available here.
 
 ## Step 7: Verify the result
 
-`tiled_image_creation_pipeline()` returns an `OmeZarrContainer`, so the written data can
-be inspected with [ngio](https://biovisioncenter.github.io/ngio/) directly.
+`tiled_image_creation_pipeline()` returns the ngio `OmeZarrContainer` of each image it
+writes. Here the whole plate is reopened with
+[ngio](https://biovisioncenter.github.io/ngio/) instead, to check the result from the
+top down.
 
 ```python exec="true" source="material-block" session="hcs"
 --8<-- "docs/snippets/getting_started/hcs_plates.py:verify"
@@ -153,6 +155,10 @@ be inspected with [ngio](https://biovisioncenter.github.io/ngio/) directly.
 ```python exec="true" html="1" session="hcs"
 --8<-- "docs/snippets/getting_started/hcs_plates.py:plot_result"
 ```
+
+Three tables sit alongside the image: `FOV_ROI_table` (one region per field of view),
+`well_ROI_table` (the whole well) and `condition_table`, built from the extra tile-table
+columns (here `drug`).
 
 The three fields of view are now one image. The empty quadrant is real rather than a
 rendering artefact: three FOVs do not cover the bounding box they span, and everything

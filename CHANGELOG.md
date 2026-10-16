@@ -1,25 +1,8 @@
 # Changelog
 
-## [v1.1.1]
+## [v1.1.2]
 
 ### Features
-- Errors now say which image, tile and source file they concern, with the
-  expected and actual values and how to fix the problem
-  ([#74](https://github.com/BioVisionCenter/ome-zarr-converters-tools/issues/74)).
-  `TiledImage.add_tile` names the offending tile, the mismatching
-  `AcquisitionDetails` field with both values, and the tile the image was
-  created from.
-- New error classes, exported from the package root and `models`:
-  `ConvertersToolsError` (base), `ConvertersToolsUserError` (a `ValueError`;
-  something the task user or converter author can fix, the message says how),
-  `ConvertersToolsOutputExistsError` (a `FileExistsError`),
-  `ConvertersToolsFileNotFoundError` (a `FileNotFoundError`),
-  `ConvertersToolsInternalError` (a `RuntimeError`; an invariant a working
-  converter cannot violate, its message ends with where to report the bug) and
-  `ConvertersToolsWarning` (a `UserWarning`). Each error also subclasses the
-  builtin it stands in for, so existing `except ValueError` code keeps working.
-- `ImageLoaderInterface.describe_source()` lets custom loaders say where a tile
-  comes from in error messages; `DefaultImageLoader` returns its file path.
 - Every concrete filter and validator is now exported from
   `ome_zarr_converters_tools` and `ome_zarr_converters_tools.pipelines`:
   `RegexFilter`, `WellFilter`, `FovNameFilter`, `AcquisitionFilter`,
@@ -36,32 +19,6 @@
   # after
   from ome_zarr_converters_tools.pipelines import RegexFilter
   ```
-
-### Fix
-- `filesystem_for_url` raises `ConvertersToolsUserError` naming the unsupported
-  scheme ("URL ... uses the scheme 'gcs', which is not supported") instead of a
-  misleading `NotImplementedError`.
-- The compute task's wait for the init task's JSON file logs at `WARNING`
-  level with the attempt count instead of `ERROR` on every retry.
-
-### API Breaking Changes
-- Invariant violations that a working converter cannot trigger now raise
-  `ConvertersToolsInternalError`, a `RuntimeError`, instead of `ValueError`
-  (or `TypeError` in `setup_plates`): unknown writer mode or tiling strategy,
-  ROI structure checks inside the tiling utilities, wrong collection type in a
-  setup handler, and the argument checks of the dask lazy loader. Code that
-  caught `ValueError` around those calls must catch `ConvertersToolsError` or
-  `RuntimeError` instead:
-  ```python
-  # before
-  except ValueError: ...
-  # after
-  except ConvertersToolsError: ...
-  ```
-- `NotAGridError` and `NotTilableError` subclass `ConvertersToolsUserError`
-  (and therefore `ValueError`) instead of `Exception`.
-- An unknown axis in `_compute_chunk_size` raises instead of logging a warning
-  and chunking by 1 (the axes are `Literal`-typed, so this was unreachable).
 
 ### Chores
 - The docs build moves from MkDocs + Material to [Zensical](https://zensical.org),
@@ -107,8 +64,63 @@
 - State explicit cost of `reindex_channels=False` (raised in
   [#70](https://github.com/BioVisionCenter/ome-zarr-converters-tools/pull/70)).
 - The error classes get an "Errors" section on the Models API page and a "Raising
-  Errors from a Converter" section in the pipeline guide
+  errors from a converter" section in the pipeline guide
   ([#79](https://github.com/BioVisionCenter/ome-zarr-converters-tools/pull/79)).
+- Documentation review, first pass: the pipeline guide is corrected against the
+  reference (`ChannelInfo.color`, `"A01"` well ids, `tolerance=1`, `data_type`
+  default, five registration steps, which `ConverterOptions` fields each pipeline
+  function reads), lists every built-in filter, gains a Validators section and
+  sentence-case headings; the Fractal guide gets a runnable `AcquisitionOptions`
+  example and the in-memory JSON hand-off; dark-mode links use the brand accent;
+  API headings drop the package prefix and `model_config`; the home page routes
+  task users to the converters built on this library.
+
+## [v1.1.1]
+
+### Features
+- Errors now say which image, tile and source file they concern, with the
+  expected and actual values and how to fix the problem
+  ([#74](https://github.com/BioVisionCenter/ome-zarr-converters-tools/issues/74)).
+  `TiledImage.add_tile` names the offending tile, the mismatching
+  `AcquisitionDetails` field with both values, and the tile the image was
+  created from.
+- New error classes, exported from the package root and `models`:
+  `ConvertersToolsError` (base), `ConvertersToolsUserError` (a `ValueError`;
+  something the task user or converter author can fix, the message says how),
+  `ConvertersToolsOutputExistsError` (a `FileExistsError`),
+  `ConvertersToolsFileNotFoundError` (a `FileNotFoundError`),
+  `ConvertersToolsInternalError` (a `RuntimeError`; an invariant a working
+  converter cannot violate, its message ends with where to report the bug) and
+  `ConvertersToolsWarning` (a `UserWarning`). Each error also subclasses the
+  builtin it stands in for, so existing `except ValueError` code keeps working.
+- `ImageLoaderInterface.describe_source()` lets custom loaders say where a tile
+  comes from in error messages; `DefaultImageLoader` returns its file path.
+
+### Fix
+- `filesystem_for_url` raises `ConvertersToolsUserError` naming the unsupported
+  scheme ("URL ... uses the scheme 'gcs', which is not supported") instead of a
+  misleading `NotImplementedError`.
+- The compute task's wait for the init task's JSON file logs at `WARNING`
+  level with the attempt count instead of `ERROR` on every retry.
+
+### API Breaking Changes
+- Invariant violations that a working converter cannot trigger now raise
+  `ConvertersToolsInternalError`, a `RuntimeError`, instead of `ValueError`
+  (or `TypeError` in `setup_plates`): unknown writer mode or tiling strategy,
+  ROI structure checks inside the tiling utilities, wrong collection type in a
+  setup handler, and the argument checks of the dask lazy loader. Code that
+  caught `ValueError` around those calls must catch `ConvertersToolsError` or
+  `RuntimeError` instead:
+  ```python
+  # before
+  except ValueError: ...
+  # after
+  except ConvertersToolsError: ...
+  ```
+- `NotAGridError` and `NotTilableError` subclass `ConvertersToolsUserError`
+  (and therefore `ValueError`) instead of `Exception`.
+- An unknown axis in `_compute_chunk_size` raises instead of logging a warning
+  and chunking by 1 (the axes are `Literal`-typed, so this was unreachable).
 
 ## [v1.1.0]
 
@@ -132,8 +144,8 @@ Requires `ngio` 1.1.2 or later. Written OME-Zarr output is unchanged.
   `NgioValueError` in `consolidate()` for chunks or shards of 8 MiB or more on
   an image that is not a multiple of them (`ngio` 1.1.1 `store_dask` let two
   parallel writers share a storage chunk). The Dask writer modes build their
-  lazy array on the image's write unit and leave the block grid to `ngio`; ozct
-  carries no guard of its own.
+  lazy array on the image's write unit and leave the block grid to `ngio`; this
+  library carries no guard of its own.
 - The Dask writer modes no longer pickle the whole image once per tile while
   building the dask graph, which was quadratic in the tile count
   (`By Tile (Using Dask)`, 512 tiles of 8 MiB: 18 s → 5 s).
@@ -636,7 +648,6 @@ fallback uses `SequenceMatcher` fuzzy matching against common fluorophore/color 
 
 ### Fix
 - Fix minor bug in `TileRegion` region loading that caused unnecessary reference data to be loaded; `data_type` is now stored directly in the model.
-
 
 ### Documentation
 - Improve stage position documentation in `docs/pipeline.md`.

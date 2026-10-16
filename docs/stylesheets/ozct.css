@@ -198,6 +198,19 @@
   --ozct-code-bg: var(--md-code-bg-color);
 }
 
+/* Not optional. Zensical's palette sheet sets --md-typeset-a-color under
+   [data-md-color-scheme=slate][data-md-color-primary=teal] (0,2,0), which beats
+   the single-attribute blocks above whatever the source order, so dark-mode
+   links came out in the stock teal rather than the brand accent. Match the
+   specificity for both schemes. */
+[data-md-color-scheme="default"][data-md-color-primary="teal"] {
+  --md-typeset-a-color: var(--ozct-accent-ink);
+}
+
+[data-md-color-scheme="slate"][data-md-color-primary="teal"] {
+  --md-typeset-a-color: var(--ozct-accent);
+}
+
 /* ── 3. Display type ─────────────────────────────────────────────────────── */
 .md-typeset h1,
 .md-typeset h2,
@@ -446,7 +459,7 @@
   border-radius: 0 0 10px 10px;
   background: var(--ozct-sunk);
   font-family: var(--md-code-font), monospace;
-  font-size: 0.72rem;
+  font-size: 0.85em; /* same scale as `pre code`, so output is not louder than input */
   padding: 0.7rem 0.9rem;
 }
 
@@ -465,7 +478,7 @@
    Where :has() is unsupported the figure simply keeps the OUT label — the old
    behaviour, and the reason this is written as a subtraction. */
 .md-typeset .result:has(> .ozct-figure) {
-  margin-top: 0;
+  margin: 1.2rem 0 1.6rem; /* a figure is not glued to the block above it */
   border: 0;
   border-radius: 0;
   background: none;
@@ -474,6 +487,13 @@
 
 .md-typeset .result:has(> .ozct-figure)::before {
   content: none;
+}
+
+/* With `html="1"` and no `source`, markdown-exec emits the figure as a direct
+   child of the article rather than inside `.result`, so the rule above does not
+   fire there; give the figure its own breathing room from the block above. */
+.md-typeset .ozct-figure {
+  margin: 1.2rem 0 1.6rem;
 }
 
 /* The SVG carries its own intrinsic size from matplotlib; cap it to the column
@@ -694,11 +714,31 @@
   background: var(--ozct-sunk);
 }
 
+/* Identifiers in a table's first column never break mid-name; the wrapper
+   scrolls instead, and the description column takes the slack. */
+.md-typeset table:not([class]) td:first-child code {
+  white-space: nowrap;
+}
+
+/* Card links: the arrow icon carries its own gap, so the link text can start
+   immediately after the shortcode and the underline begins at the text. */
+.md-typeset .grid.cards .twemoji {
+  margin-right: 0.3em;
+}
+
 /* ── 11. Glossary abbreviations ──────────────────────────────────────────── */
 .md-typeset abbr[title] {
   border-bottom: 1px dotted var(--md-default-fg-color--light);
   cursor: help;
   text-decoration: none;
+}
+
+/* Display type carries no tooltip affordance: a dotted underline through a
+   headline reads as a broken link, and the hover-only tooltip is unreachable
+   by keyboard or touch anyway. */
+.md-typeset :is(h1, h2, h3, h4, .ozct-hero-tagline) abbr[title] {
+  border-bottom: 0;
+  cursor: inherit;
 }
 
 /* ── 12. Footer ──────────────────────────────────────────────────────────────

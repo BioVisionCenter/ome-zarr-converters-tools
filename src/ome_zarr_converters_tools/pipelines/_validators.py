@@ -12,6 +12,12 @@ from ome_zarr_converters_tools.pipelines._registry import Registry
 
 
 class ValidatorModel(BaseModel):
+    """Base class for validator parameter models.
+
+    Subclasses declare `name` (a `Literal` matching the name passed to
+    `add_validator`) plus whatever parameters the validator function needs.
+    """
+
     name: Any
 
 
@@ -132,6 +138,15 @@ def apply_validator_pipeline(
     validators_config: Sequence[ValidatorModel],
     resource: Any | None = None,
 ) -> list[TiledImage]:
+    """Run validator steps on every image and return the images unchanged.
+
+    Each step calls its registered function as
+    `function(tiled_image, validator_params=step, resource=resource)`, which
+    raises on failure.
+
+    Raises:
+        ConvertersToolsUserError: A step's `name` is not a registered validator.
+    """
     for step in validators_config:
         step_function = _validator_registry.get(step.name)
         for tiled_image in tiled_images:

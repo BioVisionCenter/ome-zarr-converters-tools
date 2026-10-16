@@ -15,8 +15,8 @@ See [pipeline configuration](../guides/pipeline.md) for the prose version.
 
 ## Filters
 
-Every filter takes a `mode` of `"Include"` or `"Exclude"`. Register a custom one with
-`add_filter()`.
+Every filter except the range filters (`ZRangeFilter`, `TRangeFilter`) takes a `mode` of
+`"Include"` or `"Exclude"`. Register a custom one with `add_filter()`.
 
 ::: ome_zarr_converters_tools.pipelines.FilterModel
 ::: ome_zarr_converters_tools.pipelines.RegexFilter

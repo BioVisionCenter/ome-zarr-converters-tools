@@ -80,16 +80,23 @@ def generic_compute_task(
     image_loader_type: type[ImageLoaderInterfaceType],
     resource: Any | None = None,
 ) -> ImageListUpdateDict:
-    """Initialize the task to convert a LIF plate to OME-Zarr.
+    """Convert one `TiledImage` described by `init_args` into an OME-Zarr image.
+
+    Deserializes the image from the JSON string or file in `init_args`, builds
+    the default registration pipeline from its `converter_options`, writes the
+    image with `tiled_image_creation_pipeline` (`writer_mode` from the options,
+    `overwrite_mode` from `init_args`), removes the temporary JSON file if one
+    was used, and returns the Fractal image-list update.
 
     Args:
-        zarr_url: URL to the OME-Zarr file.
+        zarr_url: URL of the OME-Zarr image to write.
         init_args: Arguments from the initialization task. Accepts either a
             `ConvertParallelInitArgs` instance or a plain dict (as produced by
             Fractal's orchestration layer).
         collection_type: The collection type to use when loading the `TiledImage`.
         image_loader_type: The image loader type to use when loading the `TiledImage`.
-        resource: The resource to associate with the context model.
+        resource: Passed unchanged to every image-loader call; for
+            `DefaultImageLoader` this is the base directory of the raw files.
 
     Returns:
         The Fractal image-list update entry for the converted image.

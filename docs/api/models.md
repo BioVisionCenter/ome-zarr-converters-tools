@@ -88,36 +88,26 @@ in two tiers, by who can act on them:
 Warnings use `ConvertersToolsWarning` (a `UserWarning`), so they can be filtered or
 turned into errors with `warnings.filterwarnings`. Custom parsers, loaders, validators
 and filters should raise the same classes; see
-[Raising Errors from a Converter](../guides/pipeline.md#raising-errors-from-a-converter).
+[Raising errors from a converter](../guides/pipeline.md#raising-errors-from-a-converter).
 
-::: ome_zarr_converters_tools.models
-    options:
-      show_root_heading: false
-      show_root_toc_entry: false
-      members:
-        - ConvertersToolsError
-        - ConvertersToolsUserError
-        - ConvertersToolsOutputExistsError
-        - ConvertersToolsFileNotFoundError
-        - ConvertersToolsInternalError
-        - ConvertersToolsWarning
+::: ome_zarr_converters_tools.ConvertersToolsError
+::: ome_zarr_converters_tools.ConvertersToolsUserError
+::: ome_zarr_converters_tools.ConvertersToolsOutputExistsError
+::: ome_zarr_converters_tools.ConvertersToolsFileNotFoundError
+::: ome_zarr_converters_tools.ConvertersToolsInternalError
+::: ome_zarr_converters_tools.ConvertersToolsWarning
 
 ## URL helpers
 
 Paths and `s3://` URLs are handled through the same helpers, so a converter does not
 branch on storage backend.
 
-::: ome_zarr_converters_tools.models
-    options:
-      show_root_heading: false
-      show_root_toc_entry: false
-      members:
-        - UrlType
-        - find_url_type
-        - is_absolute_url
-        - join_url_paths
-        - parent_url
-        - basename_url
-        - glob_url_paths
-        - filesystem_for_url
-        - local_url_to_path
+::: ome_zarr_converters_tools.UrlType
+::: ome_zarr_converters_tools.find_url_type
+::: ome_zarr_converters_tools.is_absolute_url
+::: ome_zarr_converters_tools.join_url_paths
+::: ome_zarr_converters_tools.parent_url
+::: ome_zarr_converters_tools.basename_url
+::: ome_zarr_converters_tools.glob_url_paths
+::: ome_zarr_converters_tools.filesystem_for_url
+::: ome_zarr_converters_tools.local_url_to_path

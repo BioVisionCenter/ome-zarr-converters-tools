@@ -1,4 +1,9 @@
-# Docs
+---
+title: Docs build notes
+description: Maintainer notes on how this site is built — Zensical, executed snippets, the stylesheet, and the traps.
+---
+
+# Docs build notes
 
 The site is built by [Zensical](https://zensical.org) from `mkdocs.yml`; mkdocs-material
 is not installed. Build and serve with `pixi run -e docs build_docs` / `serve_docs`.

@@ -21,7 +21,7 @@ class PngLoader(ImageLoaderInterface):
 
     file_path: str
 
-    def load_data(self, resource: Any = None) -> np.ndarray:
+    def load_data(self, resource: Any | None = None) -> np.ndarray:
         """Load the PNG file as a NumPy array."""
         if resource is not None:
             path = f"{resource}/{self.file_path}"

@@ -17,6 +17,13 @@ library is that second half. It handles tile management, registration, filtering
 validation and writing, and adds [Fractal](https://fractal-analytics-platform.github.io/)
 utilities for packaging a converter as a task.
 
+!!! tip "Just want to convert your files?"
+
+    If your microscope is listed under [converters built on this
+    library](guides/converters.md), use that converter, as a Fractal task or from
+    Python. This site documents the library those converters share; read on if you are
+    writing a converter for a format that is not covered yet.
+
 ## Key features
 
 - **Abstraction layer** — map on-disk raw data to `Tile` objects, and let the pipeline
@@ -63,10 +70,10 @@ Reading from or writing to S3 needs the `s3` extra
 ## Main concepts
 
 A microscopy image is rarely one file. It arrives as many smaller **tiles**, and how
-atomic those tiles are depends on the microscope and the acquisition settings.
+much of the image each tile holds depends on the microscope and the acquisition settings.
 
 This library maps raw files onto `Tile` objects, then aggregates them into a
-`TiledImage` — the composite that becomes one image in the output OME-Zarr dataset.
+`TiledImage` — the composite that becomes one image in the output OME-Zarr store.
 
 ```mermaid
 flowchart LR
@@ -102,32 +109,34 @@ Two collection types decide where a `TiledImage` lands:
 
 ```mermaid
 flowchart LR
-    A["1. Parse<br>metadata"] --> B["2. Filter<br>tiles"]
+    A["1. Parse<br>metadata"] --> B["2. Filter and<br>validate tiles"]
     B --> C["3. Aggregate<br>into TiledImages"]
     C --> D["4. Register<br>align positions"]
-    D --> E["5. Setup<br>collection"]
+    D --> E["5. Set up<br>collection"]
     E --> F["6. Write<br>OME-Zarr"]
 ```
 
 1. **Parse metadata** into `Tile` objects — map raw images to tiles carrying position,
    channel and timepoint metadata.
-2. **Filter** tiles to exclude unwanted data: failed acquisitions, specific channels.
+2. **Filter and validate** tiles: exclude failed acquisitions or specific channels, and
+   optionally probe that the data matches its declared geometry.
 3. **Aggregate** tiles into `TiledImage` objects with their final axis layout.
-4. **Register** tile positions to correct stage inaccuracies and tile overlapping FOVs
-   into mosaics.
+4. **Register** tile positions to correct stage inaccuracies and arrange overlapping
+   FOVs into a mosaic.
 5. **Set up the collection** — create the plate or single-image structure and its
    OME-Zarr metadata.
 6. **Write** the OME-Zarr images.
 
-See [pipeline configuration](guides/pipeline.md) for the filters, registration steps,
-tiling modes and writer modes available at each stage.
+See [pipeline configuration](guides/pipeline.md) for the filters, validators,
+registration steps, tiling strategies and writer modes available at each stage.
 
 ## Extensibility
 
 - **Custom image loaders** — implement `ImageLoaderInterface` to read any format; see
   [programmatic tiles](getting_started/2_programmatic_tiles.md).
 - **Custom pipeline steps** — add [registration](guides/pipeline.md#custom-registration-steps),
-  [filtering](guides/pipeline.md#custom-filters) or validation steps.
+  [filtering](guides/pipeline.md#custom-filters) or
+  [validation](guides/pipeline.md#custom-validators) steps.
 - **Custom collection types** — register new handlers with `add_collection_handler()`.
 
 ## Where to go next
@@ -141,7 +150,7 @@ tiling modes and writer modes available at each stage.
     Convert a table of tiles into an OME-Zarr HCS plate, then the same data as a
     standalone image, then without a table at all.
 
-    [:octicons-arrow-right-24: HCS plates](getting_started/0_hcs_plates.md)
+    [:octicons-arrow-right-24:HCS plates](getting_started/0_hcs_plates.md)
 
 -   :material-tune:{ .lg .middle } **Pipeline configuration**
 
@@ -150,7 +159,7 @@ tiling modes and writer modes available at each stage.
     Coordinate systems, channels and axes, stage corrections, filters and validators,
     registration steps, tiling strategies, writer and overwrite modes.
 
-    [:octicons-arrow-right-24: Configure the pipeline](guides/pipeline.md)
+    [:octicons-arrow-right-24:Configure the pipeline](guides/pipeline.md)
 
 -   :material-graph-outline:{ .lg .middle } **Fractal tasks**
 
@@ -159,7 +168,7 @@ tiling modes and writer modes available at each stage.
     Package a converter as an init/compute task pair, with generated argument schemas
     and parallel conversion.
 
-    [:octicons-arrow-right-24: Build a Fractal task](guides/fractal_tasks.md)
+    [:octicons-arrow-right-24:Build a Fractal task](guides/fractal_tasks.md)
 
 -   :material-api:{ .lg .middle } **API reference**
 
@@ -168,7 +177,16 @@ tiling modes and writer modes available at each stage.
     Generated reference for every public class and function, with type annotations and
     source links.
 
-    [:octicons-arrow-right-24: Open the reference](api/core.md)
+    [:octicons-arrow-right-24:Open the reference](api/core.md)
+
+-   :material-microscope:{ .lg .middle } **Converters built on this library**
+
+    ---
+
+    Ready-made Fractal tasks for Opera/Operetta, Yokogawa, ScanR, ImageXpress, Leica
+    LIF, Zeiss CZI, Nikon ND2 and TIFF folders.
+
+    [:octicons-arrow-right-24:Find your microscope](guides/converters.md)
 
 </div>
 
@@ -180,5 +198,5 @@ is released under the BSD-3-Clause
 [licence](https://github.com/BioVisionCenter/ome-zarr-converters-tools/blob/main/LICENSE),
 and developed in the open on
 [GitHub](https://github.com/BioVisionCenter/ome-zarr-converters-tools) — issues and
-contributions welcome. For converters built on top of it, see
-[downstream converters](guides/converters.md).
+contributions welcome. For ready-made converters, see [converters built on this
+library](guides/converters.md).
