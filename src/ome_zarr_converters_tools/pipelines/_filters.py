@@ -14,6 +14,12 @@ FilterMode = Literal["Include", "Exclude"]
 
 
 class FilterModel(UserFacingModel):
+    """Base class for filter parameter models.
+
+    Subclasses declare `name` (a `Literal` matching the name passed to
+    `add_filter`), and by convention a `mode: FilterMode` field.
+    """
+
     name: Any
 
 
@@ -433,6 +439,13 @@ def add_filter(
 def apply_filter_pipeline(
     tiles: list[Tile], *, filters_config: Sequence[FilterModel]
 ) -> list[Tile]:
+    """Apply filter steps in order and return the tiles that pass all of them.
+
+    Each step calls its registered function as `function(tile, filter_params=step)`.
+
+    Raises:
+        ConvertersToolsUserError: A step's `name` is not a registered filter.
+    """
     for step in filters_config:
         step_function = _filter_registry.get(step.name)
         tiles = [tile for tile in tiles if step_function(tile, filter_params=step)]

@@ -1,0 +1,118 @@
+---
+description: API reference for acquisition details, converter options, collections, loaders and runtime settings.
+---
+
+# Models API reference
+
+**Everything that configures a conversion.**
+
+See [pipeline configuration](../guides/pipeline.md) for how these fit together in prose.
+
+## Acquisition details
+
+::: ome_zarr_converters_tools.AcquisitionDetails
+::: ome_zarr_converters_tools.ChannelInfo
+::: ome_zarr_converters_tools.StageOrientation
+::: ome_zarr_converters_tools.DataTypeEnum
+::: ome_zarr_converters_tools.default_axes_builder
+
+## Converter options
+
+::: ome_zarr_converters_tools.ConverterOptions
+::: ome_zarr_converters_tools.OmeZarrOptions
+
+## Grouping and tiling
+
+::: ome_zarr_converters_tools.Grouping
+::: ome_zarr_converters_tools.MosaicGrouping
+::: ome_zarr_converters_tools.PerFovGrouping
+::: ome_zarr_converters_tools.TilingStrategy
+::: ome_zarr_converters_tools.AutoTiling
+::: ome_zarr_converters_tools.InplaceTiling
+::: ome_zarr_converters_tools.SnapToCornersTiling
+::: ome_zarr_converters_tools.SnapToGridTiling
+::: ome_zarr_converters_tools.StagePositionCorrections
+
+## Pyramids and chunking
+
+::: ome_zarr_converters_tools.PyramidLevels
+::: ome_zarr_converters_tools.NumberOfLevels
+::: ome_zarr_converters_tools.NamedLevels
+::: ome_zarr_converters_tools.Scalings
+::: ome_zarr_converters_tools.ChunkingStrategy
+::: ome_zarr_converters_tools.FixedSizeChunking
+::: ome_zarr_converters_tools.FovBasedChunking
+::: ome_zarr_converters_tools.ShardingStrategy
+::: ome_zarr_converters_tools.NoSharding
+::: ome_zarr_converters_tools.ChunkMultipleSharding
+
+## Writing
+
+::: ome_zarr_converters_tools.WriterMode
+::: ome_zarr_converters_tools.OverwriteMode
+::: ome_zarr_converters_tools.BackendType
+::: ome_zarr_converters_tools.NgffVersions
+::: ome_zarr_converters_tools.DefaultNgffVersion
+
+## Collections
+
+::: ome_zarr_converters_tools.CollectionInterface
+::: ome_zarr_converters_tools.ImageInPlate
+::: ome_zarr_converters_tools.SingleImage
+
+## Image loaders
+
+::: ome_zarr_converters_tools.ImageLoaderInterface
+::: ome_zarr_converters_tools.DefaultImageLoader
+
+## Runtime settings
+
+::: ome_zarr_converters_tools.RuntimeSettings
+::: ome_zarr_converters_tools.TempJsonOptions
+::: ome_zarr_converters_tools.DaskScheduler
+::: ome_zarr_converters_tools.DefaultScheduler
+::: ome_zarr_converters_tools.SynchronousScheduler
+::: ome_zarr_converters_tools.ThreadScheduler
+::: ome_zarr_converters_tools.ProcessScheduler
+
+## Errors
+
+Every error raised by the package subclasses `ConvertersToolsError`, and each one also
+subclasses the builtin it stands in for (`ValueError`, `FileExistsError`,
+`FileNotFoundError`, `RuntimeError`), so `except ValueError` keeps working. Errors come
+in two tiers, by who can act on them:
+
+- `ConvertersToolsUserError`: the task user or converter author can fix it by changing
+  task parameters, converter options, the input data, the environment or the output
+  location. The message names the image, tile and source file when known, gives the
+  expected and actual values, and says how to fix it.
+- `ConvertersToolsInternalError`: an invariant that a working converter can never
+  violate, i.e. a bug in the converter implementation or in this library. Its message
+  always ends with where to report it.
+
+Warnings use `ConvertersToolsWarning` (a `UserWarning`), so they can be filtered or
+turned into errors with `warnings.filterwarnings`. Custom parsers, loaders, validators
+and filters should raise the same classes; see
+[Raising errors from a converter](../guides/pipeline.md#raising-errors-from-a-converter).
+
+::: ome_zarr_converters_tools.ConvertersToolsError
+::: ome_zarr_converters_tools.ConvertersToolsUserError
+::: ome_zarr_converters_tools.ConvertersToolsOutputExistsError
+::: ome_zarr_converters_tools.ConvertersToolsFileNotFoundError
+::: ome_zarr_converters_tools.ConvertersToolsInternalError
+::: ome_zarr_converters_tools.ConvertersToolsWarning
+
+## URL helpers
+
+Paths and `s3://` URLs are handled through the same helpers, so a converter does not
+branch on storage backend.
+
+::: ome_zarr_converters_tools.UrlType
+::: ome_zarr_converters_tools.find_url_type
+::: ome_zarr_converters_tools.is_absolute_url
+::: ome_zarr_converters_tools.join_url_paths
+::: ome_zarr_converters_tools.parent_url
+::: ome_zarr_converters_tools.basename_url
+::: ome_zarr_converters_tools.glob_url_paths
+::: ome_zarr_converters_tools.filesystem_for_url
+::: ome_zarr_converters_tools.local_url_to_path

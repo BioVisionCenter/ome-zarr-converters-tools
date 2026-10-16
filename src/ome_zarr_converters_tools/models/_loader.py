@@ -32,7 +32,29 @@ class ImageLoaderInterface(BaseModel, ABC):
 
     @abstractmethod
     def load_data(self, resource: Any | None = None) -> np.ndarray:
-        """Load the image data as a NumPy array."""
+        """Load the tile pixels as a NumPy array.
+
+        The array must follow the layout the pipeline checks in
+        `TileSlice.load_data`:
+
+        - the trailing axes are `(..., y, x)`; any other axes precede them in
+          the canonical order `t, c, z`, restricted to
+          `AcquisitionDetails.axes`;
+        - along each axis the length matches the tile's `length_*` for that
+          axis, in pixels (a mismatch fails at write time, or earlier with
+          `ShapeDtypeProbeValidator`);
+        - leading singleton axes may be omitted (they are prepended); extra
+          axes raise `ConvertersToolsUserError`.
+
+        The one trap: under the default five-axis layout a tile that returns
+        `(c, y, x)` is reshaped to `(1, 1, c, y, x)`, so its channels become Z
+        slices without an error. Either declare `axes=["c", "y", "x"]` on the
+        acquisition details or return the full `(1, c, 1, y, x)`.
+
+        Args:
+            resource: Per-call context threaded through the pipeline unchanged,
+                e.g. the base directory of the raw files.
+        """
         pass
 
     def preflight(self, resource: Any | None = None) -> None:
@@ -56,7 +78,13 @@ class ImageLoaderInterface(BaseModel, ABC):
         return text if len(text) <= 200 else f"{text[:197]}..."
 
     def find_data_type(self, resource: Any | None = None) -> str:
-        """Find the data type of the image data."""
+        """Return the pixel data type as a dtype string, e.g. `"uint16"`.
+
+        The default loads the whole tile and reads its `dtype`. Override it to
+        read a file header instead when the type is known without loading:
+        aggregation calls it once per image unless
+        `AcquisitionDetails.data_type` is set.
+        """
         return str(self.load_data(resource).dtype)
 
 

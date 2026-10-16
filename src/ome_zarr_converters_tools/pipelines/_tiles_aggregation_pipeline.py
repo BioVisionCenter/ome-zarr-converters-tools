@@ -25,17 +25,20 @@ def tiles_aggregation_pipeline(
     validators: Sequence[ValidatorModel] | None = None,
     resource: Any | None = None,
 ) -> list[TiledImage]:
-    """Process tiles and aggregates them into TiledImages.
+    """Filter, validate and aggregate tiles into `TiledImage` objects.
 
-    This function applies optional filters to the input tiles and then
-    constructs TiledImage models from the processed tiles.
+    Applies the optional filters to the tiles, groups what remains into
+    `TiledImage` objects according to `converter_options.grouping`, then runs
+    the optional validators on each image.
 
     Args:
         tiles: List of Tile models to process.
         converter_options: ConverterOptions model for the conversion.
         filters: Optional sequence of filter steps to apply to the tiles.
         validators: Optional sequence of validator steps to apply to the tiles.
-        resource: Optional resource to assist in processing.
+        resource: Passed unchanged to every loader call (`load_data`,
+            `find_data_type`, `preflight`); for `DefaultImageLoader` this is
+            the base directory of the raw files.
 
     Returns:
         A list of TiledImage models created from the processed tiles.

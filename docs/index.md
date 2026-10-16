@@ -1,21 +1,105 @@
-# Welcome to OME-Zarr Converters Tools
+---
+description: OME-Zarr Converters Tools is a Python library for building OME-Zarr converters — tile management, registration, filtering and writing, with Fractal integration.
+---
 
-OME-Zarr Converters Tools is a Python library that provides shared utilities for building OME-Zarr image converters. It handles tile management, image registration, filtering, validation, and writing OME-Zarr datasets. Moreover, it offers [Fractal](https://fractal-analytics-platform.github.io/) specific utilities to facilitate building converters as Fractal tasks.
+# OME-Zarr Converters Tools { .ozct-visually-hidden }
 
-## Features
+![](assets/logo-lockup.svg#only-light){ .ozct-hero-logo }
+![](assets/logo-lockup-dark.svg#only-dark){ .ozct-hero-logo }
 
-- **Abstraction layer** for building OME-Zarr images and HCS plates from microscope metadata and image data
-- **Customizable pipeline** for filtering, validating, registering, and tiling images
-- **Python API** for building custom converters, with optional Fractal integration for parallel processing
-- **Flexible input**: parse tiles from DataFrames or construct them programmatically
+**Shared tooling for building OME-Zarr converters — tiles in, OME-Zarr out.**
+{ .ozct-hero-tagline }
 
-## Main Concepts
+Every microscope writes its own flavour of metadata, but every converter that reads it
+has the same job afterwards: work out where each tile belongs, arrange the overlapping
+fields of view, and write a valid [OME-Zarr](https://ngff.openmicroscopy.org/) image or HCS plate. This
+library is that second half. It handles tile management, registration, filtering,
+validation and writing, and adds [Fractal](https://fractal-analytics-platform.github.io/)
+utilities for packaging a converter as a task.
 
-A microscopy image is typically not acquired as a single file, but as multiple smaller **tiles**.
-How atomic these tiles are depends on the microscope and the acquisition settings.
+!!! tip "Just want to convert your files?"
 
-OME-Zarr Converters Tools provides an abstraction layer that maps on-disk raw data to `Tile` objects.
-Multiple tiles are then aggregated into a `TiledImage` -- the composite object that represents one complete image in the output OME-Zarr dataset.
+    If your microscope is listed under [converters built on this
+    library](guides/converters.md), use that converter, as a Fractal task or from
+    Python. This site documents the library those converters share; read on if you are
+    writing a converter for a format that is not covered yet.
+
+## Key features
+
+- **Abstraction layer** — map on-disk raw data to `Tile` objects, and let the pipeline
+  turn them into OME-Zarr images and HCS plates.
+- **Configurable pipeline** — [filter, validate, register and tile](guides/pipeline.md)
+  with built-in steps, or plug in your own.
+- **Flexible input** — parse tiles from a pandas `DataFrame`, or
+  [build them in code](getting_started/2_programmatic_tiles.md) with a custom image
+  loader.
+- **Fractal integration** — [wrap a converter as an init/compute task
+  pair](guides/fractal_tasks.md) for parallel conversion, with generated JSON schemas.
+
+## Scope
+
+This library is the second half of a converter. Reading the proprietary format is the
+first half and stays in the converter: a `DefaultImageLoader` pointed at one image file
+per tile, or a loader you write. What the library then does, and does not do:
+
+- **Position-based registration.** Fields of view are placed from the stage positions
+  the parser supplies, snapped to a grid or kept in place. There is no cross-correlation
+  and no blending: where fields of view overlap, their pixels are kept side by side, not
+  merged.
+- **Axes and types.** Any subset of `t, c, z, y, x` ending in `y, x`; pixel types
+  `uint8`, `uint16` and `uint32`.
+- **Output.** OME-Zarr images and HCS plates, OME-NGFF 0.4 (the default) or 0.5, with a
+  multiscale pyramid, channel display metadata, per-FOV and per-well ROI tables and a
+  condition table, written through [ngio](https://biovisioncenter.github.io/ngio/), which
+  is also the recommended way to open the result from Python.
+- **Storage.** Local file systems and S3 (with the `s3` extra), for input and output;
+  other object stores are not supported.
+- **Fractal is optional.** Everything runs as plain Python; the Fractal utilities wrap a
+  converter as an init/compute task pair so that a cluster converts images in parallel.
+- **Not a reader, a GUI or a CLI.** General-purpose converters such as
+  [bioformats2raw](https://github.com/glencoesoftware/bioformats2raw) or
+  [ngff-zarr](https://github.com/thewtex/ngff-zarr) turn one readable file into one
+  OME-Zarr image. This library assembles mosaics and plates from many files using the
+  microscope's own metadata, and brings no readers of its own.
+
+## Installation
+
+=== "pip"
+
+    ```bash
+    pip install ome-zarr-converters-tools
+    ```
+
+=== "uv"
+
+    Inside a uv project:
+
+    ```bash
+    uv add ome-zarr-converters-tools
+    ```
+
+    Or into an existing environment:
+
+    ```bash
+    uv pip install ome-zarr-converters-tools
+    ```
+
+=== "pixi"
+
+    ```bash
+    pixi add --pypi ome-zarr-converters-tools
+    ```
+
+Reading from or writing to S3 needs the `s3` extra
+(`pip install "ome-zarr-converters-tools[s3]"`).
+
+## Main concepts
+
+A microscopy image is rarely one file. It arrives as many smaller **tiles**, and how
+much of the image each tile holds depends on the microscope and the acquisition settings.
+
+This library maps raw files onto `Tile` objects, then aggregates them into a
+`TiledImage` — the composite that becomes one image in the output OME-Zarr store.
 
 ```mermaid
 flowchart LR
@@ -40,45 +124,125 @@ flowchart LR
     T3 --> TI
 ```
 
-## Collection Types
+Two collection types decide where a `TiledImage` lands:
 
-The library supports two collection types for different acquisition structures:
+- **HCS plates** — images organised in a multi-well plate layout, following the OME-Zarr
+  HCS specification. See [HCS plates](getting_started/0_hcs_plates.md).
+- **Single images** — standalone conversions with no plate hierarchy. See
+  [single images](getting_started/1_single_images.md).
 
-- **HCS Plates**: for high-content screening applications where images are organized in a multi-well plate layout, following the OME-Zarr HCS specification.
-- **Single Images**: for standalone OME-Zarr image conversions without plate structure.
+A few words this site uses in a narrow sense:
 
-## Pipeline Overview
+- **tile**: one array on disk plus where it belongs; the unit a parser produces.
+- **field of view (FOV)**: one stage position. A FOV may be several tiles: its Z
+  slices, channels and time points.
+- **mosaic**: the fields of view of one well or image arranged into one picture.
+- **acquisition**: one multiplexing cycle inside a well, the OME-Zarr `acquisition`
+  index; not the imaging run as a whole.
+- **ROI table**: the per-FOV and per-well tables written next to each image.
+- **HCS plate**: the plate, row, column and acquisition hierarchy of the OME-Zarr
+  high-content screening layout.
 
-The conversion pipeline follows these steps:
+## Pipeline overview
 
 ```mermaid
 flowchart LR
-    A["1. Parse<br>metadata"] --> B["2. Filter<br>tiles"]
+    A["1. Parse<br>metadata"] --> B["2. Filter and<br>validate tiles"]
     B --> C["3. Aggregate<br>into TiledImages"]
     C --> D["4. Register<br>align positions"]
-    D --> E["5. Setup<br>collection"]
+    D --> E["5. Set up<br>collection"]
     E --> F["6. Write<br>OME-Zarr"]
 ```
 
-1. **Parse metadata** into `Tile` objects -- map raw images (e.g., TIFF files) to tiles with position, channel, and timepoint metadata
-2. **Filter** tiles using custom filters to exclude unwanted data (e.g., failed acquisitions, specific channels)
-3. **Aggregate** tiles into `TiledImage` objects that represent complete images with their final axis layout
-4. **Register** tile positions to correct for stage inaccuracies and tile overlapping FOVs into mosaics
-5. **Setup collection** -- create the HCS plate or single image structure with OME-Zarr metadata
-6. **Write** OME-Zarr images to disk
+1. **Parse metadata** into `Tile` objects — map raw images to tiles carrying position,
+   channel and timepoint metadata.
+2. **Filter and validate** tiles: exclude failed acquisitions or specific channels, and
+   optionally probe that the data matches its declared geometry.
+3. **Aggregate** tiles into `TiledImage` objects with their final axis layout.
+4. **Register** tile positions to correct stage inaccuracies and arrange overlapping
+   FOVs into a mosaic.
+5. **Set up the collection** — create the plate or single-image structure and its
+   OME-Zarr metadata.
+6. **Write** the OME-Zarr images.
 
-See [Pipeline Configuration](pipeline.md) for details on filters, registration steps, tiling modes, and writer modes.
+See [pipeline configuration](guides/pipeline.md) for the filters, validators,
+registration steps, tiling strategies and writer modes available at each stage.
 
 ## Extensibility
 
-The library is designed to be extended:
+- **Custom image loaders** — implement `ImageLoaderInterface` to read any format; see
+  [custom file formats](getting_started/2_programmatic_tiles.md).
+- **Custom pipeline steps** — add [registration](guides/pipeline.md#custom-registration-steps),
+  [filtering](guides/pipeline.md#custom-filters) or
+  [validation](guides/pipeline.md#custom-validators) steps.
 
-- **Custom image loaders**: implement `ImageLoaderInterface` to load any image format (see [Advanced Tutorial](advanced_tutorial.ipynb))
-- **Custom pipeline steps**: add [registration](pipeline.md#custom-registration-steps), [filtering](pipeline.md#custom-filters), or validation steps
-- **Custom collection types**: register new collection handlers via `add_collection_handler()`
+## Where to go next
 
-## Installation
+<div class="grid cards" markdown>
 
-```bash
-pip install ome-zarr-converters-tools
-```
+-   :material-hammer-wrench:{ .lg .middle } **Writing a converter**
+
+    ---
+
+    What a converter consists of, how to map your metadata onto tiles, and how to run,
+    test and package it.
+
+    [:octicons-arrow-right-24:Build your own](guides/writing_a_converter.md)
+
+-   :material-rocket-launch:{ .lg .middle } **Getting started**
+
+    ---
+
+    Convert a table of tiles into an OME-Zarr HCS plate, then the same data as a
+    standalone image, then without a table at all.
+
+    [:octicons-arrow-right-24:HCS plates](getting_started/0_hcs_plates.md)
+
+-   :material-tune:{ .lg .middle } **Pipeline configuration**
+
+    ---
+
+    Coordinate systems, channels and axes, stage corrections, filters and validators,
+    registration steps, tiling strategies, writer and overwrite modes.
+
+    [:octicons-arrow-right-24:Configure the pipeline](guides/pipeline.md)
+
+-   :material-graph-outline:{ .lg .middle } **Fractal tasks**
+
+    ---
+
+    Package a converter as an init/compute task pair, with generated argument schemas
+    and parallel conversion.
+
+    [:octicons-arrow-right-24:Build a Fractal task](guides/fractal_tasks.md)
+
+-   :material-api:{ .lg .middle } **API reference**
+
+    ---
+
+    Generated reference for every public class and function, with type annotations and
+    source links.
+
+    [:octicons-arrow-right-24:Open the reference](api/core.md)
+
+-   :material-microscope:{ .lg .middle } **Converters built on this library**
+
+    ---
+
+    Ready-made Fractal tasks for Opera/Operetta, Yokogawa, ScanR, ImageXpress, Leica
+    LIF, Zeiss CZI, Nikon ND2 and TIFF folders.
+
+    [:octicons-arrow-right-24:Find your microscope](guides/converters.md)
+
+</div>
+
+## Project
+
+OME-Zarr Converters Tools is developed at the
+[BioVisionCenter](https://www.biovisioncenter.uzh.ch/en.html), University of Zurich. It
+is released under the BSD-3-Clause
+[licence](https://github.com/BioVisionCenter/ome-zarr-converters-tools/blob/main/LICENSE),
+and developed in the open on
+[GitHub](https://github.com/BioVisionCenter/ome-zarr-converters-tools) — issues and
+contributions welcome. For ready-made converters, see [converters built on this
+library](guides/converters.md).

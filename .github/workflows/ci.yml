@@ -30,8 +30,8 @@ jobs:
           environments: dev
 
       - name: 🧹 Lint
-        # prek (drop-in pre-commit replacement) runs ruff, typos,
-        # validate-pyproject and nbstripout — see .pre-commit-config.yaml
+        # prek (drop-in pre-commit replacement) runs ruff, typos and
+        # validate-pyproject — see .pre-commit-config.yaml
         run: pixi run -e dev lint
 
       - name: Type check
@@ -74,9 +74,33 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: /home/runner/work/ome-zarr-converters-tools/ome-zarr-converters-tools/coverage.xml
 
+  docs:
+    # Build the docs and run every snippet on PRs. Kept here rather than in
+    # docs.yml so that workflow's `contents: write` is not extended to pull
+    # requests. Without this the first sign of a broken example is a bad deploy.
+    name: Docs build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: 🔧 Set up pixi
+        uses: prefix-dev/setup-pixi@v0.10.1
+        with:
+          environments: docs
+
+      - name: 📄 Run docs snippets
+        # Each snippet is standalone-runnable; running them here fails fast with a
+        # real traceback, rather than inside a markdown-exec block during the build.
+        run: pixi run -e docs test_snippets
+
+      - name: 📚 Build docs
+        run: pixi run -e docs build_docs
+
   deploy:
     name: Deploy
-    needs: test
+    needs: [test, lint, docs]
     if: success() && startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
 

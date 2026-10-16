@@ -1,0 +1,25 @@
+<!--
+  PLACEHOLDER LOCKUP — light background. Used as the landing-page hero in
+  docs/index.md via `![](assets/logo-lockup.svg#only-light){ .ozct-hero-logo }`.
+  Zensical's own stylesheets hide `img[src$="#only-light"]` under the slate
+  scheme, so the pair of images in the page needs nothing but the URL fragments.
+
+  The real lockup should carry its wordmark as outlined path data: an SVG used as
+  an `<img src>` is a separate document and cannot load the site's webfont, so
+  live <text> in Space Grotesk would silently fall back. This placeholder uses
+  <text> in a system stack precisely because it is a placeholder — it renders
+  everywhere, just not in the brand face.
+
+  Replace with the real lockup, keeping the filename and the -dark sibling.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 72" width="340" height="72" role="img" aria-label="OME-Zarr Converters Tools">
+  <g transform="translate(0 20) scale(1.33)">
+    <rect x="2" y="2" width="11" height="11" rx="2" fill="#1c7c69"/>
+    <rect x="6.5" y="6.5" width="11" height="11" rx="2" fill="#22a699"/>
+    <rect x="11" y="11" width="11" height="11" rx="2" fill="#94dad4"/>
+  </g>
+  <text x="46" y="34" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif"
+        font-size="24" font-weight="600" letter-spacing="-0.6" fill="#16695f">ome-zarr</text>
+  <text x="46" y="60" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif"
+        font-size="24" font-weight="600" letter-spacing="-0.6" fill="#101619">converters-tools</text>
+</svg>

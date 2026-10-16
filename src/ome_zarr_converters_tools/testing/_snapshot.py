@@ -542,15 +542,23 @@ def run_converter_test(
 ) -> None:
     """Run a converter end-to-end and check it against a snapshot.
 
-    Runs `api_fn` into a temporary (or snapshot-adjacent) zarr directory and
-    builds a snapshot from the output. With `update_snapshots` the snapshot is
-    written to `snapshot_path` as JSON; otherwise it is compared against the
-    on-disk snapshot and a single `AssertionError` listing every difference is
-    raised on mismatch.
+    Calls `api_fn(zarr_dir=str(path), **api_kwargs)` and builds a snapshot
+    from what it wrote. With `update_snapshots` the output goes next to the
+    snapshot (`snapshot_path.parent.parent / "output"`), `api_kwargs` gains
+    `overwrite=OverwriteMode.OVERWRITE`, and the snapshot is written to
+    `snapshot_path` as JSON. Otherwise the output goes under `tmp_path` and
+    is compared against the on-disk snapshot.
+
+    `api_fn` is the converter's Python entry point, typically
+    `convert_my_format(*, zarr_dir, acquisitions, converter_options=None,
+    overwrite=OverwriteMode.NO_OVERWRITE, ...) -> list[ImageListUpdateDict]`:
+    it must accept `zarr_dir` and `overwrite` as keywords and return the
+    image-list updates the init/compute pair produces, which the snapshot
+    records alongside the store.
 
     Args:
         tmp_path: Pytest `tmp_path` for zarr output (validation mode).
-        api_fn: The high-level converter API function.
+        api_fn: The converter's entry point; see above.
         api_kwargs: Keyword arguments for `api_fn` (e.g. `acquisitions`).
         snapshot_path: Path to the snapshot JSON file.
         update_snapshots: If True, (re)generate the snapshot instead of checking.
@@ -558,6 +566,11 @@ def run_converter_test(
             only when provided.
         output_type: `"plate"` for HCS plate output, `"single_image"` for
             individual zarr containers at the top level of the output directory.
+
+    Raises:
+        AssertionError: On mismatch, listing every difference.
+        ConvertersToolsFileNotFoundError: When the snapshot file does not exist
+            and `update_snapshots` is false.
     """
     if update_snapshots:
         zarr_dir = snapshot_path.parent.parent / "output"

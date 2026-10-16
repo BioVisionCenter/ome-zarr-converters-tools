@@ -23,12 +23,9 @@ exclude = [
     # This might not exists or be named differently in your project
     # TBD if we want to include these or not
     "docs/*",
+    # The docs snippets write their OME-Zarr output here
     "data",
-    "notebooks",
     ".github",
-    # Remove all jupyter notebook and checkpoints
-    "**/*.ipynb_checkpoints",
-    "**/*.ipynb",
     # NB all things in .gitignore are excluded by default of hatchling
 ]
 
@@ -94,21 +91,21 @@ dev = [
 zarrs = ["zarrs"]
 
 docs = [
-    "mkdocs==1.6.1",
-    "mkdocs-material==9.7.1",
+    "zensical",
     "mkdocstrings[python]>=1.0.2,<1.1.0",
-    "mkdocs-jupyter>=0.25.1,<0.26.0",
-    "ipywidgets",
     "mkdocs-autorefs",
-    "mkdocs-git-revision-date-localized-plugin",
-    "mkdocs-git-committers-plugin-2",
     "markdown-exec[ansi]",
-    "scikit-image",
+    # Was only transitive via mkdocs-material, which Zensical replaces.
+    "pymdown-extensions",
+    "griffe-typingdoc",
     "matplotlib",
+    "pandas",       # the tutorials build their tile tables with it
     "tabulate",
     "rich",
-    "mike",
 ]
+# `mike` is deliberately NOT listed above: Zensical needs the maintainers' fork, which is
+# only installable from git, and a PEP 508 direct reference in optional-dependencies would
+# make this package unpublishable to PyPI. It lives in the pixi docs feature instead.
 
 
 [project.urls]
@@ -161,6 +158,10 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*.py" = ["D", "S"]
+# Each snippet section repeats its own imports so it stands alone as a rendered block,
+# which means module-level imports after code (E402) and re-imports (F811) are the point
+# rather than a mistake. Import order is authored for the reader, so isort stays off.
+"docs/snippets/**/*.py" = ["D", "E402", "F811", "I001"]
 
 # https://docs.astral.sh/ruff/formatter/
 [tool.ruff.format]
@@ -236,3 +237,29 @@ ruff = { cmd = "ruff format", depends-on = ["ruff-fix-imports"] }
 test = { cmd = "pytest", depends-on = ["ruff"] }
 lint = { cmd = "prek run --all-files" }
 chores = { depends-on = ["test", "lint"] }
+
+[tool.pixi.feature.docs.pypi-dependencies]
+# Zensical's versioning story is a fork of mike that is not published to PyPI.
+# Kept here rather than in [project.optional-dependencies] so this package stays
+# publishable (PyPI rejects direct URL references).
+mike = { git = "https://github.com/squidfunk/mike.git" }
+
+[tool.pixi.feature.docs.tasks]
+serve_docs = "zensical serve"
+# --strict matters: without it `zensical build` exits 0 and prints "No issues found"
+# even when a markdown-exec code block raised, silently publishing tracebacks.
+# --clean avoids reusing cached HTML from a previous (possibly broken) build.
+build_docs = "zensical build --clean --strict"
+# The snippets write their OME-Zarr output under ./data (gitignored). A build
+# interrupted mid-write leaves a partial store that the next run then fails on.
+clean_docs_data = "rm -rf ./data"
+snip_hcs_plates = "python docs/snippets/getting_started/hcs_plates.py > /dev/null"
+snip_single_images = "python docs/snippets/getting_started/single_images.py > /dev/null"
+snip_programmatic_tiles = "python docs/snippets/getting_started/programmatic_tiles.py > /dev/null"
+# Must stay sequential: the scripts all write beneath ./data and the HCS one recreates
+# the plate root with OverwriteMode.OVERWRITE. (`depends-on` would run them in parallel.)
+test_snippets = """
+python docs/snippets/getting_started/hcs_plates.py > /dev/null &&
+python docs/snippets/getting_started/single_images.py > /dev/null &&
+python docs/snippets/getting_started/programmatic_tiles.py > /dev/null
+"""

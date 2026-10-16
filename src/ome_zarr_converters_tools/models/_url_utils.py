@@ -12,6 +12,8 @@ logger = getLogger(__name__)
 
 
 class UrlType(Enum):
+    """How a URL is handled: local filesystem, S3, or unsupported."""
+
     LOCAL = "local"
     S3 = "s3"
     NOT_SUPPORTED = "not_supported"

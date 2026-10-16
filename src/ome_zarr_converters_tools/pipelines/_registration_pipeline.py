@@ -24,6 +24,12 @@ class RegistrationFunctionProtocol(Protocol[P]):
 
 
 class RegistrationStep(TypedDict):
+    """One step of a registration pipeline.
+
+    `name` is a registered registration function (see `add_registration_func`)
+    and `params` are forwarded to it as keyword arguments.
+    """
+
     name: str
     params: dict[str, Any]
 
@@ -66,6 +72,11 @@ def add_registration_func(
 def apply_registration_pipeline(
     tiled_image: TiledImage, pipeline_config: list[RegistrationStep]
 ) -> TiledImage:
+    """Apply registration steps in order, mutating and returning the image.
+
+    Raises:
+        ConvertersToolsUserError: A step's `name` is not a registered step.
+    """
     for step in pipeline_config:
         step_function = _registration_registry.get(step.get("name"))
         step_params = step.get("params", {})
@@ -76,6 +87,20 @@ def apply_registration_pipeline(
 def build_default_registration_pipeline(
     alignment_corrections: StagePositionCorrections, tiling_strategy: TilingStrategy
 ) -> list[RegistrationStep]:
+    """Build the default registration pipeline.
+
+    The steps, in order: `offset_removal`, `align_to_pixel_grid`,
+    `xy_jitter_correction` and `reindex_channels` (all driven by
+    `alignment_corrections`), then `tile_regions` (driven by `tiling_strategy`).
+
+    Args:
+        alignment_corrections: Offset, jitter and channel-reindexing settings.
+        tiling_strategy: How overlapping fields of view are arranged.
+
+    Returns:
+        The steps, ready for `apply_registration_pipeline` or
+        `tiled_image_creation_pipeline`.
+    """
     return [
         RegistrationStep(
             name="offset_removal", params={"corrections": alignment_corrections}
