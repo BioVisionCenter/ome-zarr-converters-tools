@@ -4,6 +4,8 @@ description: Package a converter as a Fractal init/compute task pair, with gener
 
 # Converters as Fractal tasks
 
+**Package a converter as an init/compute task pair that Fractal runs in parallel.**
+
 The [Fractal platform](https://fractal-analytics-platform.github.io/fractal-server/) enables parallel processing of image conversion tasks.
 `ome-zarr-converters-tools` provides utilities to integrate with Fractal's **init/compute task model**, where:
 

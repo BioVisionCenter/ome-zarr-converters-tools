@@ -528,10 +528,25 @@
    is announced once, by the h1. */
 .md-typeset .ozct-hero-logo {
   display: block;
-  width: 15rem;
+  width: 21rem;
   max-width: 100%;
   height: auto;
+  margin: 0 0 1.4rem;
+}
+
+/* The one-line tagline under the lockup stands in for the h1 the page hides,
+   so it takes the display face and a size between h2 and h1. It is a <p>,
+   not a heading, so it never enters the table of contents. */
+.md-typeset .ozct-hero-tagline {
+  font-family: var(--ozct-display-font);
+  font-size: 1.7rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  color: var(--md-default-fg-color);
+  max-width: var(--ozct-measure-lede);
   margin: 0 0 1.2rem;
+  text-wrap: balance;
 }
 
 .md-typeset .ozct-visually-hidden {

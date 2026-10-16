@@ -4,6 +4,8 @@ description: "Configure the conversion pipeline: acquisition details, filters, v
 
 # Pipeline configuration
 
+**Every configurable stage of the pipeline, from parsed tiles to written store.**
+
 The conversion pipeline processes tiles through several stages before writing the final OME-Zarr dataset. This page documents the configurable components: **acquisition details**, **converter options**, **filters**, **registration steps**, **tiling modes**, **writer modes**, and **overwrite modes**.
 
 ## ConverterOptions

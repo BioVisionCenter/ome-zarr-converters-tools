@@ -4,8 +4,9 @@ description: API reference for the snapshot-testing helpers downstream converter
 
 # Testing API reference
 
-Snapshot testing for downstream converters: build a fingerprint of a converted store,
-commit it, and assert later runs still match.
+**Snapshot testing for downstream converters.**
+
+Build a fingerprint of a converted store, commit it, and assert later runs still match.
 
 The pytest plugin (`--update-snapshots`, `--extended`, the `extended` marker and the
 `update_snapshots` fixture) is loaded explicitly with

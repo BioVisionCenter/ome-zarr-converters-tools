@@ -4,8 +4,9 @@ description: API reference for acquisition details, converter options, collectio
 
 # Models API reference
 
-Everything that configures a conversion. See [pipeline
-configuration](../guides/pipeline.md) for how these fit together in prose.
+**Everything that configures a conversion.**
+
+See [pipeline configuration](../guides/pipeline.md) for how these fit together in prose.
 
 ## Acquisition details
 

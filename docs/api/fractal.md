@@ -4,6 +4,8 @@ description: API reference for packaging a converter as a Fractal init/compute t
 
 # Fractal API reference
 
+**Expose a converter as a Fractal task.**
+
 Utilities for exposing a converter as a [Fractal](https://fractal-analytics-platform.github.io/)
 task. See [converters as Fractal tasks](../guides/fractal_tasks.md) for the walkthrough.
 

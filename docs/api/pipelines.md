@@ -4,8 +4,9 @@ description: API reference for the aggregation, filtering, validation, registrat
 
 # Pipelines API reference
 
-The stages a conversion runs through, and the extension points for adding your own. See
-[pipeline configuration](../guides/pipeline.md) for the prose version.
+**The stages a conversion runs through, and the extension points for your own.**
+
+See [pipeline configuration](../guides/pipeline.md) for the prose version.
 
 ## Aggregation and creation
 

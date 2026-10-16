@@ -4,6 +4,8 @@ description: Projects that use ome-zarr-converters-tools to convert microscopy f
 
 # Downstream converters
 
+**Projects built on this library.**
+
 The following projects use `ome-zarr-converters-tools` to build OME-Zarr converters for different microscopy formats.
 
 ## [fractal-uzh-converters](https://github.com/fractal-analytics-platform/fractal-uzh-converters)

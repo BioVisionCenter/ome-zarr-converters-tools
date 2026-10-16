@@ -4,6 +4,8 @@ description: API reference for tiles, tiled images, and building them from a tab
 
 # Core API reference
 
+**Tiles, tiled images, and building them from a table.**
+
 The objects the whole pipeline is expressed in. A `Tile` is one region of one file; a
 `TiledImage` is the composite that becomes one image in the output store.
 

@@ -8,6 +8,7 @@ description: OME-Zarr Converters Tools is a Python library for building OME-Zarr
 ![](assets/logo-lockup-dark.svg#only-dark){ .ozct-hero-logo }
 
 **Shared tooling for building OME-Zarr converters — tiles in, OME-Zarr out.**
+{ .ozct-hero-tagline }
 
 Every microscope writes its own flavour of metadata, but every converter that reads it
 has the same job afterwards: work out where each tile belongs, resolve overlaps, and
