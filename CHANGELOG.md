@@ -1,5 +1,139 @@
 # Changelog
 
+## [v1.1.2]
+
+### Features
+- Every concrete filter and validator is now exported from
+  `ome_zarr_converters_tools` and `ome_zarr_converters_tools.pipelines`:
+  `RegexFilter`, `WellFilter`, `FovNameFilter`, `AcquisitionFilter`,
+  `AttributeFilter`, `ChannelFilter`, `ZRangeFilter`, `TRangeFilter` and
+  `ShapeDtypeProbeValidator`. They were previously reachable only through the
+  private `pipelines._filters` / `pipelines._validators` modules, which the docs
+  had to instruct readers to import from, and which kept them out of the API
+  reference entirely.
+
+  ```python
+  # before
+  from ome_zarr_converters_tools.pipelines._filters import RegexFilter
+
+  # after
+  from ome_zarr_converters_tools.pipelines import RegexFilter
+  ```
+- `StartPosition` and `TileShape`, the two tuples `build_dummy_tile` takes, are
+  exported from `ome_zarr_converters_tools` and `ome_zarr_converters_tools.core`, so
+  synthetic test tiles can be built from the public API.
+- The typed value models of `AttributeFilter` (`StringValue`, `IntValue`,
+  `FloatValue`, `BoolValue`, `IsNoneValue`, `IsNotNoneValue`, the `AttributeValue`
+  union and the `FilterMode` alias) are exported from `ome_zarr_converters_tools`
+  and `ome_zarr_converters_tools.pipelines`.
+
+  ```python
+  # before
+  from ome_zarr_converters_tools.pipelines._filters import StringValue
+
+  # after
+  from ome_zarr_converters_tools import AttributeFilter, StringValue
+
+  AttributeFilter(key="drug", values=[StringValue(value="DMSO")])
+  ```
+
+### Chores
+- The docs build moves from MkDocs + Material to [Zensical](https://zensical.org),
+  matching `ngio`. `mkdocs`, `mkdocs-material`, `mkdocs-jupyter`, `ipywidgets` and the
+  two git-metadata plugins leave the `docs` extra; `zensical`, `pymdown-extensions`,
+  `griffe-typingdoc` and `pandas` join it. `mike` moves to
+  `[tool.pixi.feature.docs.pypi-dependencies]` because Zensical needs a git-only fork
+  and a direct URL reference in `optional-dependencies` would make the package
+  unpublishable to PyPI. New pixi tasks: `serve_docs`, `build_docs`, `test_snippets`,
+  `clean_docs_data`.
+- CI builds the docs and runs every snippet on pull requests, through a new `docs` job
+  in `ci.yml` (kept out of `docs.yml` so its `contents: write` is never extended to
+  PRs). `deploy` now needs it, so a broken example blocks a release instead of
+  surfacing as a bad deploy.
+- `docs.yml` installs through pixi rather than pip, and no longer runs
+  `mike set-default dev` on tag pushes — it had been flipping the published default
+  back to `dev` after every release.
+- Drop the `nbstripout` pre-commit hook and the `*.ipynb` rules in `.gitignore`; there
+  are no notebooks left.
+
+### Documentation
+- The three tutorial notebooks are replaced by executed Python scripts under
+  `docs/snippets/`, included into Markdown pages by `pymdownx.snippets` and run at
+  build time by `markdown-exec`. Each script is runnable on its own from the repo root
+  (`python docs/snippets/getting_started/hcs_plates.py`), so an example that breaks
+  fails a script rather than silently rendering an empty block.
+- Tutorials now show what the converter produces: a stage-layout figure of the parsed
+  tiles and the stitched result, rendered as inline SVG through
+  `docs/snippets/_render.py` so they follow the light/dark toggle.
+- New design layer, `docs/stylesheets/ozct.css`, ported token-for-token from ngio's
+  stylesheet — same palette, type scale, surfaces, radii and motion. Placeholder logo
+  and lockup assets live in `docs/assets/`.
+- Site restructured: Home, Getting started, Guides, API reference, Contributing. The
+  single `api.md` becomes curated per-area pages plus whole-module dumps, and
+  `pipeline.md`, `converters_as_fractal_tasks.md` and `converters.md` move under
+  `docs/guides/`.
+- A `CONTRIBUTING.md` is added at the repo root and single-sourced into the site,
+  alongside the changelog.
+- Fix a latent bug in the programmatic-tiles tutorial: it set `start_z` as a slice index
+  while leaving `start_z_space` at its `"world"` default, so both Z slices resolved to
+  slice 0 and the second overwrote the first. The page now declares
+  `start_z_space="pixel"` and calls out the trap.
+- State explicit cost of `reindex_channels=False` (raised in
+  [#70](https://github.com/BioVisionCenter/ome-zarr-converters-tools/pull/70)).
+- The error classes get an "Errors" section on the Models API page and a "Raising
+  errors from a converter" section in the pipeline guide
+  ([#79](https://github.com/BioVisionCenter/ome-zarr-converters-tools/pull/79)).
+- Documentation review, first pass: the pipeline guide is corrected against the
+  reference (`ChannelInfo.color`, `"A01"` well ids, `tolerance=1`, `data_type`
+  default, five registration steps, which `ConverterOptions` fields each pipeline
+  function reads), lists every built-in filter, gains a Validators section and
+  sentence-case headings; the Fractal guide gets a runnable `AcquisitionOptions`
+  example and the in-memory JSON hand-off; dark-mode links use the brand accent;
+  API headings drop the package prefix and `model_config`; the home page routes
+  task users to the converters built on this library.
+- New guide "Writing a converter": what a converter consists of, a checklist
+  from metadata to `AcquisitionDetails` and `Tile` fields, recipes for mapping
+  common acquisition shapes onto tiles, the image-loader surface, running the
+  init/compute pair locally, snapshot testing with a complete example, and
+  packaging. Linked as the first home-page card.
+- The array layout `ImageLoaderInterface.load_data` must return (trailing `y, x`,
+  other axes in canonical order restricted to `AcquisitionDetails.axes`, leading
+  singletons optional, extra axes an error) is documented on the method, on
+  `TileSlice.load_data` and in the new guide, with the `(c, y, x)` trap called
+  out.
+- `AcquisitionDetails` fields have docstrings (units, what `"world"` and
+  `"pixel"` mean per field, the `axes` rule); `Tile` positions are documented as
+  the top-left corner in the declared coordinate space, and the same rule is a
+  warning in the pipeline guide.
+- Pipeline guide: new "Attributes, condition tables and the image list" section
+  (list values, same keys, reserved keys, what is written where, how the Fractal
+  image list receives them); "What snapping does to your pixels"; units of ROIs
+  in custom registration steps; a worked memory example for choosing a writer
+  mode. The `condition_table_path` row now says the built-in pipelines do not
+  read it.
+- Fractal guide: the init-task example returns `{"parallelization_list": [...]}`
+  as `exec_compound_task` and Fractal expect (it returned a bare list); new "Run
+  locally" and "Packaging" sections; the one-loader-class and JSON-serialisable
+  fields rules next to `generic_compute_task`.
+- `run_converter_test` documents the `api_fn` call and return contract and its
+  `Raises`; `build_dummy_tile` and its tuples have docstrings.
+- The six module-dump pages under "API reference / Modules" are removed; the
+  nine names only they rendered (`ShardingStrategy`, `NoSharding`,
+  `ChunkMultipleSharding`, `UserFacingModel`, `AttributeType`,
+  `CollectionInterfaceType`, `ImageLoaderInterfaceType`, `DefaultNgffVersion`,
+  `default_axes_builder`) are rendered on the curated pages, so every object has
+  one search hit.
+- Home page: a "Scope" section (position-based registration, axes and types,
+  what is written, storage, Fractal optional, how it relates to bioformats2raw,
+  ngff-zarr and ngio) and a short vocabulary list under "Main concepts".
+- Navigation: "Programmatic tiles" is now "Custom file formats"; the converters
+  page, contributing guide and changelog sit under "Project". The HCS tutorial
+  opens with a "Before you start" note (clone, data location, extra packages),
+  which the other tutorials point to.
+- README: routes users of supported microscopes to the converters page, links
+  the tile-table columns and the tutorials directly, and lists the new guide.
+- `docs/CLAUDE.md` records the terminology and spelling rules for site prose.
+
 ## [v1.1.1]
 
 ### Features
@@ -69,8 +203,8 @@ Requires `ngio` 1.1.2 or later. Written OME-Zarr output is unchanged.
   `NgioValueError` in `consolidate()` for chunks or shards of 8 MiB or more on
   an image that is not a multiple of them (`ngio` 1.1.1 `store_dask` let two
   parallel writers share a storage chunk). The Dask writer modes build their
-  lazy array on the image's write unit and leave the block grid to `ngio`; ozct
-  carries no guard of its own.
+  lazy array on the image's write unit and leave the block grid to `ngio`; this
+  library carries no guard of its own.
 - The Dask writer modes no longer pickle the whole image once per tile while
   building the dask graph, which was quadratic in the tile count
   (`By Tile (Using Dask)`, 512 tiles of 8 MiB: 18 s → 5 s).
@@ -573,7 +707,6 @@ fallback uses `SequenceMatcher` fuzzy matching against common fluorophore/color 
 
 ### Fix
 - Fix minor bug in `TileRegion` region loading that caused unnecessary reference data to be loaded; `data_type` is now stored directly in the model.
-
 
 ### Documentation
 - Improve stage position documentation in `docs/pipeline.md`.

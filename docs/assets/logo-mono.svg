@@ -1,0 +1,18 @@
+<!--
+  PLACEHOLDER MARK — one ink.
+
+  Deliberately different geometry from the colour mark rather than a recolour of
+  it: at one ink the three cascading tiles collapse into a single blob, so they
+  are drawn as outlines instead. Never recolour logo.svg to make a mono version.
+
+  Takes currentColor, so it inherits wherever it is placed. Not referenced by the
+  site today — it exists for READMEs, slides and print. Replace with the real
+  one-ink mark, keeping the filename and viewBox.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" role="img" aria-label="OME-Zarr Converters Tools">
+  <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+    <rect x="2.8" y="2.8" width="10" height="10" rx="1.8"/>
+    <rect x="7" y="7" width="10" height="10" rx="1.8"/>
+    <rect x="11.2" y="11.2" width="10" height="10" rx="1.8"/>
+  </g>
+</svg>

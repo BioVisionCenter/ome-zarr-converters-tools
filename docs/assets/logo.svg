@@ -1,0 +1,18 @@
+<!--
+  PLACEHOLDER MARK — light background, colour.
+
+  Three cascading tiles, back to front, in the brand's three teal levels: the
+  motif is tiles being assembled into one image, which is what this library does.
+  Drawn opaque and back-to-front rather than with opacity, because the design
+  system has no transparency anywhere.
+
+  Used as both theme.logo and theme.favicon. Replace with the real mark; keep the
+  filename, the 24x24 viewBox and the sibling files (logo-dark, logo-mono) so the
+  swap is a drop-in — docs/stylesheets/ozct.css hard-codes logo-dark.svg for the
+  slate scheme and sizes the box at 1.5rem.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" role="img" aria-label="OME-Zarr Converters Tools">
+  <rect x="2" y="2" width="11" height="11" rx="2" fill="#1c7c69"/>
+  <rect x="6.5" y="6.5" width="11" height="11" rx="2" fill="#22a699"/>
+  <rect x="11" y="11" width="11" height="11" rx="2" fill="#94dad4"/>
+</svg>

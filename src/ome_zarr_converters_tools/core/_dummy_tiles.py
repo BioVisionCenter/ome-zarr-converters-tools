@@ -39,6 +39,12 @@ def rasterize_text_with_boundary(
 
 
 class StartPosition(NamedTuple):
+    """Where a dummy tile starts: `x`, `y`, `z`, `c`, `t`.
+
+    Interpreted like the matching `Tile.start_*` fields, i.e. in the spaces
+    declared by the acquisition details passed to `build_dummy_tile`.
+    """
+
     x: int | float = 0
     y: int | float = 0
     z: int | float = 0
@@ -47,6 +53,12 @@ class StartPosition(NamedTuple):
 
 
 class TileShape(NamedTuple):
+    """Size of a dummy tile in pixels: `x`, `y`, `z`, `c`, `t`.
+
+    Also the shape of the `uint8` array its loader returns: the FOV name
+    rendered as text with a 255 border, broadcast over the other axes.
+    """
+
     x: int = 256
     y: int = 256
     z: int = 1
@@ -85,7 +97,18 @@ def build_dummy_tile(
     acquisition_details: AcquisitionDetails,
     font_scale: float = 0.22,
 ) -> Tile:
-    """Build a dummy tile with default parameters, allowing overrides."""
+    """Build a tile whose loader renders `fov_name` as text, for tests.
+
+    Args:
+        fov_name: Name of the field of view; also the text drawn in the tile.
+        start: Start position along each axis, in the spaces declared by
+            `acquisition_details`.
+        shape: Tile size in pixels along each axis.
+        collection: Where the output image goes (`ImageInPlate` or
+            `SingleImage`).
+        acquisition_details: Shared acquisition details for the tile.
+        font_scale: Font size relative to the shorter XY side.
+    """
     return Tile(
         fov_name=fov_name,
         start_x=start.x,

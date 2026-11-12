@@ -70,7 +70,12 @@ class TileSlice(BaseModel, Generic[ImageLoaderInterfaceType]):
     def load_data(
         self, *, axes: list[CANONICAL_AXES_TYPE], resource: Any | None = None
     ) -> np.ndarray:
-        """Load the image data for this TileSlice using the image loader."""
+        """Load this slice's pixels through its image loader.
+
+        Enforces the layout contract of `ImageLoaderInterface.load_data`: when
+        the loader returns fewer axes than `axes`, leading singleton axes are
+        prepended; when it returns more, `ConvertersToolsUserError` is raised.
+        """
         data = self.image_loader.load_data(resource=resource)
         # Padding data to match the ROI shape if necessary
         n_axes = len(axes)

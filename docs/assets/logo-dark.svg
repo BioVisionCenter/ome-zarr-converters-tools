@@ -1,0 +1,15 @@
+<!--
+  PLACEHOLDER MARK — dark background, colour.
+
+  Same geometry as logo.svg, lifted tones. The colour mark's deepest level
+  (#1c7c69) goes muddy on the slate chrome, which is why this file exists at all;
+  docs/stylesheets/ozct.css swaps it in as a background on .md-header__button.md-logo
+  under [data-md-color-scheme="slate"].
+
+  Replace with the real dark-background mark, keeping the filename and viewBox.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" role="img" aria-label="OME-Zarr Converters Tools">
+  <rect x="2" y="2" width="11" height="11" rx="2" fill="#1f9389"/>
+  <rect x="6.5" y="6.5" width="11" height="11" rx="2" fill="#6cc8be"/>
+  <rect x="11" y="11" width="11" height="11" rx="2" fill="#abe4dc"/>
+</svg>

@@ -1,0 +1,18 @@
+<!--
+  PLACEHOLDER LOCKUP — dark background. The `#only-dark` half of the landing-page
+  hero pair. See logo-lockup.svg for why the lockup ships as two files with baked-in
+  fills rather than following the palette the way the inline diagrams do.
+
+  Replace with the real dark-background lockup, keeping the filename.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 72" width="340" height="72" role="img" aria-label="OME-Zarr Converters Tools">
+  <g transform="translate(0 20) scale(1.33)">
+    <rect x="2" y="2" width="11" height="11" rx="2" fill="#1f9389"/>
+    <rect x="6.5" y="6.5" width="11" height="11" rx="2" fill="#6cc8be"/>
+    <rect x="11" y="11" width="11" height="11" rx="2" fill="#abe4dc"/>
+  </g>
+  <text x="46" y="34" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif"
+        font-size="24" font-weight="600" letter-spacing="-0.6" fill="#6cc8be">ome-zarr</text>
+  <text x="46" y="60" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif"
+        font-size="24" font-weight="600" letter-spacing="-0.6" fill="#e6edee">converters-tools</text>
+</svg>

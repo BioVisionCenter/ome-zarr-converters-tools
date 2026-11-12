@@ -117,18 +117,26 @@ def setup_images_for_conversion(
     converter_options: ConverterOptions,
     overwrite_mode: OverwriteMode = OverwriteMode.NO_OVERWRITE,
 ) -> list[dict]:
-    """Setup the OME-Zarr collection from converted tiled images.
+    """Create the collection skeleton and build the parallelization list.
 
-    This function run all the necessary steps to setup before parallel conversion.
-        - Build the OME-Zarr collection structure.
-        - Build the parallelization list (used by the fractal compute task).
+    This is the init half of a Fractal init/compute pair. It runs every step
+    that must happen before the compute tasks start:
+
+    - Build the OME-Zarr collection structure (plates and wells).
+    - Build the parallelization list consumed by the Fractal compute task.
 
     Args:
-        tiled_images: List of tiled images that have been converted.
-        zarr_dir: The base directory for the zarr data.
-        collection_type: The type of collection to set up.
+        tiled_images: The images to convert.
+        zarr_dir: The base directory for the Zarr data.
+        collection_type: Name of the registered collection handler, i.e. the
+            class name of the tiles' collection (`"ImageInPlate"` or
+            `"SingleImage"`).
         converter_options: The converter options to use during conversion.
         overwrite_mode: The overwrite mode to use when writing the data.
+
+    Returns:
+        One `{"zarr_url": ..., "init_args": ...}` dict per image, the
+        parallelization list Fractal fans out over compute tasks.
 
     Note:
         The NGFF version is taken from
